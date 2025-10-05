@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>{{{ PRODUCT_NAME }}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      background-color: #111;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    #logo {
+      width: 200px;
+      height: auto;
+      margin-bottom: 30px;
+      animation: fadein 2s ease-in-out;
+    }
+
+    #loading-text {
+      font-size: 20px;
+      letter-spacing: 2px;
+      animation: blink 1.2s infinite;
+    }
+
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    canvas {
+      display: none;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 🔹 FUnityロゴ表示 -->
+  <img id="logo" src="logo.png" alt="FUnity Logo">
+  <div id="loading-text">Loading...</div>
+
+  <!-- 🔹 Unity Canvas -->
+  <canvas id="unity-canvas"></canvas>
+
+  <!-- 🔹 Unityビルド読み込み -->
+  <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+  <script>
+    const canvas = document.getElementById("unity-canvas");
+
+    const config = {
+      dataUrl: "Build/{{{ DATA_FILENAME }}}",
+      frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+      codeUrl: "Build/{{{ CODE_FILENAME }}}",
+#if MEMORY_FILENAME
+      memoryUrl: "Build/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+      symbolsUrl: "Build/{{{ SYMBOLS_FILENAME }}}",
+#endif
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "{{{ COMPANY_NAME }}}",
+      productName: "{{{ PRODUCT_NAME }}}",
+      productVersion: "{{{ PRODUCT_VERSION }}}",
+
+      // ✅ gzip使用時に必須（Unity 6000対応）
+      useGzip: true,
+      decompressionFallback: "decompress.js"
+    };
+
+    // Unity 6 新API（Promiseベース）
+    createUnityInstance(canvas, config)
+      .then((unityInstance) => {
+        document.getElementById("logo").style.display = "none";
+        document.getElementById("loading-text").style.display = "none";
+        unityInstance.canvas.style.display = "block";
+      })
+      .catch((message) => {
+        console.error(message);
+      });
+  </script>
+</body>
+</html>
