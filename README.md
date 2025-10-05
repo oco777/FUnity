@@ -6,10 +6,10 @@
 
 > **Fun × Unity – 描いて、動かして、遊べるプログラミング環境**
 
-FUnity（ファニティ）は、子ども（小中学生）向けに開発中の  
-**Scratch風の教育的Unityプロジェクト** です。  
-Unityの **UI Toolkit** と **Visual Scripting** を使って、  
-「絵を描いて」「動かして」「遊べる」作品を簡単に作ることを目指しています。
+FUnity（ファニティ）は、子ども（小中学生）向けに開発中の
+**Scratch風の教育的Unityプロジェクト** です。
+Unityの **UI Toolkit** や **Visual Scripting** を活用することを目指し、
+「絵を描いて」「動かして」「遊べる」作品を簡単に作れる環境づくりに取り組んでいます。
 
 ---
 
@@ -27,30 +27,29 @@ Unityの **UI Toolkit** と **Visual Scripting** を使って、
 | 機能 | 内容 |
 |------|------|
 | 🎨 **エディタ拡張ペイントツール** | Unityエディタ上で絵を描いてSprite化 |
-| 🧩 **Visual Scripting連携** | ブロックプログラミング風の操作感 |
-| 🧰 **UI Toolkitベースの舞台** | 直感的な2D作品制作環境 |
 | 🌐 **unityroom公開対応** | WebGLビルドで作品を共有 |
+| 🧩 **Visual Scripting連携（予定）** | ブロックプログラミング風の操作感を提供予定 |
+| 🧰 **UI Toolkitベースの舞台（予定）** | 直感的な2D作品制作環境を提供予定 |
 
 ---
 
 ## 📁 プロジェクト構成
 
 ```
-Assets/
- └─ FUnity/
-     ├─ FUnity.asmdef
-     ├─ Scripts/
-     ├─ UI/
-     ├─ VisualScripting/
-     ├─ Sprites/
-     └─ Editor/ ← Editor拡張用フォルダ
-         ├─ FUnity.Editor.asmdef
-         └─ PaintWindow.cs
+FUnity/
+ └─ Assets/
+     └─ FUnity/
+         ├─ FUnity.asmdef
+         └─ Editor/ ← Editor拡張用フォルダ
+             ├─ FUnity.Editor.asmdef
+             ├─ PaintToSprite.cs
+             └─ PaintWindow.cs
 ```
 
-- `FUnity.asmdef`：ランタイム用のメインモジュール  
-- `FUnity.Editor.asmdef`：Editor拡張（ペイントツールなど）  
-- `PaintWindow.cs`：ペイントウィンドウの基本機能  
+- `FUnity.asmdef`：ランタイム用のメインモジュール（将来の拡張を想定）
+- `FUnity.Editor.asmdef`：Editor拡張（ペイントツールなど）
+- `PaintToSprite.cs`：ペイントデータをSpriteに変換
+- `PaintWindow.cs`：ペイントウィンドウの基本機能
 
 ---
 
