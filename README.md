@@ -86,7 +86,7 @@ Assets/
 ---
 
 ## 🧑‍💻 作者
-**Hisashi Komori**  
+**パパコーダー (PapaCoder)**  
 開発・構想・デザイン  
 🌐 [https://papacoder.net/](https://papacoder.net/)
 

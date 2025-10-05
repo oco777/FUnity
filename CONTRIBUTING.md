@@ -126,6 +126,6 @@ FUnity は以下の目的で開発されています：
 
 ## 🙌 開発チームと貢献者
 
-- 開発者：**Hisashi Komori**  
+- 開発者：**パパコーダー (PapaCoder)**  
 - 公式サイト：[https://papacoder.net](https://papacoder.net)  
 - 貢献者リストは [Contributors](https://github.com/oco777/FUnity/graphs/contributors) をご覧ください。
