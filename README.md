@@ -35,17 +35,18 @@ Unityの **UI Toolkit** と **Visual Scripting** を使って、
 
 ## 📁 プロジェクト構成
 
+```
 Assets/
-└─ FUnity/
-├─ FUnity.asmdef
-├─ Scripts/
-├─ UI/
-├─ VisualScripting/
-├─ Sprites/
-└─ Editor/ ← Editor拡張用フォルダ
-├─ FUnity.Editor.asmdef
-└─ PaintWindow.cs
-
+ └─ FUnity/
+     ├─ FUnity.asmdef
+     ├─ Scripts/
+     ├─ UI/
+     ├─ VisualScripting/
+     ├─ Sprites/
+     └─ Editor/ ← Editor拡張用フォルダ
+         ├─ FUnity.Editor.asmdef
+         └─ PaintWindow.cs
+```
 
 - `FUnity.asmdef`：ランタイム用のメインモジュール  
 - `FUnity.Editor.asmdef`：Editor拡張（ペイントツールなど）  
@@ -100,10 +101,8 @@ MIT License
 
 ## 🔗 関連リンク
 
-- 🎮 unityroom（作品公開予定）  
+- 🎮 unityroom（作品公開予定・準備中）  
   https://unityroom.com/games/funity  
 
 - 💻 GitHubリポジトリ  
   https://github.com/oco777/FUnity
-
-
