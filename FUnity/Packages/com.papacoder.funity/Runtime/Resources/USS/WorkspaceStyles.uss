@@ -1,0 +1,35 @@
+.funity-workspace {
+    flex-grow: 1;
+    background-color: #1e1e1e;
+    color: white;
+}
+
+.funity-layout {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.funity-palette {
+    width: 280px;
+    background-color: #252830;
+    padding: 8px;
+    gap: 4px;
+}
+
+.funity-stage {
+    flex-grow: 1;
+    background-color: #1a1d24;
+    padding: 12px;
+}
+
+.funity-stage-label {
+    unity-font-style: bold;
+    font-size: 16px;
+}
+
+.funity-block {
+    padding: 8px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    color: black;
+}

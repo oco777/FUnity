@@ -1,0 +1,3 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:Instance src="project://database/Packages/com.papacoder.funity/UXML/WorkspaceLayout.uxml" />
+</ui:UXML>
