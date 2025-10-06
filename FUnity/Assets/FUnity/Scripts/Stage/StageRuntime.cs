@@ -14,10 +14,12 @@ namespace FUnity.Stage
     {
         private readonly List<StageSpriteActor> _actors = new();
 
+        private const string LayoutResourcePath = "Stage/StageLayout";
+        private const string StyleResourcePath = "Stage/StageStyles";
+
         private UIDocument _document = default!;
-        private VisualElement _stageRoot = default!;
-        private ScrollView _spriteList = default!;
-        private Label _instructionsLabel = default!;
+        private VisualElement? _stageRoot;
+        private ScrollView? _spriteList;
 
         public static StageRuntime? Instance { get; private set; }
 
@@ -37,7 +39,8 @@ namespace FUnity.Stage
 
             Instance = this;
             _document = GetComponent<UIDocument>();
-            BuildLayout();
+            LoadLayout();
+            CacheLayoutReferences();
         }
 
         private void OnEnable()
@@ -90,6 +93,12 @@ namespace FUnity.Stage
             }
 
             _actors.Add(actor);
+            if (_stageRoot == null)
+            {
+                Debug.LogError("Stage root is missing. Ensure StageLayout.uxml is loaded correctly.");
+                return;
+            }
+
             actor.AttachToStage(_stageRoot);
             RefreshSpriteList();
         }
@@ -103,107 +112,44 @@ namespace FUnity.Stage
             }
         }
 
-        private void BuildLayout()
+        private void LoadLayout()
         {
             var root = _document.rootVisualElement;
-            root.style.flexGrow = 1f;
-            root.style.flexDirection = FlexDirection.Row;
-            root.style.backgroundColor = new StyleColor(new Color(0.11f, 0.11f, 0.13f));
-            root.style.paddingLeft = 12f;
-            root.style.paddingRight = 12f;
-            root.style.paddingTop = 12f;
-            root.style.paddingBottom = 12f;
-            //root.style.gap = 12f;
+            root.Clear();
 
-            var leftColumn = new VisualElement { name = "funity-left" };
-            leftColumn.style.flexGrow = 1f;
-            leftColumn.style.flexDirection = FlexDirection.Column;
-            //leftColumn.style.gap = 8f;
-            root.Add(leftColumn);
+            var layout = Resources.Load<VisualTreeAsset>(LayoutResourcePath);
+            if (layout == null)
+            {
+                Debug.LogError($"Unable to load stage layout UXML at Resources/{LayoutResourcePath}.");
+                return;
+            }
 
-            var stageTitle = new Label("ステージ");
-            stageTitle.style.unityFontStyleAndWeight = FontStyle.Bold;
-            stageTitle.style.fontSize = 20f;
-            stageTitle.style.color = new StyleColor(Color.white);
-            leftColumn.Add(stageTitle);
+            layout.CloneTree(root);
 
-            _stageRoot = new VisualElement { name = "funity-stage" };
-            _stageRoot.style.flexGrow = 1f;
-            _stageRoot.style.minHeight = 360f;
-            _stageRoot.style.backgroundColor = new StyleColor(new Color(0.18f, 0.18f, 0.2f));
-            _stageRoot.style.borderBottomWidth = 2f;
-            _stageRoot.style.borderTopWidth = 2f;
-            _stageRoot.style.borderLeftWidth = 2f;
-            _stageRoot.style.borderRightWidth = 2f;
-            _stageRoot.style.borderBottomColor = new StyleColor(new Color(0.34f, 0.34f, 0.38f));
-            _stageRoot.style.borderTopColor = new StyleColor(new Color(0.34f, 0.34f, 0.38f));
-            _stageRoot.style.borderLeftColor = new StyleColor(new Color(0.34f, 0.34f, 0.38f));
-            _stageRoot.style.borderRightColor = new StyleColor(new Color(0.34f, 0.34f, 0.38f));
-            _stageRoot.style.position = Position.Relative;
-            _stageRoot.style.overflow = Overflow.Hidden;
-            _stageRoot.style.flexDirection = FlexDirection.Row;
-            _stageRoot.style.justifyContent = Justify.Center;
-            _stageRoot.style.alignItems = Align.Center;
-            leftColumn.Add(_stageRoot);
+            var styleSheet = Resources.Load<StyleSheet>(StyleResourcePath);
+            if (styleSheet == null)
+            {
+                Debug.LogWarning($"Unable to load stage stylesheet USS at Resources/{StyleResourcePath}. Using inline defaults.");
+                return;
+            }
 
-            var spritePanelTitle = new Label("スプライト");
-            spritePanelTitle.style.unityFontStyleAndWeight = FontStyle.Bold;
-            spritePanelTitle.style.fontSize = 16f;
-            spritePanelTitle.style.color = new StyleColor(Color.white);
-            leftColumn.Add(spritePanelTitle);
+            root.styleSheets.Add(styleSheet);
+        }
 
-            _spriteList = new ScrollView { name = "funity-sprite-list" };
-            _spriteList.style.flexGrow = 0f;
-            _spriteList.style.height = 120f;
-            _spriteList.style.backgroundColor = new StyleColor(new Color(0.14f, 0.14f, 0.17f));
-            _spriteList.style.borderBottomWidth = 1f;
-            _spriteList.style.borderTopWidth = 1f;
-            _spriteList.style.borderLeftWidth = 1f;
-            _spriteList.style.borderRightWidth = 1f;
-            _spriteList.style.borderBottomColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-            _spriteList.style.borderTopColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-            _spriteList.style.borderLeftColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-            _spriteList.style.borderRightColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-            leftColumn.Add(_spriteList);
+        private void CacheLayoutReferences()
+        {
+            var root = _document.rootVisualElement;
+            _stageRoot = root.Q<VisualElement>("funity-stage");
+            _spriteList = root.Q<ScrollView>("funity-sprite-list");
+            if (_stageRoot == null)
+            {
+                Debug.LogError("Stage root element not found in loaded UXML. Stage functionality will be limited.");
+            }
 
-            var rightColumn = new VisualElement { name = "funity-right" };
-            rightColumn.style.width = 360f;
-            rightColumn.style.flexShrink = 0f;
-            rightColumn.style.flexDirection = FlexDirection.Column;
-            //rightColumn.style.gap = 8f;
-            root.Add(rightColumn);
-
-            var programmingTitle = new Label("Visual Scripting");
-            programmingTitle.style.unityFontStyleAndWeight = FontStyle.Bold;
-            programmingTitle.style.fontSize = 20f;
-            programmingTitle.style.color = new StyleColor(Color.white);
-            rightColumn.Add(programmingTitle);
-
-            _instructionsLabel = new Label(
-                "Visual Scripting Graph ウィンドウを開いて、Flow Graph でスプライトを操作してください。\n" +
-                "StageRuntime.SpawnSprite や StageSpriteActor.MoveBy などのメソッドはそのままブロックとして利用できます。");
-            _instructionsLabel.style.whiteSpace = WhiteSpace.Normal;
-            _instructionsLabel.style.fontSize = 13f;
-            _instructionsLabel.style.color = new StyleColor(new Color(0.85f, 0.85f, 0.9f));
-            _instructionsLabel.style.unityTextAlign = TextAnchor.UpperLeft;
-            _instructionsLabel.style.backgroundColor = new StyleColor(new Color(0.14f, 0.14f, 0.17f));
-            _instructionsLabel.style.paddingLeft = 12f;
-            _instructionsLabel.style.paddingRight = 12f;
-            _instructionsLabel.style.paddingTop = 12f;
-            _instructionsLabel.style.paddingBottom = 12f;
-            _instructionsLabel.style.borderBottomWidth = 1f;
-            _instructionsLabel.style.borderTopWidth = 1f;
-            _instructionsLabel.style.borderLeftWidth = 1f;
-            _instructionsLabel.style.borderRightWidth = 1f;
-            _instructionsLabel.style.borderBottomColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-            _instructionsLabel.style.borderTopColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-            _instructionsLabel.style.borderLeftColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-            _instructionsLabel.style.borderRightColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-            _instructionsLabel.style.borderTopLeftRadius = 4f;
-            _instructionsLabel.style.borderTopRightRadius = 4f;
-            _instructionsLabel.style.borderBottomLeftRadius = 4f;
-            _instructionsLabel.style.borderBottomRightRadius = 4f;
-            rightColumn.Add(_instructionsLabel);
+            if (_spriteList == null)
+            {
+                Debug.LogError("Sprite list element not found in loaded UXML. Sprite overview will be disabled.");
+            }
         }
 
         private void RegisterExistingActors()
@@ -226,25 +172,10 @@ namespace FUnity.Stage
             foreach (var actor in _actors)
             {
                 var entry = new VisualElement();
-                entry.style.flexDirection = FlexDirection.Row;
-                entry.style.alignItems = Align.Center;
-                //entry.style.gap = 8f;
-                entry.style.paddingLeft = 8f;
-                entry.style.paddingRight = 8f;
-                entry.style.paddingTop = 4f;
-                entry.style.paddingBottom = 4f;
+                entry.AddToClassList("funity-sprite-entry");
 
                 var swatch = new VisualElement();
-                swatch.style.width = 32f;
-                swatch.style.height = 32f;
-                swatch.style.borderBottomWidth = 1f;
-                swatch.style.borderTopWidth = 1f;
-                swatch.style.borderLeftWidth = 1f;
-                swatch.style.borderRightWidth = 1f;
-                swatch.style.borderBottomColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-                swatch.style.borderTopColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-                swatch.style.borderLeftColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-                swatch.style.borderRightColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
+                swatch.AddToClassList("funity-sprite-swatch");
                 swatch.style.backgroundImage = actor.CurrentBackground;
                 swatch.style.unityBackgroundImageTintColor = new StyleColor(Color.white);
                 if (!actor.HasSprite)
@@ -254,8 +185,7 @@ namespace FUnity.Stage
                 entry.Add(swatch);
 
                 var label = new Label(actor.DisplayName);
-                label.style.color = new StyleColor(Color.white);
-                label.style.fontSize = 14f;
+                label.AddToClassList("funity-sprite-label");
                 entry.Add(label);
 
                 _spriteList.contentContainer.Add(entry);
