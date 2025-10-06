@@ -27,9 +27,19 @@ Unityの **UI Toolkit** や **Visual Scripting** を活用することを目指�
 | 機能 | 内容 |
 |------|------|
 | 🎨 **エディタ拡張ペイントツール** | Unityエディタ上で絵を描いてSprite化 |
+| 🧾 **Stage Sprite定義の自動生成** | 描いたSpriteからUI Toolkit用スプライト定義を同時生成 |
 | 🌐 **unityroom公開対応** | WebGLビルドで作品を共有 |
 | 🧩 **Visual Scripting連携（予定）** | ブロックプログラミング風の操作感を提供予定 |
-| 🧰 **UI Toolkitベースの舞台（予定）** | 直感的な2D作品制作環境を提供予定 |
+| 🧰 **UI Toolkitベースの舞台** | Scratchライクなステージとスプライト一覧を自動構築 |
+
+### 🧑‍💻 Visual Scripting + UI Toolkit ステージの使い方
+
+1. **シーンを再生**すると、自動的に `FUnity Stage` GameObject が生成されます。UI Toolkitで構成されたステージ／スプライトパネル／Visual Scriptingガイドが表示されます。
+2. エディタ拡張の「Paint & Save as Sprite」で描いた画像を保存すると、Spriteと同じ場所に `*_StageSprite.asset` が生成されます。
+3. Visual Scripting Graph から `StageVisualScripting.Spawn` を呼び出し、生成した `StageSpriteDefinition` を渡すと、ステージ上にスプライトが配置されます。
+4. 生成された `StageSpriteActor` コンポーネントの `MoveBy` / `MoveTo` / `SetSprite` などのメソッドをVisual Scriptingノードから呼び出すことで、Scratchのようにスプライトを動かせます。
+
+> 📌 Stageは `StageBootstrapper` により自動生成されるため、既存のシーンを編集する必要はありません。プレイモードに入るだけでScratch風ワークスペースが立ち上がります。
 
 ---
 

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
+using FUnity.Stage;
 
 namespace FUnity.Editor {
     public class PaintToSprite : EditorWindow {
@@ -84,6 +85,9 @@ namespace FUnity.Editor {
                     return;
                 }
 
+                // Stage用の定義アセットを自動生成
+                CreateStageSpriteDefinition(sprite, relativePath);
+
                 // シーン上に配置
                 GameObject obj = new GameObject("FUnitySprite");
                 var renderer = obj.AddComponent<SpriteRenderer>();
@@ -93,6 +97,19 @@ namespace FUnity.Editor {
 
                 Debug.Log("✅ Sprite created and placed in the scene!");
             }
+        }
+
+        private static void CreateStageSpriteDefinition(Sprite sprite, string spriteAssetPath) {
+            string directory = Path.GetDirectoryName(spriteAssetPath);
+            if (string.IsNullOrEmpty(directory)) return;
+
+            string definitionPath = Path.Combine(directory, sprite.name + "_StageSprite.asset");
+            var definition = ScriptableObject.CreateInstance<StageSpriteDefinition>();
+            definition.Initialize(sprite, sprite.name);
+            AssetDatabase.CreateAsset(definition, definitionPath);
+            AssetDatabase.SaveAssets();
+
+            Debug.Log($"🧩 StageSpriteDefinition created at {definitionPath}. Visual Scriptingから StageVisualScripting.Spawn を呼び出すことで配置できます。");
         }
     }
 }
