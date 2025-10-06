@@ -3,7 +3,7 @@ using UnityEditor;
 
 namespace FUnity.Editor {
     /// <summary>
-    /// Basic painting window used for quickly sketching textures inside the editor.
+    /// エディター内で素早くテクスチャを描ける基本的なペイントウィンドウです。
     /// </summary>
     public class PaintWindow : EditorWindow {
         private Texture2D m_canvasTexture;
@@ -13,7 +13,7 @@ namespace FUnity.Editor {
 
         [MenuItem("FUnity/Paint Window")]
         /// <summary>
-        /// Opens the paint tool window from the Unity editor menu.
+        /// Unity エディターのメニューからペイントツールウィンドウを開きます。
         /// </summary>
         public static void ShowWindow() {
             var window = GetWindow<PaintWindow>();
@@ -22,7 +22,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Allocates the texture used as the drawing canvas when the window is enabled.
+        /// ウィンドウが有効化された際に描画用キャンバステクスチャを確保します。
         /// </summary>
         private void OnEnable() {
             if (m_canvasTexture == null) {
@@ -32,7 +32,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Renders the painting interface and handles user interactions.
+        /// ペイント用インターフェースを描画し、ユーザー操作を処理します。
         /// </summary>
         private void OnGUI() {
             GUILayout.Label("🎨 FUnity Paint Tool", EditorStyles.boldLabel);
@@ -53,7 +53,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Converts mouse drags into pixel updates on the canvas.
+        /// マウスドラッグをキャンバス上のピクセル更新に変換します。
         /// </summary>
         private void HandleMouseInput(Rect drawArea) {
             Event e = Event.current;
@@ -71,7 +71,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Colors a single pixel on the canvas texture using the active draw color.
+        /// 選択中の描画色でキャンバステクスチャの単一ピクセルを塗ります。
         /// </summary>
         private void DrawPixel(Vector2Int pos) {
             if (pos.x < 0 || pos.x >= m_canvasSize || pos.y < 0 || pos.y >= m_canvasSize) return;
@@ -80,7 +80,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Fills the canvas with white pixels to start a new drawing.
+        /// 新しい描画を始められるようキャンバスを白で塗りつぶします。
         /// </summary>
         private void ClearCanvas() {
             Color[] pixels = new Color[m_canvasSize * m_canvasSize];

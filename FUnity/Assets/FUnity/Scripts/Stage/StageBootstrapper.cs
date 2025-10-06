@@ -4,15 +4,15 @@ using UnityEngine.UIElements;
 namespace FUnity.Stage
 {
     /// <summary>
-    /// Ensures that a UI Toolkit based stage is available whenever a scene is loaded.
-    /// The bootstrapper is executed automatically (both in Play Mode and builds) and
-    /// spawns a dedicated GameObject with an UIDocument + StageRuntime pair.
+    /// シーンがロードされるたびに UI Toolkit ベースのステージが利用可能になるよう保証します。
+    /// ブートストラッパーは（プレイモードとビルドの両方で）自動実行され、
+    /// UIDocument と StageRuntime を備えた専用の GameObject を生成します。
     /// </summary>
     public static class StageBootstrapper
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         /// <summary>
-        /// Guarantees that the stage GameObject exists after a scene has finished loading.
+        /// シーンの読み込み完了後にステージ用 GameObject が存在することを保証します。
         /// </summary>
         private static void EnsureStage()
         {

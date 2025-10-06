@@ -5,7 +5,7 @@ using FUnity.Stage;
 
 namespace FUnity.Editor {
     /// <summary>
-    /// Provides a simple painting canvas that exports the result as a sprite asset and stage definition.
+    /// スプライトアセットとステージ定義として書き出せるシンプルなペイントキャンバスを提供します。
     /// </summary>
     public class PaintToSprite : EditorWindow {
         private Texture2D m_canvasTexture;
@@ -13,7 +13,7 @@ namespace FUnity.Editor {
 
         [MenuItem("FUnity/Paint & Save as Sprite")]
         /// <summary>
-        /// Opens the paint window from the Unity menu.
+        /// Unity メニューからペイントウィンドウを開きます。
         /// </summary>
         public static void ShowWindow() {
             var window = GetWindow<PaintToSprite>();
@@ -22,7 +22,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Creates the painting texture when the window is enabled.
+        /// ウィンドウが有効化された際にペイント用テクスチャを作成します。
         /// </summary>
         private void OnEnable() {
             if (m_canvasTexture == null) {
@@ -32,7 +32,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Draws the painting UI and handles button interactions.
+        /// ペイント用 UI を描画し、ボタン操作を処理します。
         /// </summary>
         private void OnGUI() {
             GUILayout.Label("🎨 Draw your Sprite", EditorStyles.boldLabel);
@@ -49,7 +49,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Processes mouse dragging to draw pixels onto the canvas texture.
+        /// マウスドラッグを処理してキャンバステクスチャにピクセルを描画します。
         /// </summary>
         private void HandleMouse(Rect area) {
             Event e = Event.current;
@@ -63,7 +63,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Resets every pixel in the canvas texture to transparent.
+        /// キャンバステクスチャのすべてのピクセルを透明でリセットします。
         /// </summary>
         private void ClearCanvas() {
             Color[] pixels = new Color[m_canvasSize * m_canvasSize];
@@ -73,7 +73,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Saves the current canvas as a PNG and configures it for use as a sprite.
+        /// 現在のキャンバスを PNG として保存し、スプライトとして利用できるよう設定します。
         /// </summary>
         private void SaveAsSprite() {
             string path = EditorUtility.SaveFilePanel("Save Sprite", "Assets", "MyDrawing", "png");
@@ -121,7 +121,7 @@ namespace FUnity.Editor {
         }
 
         /// <summary>
-        /// Generates a StageSpriteDefinition asset that references the newly created sprite.
+        /// 生成したスプライトを参照する StageSpriteDefinition アセットを生成します。
         /// </summary>
         private static void CreateStageSpriteDefinition(Sprite sprite, string spriteAssetPath) {
             string directory = Path.GetDirectoryName(spriteAssetPath);

@@ -5,9 +5,9 @@ using UnityEngine.UIElements;
 namespace FUnity.Stage
 {
     /// <summary>
-    /// Builds and manages the Scratch-like workspace using Unity UI Toolkit.
-    /// The runtime creates a two-column layout: a stage on the left and helper panels on the right.
-    /// Stage sprites are managed via <see cref="StageSpriteActor"/> instances that Visual Scripting can control.
+    /// Unity UI Toolkit を用いてスクラッチ風ワークスペースを構築し管理します。
+    /// ランタイムは左にステージ、右に補助パネルを持つ二列レイアウトを生成します。
+    /// ステージ上のスプライトは Visual Scripting から操作できる <see cref="StageSpriteActor"/> インスタンスで管理されます。
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public sealed class StageRuntime : MonoBehaviour
@@ -24,12 +24,12 @@ namespace FUnity.Stage
         public static StageRuntime? Instance { get; private set; }
 
         /// <summary>
-        /// Width/height of the current stage content rectangle.
+        /// 現在のステージ表示領域の幅と高さを返します。
         /// </summary>
         public Vector2 StageSize => m_stageRoot?.contentRect.size ?? new Vector2(960f, 540f);
 
         /// <summary>
-        /// Initializes the runtime instance, loads the layout assets and caches key references.
+        /// ランタイムを初期化し、レイアウトアセットの読み込みと主要参照のキャッシュを行います。
         /// </summary>
         private void Awake()
         {
@@ -47,7 +47,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Hooks up existing actors and refreshes the on-screen sprite list when the component activates.
+        /// コンポーネントが有効化された際に既存のアクターを登録し、画面上のスプライト一覧を更新します。
         /// </summary>
         private void OnEnable()
         {
@@ -56,7 +56,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Cleans up registered actors and releases the singleton instance when the component is disabled.
+        /// コンポーネントが無効化されたときに登録済みアクターを後処理し、シングルトンを解放します。
         /// </summary>
         private void OnDisable()
         {
@@ -73,8 +73,8 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Instantiate a new sprite actor on the stage at runtime.
-        /// This method is designed to be called from Visual Scripting graphs.
+        /// ランタイム中にステージへ新しいスプライトアクターを生成します。
+        /// Visual Scripting のグラフから呼び出せるよう設計されています。
         /// </summary>
         public StageSpriteActor? SpawnSprite(StageSpriteDefinition definition)
         {
@@ -95,7 +95,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Adds an actor to the runtime so it can be rendered and tracked by the stage.
+        /// アクターをランタイムへ登録し、ステージで描画・追跡できるようにします。
         /// </summary>
         internal void RegisterActor(StageSpriteActor actor)
         {
@@ -116,7 +116,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Removes an actor from the runtime, ensuring it is detached from the visual tree.
+        /// アクターをランタイムから外し、ビジュアルツリーから確実に切り離します。
         /// </summary>
         internal void UnregisterActor(StageSpriteActor actor)
         {
@@ -128,7 +128,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Loads the UXML/USS resources that define the stage layout and styling.
+        /// ステージのレイアウトとスタイルを定義する UXML/USS リソースを読み込みます。
         /// </summary>
         private void LoadLayout()
         {
@@ -155,7 +155,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Queries and stores the key visual elements required for stage interaction.
+        /// ステージ操作に必要な主要ビジュアル要素を検索して保持します。
         /// </summary>
         private void CacheLayoutReferences()
         {
@@ -174,7 +174,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Finds StageSpriteActor components already present in the hierarchy and registers them.
+        /// 階層内に既に存在する StageSpriteActor コンポーネントを見つけて登録します。
         /// </summary>
         private void RegisterExistingActors()
         {
@@ -186,7 +186,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Rebuilds the UI list that mirrors the currently registered sprite actors.
+        /// 登録されているスプライトアクターを反映した UI リストを再構築します。
         /// </summary>
         private void RefreshSpriteList()
         {
