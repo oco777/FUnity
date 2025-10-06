@@ -164,12 +164,15 @@ namespace FUnity.Stage
         private VisualElement CreateVisualElement()
         {
             var element = new VisualElement { name = DisplayName };
-            element.style.position = Position.Absolute;
+            element.style.position = UnityEngine.UIElements.Position.Absolute;
             element.style.width = size.x;
             element.style.height = size.y;
             element.style.left = _position.x;
             element.style.top = _position.y;
-            element.style.borderRadius = 8f;
+            element.style.borderTopLeftRadius = 8f;
+            element.style.borderTopRightRadius = 8f;
+            element.style.borderBottomLeftRadius = 8f;
+            element.style.borderBottomRightRadius = 8f;
             element.style.overflow = Overflow.Hidden;
             element.style.borderBottomWidth = 1f;
             element.style.borderTopWidth = 1f;
@@ -191,7 +194,7 @@ namespace FUnity.Stage
             }
 
             var nameLabel = new Label(DisplayName);
-            nameLabel.style.position = Position.Absolute;
+            nameLabel.style.position = UnityEngine.UIElements.Position.Absolute;
             nameLabel.style.bottom = 4f;
             nameLabel.style.left = 4f;
             nameLabel.style.color = new StyleColor(Color.white);

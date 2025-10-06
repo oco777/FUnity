@@ -24,9 +24,9 @@ namespace FUnity.Stage
             var panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
             panelSettings.name = "FUnity Stage Panel Settings (Runtime)";
             panelSettings.clearColor = true;
-            panelSettings.clearColorValue = Color.clear;
+            panelSettings.colorClearValue = Color.clear;
             panelSettings.scaleMode = PanelScaleMode.ScaleWithScreenSize;
-            panelSettings.referenceResolution = new Vector2(1920f, 1080f);
+            panelSettings.referenceResolution = new Vector2Int(1920, 1080);
             panelSettings.match = 0.5f;
 
             var document = root.AddComponent<UIDocument>();

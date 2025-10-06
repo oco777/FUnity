@@ -113,12 +113,12 @@ namespace FUnity.Stage
             root.style.paddingRight = 12f;
             root.style.paddingTop = 12f;
             root.style.paddingBottom = 12f;
-            root.style.gap = 12f;
+            //root.style.gap = 12f;
 
             var leftColumn = new VisualElement { name = "funity-left" };
             leftColumn.style.flexGrow = 1f;
             leftColumn.style.flexDirection = FlexDirection.Column;
-            leftColumn.style.gap = 8f;
+            //leftColumn.style.gap = 8f;
             root.Add(leftColumn);
 
             var stageTitle = new Label("ステージ");
@@ -170,7 +170,7 @@ namespace FUnity.Stage
             rightColumn.style.width = 360f;
             rightColumn.style.flexShrink = 0f;
             rightColumn.style.flexDirection = FlexDirection.Column;
-            rightColumn.style.gap = 8f;
+            //rightColumn.style.gap = 8f;
             root.Add(rightColumn);
 
             var programmingTitle = new Label("Visual Scripting");
@@ -199,7 +199,10 @@ namespace FUnity.Stage
             _instructionsLabel.style.borderTopColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
             _instructionsLabel.style.borderLeftColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
             _instructionsLabel.style.borderRightColor = new StyleColor(new Color(0.27f, 0.27f, 0.32f));
-            _instructionsLabel.style.borderRadius = 4f;
+            _instructionsLabel.style.borderTopLeftRadius = 4f;
+            _instructionsLabel.style.borderTopRightRadius = 4f;
+            _instructionsLabel.style.borderBottomLeftRadius = 4f;
+            _instructionsLabel.style.borderBottomRightRadius = 4f;
             rightColumn.Add(_instructionsLabel);
         }
 
@@ -225,7 +228,7 @@ namespace FUnity.Stage
                 var entry = new VisualElement();
                 entry.style.flexDirection = FlexDirection.Row;
                 entry.style.alignItems = Align.Center;
-                entry.style.gap = 8f;
+                //entry.style.gap = 8f;
                 entry.style.paddingLeft = 8f;
                 entry.style.paddingRight = 8f;
                 entry.style.paddingTop = 4f;
