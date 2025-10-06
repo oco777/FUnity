@@ -11,60 +11,60 @@ namespace FUnity.Stage
     public sealed class StageSpriteActor : MonoBehaviour
     {
         [SerializeField]
-        private string displayName = "Sprite";
+        private string m_displayName = "Sprite";
 
         [SerializeField]
-        private Sprite? sprite;
+        private Sprite? m_sprite;
 
         [SerializeField]
-        private Vector2 size = new Vector2(128f, 128f);
+        private Vector2 m_size = new Vector2(128f, 128f);
 
         [SerializeField]
-        private Vector2 initialPosition = new Vector2(120f, 120f);
+        private Vector2 m_initialPosition = new Vector2(120f, 120f);
 
-        private VisualElement? _visualElement;
-        private Vector2 _position;
-        private StageRuntime? _runtime;
+        private VisualElement? m_visualElement;
+        private Vector2 m_position;
+        private StageRuntime? m_runtime;
 
         /// <summary>
         /// Friendly name shown in the UI and Visual Scripting inspector.
         /// </summary>
-        public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
+        public string DisplayName => string.IsNullOrWhiteSpace(m_displayName) ? name : m_displayName;
 
         /// <summary>
         /// Current pixel position inside the stage (origin = top-left).
         /// </summary>
-        public Vector2 Position => _position;
+        public Vector2 Position => m_position;
 
         internal StyleBackground CurrentBackground =>
-            sprite != null
-                ? new StyleBackground(sprite)
+            m_sprite != null
+                ? new StyleBackground(m_sprite)
                 : new StyleBackground { keyword = StyleKeyword.Null };
 
-        internal bool HasSprite => sprite != null;
+        internal bool HasSprite => m_sprite != null;
 
         private void Awake()
         {
-            _position = initialPosition;
+            m_position = m_initialPosition;
         }
 
         private void OnEnable()
         {
-            _runtime = StageRuntime.Instance;
-            if (_runtime != null)
+            m_runtime = StageRuntime.Instance;
+            if (m_runtime != null)
             {
-                _runtime.RegisterActor(this);
+                m_runtime.RegisterActor(this);
             }
         }
 
         private void OnDisable()
         {
-            if (_runtime != null)
+            if (m_runtime != null)
             {
-                _runtime.UnregisterActor(this);
+                m_runtime.UnregisterActor(this);
             }
 
-            _runtime = null;
+            m_runtime = null;
         }
 
         /// <summary>
@@ -77,10 +77,10 @@ namespace FUnity.Stage
                 return;
             }
 
-            displayName = definition.DisplayName;
-            sprite = definition.Sprite;
-            size = definition.Size;
-            initialPosition = definition.InitialPosition;
+            m_displayName = definition.DisplayName;
+            m_sprite = definition.Sprite;
+            m_size = definition.Size;
+            m_initialPosition = definition.InitialPosition;
         }
 
         /// <summary>
@@ -88,19 +88,19 @@ namespace FUnity.Stage
         /// </summary>
         public void SetSprite(Sprite? newSprite)
         {
-            sprite = newSprite;
-            if (_visualElement != null)
+            m_sprite = newSprite;
+            if (m_visualElement != null)
             {
                 if (newSprite != null)
                 {
-                    _visualElement.style.backgroundImage = new StyleBackground(newSprite);
-                    _visualElement.style.unityBackgroundImageTintColor = new StyleColor(Color.white);
-                    _visualElement.style.backgroundColor = new StyleColor(Color.clear);
+                    m_visualElement.style.backgroundImage = new StyleBackground(newSprite);
+                    m_visualElement.style.unityBackgroundImageTintColor = new StyleColor(Color.white);
+                    m_visualElement.style.backgroundColor = new StyleColor(Color.clear);
                 }
                 else
                 {
-                    _visualElement.style.backgroundImage = new StyleBackground { keyword = StyleKeyword.Null };
-                    _visualElement.style.backgroundColor = new StyleColor(new Color(0.8f, 0.2f, 0.2f));
+                    m_visualElement.style.backgroundImage = new StyleBackground { keyword = StyleKeyword.Null };
+                    m_visualElement.style.backgroundColor = new StyleColor(new Color(0.8f, 0.2f, 0.2f));
                 }
             }
         }
@@ -110,29 +110,29 @@ namespace FUnity.Stage
         /// </summary>
         public void MoveTo(Vector2 position)
         {
-            _position = position;
-            if (_visualElement != null)
+            m_position = position;
+            if (m_visualElement != null)
             {
-                _visualElement.style.left = position.x;
-                _visualElement.style.top = position.y;
+                m_visualElement.style.left = position.x;
+                m_visualElement.style.top = position.y;
             }
         }
 
         /// <summary>
         /// Move by the given delta (in pixels).
         /// </summary>
-        public void MoveBy(Vector2 delta) => MoveTo(_position + delta);
+        public void MoveBy(Vector2 delta) => MoveTo(m_position + delta);
 
         /// <summary>
         /// Resize the sprite visual.
         /// </summary>
         public void SetSize(Vector2 newSize)
         {
-            size = newSize;
-            if (_visualElement != null)
+            m_size = newSize;
+            if (m_visualElement != null)
             {
-                _visualElement.style.width = newSize.x;
-                _visualElement.style.height = newSize.y;
+                m_visualElement.style.width = newSize.x;
+                m_visualElement.style.height = newSize.y;
             }
         }
 
@@ -143,21 +143,21 @@ namespace FUnity.Stage
                 return;
             }
 
-            _visualElement ??= CreateVisualElement();
-            if (_visualElement.parent != stageRoot)
+            m_visualElement ??= CreateVisualElement();
+            if (m_visualElement.parent != stageRoot)
             {
-                _visualElement.RemoveFromHierarchy();
-                stageRoot.Add(_visualElement);
+                m_visualElement.RemoveFromHierarchy();
+                stageRoot.Add(m_visualElement);
             }
 
-            MoveTo(_position);
+            MoveTo(m_position);
         }
 
         internal void DetachFromStage()
         {
-            if (_visualElement != null)
+            if (m_visualElement != null)
             {
-                _visualElement.RemoveFromHierarchy();
+                m_visualElement.RemoveFromHierarchy();
             }
         }
 
@@ -165,10 +165,10 @@ namespace FUnity.Stage
         {
             var element = new VisualElement { name = DisplayName };
             element.style.position = UnityEngine.UIElements.Position.Absolute;
-            element.style.width = size.x;
-            element.style.height = size.y;
-            element.style.left = _position.x;
-            element.style.top = _position.y;
+            element.style.width = m_size.x;
+            element.style.height = m_size.y;
+            element.style.left = m_position.x;
+            element.style.top = m_position.y;
             element.style.borderTopLeftRadius = 8f;
             element.style.borderTopRightRadius = 8f;
             element.style.borderBottomLeftRadius = 8f;
@@ -183,9 +183,9 @@ namespace FUnity.Stage
             element.style.borderLeftColor = new StyleColor(new Color(0.2f, 0.2f, 0.24f));
             element.style.borderRightColor = new StyleColor(new Color(0.2f, 0.2f, 0.24f));
 
-            if (sprite != null)
+            if (m_sprite != null)
             {
-                element.style.backgroundImage = new StyleBackground(sprite);
+                element.style.backgroundImage = new StyleBackground(m_sprite);
                 element.style.unityBackgroundImageTintColor = new StyleColor(Color.white);
             }
             else
@@ -204,7 +204,7 @@ namespace FUnity.Stage
             nameLabel.style.unityTextOutlineWidth = 0.2f;
             element.Add(nameLabel);
 
-            _visualElement = element;
+            m_visualElement = element;
             return element;
         }
     }

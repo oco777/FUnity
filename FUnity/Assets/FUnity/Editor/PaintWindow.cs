@@ -3,10 +3,10 @@ using UnityEditor;
 
 namespace FUnity.Editor {
     public class PaintWindow : EditorWindow {
-        private Texture2D _canvasTexture;
-        private Color _drawColor = Color.black;
-        private Vector2Int _lastPixelPos = new Vector2Int(-1, -1);
-        private int _canvasSize = 256;
+        private Texture2D m_canvasTexture;
+        private Color m_drawColor = Color.black;
+        private Vector2Int m_lastPixelPos = new Vector2Int(-1, -1);
+        private int m_canvasSize = 256;
 
         [MenuItem("FUnity/Paint Window")]
         public static void ShowWindow() {
@@ -16,8 +16,8 @@ namespace FUnity.Editor {
         }
 
         private void OnEnable() {
-            if (_canvasTexture == null) {
-                _canvasTexture = new Texture2D(_canvasSize, _canvasSize, TextureFormat.RGBA32, false);
+            if (m_canvasTexture == null) {
+                m_canvasTexture = new Texture2D(m_canvasSize, m_canvasSize, TextureFormat.RGBA32, false);
                 ClearCanvas();
             }
         }
@@ -26,11 +26,11 @@ namespace FUnity.Editor {
             GUILayout.Label("🎨 FUnity Paint Tool", EditorStyles.boldLabel);
 
             // 色選択
-            _drawColor = EditorGUILayout.ColorField("Draw Color", _drawColor);
+            m_drawColor = EditorGUILayout.ColorField("Draw Color", m_drawColor);
 
             // キャンバス描画
-            Rect drawArea = GUILayoutUtility.GetRect(_canvasSize, _canvasSize, GUILayout.ExpandWidth(false));
-            GUI.DrawTexture(drawArea, _canvasTexture);
+            Rect drawArea = GUILayoutUtility.GetRect(m_canvasSize, m_canvasSize, GUILayout.ExpandWidth(false));
+            GUI.DrawTexture(drawArea, m_canvasTexture);
 
             HandleMouseInput(drawArea);
 
@@ -44,28 +44,28 @@ namespace FUnity.Editor {
             Event e = Event.current;
             if (e.type == EventType.MouseDrag && drawArea.Contains(e.mousePosition)) {
                 Vector2 localPos = e.mousePosition - new Vector2(drawArea.x, drawArea.y);
-                Vector2Int pixelPos = new Vector2Int((int)localPos.x, _canvasSize - (int)localPos.y);
+                Vector2Int pixelPos = new Vector2Int((int)localPos.x, m_canvasSize - (int)localPos.y);
 
                 DrawPixel(pixelPos);
-                _lastPixelPos = pixelPos;
+                m_lastPixelPos = pixelPos;
                 e.Use();
             }
             else if (e.type == EventType.MouseUp) {
-                _lastPixelPos = new Vector2Int(-1, -1);
+                m_lastPixelPos = new Vector2Int(-1, -1);
             }
         }
 
         private void DrawPixel(Vector2Int pos) {
-            if (pos.x < 0 || pos.x >= _canvasSize || pos.y < 0 || pos.y >= _canvasSize) return;
-            _canvasTexture.SetPixel(pos.x, pos.y, _drawColor);
-            _canvasTexture.Apply();
+            if (pos.x < 0 || pos.x >= m_canvasSize || pos.y < 0 || pos.y >= m_canvasSize) return;
+            m_canvasTexture.SetPixel(pos.x, pos.y, m_drawColor);
+            m_canvasTexture.Apply();
         }
 
         private void ClearCanvas() {
-            Color[] pixels = new Color[_canvasSize * _canvasSize];
+            Color[] pixels = new Color[m_canvasSize * m_canvasSize];
             for (int i = 0; i < pixels.Length; i++) pixels[i] = Color.white;
-            _canvasTexture.SetPixels(pixels);
-            _canvasTexture.Apply();
+            m_canvasTexture.SetPixels(pixels);
+            m_canvasTexture.Apply();
         }
     }
 }
