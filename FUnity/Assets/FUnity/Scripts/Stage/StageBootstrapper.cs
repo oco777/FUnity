@@ -11,6 +11,9 @@ namespace FUnity.Stage
     public static class StageBootstrapper
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        /// <summary>
+        /// Guarantees that the stage GameObject exists after a scene has finished loading.
+        /// </summary>
         private static void EnsureStage()
         {
             if (Object.FindObjectOfType<StageRuntime>() != null)

@@ -43,11 +43,17 @@ namespace FUnity.Stage
 
         internal bool HasSprite => m_sprite != null;
 
+        /// <summary>
+        /// Initializes the cached position so the sprite starts at its configured coordinates.
+        /// </summary>
         private void Awake()
         {
             m_position = m_initialPosition;
         }
 
+        /// <summary>
+        /// Registers the actor with the active stage runtime when the component becomes enabled.
+        /// </summary>
         private void OnEnable()
         {
             m_runtime = StageRuntime.Instance;
@@ -57,6 +63,9 @@ namespace FUnity.Stage
             }
         }
 
+        /// <summary>
+        /// Unregisters the actor from the runtime to avoid lingering references when disabled.
+        /// </summary>
         private void OnDisable()
         {
             if (m_runtime != null)
@@ -136,6 +145,9 @@ namespace FUnity.Stage
             }
         }
 
+        /// <summary>
+        /// Ensures the actor has a visual element and attaches it to the provided stage root.
+        /// </summary>
         internal void AttachToStage(VisualElement stageRoot)
         {
             if (stageRoot == null)
@@ -153,6 +165,9 @@ namespace FUnity.Stage
             MoveTo(m_position);
         }
 
+        /// <summary>
+        /// Removes the visual element from the hierarchy without destroying the component.
+        /// </summary>
         internal void DetachFromStage()
         {
             if (m_visualElement != null)
@@ -161,6 +176,9 @@ namespace FUnity.Stage
             }
         }
 
+        /// <summary>
+        /// Creates the UI Toolkit visual representation for the sprite actor.
+        /// </summary>
         private VisualElement CreateVisualElement()
         {
             var element = new VisualElement { name = DisplayName };

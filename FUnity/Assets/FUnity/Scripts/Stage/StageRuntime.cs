@@ -28,6 +28,9 @@ namespace FUnity.Stage
         /// </summary>
         public Vector2 StageSize => m_stageRoot?.contentRect.size ?? new Vector2(960f, 540f);
 
+        /// <summary>
+        /// Initializes the runtime instance, loads the layout assets and caches key references.
+        /// </summary>
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -43,12 +46,18 @@ namespace FUnity.Stage
             CacheLayoutReferences();
         }
 
+        /// <summary>
+        /// Hooks up existing actors and refreshes the on-screen sprite list when the component activates.
+        /// </summary>
         private void OnEnable()
         {
             RegisterExistingActors();
             RefreshSpriteList();
         }
 
+        /// <summary>
+        /// Cleans up registered actors and releases the singleton instance when the component is disabled.
+        /// </summary>
         private void OnDisable()
         {
             foreach (var actor in m_actors)
@@ -85,6 +94,9 @@ namespace FUnity.Stage
             return actor;
         }
 
+        /// <summary>
+        /// Adds an actor to the runtime so it can be rendered and tracked by the stage.
+        /// </summary>
         internal void RegisterActor(StageSpriteActor actor)
         {
             if (m_actors.Contains(actor))
@@ -103,6 +115,9 @@ namespace FUnity.Stage
             RefreshSpriteList();
         }
 
+        /// <summary>
+        /// Removes an actor from the runtime, ensuring it is detached from the visual tree.
+        /// </summary>
         internal void UnregisterActor(StageSpriteActor actor)
         {
             if (m_actors.Remove(actor))
@@ -112,6 +127,9 @@ namespace FUnity.Stage
             }
         }
 
+        /// <summary>
+        /// Loads the UXML/USS resources that define the stage layout and styling.
+        /// </summary>
         private void LoadLayout()
         {
             var root = m_document.rootVisualElement;
@@ -136,6 +154,9 @@ namespace FUnity.Stage
             root.styleSheets.Add(styleSheet);
         }
 
+        /// <summary>
+        /// Queries and stores the key visual elements required for stage interaction.
+        /// </summary>
         private void CacheLayoutReferences()
         {
             var root = m_document.rootVisualElement;
@@ -152,6 +173,9 @@ namespace FUnity.Stage
             }
         }
 
+        /// <summary>
+        /// Finds StageSpriteActor components already present in the hierarchy and registers them.
+        /// </summary>
         private void RegisterExistingActors()
         {
             var existingActors = GetComponentsInChildren<StageSpriteActor>(true);
@@ -161,6 +185,9 @@ namespace FUnity.Stage
             }
         }
 
+        /// <summary>
+        /// Rebuilds the UI list that mirrors the currently registered sprite actors.
+        /// </summary>
         private void RefreshSpriteList()
         {
             if (m_spriteList == null)
