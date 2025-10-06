@@ -4,17 +4,26 @@ using System.IO;
 using FUnity.Stage;
 
 namespace FUnity.Editor {
+    /// <summary>
+    /// Provides a simple painting canvas that exports the result as a sprite asset and stage definition.
+    /// </summary>
     public class PaintToSprite : EditorWindow {
         private Texture2D m_canvasTexture;
         private int m_canvasSize = 256;
 
         [MenuItem("FUnity/Paint & Save as Sprite")]
+        /// <summary>
+        /// Opens the paint window from the Unity menu.
+        /// </summary>
         public static void ShowWindow() {
             var window = GetWindow<PaintToSprite>();
             window.titleContent = new GUIContent("Paint to Sprite");
             window.Show();
         }
 
+        /// <summary>
+        /// Creates the painting texture when the window is enabled.
+        /// </summary>
         private void OnEnable() {
             if (m_canvasTexture == null) {
                 m_canvasTexture = new Texture2D(m_canvasSize, m_canvasSize, TextureFormat.RGBA32, false);
@@ -22,6 +31,9 @@ namespace FUnity.Editor {
             }
         }
 
+        /// <summary>
+        /// Draws the painting UI and handles button interactions.
+        /// </summary>
         private void OnGUI() {
             GUILayout.Label("🎨 Draw your Sprite", EditorStyles.boldLabel);
 
@@ -36,6 +48,9 @@ namespace FUnity.Editor {
             if (GUILayout.Button("Save as Sprite")) SaveAsSprite();
         }
 
+        /// <summary>
+        /// Processes mouse dragging to draw pixels onto the canvas texture.
+        /// </summary>
         private void HandleMouse(Rect area) {
             Event e = Event.current;
             if (e.type == EventType.MouseDrag && area.Contains(e.mousePosition)) {
@@ -47,6 +62,9 @@ namespace FUnity.Editor {
             }
         }
 
+        /// <summary>
+        /// Resets every pixel in the canvas texture to transparent.
+        /// </summary>
         private void ClearCanvas() {
             Color[] pixels = new Color[m_canvasSize * m_canvasSize];
             for (int i = 0; i < pixels.Length; i++) pixels[i] = Color.clear;
@@ -54,6 +72,9 @@ namespace FUnity.Editor {
             m_canvasTexture.Apply();
         }
 
+        /// <summary>
+        /// Saves the current canvas as a PNG and configures it for use as a sprite.
+        /// </summary>
         private void SaveAsSprite() {
             string path = EditorUtility.SaveFilePanel("Save Sprite", "Assets", "MyDrawing", "png");
             if (string.IsNullOrEmpty(path)) return;
@@ -99,6 +120,9 @@ namespace FUnity.Editor {
             }
         }
 
+        /// <summary>
+        /// Generates a StageSpriteDefinition asset that references the newly created sprite.
+        /// </summary>
         private static void CreateStageSpriteDefinition(Sprite sprite, string spriteAssetPath) {
             string directory = Path.GetDirectoryName(spriteAssetPath);
             if (string.IsNullOrEmpty(directory)) return;

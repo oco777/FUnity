@@ -2,6 +2,9 @@
 using UnityEditor;
 
 namespace FUnity.Editor {
+    /// <summary>
+    /// Basic painting window used for quickly sketching textures inside the editor.
+    /// </summary>
     public class PaintWindow : EditorWindow {
         private Texture2D m_canvasTexture;
         private Color m_drawColor = Color.black;
@@ -9,12 +12,18 @@ namespace FUnity.Editor {
         private int m_canvasSize = 256;
 
         [MenuItem("FUnity/Paint Window")]
+        /// <summary>
+        /// Opens the paint tool window from the Unity editor menu.
+        /// </summary>
         public static void ShowWindow() {
             var window = GetWindow<PaintWindow>();
             window.titleContent = new GUIContent("FUnity Paint");
             window.Show();
         }
 
+        /// <summary>
+        /// Allocates the texture used as the drawing canvas when the window is enabled.
+        /// </summary>
         private void OnEnable() {
             if (m_canvasTexture == null) {
                 m_canvasTexture = new Texture2D(m_canvasSize, m_canvasSize, TextureFormat.RGBA32, false);
@@ -22,6 +31,9 @@ namespace FUnity.Editor {
             }
         }
 
+        /// <summary>
+        /// Renders the painting interface and handles user interactions.
+        /// </summary>
         private void OnGUI() {
             GUILayout.Label("🎨 FUnity Paint Tool", EditorStyles.boldLabel);
 
@@ -40,6 +52,9 @@ namespace FUnity.Editor {
             }
         }
 
+        /// <summary>
+        /// Converts mouse drags into pixel updates on the canvas.
+        /// </summary>
         private void HandleMouseInput(Rect drawArea) {
             Event e = Event.current;
             if (e.type == EventType.MouseDrag && drawArea.Contains(e.mousePosition)) {
@@ -55,12 +70,18 @@ namespace FUnity.Editor {
             }
         }
 
+        /// <summary>
+        /// Colors a single pixel on the canvas texture using the active draw color.
+        /// </summary>
         private void DrawPixel(Vector2Int pos) {
             if (pos.x < 0 || pos.x >= m_canvasSize || pos.y < 0 || pos.y >= m_canvasSize) return;
             m_canvasTexture.SetPixel(pos.x, pos.y, m_drawColor);
             m_canvasTexture.Apply();
         }
 
+        /// <summary>
+        /// Fills the canvas with white pixels to start a new drawing.
+        /// </summary>
         private void ClearCanvas() {
             Color[] pixels = new Color[m_canvasSize * m_canvasSize];
             for (int i = 0; i < pixels.Length; i++) pixels[i] = Color.white;
