@@ -1,0 +1,22 @@
+{
+  "name": "com.papacoder.funity",
+  "displayName": "FUnity",
+  "version": "1.0.0",
+  "unity": "6000.0",
+  "unityRelease": "58f2",
+  "description": "Scratch-inspired visual programming environment for Unity projects.",
+  "documentationUrl": "https://github.com/papacoder/funity",
+  "changelogUrl": "https://github.com/papacoder/funity/releases",
+  "licensesUrl": "https://github.com/papacoder/funity/blob/main/LICENSE.md",
+  "keywords": ["education", "visual-scripting", "scratch", "kids"],
+  "dependencies": {
+    "com.unity.ui": "1.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "Basic Scratch-Style Workspace",
+      "description": "Minimal sample scene showcasing the FUnity workspace.",
+      "path": "Samples~/BasicScene"
+    }
+  ]
+}

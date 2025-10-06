@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:VisualElement name="funity-workspace" class="funity-workspace">
+    <ui:VisualElement name="workspace-root" class="funity-layout">
+      <ui:VisualElement name="palette" class="funity-palette">
+        <ui:ScrollView name="palette-list" show-horizontal-scroller="false" vertical-page-size="400" />
+      </ui:VisualElement>
+      <ui:VisualElement name="stage" class="funity-stage">
+        <ui:Label text="Stage Preview" class="funity-stage-label" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>
