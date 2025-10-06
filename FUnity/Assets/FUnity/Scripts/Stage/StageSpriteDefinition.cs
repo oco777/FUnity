@@ -9,30 +9,30 @@ namespace FUnity.Stage
     public sealed class StageSpriteDefinition : ScriptableObject
     {
         [SerializeField]
-        private string displayName = "Sprite";
+        private string m_displayName = "Sprite";
 
         [SerializeField]
-        private Sprite? sprite;
+        private Sprite? m_sprite;
 
         [SerializeField]
-        private Vector2 size = new Vector2(128f, 128f);
+        private Vector2 m_size = new Vector2(128f, 128f);
 
         [SerializeField]
-        private Vector2 initialPosition = new Vector2(120f, 120f);
+        private Vector2 m_initialPosition = new Vector2(120f, 120f);
 
-        public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
-        public Sprite? Sprite => sprite;
-        public Vector2 Size => size;
-        public Vector2 InitialPosition => initialPosition;
+        public string DisplayName => string.IsNullOrWhiteSpace(m_displayName) ? name : m_displayName;
+        public Sprite? Sprite => m_sprite;
+        public Vector2 Size => m_size;
+        public Vector2 InitialPosition => m_initialPosition;
 
         /// <summary>
         /// Utility method called by editor tools when generating new definitions.
         /// </summary>
         public void Initialize(Sprite newSprite, string friendlyName)
         {
-            sprite = newSprite;
-            displayName = string.IsNullOrWhiteSpace(friendlyName) ? newSprite.name : friendlyName;
-            size = new Vector2(newSprite.rect.width, newSprite.rect.height);
+            m_sprite = newSprite;
+            m_displayName = string.IsNullOrWhiteSpace(friendlyName) ? newSprite.name : friendlyName;
+            m_size = new Vector2(newSprite.rect.width, newSprite.rect.height);
         }
     }
 }

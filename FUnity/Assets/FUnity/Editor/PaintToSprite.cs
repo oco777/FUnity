@@ -5,8 +5,8 @@ using FUnity.Stage;
 
 namespace FUnity.Editor {
     public class PaintToSprite : EditorWindow {
-        private Texture2D _canvasTexture;
-        private int _canvasSize = 256;
+        private Texture2D m_canvasTexture;
+        private int m_canvasSize = 256;
 
         [MenuItem("FUnity/Paint & Save as Sprite")]
         public static void ShowWindow() {
@@ -16,8 +16,8 @@ namespace FUnity.Editor {
         }
 
         private void OnEnable() {
-            if (_canvasTexture == null) {
-                _canvasTexture = new Texture2D(_canvasSize, _canvasSize, TextureFormat.RGBA32, false);
+            if (m_canvasTexture == null) {
+                m_canvasTexture = new Texture2D(m_canvasSize, m_canvasSize, TextureFormat.RGBA32, false);
                 ClearCanvas();
             }
         }
@@ -26,8 +26,8 @@ namespace FUnity.Editor {
             GUILayout.Label("🎨 Draw your Sprite", EditorStyles.boldLabel);
 
             // 描画領域
-            Rect drawArea = GUILayoutUtility.GetRect(_canvasSize, _canvasSize, GUILayout.ExpandWidth(false));
-            GUI.DrawTexture(drawArea, _canvasTexture);
+            Rect drawArea = GUILayoutUtility.GetRect(m_canvasSize, m_canvasSize, GUILayout.ExpandWidth(false));
+            GUI.DrawTexture(drawArea, m_canvasTexture);
 
             HandleMouse(drawArea);
 
@@ -40,25 +40,25 @@ namespace FUnity.Editor {
             Event e = Event.current;
             if (e.type == EventType.MouseDrag && area.Contains(e.mousePosition)) {
                 Vector2 local = e.mousePosition - new Vector2(area.x, area.y);
-                Vector2Int pixel = new Vector2Int((int)local.x, _canvasSize - (int)local.y);
-                _canvasTexture.SetPixel(pixel.x, pixel.y, Color.black);
-                _canvasTexture.Apply();
+                Vector2Int pixel = new Vector2Int((int)local.x, m_canvasSize - (int)local.y);
+                m_canvasTexture.SetPixel(pixel.x, pixel.y, Color.black);
+                m_canvasTexture.Apply();
                 e.Use();
             }
         }
 
         private void ClearCanvas() {
-            Color[] pixels = new Color[_canvasSize * _canvasSize];
+            Color[] pixels = new Color[m_canvasSize * m_canvasSize];
             for (int i = 0; i < pixels.Length; i++) pixels[i] = Color.clear;
-            _canvasTexture.SetPixels(pixels);
-            _canvasTexture.Apply();
+            m_canvasTexture.SetPixels(pixels);
+            m_canvasTexture.Apply();
         }
 
         private void SaveAsSprite() {
             string path = EditorUtility.SaveFilePanel("Save Sprite", "Assets", "MyDrawing", "png");
             if (string.IsNullOrEmpty(path)) return;
 
-            byte[] bytes = _canvasTexture.EncodeToPNG();
+            byte[] bytes = m_canvasTexture.EncodeToPNG();
             File.WriteAllBytes(path, bytes);
 
             AssetDatabase.Refresh();

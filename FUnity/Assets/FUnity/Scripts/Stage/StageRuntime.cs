@@ -12,21 +12,21 @@ namespace FUnity.Stage
     [RequireComponent(typeof(UIDocument))]
     public sealed class StageRuntime : MonoBehaviour
     {
-        private readonly List<StageSpriteActor> _actors = new();
+        private readonly List<StageSpriteActor> m_actors = new();
 
         private const string LayoutResourcePath = "Stage/StageLayout";
         private const string StyleResourcePath = "Stage/StageStyles";
 
-        private UIDocument _document = default!;
-        private VisualElement? _stageRoot;
-        private ScrollView? _spriteList;
+        private UIDocument m_document = default!;
+        private VisualElement? m_stageRoot;
+        private ScrollView? m_spriteList;
 
         public static StageRuntime? Instance { get; private set; }
 
         /// <summary>
         /// Width/height of the current stage content rectangle.
         /// </summary>
-        public Vector2 StageSize => _stageRoot?.contentRect.size ?? new Vector2(960f, 540f);
+        public Vector2 StageSize => m_stageRoot?.contentRect.size ?? new Vector2(960f, 540f);
 
         private void Awake()
         {
@@ -38,7 +38,7 @@ namespace FUnity.Stage
             }
 
             Instance = this;
-            _document = GetComponent<UIDocument>();
+            m_document = GetComponent<UIDocument>();
             LoadLayout();
             CacheLayoutReferences();
         }
@@ -51,12 +51,12 @@ namespace FUnity.Stage
 
         private void OnDisable()
         {
-            foreach (var actor in _actors)
+            foreach (var actor in m_actors)
             {
                 actor.DetachFromStage();
             }
 
-            _actors.Clear();
+            m_actors.Clear();
             if (Instance == this)
             {
                 Instance = null;
@@ -87,25 +87,25 @@ namespace FUnity.Stage
 
         internal void RegisterActor(StageSpriteActor actor)
         {
-            if (_actors.Contains(actor))
+            if (m_actors.Contains(actor))
             {
                 return;
             }
 
-            _actors.Add(actor);
-            if (_stageRoot == null)
+            m_actors.Add(actor);
+            if (m_stageRoot == null)
             {
                 Debug.LogError("Stage root is missing. Ensure StageLayout.uxml is loaded correctly.");
                 return;
             }
 
-            actor.AttachToStage(_stageRoot);
+            actor.AttachToStage(m_stageRoot);
             RefreshSpriteList();
         }
 
         internal void UnregisterActor(StageSpriteActor actor)
         {
-            if (_actors.Remove(actor))
+            if (m_actors.Remove(actor))
             {
                 actor.DetachFromStage();
                 RefreshSpriteList();
@@ -114,7 +114,7 @@ namespace FUnity.Stage
 
         private void LoadLayout()
         {
-            var root = _document.rootVisualElement;
+            var root = m_document.rootVisualElement;
             root.Clear();
 
             var layout = Resources.Load<VisualTreeAsset>(LayoutResourcePath);
@@ -138,15 +138,15 @@ namespace FUnity.Stage
 
         private void CacheLayoutReferences()
         {
-            var root = _document.rootVisualElement;
-            _stageRoot = root.Q<VisualElement>("funity-stage");
-            _spriteList = root.Q<ScrollView>("funity-sprite-list");
-            if (_stageRoot == null)
+            var root = m_document.rootVisualElement;
+            m_stageRoot = root.Q<VisualElement>("funity-stage");
+            m_spriteList = root.Q<ScrollView>("funity-sprite-list");
+            if (m_stageRoot == null)
             {
                 Debug.LogError("Stage root element not found in loaded UXML. Stage functionality will be limited.");
             }
 
-            if (_spriteList == null)
+            if (m_spriteList == null)
             {
                 Debug.LogError("Sprite list element not found in loaded UXML. Sprite overview will be disabled.");
             }
@@ -163,13 +163,13 @@ namespace FUnity.Stage
 
         private void RefreshSpriteList()
         {
-            if (_spriteList == null)
+            if (m_spriteList == null)
             {
                 return;
             }
 
-            _spriteList.contentContainer.Clear();
-            foreach (var actor in _actors)
+            m_spriteList.contentContainer.Clear();
+            foreach (var actor in m_actors)
             {
                 var entry = new VisualElement();
                 entry.AddToClassList("funity-sprite-entry");
@@ -188,7 +188,7 @@ namespace FUnity.Stage
                 label.AddToClassList("funity-sprite-label");
                 entry.Add(label);
 
-                _spriteList.contentContainer.Add(entry);
+                m_spriteList.contentContainer.Add(entry);
             }
         }
     }
