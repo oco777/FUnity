@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement class="funity-root">
+        <ui:VisualElement name="funity-left" class="funity-column funity-left-column">
+            <ui:Label text="ステージ" class="funity-title" />
+            <ui:VisualElement name="funity-stage" class="funity-stage" />
+            <ui:Label text="スプライト" class="funity-subtitle" />
+            <ui:ScrollView name="funity-sprite-list" class="funity-sprite-list" />
+        </ui:VisualElement>
+        <ui:VisualElement name="funity-right" class="funity-column funity-right-column">
+            <ui:Label text="Visual Scripting" class="funity-title" />
+            <ui:Label name="funity-instructions"
+                      class="funity-instructions"
+                      text="Visual Scripting Graph ウィンドウを開いて、Flow Graph でスプライトを操作してください。&#10;StageRuntime.SpawnSprite や StageSpriteActor.MoveBy などのメソッドはそのままブロックとして利用できます。" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
