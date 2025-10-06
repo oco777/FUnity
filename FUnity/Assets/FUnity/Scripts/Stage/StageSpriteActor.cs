@@ -4,8 +4,8 @@ using UnityEngine.UIElements;
 namespace FUnity.Stage
 {
     /// <summary>
-    /// Represents a sprite that is rendered inside the UI Toolkit stage.
-    /// Public API is intentionally simple so it can be consumed directly from Visual Scripting graphs.
+    /// UI Toolkit のステージ内で描画されるスプライトを表します。
+    /// 公開 API は Visual Scripting のグラフから直接扱えるよう意図的にシンプルにしています。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StageSpriteActor : MonoBehaviour
@@ -27,12 +27,12 @@ namespace FUnity.Stage
         private StageRuntime? m_runtime;
 
         /// <summary>
-        /// Friendly name shown in the UI and Visual Scripting inspector.
+        /// UI と Visual Scripting インスペクターに表示されるわかりやすい名称です。
         /// </summary>
         public string DisplayName => string.IsNullOrWhiteSpace(m_displayName) ? name : m_displayName;
 
         /// <summary>
-        /// Current pixel position inside the stage (origin = top-left).
+        /// ステージ内での現在のピクセル座標（原点は左上）を返します。
         /// </summary>
         public Vector2 Position => m_position;
 
@@ -44,7 +44,7 @@ namespace FUnity.Stage
         internal bool HasSprite => m_sprite != null;
 
         /// <summary>
-        /// Initializes the cached position so the sprite starts at its configured coordinates.
+        /// キャッシュされた位置を初期化し、設定済み座標からスプライトを開始させます。
         /// </summary>
         private void Awake()
         {
@@ -52,7 +52,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Registers the actor with the active stage runtime when the component becomes enabled.
+        /// コンポーネントが有効化されたときにアクティブなステージランタイムへ登録します。
         /// </summary>
         private void OnEnable()
         {
@@ -64,7 +64,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Unregisters the actor from the runtime to avoid lingering references when disabled.
+        /// コンポーネントが無効化された際にランタイムから登録を解除し、参照の残存を防ぎます。
         /// </summary>
         private void OnDisable()
         {
@@ -77,7 +77,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Apply values from a definition ScriptableObject. Useful when spawned at runtime.
+        /// 定義用 ScriptableObject の値を適用します。ランタイム生成時に便利です。
         /// </summary>
         public void ApplyDefinition(StageSpriteDefinition definition)
         {
@@ -93,7 +93,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Set a new sprite texture at runtime.
+        /// ランタイム中に新しいスプライトテクスチャを設定します。
         /// </summary>
         public void SetSprite(Sprite? newSprite)
         {
@@ -115,7 +115,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Directly move to a specific pixel coordinate.
+        /// 指定したピクセル座標へ直接移動します。
         /// </summary>
         public void MoveTo(Vector2 position)
         {
@@ -128,12 +128,12 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Move by the given delta (in pixels).
+        /// 指定されたピクセル量だけ移動します。
         /// </summary>
         public void MoveBy(Vector2 delta) => MoveTo(m_position + delta);
 
         /// <summary>
-        /// Resize the sprite visual.
+        /// スプライトの見た目をリサイズします。
         /// </summary>
         public void SetSize(Vector2 newSize)
         {
@@ -146,7 +146,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Ensures the actor has a visual element and attaches it to the provided stage root.
+        /// アクターがビジュアル要素を保持していることを確認し、指定されたステージルートにアタッチします。
         /// </summary>
         internal void AttachToStage(VisualElement stageRoot)
         {
@@ -166,7 +166,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Removes the visual element from the hierarchy without destroying the component.
+        /// コンポーネントを破棄せずにビジュアル要素を階層から取り外します。
         /// </summary>
         internal void DetachFromStage()
         {
@@ -177,7 +177,7 @@ namespace FUnity.Stage
         }
 
         /// <summary>
-        /// Creates the UI Toolkit visual representation for the sprite actor.
+        /// スプライトアクター用の UI Toolkit ビジュアルを生成します。
         /// </summary>
         private VisualElement CreateVisualElement()
         {

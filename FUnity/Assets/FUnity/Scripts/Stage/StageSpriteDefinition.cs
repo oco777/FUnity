@@ -3,7 +3,7 @@ using UnityEngine;
 namespace FUnity.Stage
 {
     /// <summary>
-    /// ScriptableObject used to describe a sprite entry that can be spawned on the stage.
+    /// ステージ上に出現させるスプライト情報を表す ScriptableObject です。
     /// </summary>
     [CreateAssetMenu(menuName = "FUnity/Stage Sprite", fileName = "StageSpriteDefinition")]
     public sealed class StageSpriteDefinition : ScriptableObject
@@ -26,7 +26,7 @@ namespace FUnity.Stage
         public Vector2 InitialPosition => m_initialPosition;
 
         /// <summary>
-        /// Utility method called by editor tools when generating new definitions.
+        /// エディターツールが新しい定義を生成するときに呼び出すユーティリティメソッドです。
         /// </summary>
         public void Initialize(Sprite newSprite, string friendlyName)
         {
