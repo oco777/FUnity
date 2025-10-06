@@ -110,8 +110,37 @@ MIT License
 
 ## 🔗 関連リンク
 
-- 🎮 unityroom（作品公開予定・準備中）  
-  https://unityroom.com/games/funity  
+- 🎮 unityroom（作品公開予定・準備中）
+  https://unityroom.com/games/funity
 
-- 💻 GitHubリポジトリ  
+- 💻 GitHubリポジトリ
   https://github.com/oco777/FUnity
+
+---
+
+## 🚀 インストール方法（Installation）
+
+### 方法1：Unity Package Manager 経由で導入
+1. Unityエディタで新しいプロジェクト（Unity 6000.0.58f2 など）を作成・オープンします。
+2. メニューから **Window > Package Manager** を開きます。
+3. 左上の **＋** ボタンをクリックし、**Add package from git URL...** を選択します。
+4. 表示されたダイアログに次のURLを入力し、**Add** をクリックします。
+
+```text
+https://github.com/oco777/FUnity.git
+```
+
+5. Package Manager のリストに **FUnity** が表示されたら導入完了です。
+
+### 方法2：ローカルフォルダから導入
+1. GitHubからリポジトリをダウンロードするか、任意の場所にクローンします。
+   - 例：`git clone https://github.com/oco777/FUnity.git`
+2. Unityエディタの **Package Manager** で **＋** ボタンをクリックし、**Add package from disk...** を選択します。
+3. ダウンロード／クローンしたフォルダ内の `package.json`（`FUnity/package.json`）を指定します。
+4. Package Manager に **FUnity** が追加されれば導入完了です。
+
+### 動作確認とサンプルのインポート
+1. **Package Manager > FUnity > Samples** を開き、利用可能なサンプルがあれば **Import** をクリックします。
+2. プロジェクトウィンドウに追加されたサンプルシーンを開いて再生し、FUnityの機能を確認します。
+
+> 💡 Unity 6000系では Package Manager UI が刷新されています。検索バーから「My Assets」「Unity Registry」などを切り替えながら、**In Project** タブに FUnity が追加されていることを確認してください。
