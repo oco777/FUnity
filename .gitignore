@@ -1,0 +1,150 @@
+# =======================================
+# Unity .gitignore (2025 Updated)
+# =======================================
+
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDE / Editor settings ---
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.vs/
+
+# --- Unity generated folders ---
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Uu]serSettings/
+
+# --- Unity Cache and Auto Generated ---
+sysinfo.txt
+*.stackdump
+*.crash
+*.dmp
+*.bak
+*.old
+*.orig
+*.meta~
+*.asset.meta
+*.import
+*.importlog
+*.symbolmap
+
+# --- Asset Store tools ---
+AssetStoreTools*
+
+# --- Packages ---
+# manifest.json は保持、packages-lock.json は自動生成されるため無視
+Packages/packages-lock.json
+
+# --- Gradle (for Android builds) ---
+.gradle/
+*.gradle
+*.gradle.*
+gradlew
+gradlew.bat
+gradle-wrapper.jar
+gradle-wrapper.properties
+
+# --- iOS / Xcode ---
+xcuserdata/
+*.xcuserstate
+*.xcworkspace
+*.xcconfig
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+
+# --- Android ---
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# --- Unity Cloud Build ---
+/[Uu]serSettings/EditorUserSettings.asset
+
+# --- WebGL Builds ---
+Build/
+Builds/
+StreamingAssets/WebGLTemplates/*
+
+# --- Addressables ---
+/ServerData/
+AddressablesLink.xml
+
+# --- Rider / JetBrains ---
+.idea/
+*.sln.iml
+*.DotSettings.user
+
+# --- VS Code workspace ---
+*.code-workspace
+
+# --- Logs and Crash Dumps ---
+*.log
+*.log.*
+*.dmp
+crash-reports/
+stacktraces/
+
+# --- Collab Cache (Legacy) ---
+.collab/
+.collabignore
+
+# --- Git LFS optional assets ---
+# Uncomment if using Git LFS for large files
+# *.psd
+# *.fbx
+# *.png
+# *.jpg
+# *.wav
+# *.mp4
+# *.zip
+# *.unitypackage
+
+# --- Unity Cache Server / ShaderCache ---
+ShaderCache/
+ScriptAssemblies/
+*.shadergraph.meta
+*.shadergraphimporter
+
+# --- Rider plugin temp ---
+.idea/.idea.Unity/
+.idea/.idea.Unity/.idea
+
+# --- Custom project rules (optional) ---
+# Ignore local test scenes or experimental folders
+Assets/Experimental/
+Assets/TempScenes/
+
+# --- ProjectVersion file (optional) ---
+# If you want to allow other devs to use different Unity versions
+# uncomment the next line
+# ProjectSettings/ProjectVersion.txt
+
+# --- FUnity specific ---
+# 開発中の一時データやキャッシュ
+/Samples~/Temp/
+/Art/Exported/
+/Runtime/Cache/
