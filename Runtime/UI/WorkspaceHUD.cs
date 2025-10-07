@@ -10,6 +10,7 @@ namespace FUnity.UI
     public sealed class WorkspaceHUD : MonoBehaviour
     {
         private UIDocument document;
+        private Button runButton;
 
         private void Awake()
         {
@@ -25,11 +26,25 @@ namespace FUnity.UI
                 return;
             }
 
-            var runButton = root.Q<Button>("run-button");
+            runButton = root.Q<Button>("run-button");
             if (runButton != null)
             {
-                runButton.clicked += () => Debug.Log("[FUnity] Run workspace requested.");
+                runButton.clicked += OnRunClicked;
             }
+        }
+
+        private void OnDisable()
+        {
+            if (runButton != null)
+            {
+                runButton.clicked -= OnRunClicked;
+                runButton = null;
+            }
+        }
+
+        private static void OnRunClicked()
+        {
+            Debug.Log("[FUnity] Run workspace requested.");
         }
     }
 }
