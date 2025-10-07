@@ -1,5 +1,5 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:fui="FUnity.UI">
-    <ui:Style src="../USS/block.uss" />
-    <fui:BlockElement text="Move 10 Steps" />
-    <fui:BlockElement text="Turn 15 Degrees" />
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 1;">
+        <ui:Label text="TEST" name="Label" />
+    </ui:VisualElement>
 </ui:UXML>

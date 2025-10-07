@@ -6,6 +6,7 @@ namespace FUnity.UI
     /// <summary>
     /// Scratch-like rounded block element that can be reused from UXML.
     /// </summary>
+    [UxmlElement]
     public class BlockElement : VisualElement
     {
         public new class UxmlFactory : UxmlFactory<BlockElement, UxmlTraits>
