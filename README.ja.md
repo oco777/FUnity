@@ -48,19 +48,18 @@ Unityの **UI Toolkit** や **Visual Scripting** を活用することを目指�
 
 ```
 FUnity/
- └─ Assets/
-     └─ FUnity/
-         ├─ FUnity.asmdef
-         └─ Editor/ ← Editor拡張用フォルダ
-             ├─ FUnity.Editor.asmdef
-             ├─ PaintToSprite.cs
-             └─ PaintWindow.cs
+ ├─ package.json             ← UPM パッケージの定義ファイル
+ ├─ Runtime/                 ← コアランタイム（UI Toolkit ワークスペースやブロック定義）
+ ├─ Samples~/BasicScene/     ← Package Manager から取り込めるサンプルシーン
+ ├─ USS/, UXML/, Art/        ← UI Toolkit 用のスタイルやレイアウト、アセット一式
+ └─ FUnity/                  ← 開発用の Unity プロジェクト（このリポジトリを直接開く場合）
 ```
 
-- `FUnity.asmdef`：ランタイム用のメインモジュール（将来の拡張を想定）
-- `FUnity.Editor.asmdef`：Editor拡張（ペイントツールなど）
-- `PaintToSprite.cs`：ペイントデータをSpriteに変換
-- `PaintWindow.cs`：ペイントウィンドウの基本機能
+- `Runtime/Core`：ワークスペースの ScriptableObject と管理クラス。
+- `Runtime/UI`：UI Toolkit ベースのステージ／パレット UI 実装。
+- `Runtime/Blocks`：Scratch ライクなブロック定義のサンプルコレクション。
+- `Samples~/BasicScene`：Package Manager から **Import** できる最小構成のサンプル。
+- `FUnity/Packages/manifest.json`：開発用プロジェクトでは `"com.papacoder.funity": "file:.."` でローカルパッケージを参照しています。
 
 ---
 
@@ -116,3 +115,28 @@ MIT License
 
 - 💻 GitHubリポジトリ
   https://github.com/oco777/FUnity
+
+---
+
+## 🚀 インストール方法（Installation）
+
+### 方法1：Unity Package Manager 経由で導入
+1. Unityエディタで新しいプロジェクト（Unity 6000.0.58f2 など）を作成・オープンします。
+2. メニューから **Window > Package Manager** を開きます。
+3. 左上の **＋** ボタンをクリックし、**Add package from git URL...** を選択します。
+4. 表示されたダイアログに次のURLを入力し、**Add** をクリックします。
+
+```text
+https://github.com/oco777/FUnity.git
+```
+
+5. Package Manager のリストに **FUnity** が表示されたら導入完了です。
+
+> ✅ `package.json` をリポジトリ直下に移動したため、`#?path=...` を付与せずに Git URL だけでインストールできます。
+
+### 方法2：ローカルフォルダから導入
+1. GitHubからリポジトリをダウンロードするか、任意の場所にクローンします。
+   - 例：`git clone https://github.com/oco777/FUnity.git`
+2. Unityエディタの **Package Manager** で **＋** ボタンをクリックし、**Add package from disk...** を選択します。
+3. ダウンロード／クローンしたフォルダ内の `package.json`（`FUnity/package.json`）を指定します。
+4. Package Manager に **FUnity** が追加されれば導入完了です。

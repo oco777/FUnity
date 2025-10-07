@@ -5,9 +5,9 @@
   "unity": "6000.0",
   "unityRelease": "58f2",
   "description": "Scratch-inspired visual programming environment for Unity projects.",
-  "documentationUrl": "https://github.com/papacoder/funity",
-  "changelogUrl": "https://github.com/papacoder/funity/releases",
-  "licensesUrl": "https://github.com/papacoder/funity/blob/main/LICENSE.md",
+  "documentationUrl": "https://github.com/oco777/FUnity",
+  "changelogUrl": "https://github.com/oco777/FUnity/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/oco777/FUnity/blob/main/LICENSE",
   "keywords": ["education", "visual-scripting", "scratch", "kids"],
   "dependencies": {
     "com.unity.ui": "1.0.0"
