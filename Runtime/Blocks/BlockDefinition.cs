@@ -3,19 +3,26 @@ using UnityEngine;
 namespace FUnity.Blocks
 {
     /// <summary>
-    /// Describes a block type available in the FUnity workspace.
+    /// FUnity ワークスペースで利用できるブロックの種類を記述します。
     /// </summary>
     [CreateAssetMenu(menuName = "FUnity/Block Definition", fileName = "BlockDefinition")]
     public sealed class BlockDefinition : ScriptableObject
     {
         [SerializeField]
-        private string displayName = "New Block";
+        private string m_displayName = "New Block";
 
         [TextArea]
         [SerializeField]
-        private string description = "Describe what this block does.";
+        private string m_description = "Describe what this block does.";
 
-        public string DisplayName => displayName;
-        public string Description => description;
+        /// <summary>
+        /// ブロックの表示名を取得します。
+        /// </summary>
+        public string DisplayName => m_displayName;
+
+        /// <summary>
+        /// ブロックの説明文を取得します。
+        /// </summary>
+        public string Description => m_description;
     }
 }
