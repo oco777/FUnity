@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:fui="FUnity.UI">
+    <ui:Style src="../USS/block.uss" />
+    <fui:BlockElement text="Move 10 Steps" />
+    <fui:BlockElement text="Turn 15 Degrees" />
+</ui:UXML>

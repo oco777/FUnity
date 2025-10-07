@@ -1,0 +1,19 @@
+.block {
+    width: 160px;
+    height: 40px;
+    background-color: #FFCC00;
+    border-radius: 8px;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    font-size: 14px;
+    font-weight: bold;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.block__label {
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
