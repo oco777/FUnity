@@ -145,7 +145,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &200002
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -154,7 +153,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 200000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e08f811a5f6f4b49ae266b782ec8631, type: 3}
+  m_Script: {fileID: 11500000, guid: 5125d6d03fa1641a68622e877847ab7d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   m_PanelSettings: {fileID: 11400000, guid: eb7c6cb1b6b8480c8c91cde56543f148, type: 2}
@@ -162,6 +161,6 @@ MonoBehaviour:
   m_ParentSettings: 0
   m_SortingOrder: 0
   m_TargetTexture: {fileID: 0}
-  m_VisualTreeAsset: {fileID: 11400000, guid: 6f8f2d5c43c54c329fbc490c681e4d56, type: 3}
+  m_VisualTreeAsset: {fileID: 1344421583687837232, guid: 6f8f2d5c43c54c329fbc490c681e4d56, type: 3}
   m_StyleSheets:
   - {fileID: 7433441135550727556, guid: 9a7e6a1d0b154dbcb5f222dfbdb19cb6, type: 3}
