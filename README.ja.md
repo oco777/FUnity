@@ -140,3 +140,39 @@ https://github.com/oco777/FUnity.git
 2. Unityエディタの **Package Manager** で **＋** ボタンをクリックし、**Add package from disk...** を選択します。
 3. ダウンロード／クローンしたフォルダ内の `package.json`（`FUnity/package.json`）を指定します。
 4. Package Manager に **FUnity** が追加されれば導入完了です。
+
+### 方法3：ローカル開発モードで使用する（manifest.jsonでパス指定）
+以下の手順で、Unity Package Manager の依存関係をローカルフォルダに向け、ソースを直接編集しながら開発できます。
+
+#### 🧩 FUnityをローカル開発モードで使用する手順
+
+##### 1. FUnityをローカルにクローン
+ターミナルまたはコマンドプロンプトで以下を実行します：
+
+```bash
+git clone https://github.com/oco777/FUnity.git
+```
+
+##### 2. manifest.jsonを編集
+Unityプロジェクトの `Packages/manifest.json` を開き、
+以下のように書き換えます：
+
+```json
+{
+  "dependencies": {
+    "com.papacoder.funity": "file:../FUnity"
+  }
+}
+```
+
+> 💡 UnityプロジェクトとFUnityフォルダが同じ階層にある場合、`file:../FUnity` でOKです。
+
+##### 3. Unityを再起動
+Unityを閉じて再起動します。
+`Packages/com.papacoder.funity` にFUnityの中身が直接表示されれば成功です。
+
+##### 4. 編集とテスト
+FUnityフォルダ内のスクリプトやUXMLを編集すると、
+Unity上で即反映されます。
+
+> 🔁 パッケージを更新するたびに `manifest.json` を元に戻す必要はなく、Unityを再起動するだけで最新のローカル変更が反映されます。
