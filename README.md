@@ -1,28 +1,31 @@
-# FUnity
+# FUnity - Visual Programming Environment
 
-FUnity is a Scratch-inspired learning toolkit distributed through the Unity Package Manager (UPM). The repository is organised as a Unity package at the repository root with a dedicated development project stored under `FUnityProject/` for local testing and iteration.
+FUnity is a Scratch-inspired learning toolkit built on top of Unity's UI Toolkit. This repository is structured so it can be
+installed directly through the Unity Package Manager (UPM) while also shipping with a dedicated development project for local
+iteration and play testing.
 
-## Getting Started
-1. Open your Unity project.
-2. Add the following entry to your `Packages/manifest.json` dependencies section:
-   ```json
-   "com.papacoder.funity": "https://github.com/oco777/FUnity.git"
-   ```
-3. After Unity finishes resolving packages, explore the **Samples** window to import the `Basic Scene` sample.
+## Package Installation (UPM)
+To install FUnity from GitHub, add the repository URL to your Unity project's `Packages/manifest.json` dependencies:
 
-### Local Development Project
+```json
+"com.papacoder.funity": "https://github.com/oco777/FUnity.git"
+```
 
-To experiment with the package in isolation, open the project located in `FUnityProject/` with Unity 2021.3 or newer. The project depends on the local package via a relative path (`"file:../"`), so changes made to the package are immediately reflected inside the project.
+Unity will download the package, making the runtime code, UI Toolkit layouts, and art assets available under
+**Packages/com.papacoder.funity**. Import the bundled sample from the **Package Manager** window to explore a working scene.
 
-## Package Layout
-- **Runtime/** – Core runtime scripts, UI helpers, block definitions, and resource assets.
-- **Editor/** – Editor tooling to streamline FUnity specific authoring flows.
-- **UXML/** and **USS/** – UI Toolkit layouts and styles.
-- **Art/** – Package art assets such as logos or promotional imagery.
-- **Samples~/** – Importable samples demonstrating package usage.
+## Local Development Project
+The repository includes `FUnityProject/`, a Unity project configured to reference the package via a relative path. Open the
+project in Unity Hub (Unity 6 or newer) to validate changes you make inside the package folders. The `Packages/manifest.json`
+entry uses `"file:../"`, so editing files in the package root immediately reflects inside the development project.
 
-## Contributing
-Contributions are welcome! Please open an issue or submit a pull request describing your proposed changes.
+## Repository Layout
+- `Runtime/` – Runtime scripts grouped into `Core/`, `UI/`, `Blocks/`, and `Resources/`.
+- `UXML/` – UI Toolkit layout definitions used by the package.
+- `USS/` – UI Toolkit style sheets.
+- `Art/` – Package artwork such as logos or screenshots.
+- `Samples~/BasicScene/` – Importable sample scene, controller script, and documentation.
+- `FUnityProject/` – Unity project for development and testing (contains `Assets/`, `Packages/`, `ProjectSettings/`, and `UserSettings/`).
 
 ## License
-FUnity is released under the MIT License. See [LICENSE.md](LICENSE.md) for more information.
+FUnity is released under the MIT License. See [LICENSE.md](LICENSE.md) for full details.

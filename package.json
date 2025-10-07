@@ -1,23 +1,30 @@
 {
   "name": "com.papacoder.funity",
-  "displayName": "FUnity",
-  "version": "0.1.0",
-  "unity": "2021.3",
-  "description": "Scratch-inspired education toolkit for Unity",
-  "keywords": ["education", "scratch", "visual scripting"],
+  "displayName": "FUnity - Visual Programming Environment",
+  "version": "1.0.0",
+  "unity": "6000.0",
+  "description": "A Scratch-inspired educational toolkit for Unity UI Toolkit.",
+  "keywords": [
+    "education",
+    "scratch",
+    "visual scripting"
+  ],
   "license": "MIT",
   "author": {
-    "name": "FUnity Contributors",
-    "url": "https://github.com/oco777/FUnity"
+    "name": "パパコーダー",
+    "url": "https://papacoder.net"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/oco777/FUnity.git"
   },
+  "dependencies": {
+    "com.unity.ui": "1.0.0"
+  },
   "samples": [
     {
       "displayName": "Basic Scene",
-      "description": "Minimal setup showcasing the FUnity runtime",
+      "description": "A minimal scene showing how to use FUnity.",
       "path": "Samples~/BasicScene"
     }
   ]
