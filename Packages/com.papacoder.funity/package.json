@@ -8,7 +8,12 @@
   "documentationUrl": "https://github.com/oco777/FUnity",
   "changelogUrl": "https://github.com/oco777/FUnity/blob/main/CHANGELOG.md",
   "licensesUrl": "https://github.com/oco777/FUnity/blob/main/LICENSE",
-  "keywords": ["education", "visual-scripting", "scratch", "kids"],
+  "keywords": [
+    "education",
+    "visual-scripting",
+    "scratch",
+    "kids"
+  ],
   "dependencies": {
     "com.unity.ui": "1.0.0"
   },
@@ -18,5 +23,9 @@
       "description": "Minimal sample scene showcasing the FUnity workspace.",
       "path": "Samples~/BasicScene"
     }
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oco777/FUnity.git"
+  }
 }
