@@ -1,5 +1,5 @@
 {
-  "name": "com.funity.core",
+  "name": "com.papacoder.funity",
   "displayName": "FUnity",
   "version": "0.1.0",
   "unity": "2021.3",
@@ -8,11 +8,11 @@
   "license": "MIT",
   "author": {
     "name": "FUnity Contributors",
-    "url": "https://github.com/FUnity/FUnity"
+    "url": "https://github.com/oco777/FUnity"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/FUnity/FUnity.git"
+    "url": "https://github.com/oco777/FUnity.git"
   },
   "samples": [
     {
