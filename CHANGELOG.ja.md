@@ -4,8 +4,7 @@
 各エントリは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) の形式を参考に記載しています。
 
 ## [未リリース]
-### 追加
-- README の日本語版ドキュメントを `README.ja.md` として追加。
-- 変更履歴の日本語版として本ファイル `CHANGELOG.ja.md` を追加。
-- プロジェクトの主要機能やビルド手順をREADME日本語版に整理。
+### 変更
+- Unity Package Manager から Git URL (`https://github.com/oco777/FUnity.git`) を指定するだけでインストールできるようにパッケージ構成をリポジトリ直下へ移動。
+- 開発用プロジェクトの `manifest.json` をローカルパッケージ参照に更新し、ドキュメント内のパスとリンクを最新化。
 
