@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:VisualElement class="workspace-root">
+    <ui:Button name="run-button" text="Run" class="workspace-button" />
+    <ui:Button name="stop-button" text="Stop" class="workspace-button" />
+  </ui:VisualElement>
+</ui:UXML>
