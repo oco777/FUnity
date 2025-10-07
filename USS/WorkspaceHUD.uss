@@ -1,0 +1,11 @@
+.workspace-root {
+    padding: 12px;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
+}
+
+.workspace-button {
+    min-width: 80px;
+}
