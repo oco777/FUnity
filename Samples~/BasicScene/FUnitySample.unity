@@ -154,12 +154,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 200000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0da8f2c7b7fcbaf48a8ba4a8988e85b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_PanelSettings: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 3e08f811a5f6f4b49ae266b782ec8631, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_PanelSettings: {fileID: 11400000, guid: eb7c6cb1b6b8480c8c91cde56543f148, type: 2}
   m_PanelSettingsFallback: {fileID: 0}
   m_ParentSettings: 0
   m_SortingOrder: 0
   m_TargetTexture: {fileID: 0}
   m_VisualTreeAsset: {fileID: 11400000, guid: 6f8f2d5c43c54c329fbc490c681e4d56, type: 3}
+  m_StyleSheets:
+  - {fileID: 7433441135550727556, guid: 9a7e6a1d0b154dbcb5f222dfbdb19cb6, type: 3}

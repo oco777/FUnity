@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c9d7f913bb93b04e9ebcfdaf61c65f4, type: 3}
+  m_Name: FUnityPanelSettings
+  m_EditorClassIdentifier:
+  serializedVersion: 2
+  m_ClearColor: {r: 0, g: 0, b: 0, a: 0}
+  m_ClearDepthStencil: 0
+  m_ColorClearMode: 0
+  m_ColorClearValue:
+    r: 0
+    g: 0
+    b: 0
+    a: 0
+  m_DepthClearValue: 1
+  m_PanelClearFlags: 0
+  m_ParentSettings: {fileID: 0}
+  m_ScaleMode: 1
+  m_ReferenceDpi: 96
+  m_FallbackDpi: 96
+  m_ReferenceResolution:
+    x: 1920
+    y: 1080
+  m_ScreenMatchMode: 0
+  m_Match: 0
+  m_SortingOrder: 0
+  m_TargetTexture: {fileID: 0}
+  m_ClearDepthStencilOnStart: 0
+  m_TargetDisplay: 0
+  m_PixelPerfect: 0
+  m_HasRenderTexture: 0
+  m_OffScreenRendering: 0
+  m_AllowExternalReadback: 0
+  m_Scale: 1
+  m_RuntimeShader: {fileID: 4800000, guid: 933532a4fcc9baf4fa526b5d15112fba, type: 3}
+  m_RuntimeWorldShader: {fileID: 4800000, guid: 933532a4fcc9baf4fa526b5d15112fba, type: 3}
+  m_AtlasWidth: 2048
+  m_AtlasHeight: 2048
+  m_AtlasBGColor: {r: 0, g: 0, b: 0, a: 0}
+  m_AtlasBlending: 0
+  m_AtlasOpacity: 1
+  m_VRCompatible: 0
+  m_ThemeStyleSheet: {fileID: 0}
+  m_ThemeUss: {fileID: 0}
