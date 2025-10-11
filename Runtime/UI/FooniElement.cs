@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.UIElements.Experimental;
 
 namespace FUnity.Runtime.UI
 {
@@ -12,12 +13,19 @@ namespace FUnity.Runtime.UI
         private const string VisualTreeResourcePath = "UI/FooniElement";
         private const string StyleResourcePath = "UI/FooniElement";
         private const string FooniTexturePath = "Characters/Fooni";
-        private const string FooniImageClass = "fooni-image";
+        private const string FooniImageName = "fooni-image";
+        private const float FloatAmplitude = 10f;
+        private const float FloatDuration = 3f;
+
+        private Image _image;
+        private IValueAnimation<float> _floatingAnimation;
 
         public FooniElement()
         {
             InitializeLayout();
-            ApplyTexture();
+            CacheImageElement();
+            LoadCharacter();
+            StartFloatingAnimation();
         }
 
         private void InitializeLayout()
@@ -43,23 +51,50 @@ namespace FUnity.Runtime.UI
             }
         }
 
-        private void ApplyTexture()
+        private void CacheImageElement()
         {
+            _image = this.Q<Image>(name: FooniImageName) ?? this.Q<Image>(className: FooniImageName);
+            if (_image == null)
+            {
+                Debug.LogWarning("FooniElement: Unable to find Image element with name or class 'fooni-image'.");
+            }
+        }
+
+        private void LoadCharacter()
+        {
+            if (_image == null)
+            {
+                return;
+            }
+
             var texture = Resources.Load<Texture2D>(FooniTexturePath);
             if (texture == null)
             {
-                Debug.LogWarning($"FooniElement: Unable to load texture at Resources/{FooniTexturePath}.");
+                Debug.LogWarning("⚠️ Fooni image not found in Resources/Characters/Fooni.png");
                 return;
             }
 
-            var image = this.Q<Image>(className: FooniImageClass);
-            if (image == null)
+            _image.image = texture;
+        }
+
+        private void StartFloatingAnimation()
+        {
+            if (_image == null)
             {
-                Debug.LogWarning("FooniElement: Unable to find Image element with class 'fooni-image'.");
                 return;
             }
 
-            image.image = texture;
+            _floatingAnimation?.Stop();
+            _floatingAnimation = _image.experimental.animation.Start(0f, 1f, FloatDuration, Easing.InOutSine, progress =>
+            {
+                var offset = Mathf.Sin(progress * Mathf.PI * 2f) * FloatAmplitude;
+                _image.style.translate = new Translate(0f, offset, 0f);
+            });
+
+            if (_floatingAnimation != null)
+            {
+                _floatingAnimation.loop = true;
+            }
         }
     }
 }
