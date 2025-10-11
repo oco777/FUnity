@@ -6,38 +6,56 @@ namespace FUnity.UI
     [RequireComponent(typeof(UIDocument))]
     public class FUnityUIInitializer : MonoBehaviour
     {
-        private const string UxmlResourcePath = "UI/block";
-        private const string PanelSettingsPath = "FUnityPanelSettings";
+        private const string FooniElementResourcePath = "UI/FooniElement";
+        private const string PanelSettingsResourcePath = "FUnityPanelSettings";
+
+        [SerializeField]
+        private UIDocument uiDocument;
 
         private void Awake()
         {
-            var uiDocument = GetComponent<UIDocument>();
+            // Ensure the UIDocument reference is available.
             if (uiDocument == null)
             {
-                Debug.LogWarning("[FUnityUIInitializer] UIDocument not found.");
+                uiDocument = GetComponent<UIDocument>();
+            }
+
+            if (uiDocument == null)
+            {
+                Debug.LogError("UIDocumentが見つかりません。");
                 return;
             }
 
-            var visualTree = Resources.Load<VisualTreeAsset>(UxmlResourcePath);
+            // Load the Fooni element layout.
+            var visualTree = Resources.Load<VisualTreeAsset>(FooniElementResourcePath);
             if (visualTree == null)
             {
-                Debug.LogWarning($"[FUnityUIInitializer] UXML not found at Resources/{UxmlResourcePath}.uxml");
+                Debug.LogError("FooniElement.uxml が見つかりません。");
                 return;
             }
 
-            uiDocument.visualTreeAsset = visualTree;
+            // Replace the current root content with Fooni.
+            var root = uiDocument.rootVisualElement;
+            root.Clear();
+            var fooniElement = visualTree.Instantiate();
+            root.Add(fooniElement);
 
-            var panel = Resources.Load<PanelSettings>(PanelSettingsPath);
-            if (panel != null)
+            ApplyPanelSettings();
+            Debug.Log("🌈 FUnityUIInitializer: FooniElement を表示しました。");
+        }
+
+        // Apply panel settings if available in Resources.
+        private void ApplyPanelSettings()
+        {
+            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsResourcePath);
+            if (panelSettings != null)
             {
-                uiDocument.panelSettings = panel;
+                uiDocument.panelSettings = panelSettings;
             }
             else
             {
-                Debug.LogWarning($"[FUnityUIInitializer] PanelSettings not found in Resources/{PanelSettingsPath}");
+                Debug.LogWarning($"[FUnityUIInitializer] PanelSettings not found in Resources/{PanelSettingsResourcePath}");
             }
-
-            Debug.Log("[FUnityUIInitializer] UI initialized successfully.");
         }
     }
 }
