@@ -15,10 +15,10 @@ namespace FUnity.Runtime.UI
         private const string FooniTexturePath = "Characters/Fooni";
         private const string FooniImageName = "fooni-image";
         private const float FloatAmplitude = 10f;
-        private const float FloatDuration = 3f;
+        private const int FloatDurationMs = 3000;
 
         private Image _image;
-        private IValueAnimation _floatingAnimation;
+        private IValueAnimation<float> _floatingAnimation;
 
         public FooniElement()
         {
@@ -79,25 +79,26 @@ namespace FUnity.Runtime.UI
 
         private void StartFloatingAnimation()
         {
-            if (_image == null)
-            {
-                return;
-            }
-
             _floatingAnimation?.Stop();
 
-            var animation = _image.experimental.animation.Start(0f, 1f, FloatDuration, Easing.InOutSine);
+            var animation = this.experimental.animation.Start(0f, 1f, FloatDurationMs, (element, value) =>
+            {
+                var offset = Mathf.Sin(value * Mathf.PI * 2f) * FloatAmplitude;
+                element.style.translate = new Translate(0f, offset, 0f);
+            });
+
             if (animation == null)
             {
                 return;
             }
 
-            animation.valueUpdated += value =>
+            animation.onAnimationCompleted += () =>
             {
-                var offset = Mathf.Sin(value * Mathf.PI * 2f) * FloatAmplitude;
-                _image.style.translate = new Translate(0f, offset, 0f);
+                if (panel != null)
+                {
+                    StartFloatingAnimation();
+                }
             };
-            animation.loop = true;
 
             _floatingAnimation = animation;
         }
