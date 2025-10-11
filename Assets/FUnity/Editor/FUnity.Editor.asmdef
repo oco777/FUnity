@@ -2,8 +2,7 @@
   "name": "FUnity.Editor",
   "rootNamespace": "FUnity",
   "references": [
-    "FUnity.Runtime",
-    "FUnity.AssetsRuntime"
+    "FUnity.Runtime"
   ],
   "includePlatforms": [
     "Editor"

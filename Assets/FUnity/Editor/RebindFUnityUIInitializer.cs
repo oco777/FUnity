@@ -8,66 +8,54 @@ namespace FUnity.EditorTools
 {
     /// <summary>
     /// Rebinds the scene's "FUnity UI" GameObject by removing missing MonoBehaviours,
-    /// ensuring UIDocument and FUnityUIInitializer are attached, and optionally assigning
-    /// a UILoadProfile if one exists in the project.
+    /// ensuring UIDocument and FUnityUIInitializer (from package) are attached,
+    /// and optionally assigning a UILoadProfile if one exists.
     /// </summary>
     public static class RebindFUnityUIInitializer
     {
         [MenuItem("FUnity/Fix/Rebind FUnity UI Initializer")]
         public static void Rebind()
         {
-            // 1) Find target GameObject
             var go = GameObject.Find("FUnity UI");
             if (!go)
             {
-                Debug.LogError("❌ GameObject 'FUnity UI' not found in the current scene.");
+                Debug.LogError("❌ GameObject 'FUnity UI' not found in scene.");
                 return;
             }
 
-            // 2) Remove all missing MonoBehaviours on the GameObject
+            // Remove all missing components
             int before = go.GetComponents<Component>().Count(c => c == null);
             if (before > 0)
-            {
                 GameObjectUtility.RemoveMonoBehavioursWithMissingScript(go);
-            }
             int after = go.GetComponents<Component>().Count(c => c == null);
             int removed = before - after;
 
-            // 3) Ensure UIDocument
-            var doc = go.GetComponent<UIDocument>();
-            if (doc == null)
-            {
-                doc = go.AddComponent<UIDocument>();
-            }
+            // Ensure UIDocument
+            var doc = go.GetComponent<UIDocument>() ?? go.AddComponent<UIDocument>();
 
-            // 4) Ensure FUnityUIInitializer
-            var init = go.GetComponent<FUnityUIInitializer>();
-            if (init == null)
-            {
-                init = go.AddComponent<FUnityUIInitializer>();
-            }
+            // Ensure FUnityUIInitializer (package type)
+            var init = go.GetComponent<FUnityUIInitializer>() ?? go.AddComponent<FUnityUIInitializer>();
 
-            // 5) Optionally assign a UILoadProfile if found
-            var profileGuid = AssetDatabase.FindAssets("t:UILoadProfile").FirstOrDefault();
+            // Try assign any UILoadProfile
+            var guid = AssetDatabase.FindAssets("t:UILoadProfile").FirstOrDefault();
             bool profileAssigned = false;
-            if (!string.IsNullOrEmpty(profileGuid))
+            if (!string.IsNullOrEmpty(guid))
             {
-                var path = AssetDatabase.GUIDToAssetPath(profileGuid);
+                var path = AssetDatabase.GUIDToAssetPath(guid);
                 var profile = AssetDatabase.LoadAssetAtPath<UILoadProfile>(path);
                 if (profile != null)
                 {
-                    var soInit = new SerializedObject(init);
-                    var prop = soInit.FindProperty("profile");
-                    if (prop != null)
+                    var so = new SerializedObject(init);
+                    var p = so.FindProperty("profile");
+                    if (p != null)
                     {
-                        prop.objectReferenceValue = profile;
-                        soInit.ApplyModifiedPropertiesWithoutUndo();
+                        p.objectReferenceValue = profile;
+                        so.ApplyModifiedPropertiesWithoutUndo();
                         profileAssigned = true;
                     }
                 }
             }
 
-            // Mark scene dirty for saving if needed
             EditorUtility.SetDirty(go);
             Debug.Log($"✅ Rebound FUnity UI. Removed missing: {removed}. Profile assigned: {profileAssigned}");
             Selection.activeObject = go;
