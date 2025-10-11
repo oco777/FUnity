@@ -1,13 +1,10 @@
 {
-  "name": "FUnity.Editor",
+  "name": "FUnity.AssetsRuntime",
   "rootNamespace": "FUnity",
   "references": [
-    "FUnity.Runtime",
-    "FUnity.AssetsRuntime"
+    "UnityEngine.UIElementsModule"
   ],
-  "includePlatforms": [
-    "Editor"
-  ],
+  "includePlatforms": [],
   "autoReferenced": true,
   "overrideReferences": false,
   "precompiledReferences": [],
