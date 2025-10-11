@@ -14,12 +14,10 @@ namespace FUnity.Runtime.UI
         private const string StyleResourcePath = "UI/FooniElement";
         private const string FooniTexturePath = "Characters/Fooni";
         private const string FooniImageName = "fooni-image";
-        private const float FloatAmplitude = 10f;
-        private const int FloatDurationMs = 3000;
-
         private Image _image;
-        private IValueAnimation<float> _floatingAnimation;
+        private IValueAnimation _floatAnimation;
 
+        // Initializes the element layout and animation.
         public FooniElement()
         {
             InitializeLayout();
@@ -28,6 +26,7 @@ namespace FUnity.Runtime.UI
             StartFloatingAnimation();
         }
 
+        // Loads the UXML and USS resources for the visual layout.
         private void InitializeLayout()
         {
             var visualTree = Resources.Load<VisualTreeAsset>(VisualTreeResourcePath);
@@ -51,6 +50,7 @@ namespace FUnity.Runtime.UI
             }
         }
 
+        // Caches the Fooni image element for later updates.
         private void CacheImageElement()
         {
             _image = this.Q<Image>(name: FooniImageName) ?? this.Q<Image>(className: FooniImageName);
@@ -60,6 +60,7 @@ namespace FUnity.Runtime.UI
             }
         }
 
+        // Loads the character texture from the Resources folder.
         private void LoadCharacter()
         {
             if (_image == null)
@@ -77,30 +78,32 @@ namespace FUnity.Runtime.UI
             _image.image = texture;
         }
 
+        // Starts the floating animation that makes Fooni gently move up and down.
         private void StartFloatingAnimation()
         {
-            _floatingAnimation?.Stop();
+            const int durationMs = 3000;
+            const float amplitude = 10f;
 
-            var animation = this.experimental.animation.Start(0f, 1f, FloatDurationMs, (element, value) =>
+            _floatAnimation?.Stop();
+
+            _floatAnimation = this.experimental.animation.Start(0f, 1f, durationMs, (element, t) =>
             {
-                var offset = Mathf.Sin(value * Mathf.PI * 2f) * FloatAmplitude;
+                float offset = Mathf.Sin(t * Mathf.PI * 2f) * amplitude;
                 element.style.translate = new Translate(0f, offset, 0f);
             });
 
-            if (animation == null)
+            if (_floatAnimation == null)
             {
                 return;
             }
 
-            animation.onAnimationCompleted += () =>
+            _floatAnimation.onAnimationCompleted += () =>
             {
                 if (panel != null)
                 {
                     StartFloatingAnimation();
                 }
             };
-
-            _floatingAnimation = animation;
         }
     }
 }
