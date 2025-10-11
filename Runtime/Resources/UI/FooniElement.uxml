@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement class="fooni-container">
+        <ui:Image class="fooni-image" />
+    </ui:VisualElement>
+</ui:UXML>
