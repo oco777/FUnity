@@ -1,0 +1,12 @@
+{
+  "name": "FUnity.Editor",
+  "rootNamespace": "FUnity",
+  "references": [
+    "FUnity.Runtime"
+  ],
+  "includePlatforms": [ "Editor" ],
+  "autoReferenced": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "noEngineReferences": false
+}

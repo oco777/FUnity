@@ -19,6 +19,7 @@ namespace FUnity.EditorTools
             if (profile != null)
             {
                 Debug.LogWarning($"Default UI Load Profile already exists at {AssetPath}");
+                Selection.activeObject = profile;
                 return;
             }
 
@@ -31,6 +32,7 @@ namespace FUnity.EditorTools
             AssetDatabase.Refresh();
 
             Debug.Log($"✅ Default UI Load Profile created at {AssetPath}");
+            Selection.activeObject = profile;
         }
     }
 }
