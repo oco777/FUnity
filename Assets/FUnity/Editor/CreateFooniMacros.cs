@@ -39,7 +39,7 @@ namespace FUnity.EditorTools
                       "Note: Ensure a FooniController exists under 'FUnity UI' in the scene.");
         }
 
-        private static ScriptGraphAsset LoadOrCreateMacro(string path, string stickyText)
+        private static ScriptGraphAsset LoadOrCreateMacro(string path, string _)
         {
             var macro = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(path);
             if (macro == null)
@@ -50,55 +50,12 @@ namespace FUnity.EditorTools
                 AssetDatabase.SaveAssets();
             }
 
-            var graph = macro.graph as FlowGraph;
-            if (graph == null)
+            if (macro.graph == null)
             {
-                graph = new FlowGraph();
-                macro.graph = graph;
-            }
-
-            bool updated = EnsureStickyNote(graph, stickyText);
-
-            if (updated)
-            {
-                EditorUtility.SetDirty(macro);
-                AssetDatabase.SaveAssets();
+                macro.graph = new FlowGraph();
             }
 
             return macro;
-        }
-
-        private static bool EnsureStickyNote(FlowGraph graph, string stickyText)
-        {
-            Note existingNote = null;
-            foreach (var element in graph.elements)
-            {
-                if (element is Note note)
-                {
-                    existingNote = note;
-                    break;
-                }
-            }
-
-            if (existingNote == null)
-            {
-                existingNote = new Note
-                {
-                    title = "Fooni Macro Guide",
-                    text = stickyText
-                };
-                graph.elements.Add(existingNote);
-                return true;
-            }
-
-            if (existingNote.text != stickyText)
-            {
-                existingNote.title = "Fooni Macro Guide";
-                existingNote.text = stickyText;
-                return true;
-            }
-
-            return false;
         }
 
         private static GameObject EnsureRunner(string name, ScriptGraphAsset macro)
