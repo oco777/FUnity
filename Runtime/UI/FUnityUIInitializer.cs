@@ -1,12 +1,12 @@
+using FUnity.Runtime.UI;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace FUnity.UI
+namespace FUnity.Runtime.UI
 {
     [RequireComponent(typeof(UIDocument))]
     public class FUnityUIInitializer : MonoBehaviour
     {
-        private const string FooniElementResourcePath = "UI/FooniElement";
         private const string PanelSettingsResourcePath = "FUnityPanelSettings";
 
         [SerializeField]
@@ -26,22 +26,14 @@ namespace FUnity.UI
                 return;
             }
 
-            // Load the Fooni element layout.
-            var visualTree = Resources.Load<VisualTreeAsset>(FooniElementResourcePath);
-            if (visualTree == null)
-            {
-                Debug.LogError("FooniElement.uxml が見つかりません。");
-                return;
-            }
-
-            // Replace the current root content with Fooni.
+            // Replace the current root content with a new Fooni element instance.
             var root = uiDocument.rootVisualElement;
             root.Clear();
-            var fooniElement = visualTree.Instantiate();
+            var fooniElement = new FooniElement();
             root.Add(fooniElement);
 
             ApplyPanelSettings();
-            Debug.Log("🌈 FUnityUIInitializer: FooniElement を表示しました。");
+            Debug.Log("🌈 FUnityUIInitializer: FooniElement をコードから生成・表示しました。");
         }
 
         // Apply panel settings if available in Resources.
