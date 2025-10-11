@@ -6,41 +6,38 @@ namespace FUnity.UI
     [RequireComponent(typeof(UIDocument))]
     public class FUnityUIInitializer : MonoBehaviour
     {
-#if UNITY_EDITOR
-        private const string UxmlPath = "Packages/com.papacoder.funity/UXML/block.uxml";
-#endif
-        private const string PanelSettingsPath = "Assets/FUnity/Resources/FUnityPanelSettings.asset";
+        private const string UxmlResourcePath = "UI/block";
+        private const string PanelSettingsPath = "FUnityPanelSettings";
 
-        private void OnEnable()
+        private void Awake()
         {
-            Debug.Log("[FUnityUIInitializer] OnEnable called");
-
             var uiDocument = GetComponent<UIDocument>();
             if (uiDocument == null)
             {
-                Debug.LogWarning("[FUnityUIInitializer] UIDocument not found on this GameObject.");
+                Debug.LogWarning("[FUnityUIInitializer] UIDocument not found.");
                 return;
             }
 
-#if UNITY_EDITOR
-            var visualTree = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UxmlPath);
+            var visualTree = Resources.Load<VisualTreeAsset>(UxmlResourcePath);
             if (visualTree == null)
             {
-                Debug.LogWarning($"[FUnityUIInitializer] UXML not found at {UxmlPath}");
+                Debug.LogWarning($"[FUnityUIInitializer] UXML not found at Resources/{UxmlResourcePath}.uxml");
                 return;
             }
-            uiDocument.visualTreeAsset = visualTree;
-#endif
 
-            var panel = Resources.Load<PanelSettings>("FUnityPanelSettings");
+            uiDocument.visualTreeAsset = visualTree;
+
+            var panel = Resources.Load<PanelSettings>(PanelSettingsPath);
             if (panel != null)
             {
                 uiDocument.panelSettings = panel;
             }
             else
             {
-                Debug.LogWarning("[FUnityUIInitializer] PanelSettings not found in Resources/FUnityPanelSettings.asset");
+                Debug.LogWarning($"[FUnityUIInitializer] PanelSettings not found in Resources/{PanelSettingsPath}");
             }
+
+            Debug.Log("[FUnityUIInitializer] UI initialized successfully.");
         }
     }
 }
