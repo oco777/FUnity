@@ -2,7 +2,8 @@
   "name": "FUnity.AssetsRuntime",
   "rootNamespace": "FUnity",
   "references": [
-    "UnityEngine.UIElementsModule"
+    "UnityEngine.UIElementsModule",
+    "FUnity.Runtime"
   ],
   "includePlatforms": [],
   "autoReferenced": true,
