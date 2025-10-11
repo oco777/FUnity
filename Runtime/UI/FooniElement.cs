@@ -97,13 +97,7 @@ namespace FUnity.Runtime.UI
                 return;
             }
 
-            _floatAnimation.onAnimationCompleted += () =>
-            {
-                if (panel != null)
-                {
-                    StartFloatingAnimation();
-                }
-            };
+            schedule.Execute(StartFloatingAnimation).StartingIn(durationMs);
         }
     }
 }
