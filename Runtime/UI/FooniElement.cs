@@ -18,7 +18,7 @@ namespace FUnity.Runtime.UI
         private const float FloatDuration = 3f;
 
         private Image _image;
-        private IValueAnimation<float> _floatingAnimation;
+        private IValueAnimation _floatingAnimation;
 
         public FooniElement()
         {
@@ -85,16 +85,21 @@ namespace FUnity.Runtime.UI
             }
 
             _floatingAnimation?.Stop();
-            _floatingAnimation = _image.experimental.animation.Start(0f, 1f, FloatDuration, Easing.InOutSine, progress =>
-            {
-                var offset = Mathf.Sin(progress * Mathf.PI * 2f) * FloatAmplitude;
-                _image.style.translate = new Translate(0f, offset, 0f);
-            });
 
-            if (_floatingAnimation != null)
+            var animation = _image.experimental.animation.Start(0f, 1f, FloatDuration, Easing.InOutSine);
+            if (animation == null)
             {
-                _floatingAnimation.loop = true;
+                return;
             }
+
+            animation.valueUpdated += value =>
+            {
+                var offset = Mathf.Sin(value * Mathf.PI * 2f) * FloatAmplitude;
+                _image.style.translate = new Translate(0f, offset, 0f);
+            };
+            animation.loop = true;
+
+            _floatingAnimation = animation;
         }
     }
 }
