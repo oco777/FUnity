@@ -1,15 +1,16 @@
 {
-  "name": "FUnity.Runtime",
-  "rootNamespace": "FUnity",
-  "references": [
-    "UnityEngine.UIElementsModule"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "noEngineReferences": false
+    "name": "FUnity.Runtime",
+    "rootNamespace": "FUnity",
+    "references": [
+        "UnityEngine.UIElementsModule"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
