@@ -10,8 +10,8 @@ namespace FUnity.UI
     public static class PanelSettingsInitializer
     {
         private const string ResourceName = "FUnityPanelSettings";
-        private const string ResourceDirectory = "Packages/com.papacoder.funity/Runtime/Resources";
-        private const string AssetPath = ResourceDirectory + "/" + ResourceName + ".asset";
+        private static readonly string ResourceDirectory = Path.Combine("Assets", "Resources");
+        private static readonly string AssetPath = Path.Combine(ResourceDirectory, ResourceName + ".asset");
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void EnsurePanelSettings()
