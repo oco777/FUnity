@@ -23,6 +23,23 @@ namespace FUnity.EditorTools
             var stagePath = $"{dir}/FUnityStageData.asset";
             AssetDatabase.CreateAsset(stage, stagePath);
 
+            /* ---- Stage の BackgroundImage を設定（最小差分） ---- */
+            var bgTex = LoadFirst<Texture2D>(new[]
+            {
+                "Assets/FUnity/Art/Backgrounds/Background_01.png",
+                "Packages/com.papacoder.funity/Runtime/Art/Backgrounds/Background_01.png",
+                "Packages/com.papacoder.funity/Art/Backgrounds/Background_01.png",
+            }, "t:Texture2D Background_01");
+
+            var soStage = new SerializedObject(stage);
+            var bgProp = soStage.FindProperty("m_backgroundImage"); // FUnityStageData の Serialized 名
+            if (bgProp != null)
+            {
+                bgProp.objectReferenceValue = bgTex;
+                soStage.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(stage);
+            }
+
             var actor = ConfigureFooniActorData();
 
             var duplicateActorPath = $"{dir}/FUnityActorData_Fooni.asset";
