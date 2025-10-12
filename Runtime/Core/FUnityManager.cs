@@ -222,6 +222,10 @@ namespace FUnity.Core
                 ve.style.height = data.Size.y;
             }
 
+            // Inline sizing wins against USS. Prevent flex layout overrides.
+            ve.style.flexGrow = 0f;
+            ve.style.flexShrink = 0f;
+
             // 識別用
             ve.AddToClassList("actor");
             if (!string.IsNullOrEmpty(data.DisplayName))
