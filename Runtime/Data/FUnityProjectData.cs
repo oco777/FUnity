@@ -31,5 +31,12 @@ namespace FUnity.Runtime.Core
 
         [Header("Visual Scripting Runners")]
         public List<RunnerEntry> runners = new List<RunnerEntry>();
+
+        [Header("Stage & Actors")]
+        [SerializeField] private FUnityStageData m_stage;
+        [SerializeField] private List<FUnityActorData> m_actors = new List<FUnityActorData>();
+
+        public FUnityStageData Stage => m_stage;
+        public List<FUnityActorData> Actors => m_actors;
     }
 }
