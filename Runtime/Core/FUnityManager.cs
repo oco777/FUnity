@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.UI;
 using FUnity.Runtime.Core;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 #if UNITY_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 #endif
@@ -59,8 +62,46 @@ namespace FUnity.Core
 
             uiDocument = _fUnityUI.GetComponent<UIDocument>() ?? _fUnityUI.AddComponent<UIDocument>();
 
+            if (uiDocument.panelSettings == null)
+            {
+                var panelSettings = FindDefaultPanelSettings();
+                if (panelSettings != null)
+                {
+                    uiDocument.panelSettings = panelSettings;
+                    Debug.Log($"[FUnity] Assigned PanelSettings: {panelSettings.name} to UIDocument on '{_fUnityUI.name}'.");
+                }
+                else
+                {
+                    Debug.LogWarning("[FUnity] FUnityPanelSettings not found. Place a PanelSettings asset named 'FUnityPanelSettings' under Resources or import the sample so it can be found in the Editor.");
+                }
+            }
+
             var controller = _fUnityUI.GetComponent<FooniController>() ?? _fUnityUI.AddComponent<FooniController>();
             controller.SetUIDocument(uiDocument);
+        }
+
+        private PanelSettings FindDefaultPanelSettings()
+        {
+            var panelSettings = Resources.Load<PanelSettings>("FUnityPanelSettings");
+            if (panelSettings != null)
+            {
+                return panelSettings;
+            }
+
+#if UNITY_EDITOR
+            var guids = AssetDatabase.FindAssets("t:PanelSettings FUnityPanelSettings");
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<PanelSettings>(path);
+                if (asset != null)
+                {
+                    return asset;
+                }
+            }
+#endif
+
+            return null;
         }
 
 #if UNITY_VISUAL_SCRIPTING
