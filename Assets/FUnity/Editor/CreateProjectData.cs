@@ -24,22 +24,67 @@ namespace FUnity.EditorTools
             var stagePath = $"{dir}/FUnityStageData.asset";
             AssetDatabase.CreateAsset(stage, stagePath);
 
-            // ---- Ensure PanelSettings & Theme (auto-create if not exists) ----
+            // ---- Ensure UnityDefaultRuntimeTheme.uss (write correct USS text and reimport) ----
             EnsureFolder("Assets/FUnity");
             EnsureFolder("Assets/FUnity/UI");
             EnsureFolder("Assets/FUnity/UI/USS");
 
-            // 1) Theme(USS) を確保
-            var themePath = "Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss";
-            var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(themePath);
-            if (theme == null)
+            var themeUssPath = "Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss";
+            var needWrite = true;
+
+            if (File.Exists(themeUssPath))
             {
-                theme = ScriptableObject.CreateInstance<StyleSheet>();
-                AssetDatabase.CreateAsset(theme, themePath);
-                EditorUtility.SetDirty(theme);
+                var firstLines = File.ReadLines(themeUssPath).Take(3).ToArray();
+                var content = File.ReadAllText(themeUssPath).Trim();
+                if (!firstLines.Any(l => l.TrimStart().StartsWith("---")) && !string.IsNullOrEmpty(content))
+                {
+                    needWrite = false;
+                }
             }
 
-            // 2) PanelSettings を確保
+            if (needWrite)
+            {
+                var ussText = @"/* Unity Default Runtime Theme (safe minimal)
+   - No YAML front matter, no unsupported at-rules.
+   - Avoids shorthand traps; uses explicit px where needed.
+   - Keep it minimal; project-specific styles can be layered later.
+*/
+
+/* Base label/text */
+Label {
+    font-size: 14px;
+}
+
+/* Buttons baseline */
+Button {
+    min-width: 80px;
+    min-height: 24px;
+}
+
+/* Actor template defaults */
+.actor {
+    flex-shrink: 0;
+}
+
+.portrait {
+    width: 100%;
+    height: 100%;
+    /* Keep aspect and fit inside parent */
+    -unity-background-scale-mode: scale-to-fit;
+}
+";
+
+                File.WriteAllText(themeUssPath, ussText, System.Text.Encoding.UTF8);
+                AssetDatabase.ImportAsset(themeUssPath);
+            }
+
+            var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(themeUssPath);
+            if (theme == null)
+            {
+                Debug.LogWarning("[FUnity] UnityDefaultRuntimeTheme.uss could not be loaded after write.");
+            }
+
+            // ---- Ensure PanelSettings (auto-create if not exists) ----
             var panelPath = "Assets/FUnity/UI/FUnityPanelSettings.asset";
             var panel = AssetDatabase.LoadAssetAtPath<PanelSettings>(panelPath);
             if (panel == null)
