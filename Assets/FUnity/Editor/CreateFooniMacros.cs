@@ -100,10 +100,10 @@ namespace FUnity.EditorTools
 
         private static void EnsureInspectorHelp(GameObject go)
         {
-            var comment = go.GetComponent<InspectorComment>();
+            var comment = go.GetComponent<FUnityInspectorComment>();
             if (comment == null)
             {
-                comment = Undo.AddComponent<InspectorComment>(go);
+                comment = Undo.AddComponent<FUnityInspectorComment>(go);
             }
 
             bool changed = false;
