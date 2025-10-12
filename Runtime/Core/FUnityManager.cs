@@ -180,19 +180,36 @@ namespace FUnity.Core
                 return null;
             }
 
-            var element = new FooniElement
-            {
-                name = string.IsNullOrEmpty(data.DisplayName) ? "FUnityActor" : data.DisplayName
-            };
+            VisualElement element = null;
 
-            if (data.Portrait != null)
+            if (data.ElementUxml != null)
             {
-                element.style.backgroundImage = new StyleBackground(data.Portrait);
+                element = data.ElementUxml.Instantiate();
+
+                if (data.ElementStyle != null)
+                {
+                    element.styleSheets.Add(data.ElementStyle);
+                }
+            }
+            else
+            {
+                element = new FooniElement();
             }
 
-            element.style.width = 128;
-            element.style.height = 128;
-            element.style.translate = new Translate(data.InitialPosition.x, data.InitialPosition.y, 0f);
+            var portraitTarget = element.Q<VisualElement>("portrait") ?? element;
+            if (data.Portrait != null)
+            {
+                portraitTarget.style.backgroundImage = new StyleBackground(data.Portrait);
+            }
+
+            element.style.translate = new Translate(data.InitialPosition.x, data.InitialPosition.y);
+
+            if (!string.IsNullOrEmpty(data.DisplayName))
+            {
+                element.name = data.DisplayName;
+            }
+
+            element.AddToClassList("actor");
 
             return element;
         }
