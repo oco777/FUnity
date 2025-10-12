@@ -16,30 +16,30 @@ namespace FUnity.Core
     /// </summary>
     public sealed class FUnityManager : MonoBehaviour
     {
-        [SerializeField]
-        private UIDocument uiDocument;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("uiDocument")]
+        private UIDocument m_UIDocument;
 
-        [SerializeField]
-        private FUnityProjectData project;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("project")]
+        private FUnityProjectData m_Project;
 
-        private GameObject _fUnityUI;
+        private GameObject m_FUnityUI;
 
         private void Awake()
         {
-            if (project == null)
+            if (m_Project == null)
             {
-                project = Resources.Load<FUnityProjectData>("FUnityProjectData");
+                m_Project = Resources.Load<FUnityProjectData>("FUnityProjectData");
             }
 
-            if (project == null || project.ensureFUnityUI)
+            if (m_Project == null || m_Project.ensureFUnityUI)
             {
                 EnsureFUnityUI();
             }
 
 #if UNITY_VISUAL_SCRIPTING
-            if (project != null && project.runners != null)
+            if (m_Project != null && m_Project.runners != null)
             {
-                foreach (var runner in project.runners)
+                foreach (var runner in m_Project.runners)
                 {
                     if (runner == null)
                     {
@@ -54,21 +54,21 @@ namespace FUnity.Core
 
         private void EnsureFUnityUI()
         {
-            _fUnityUI = GameObject.Find("FUnity UI");
-            if (_fUnityUI == null)
+            m_FUnityUI = GameObject.Find("FUnity UI");
+            if (m_FUnityUI == null)
             {
-                _fUnityUI = new GameObject("FUnity UI");
+                m_FUnityUI = new GameObject("FUnity UI");
             }
 
-            uiDocument = _fUnityUI.GetComponent<UIDocument>() ?? _fUnityUI.AddComponent<UIDocument>();
+            m_UIDocument = m_FUnityUI.GetComponent<UIDocument>() ?? m_FUnityUI.AddComponent<UIDocument>();
 
-            if (uiDocument.panelSettings == null)
+            if (m_UIDocument.panelSettings == null)
             {
                 var panelSettings = FindDefaultPanelSettings();
                 if (panelSettings != null)
                 {
-                    uiDocument.panelSettings = panelSettings;
-                    Debug.Log($"[FUnity] Assigned PanelSettings: {panelSettings.name} to UIDocument on '{_fUnityUI.name}'.");
+                    m_UIDocument.panelSettings = panelSettings;
+                    Debug.Log($"[FUnity] Assigned PanelSettings: {panelSettings.name} to UIDocument on '{m_FUnityUI.name}'.");
                 }
                 else
                 {
@@ -76,8 +76,8 @@ namespace FUnity.Core
                 }
             }
 
-            var controller = _fUnityUI.GetComponent<FooniController>() ?? _fUnityUI.AddComponent<FooniController>();
-            controller.SetUIDocument(uiDocument);
+            var controller = m_FUnityUI.GetComponent<FooniController>() ?? m_FUnityUI.AddComponent<FooniController>();
+            controller.SetUIDocument(m_UIDocument);
         }
 
         private PanelSettings FindDefaultPanelSettings()
@@ -126,9 +126,9 @@ namespace FUnity.Core
                 }
             }
 
-            if (!Variables.Object(go).IsDefined("FUnityUI") && _fUnityUI != null)
+            if (!Variables.Object(go).IsDefined("FUnityUI") && m_FUnityUI != null)
             {
-                Variables.Object(go).Set("FUnityUI", _fUnityUI);
+                Variables.Object(go).Set("FUnityUI", m_FUnityUI);
             }
         }
 #endif

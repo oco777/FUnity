@@ -46,7 +46,7 @@ namespace FUnity.EditorTools
                 if (profile != null)
                 {
                     var so = new SerializedObject(init);
-                    var p = so.FindProperty("profile");
+                    var p = so.FindProperty("m_Profile");
                     if (p != null)
                     {
                         p.objectReferenceValue = profile;

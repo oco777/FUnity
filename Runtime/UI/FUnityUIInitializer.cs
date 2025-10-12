@@ -8,10 +8,12 @@ namespace FUnity.Runtime.UI
     [RequireComponent(typeof(UIDocument))]
     public class FUnityUIInitializer : MonoBehaviour
     {
-        [SerializeField] private UIDocument uiDocument;
-        [SerializeField] private UILoadProfile profile;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("uiDocument")]
+        private UIDocument m_UIDocument;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("profile")]
+        private UILoadProfile m_Profile;
 
-        public UILoadProfile Profile => profile;
+        public UILoadProfile Profile => m_Profile;
 
         private void Awake()
         {
@@ -21,9 +23,9 @@ namespace FUnity.Runtime.UI
                 return;
             }
 
-            if (profile != null)
+            if (m_Profile != null)
             {
-                ApplyProfile(profile);
+                ApplyProfile(m_Profile);
             }
             else
             {
@@ -33,27 +35,27 @@ namespace FUnity.Runtime.UI
 
         private bool TryResolveDocument()
         {
-            if (uiDocument == null)
+            if (m_UIDocument == null)
             {
-                uiDocument = GetComponent<UIDocument>();
+                m_UIDocument = GetComponent<UIDocument>();
             }
 
-            return uiDocument != null;
+            return m_UIDocument != null;
         }
 
         private void ApplyProfile(UILoadProfile loadProfile)
         {
             if (loadProfile.panelSettings != null)
             {
-                uiDocument.panelSettings = loadProfile.panelSettings;
+                m_UIDocument.panelSettings = loadProfile.panelSettings;
             }
 
             if (loadProfile.uxml != null)
             {
-                uiDocument.visualTreeAsset = loadProfile.uxml;
+                m_UIDocument.visualTreeAsset = loadProfile.uxml;
             }
 
-            var root = uiDocument.rootVisualElement;
+            var root = m_UIDocument.rootVisualElement;
             root.Clear();
             root.styleSheets.Clear();
 
@@ -61,9 +63,9 @@ namespace FUnity.Runtime.UI
             {
                 loadProfile.uxml.CloneTree(root);
             }
-            else if (uiDocument.visualTreeAsset != null)
+            else if (m_UIDocument.visualTreeAsset != null)
             {
-                uiDocument.visualTreeAsset.CloneTree(root);
+                m_UIDocument.visualTreeAsset.CloneTree(root);
             }
 
             AppendStyleSheets(root, loadProfile.uss);
@@ -99,7 +101,7 @@ namespace FUnity.Runtime.UI
 
         private void ApplyFallback()
         {
-            var root = uiDocument.rootVisualElement;
+            var root = m_UIDocument.rootVisualElement;
             root.Clear();
             root.styleSheets.Clear();
 
@@ -109,9 +111,9 @@ namespace FUnity.Runtime.UI
 
         private void OnValidate()
         {
-            if (uiDocument == null)
+            if (m_UIDocument == null)
             {
-                uiDocument = GetComponent<UIDocument>();
+                m_UIDocument = GetComponent<UIDocument>();
             }
         }
     }
