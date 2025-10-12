@@ -59,11 +59,23 @@ namespace FUnity.Runtime.UI
         public void EnableFloat(bool enabled)
         {
             _floatEnabled = enabled;
-            if (!_floatEnabled && _fooni != null)
+
+            if (!_floatEnabled)
             {
-                // Reset translation when disabled (visual reset)
-                _fooni.style.translate = new Translate(0, 0, 0);
+                if (_fooni != null)
+                {
+                    // Reset translation when disabled (visual reset)
+                    _fooni.style.translate = new Translate(0, 0, 0);
+                }
+                _ticker?.Pause();
+                return;
             }
+
+            if (_ticker == null)
+            {
+                StartTicker();
+            }
+            _ticker?.Resume();
         }
 
         /// <summary>Set floating amplitude in pixels.</summary>
