@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEngine.UIElements.Experimental;
 
 namespace FUnity.Runtime.UI
 {
@@ -10,12 +9,14 @@ namespace FUnity.Runtime.UI
     [UxmlElement]
     public partial class FooniElement : VisualElement
     {
+        // NOTE:
+        // FooniElement は見た目専用の UI 要素です。
+        // アニメーションや時間変化は FooniController に集約しました（Visual Scripting から制御）。
         private const string VisualTreeResourcePath = "UI/FooniElement";
         private const string StyleResourcePath = "UI/FooniElement";
         private const string FooniTexturePath = "Characters/Fooni";
         private const string FooniImageName = "fooni-image";
         private Image _image;
-        private IValueAnimation _floatAnimation;
 
         // Initializes the element layout and animation.
         public FooniElement()
@@ -23,7 +24,6 @@ namespace FUnity.Runtime.UI
             InitializeLayout();
             CacheImageElement();
             LoadCharacter();
-            StartFloatingAnimation();
         }
 
         // Loads the UXML and USS resources for the visual layout.
@@ -76,28 +76,6 @@ namespace FUnity.Runtime.UI
             }
 
             _image.image = texture;
-        }
-
-        // Starts the floating animation that makes Fooni gently move up and down.
-        private void StartFloatingAnimation()
-        {
-            const int durationMs = 3000;
-            const float amplitude = 10f;
-
-            _floatAnimation?.Stop();
-
-            _floatAnimation = this.experimental.animation.Start(0f, 1f, durationMs, (element, t) =>
-            {
-                float offset = Mathf.Sin(t * Mathf.PI * 2f) * amplitude;
-                element.style.translate = new Translate(0f, offset, 0f);
-            });
-
-            if (_floatAnimation == null)
-            {
-                return;
-            }
-
-            schedule.Execute(StartFloatingAnimation).StartingIn(durationMs);
         }
     }
 }
