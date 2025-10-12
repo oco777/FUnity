@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.IO;
+using System.Linq;
 using FUnity.Runtime.Core;
 using UnityEditor;
 using UnityEngine;
@@ -22,6 +23,39 @@ namespace FUnity.EditorTools
             var stage = ScriptableObject.CreateInstance<FUnityStageData>();
             var stagePath = $"{dir}/FUnityStageData.asset";
             AssetDatabase.CreateAsset(stage, stagePath);
+
+            // ---- Ensure PanelSettings & Theme (auto-create if not exists) ----
+            EnsureFolder("Assets/FUnity");
+            EnsureFolder("Assets/FUnity/UI");
+            EnsureFolder("Assets/FUnity/UI/USS");
+
+            // 1) Theme(USS) を確保
+            var themePath = "Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss";
+            var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(themePath);
+            if (theme == null)
+            {
+                theme = ScriptableObject.CreateInstance<StyleSheet>();
+                AssetDatabase.CreateAsset(theme, themePath);
+                EditorUtility.SetDirty(theme);
+            }
+
+            // 2) PanelSettings を確保
+            var panelPath = "Assets/FUnity/UI/FUnityPanelSettings.asset";
+            var panel = AssetDatabase.LoadAssetAtPath<PanelSettings>(panelPath);
+            if (panel == null)
+            {
+                panel = ScriptableObject.CreateInstance<PanelSettings>();
+                // 任意の初期値（必要なら）
+                //  panel.scaleMode = PanelScaleMode.ScaleWithScreenSize; // 既定のままでOKならコメントのまま
+                AssetDatabase.CreateAsset(panel, panelPath);
+            }
+
+            // 3) PanelSettings に Theme を積む（重複チェック）
+            if (panel != null && theme != null && panel.themeStyleSheets != null && !panel.themeStyleSheets.Contains(theme))
+            {
+                panel.themeStyleSheets.Add(theme);
+                EditorUtility.SetDirty(panel);
+            }
 
             /* ---- Stage の BackgroundImage を設定（最小差分） ---- */
             var bgTex = LoadFirst<Texture2D>(new[]
