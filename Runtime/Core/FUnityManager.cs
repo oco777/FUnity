@@ -212,9 +212,15 @@ namespace FUnity.Core
             ve.style.left     = data.InitialPosition.x;             // X
             ve.style.top      = data.InitialPosition.y;             // Y
 
-            // サイズが必要であれば（UXML/USS側で指定済みなら不要）
-            // ve.style.width  = 128;
-            // ve.style.height = 128;
+            if (data.Size.x > 0f)
+            {
+                ve.style.width = data.Size.x;
+            }
+
+            if (data.Size.y > 0f)
+            {
+                ve.style.height = data.Size.y;
+            }
 
             // 識別用
             ve.AddToClassList("actor");

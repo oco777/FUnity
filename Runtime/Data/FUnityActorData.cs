@@ -15,11 +15,15 @@ namespace FUnity.Runtime.Core
         [SerializeField] private VisualTreeAsset m_ElementUxml;
         [SerializeField] private StyleSheet m_ElementStyle;
 
+        [Header("Layout")]
+        [SerializeField] private Vector2 m_size = new Vector2(128, 128);
+
         public string DisplayName => m_displayName;
         public Texture2D Portrait => m_portrait;
         public Vector2 InitialPosition => m_initialPosition;
         public bool FloatAnimation => m_floatAnimation;
         public VisualTreeAsset ElementUxml => m_ElementUxml;
         public StyleSheet ElementStyle => m_ElementStyle;
+        public Vector2 Size => m_size;
     }
 }
