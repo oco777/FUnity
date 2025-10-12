@@ -180,7 +180,7 @@ namespace FUnity.Core
             }
             else
             {
-                root.style.backgroundImage = StyleBackground.none;
+                root.style.backgroundImage = new StyleBackground();
             }
         }
 
