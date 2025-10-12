@@ -9,27 +9,28 @@ namespace FUnity.Runtime.UI
     /// </summary>
     public class FooniController : MonoBehaviour
     {
-        [SerializeField] private UIDocument uiDocument;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("uiDocument")]
+        private UIDocument m_UIDocument;
 
         public void SetUIDocument(UIDocument doc)
         {
-            uiDocument = doc;
+            m_UIDocument = doc;
         }
 
         // Cached references and animation state
-        private FooniElement _fooni;
-        private bool _floatEnabled = true;
-        private float _amplitude = 10f;   // px
-        private float _periodSec = 3f;    // seconds
-        private float _phase;
+        private FooniElement m_Fooni;
+        private bool m_FloatEnabled = true;
+        private float m_Amplitude = 10f;   // px
+        private float m_PeriodSec = 3f;    // seconds
+        private float m_Phase;
 
-        private IVisualElementScheduledItem _ticker;
+        private IVisualElementScheduledItem m_Ticker;
 
         private void Awake()
         {
             // Ensure UIDocument and root
-            if (!uiDocument) uiDocument = GetComponent<UIDocument>();
-            var root = uiDocument ? uiDocument.rootVisualElement : null;
+            if (!m_UIDocument) m_UIDocument = GetComponent<UIDocument>();
+            var root = m_UIDocument ? m_UIDocument.rootVisualElement : null;
             if (root == null)
             {
                 Debug.LogError("FooniController: UIDocument / rootVisualElement is missing.");
@@ -37,11 +38,11 @@ namespace FUnity.Runtime.UI
             }
 
             // Try get existing FooniElement; if not found, create one
-            _fooni = root.Q<FooniElement>();
-            if (_fooni == null)
+            m_Fooni = root.Q<FooniElement>();
+            if (m_Fooni == null)
             {
-                _fooni = new FooniElement();
-                root.Add(_fooni);
+                m_Fooni = new FooniElement();
+                root.Add(m_Fooni);
                 Debug.Log("FooniController: FooniElement not found. Created a new one.");
             }
 
@@ -50,12 +51,12 @@ namespace FUnity.Runtime.UI
 
         private void OnEnable()
         {
-            if (_fooni != null) StartTicker();
+            if (m_Fooni != null) StartTicker();
         }
 
         private void OnDisable()
         {
-            _ticker?.Pause();
+            m_Ticker?.Pause();
         }
 
         // ===== Visual Scripting APIs (auto-exposed as units) =====
@@ -63,44 +64,44 @@ namespace FUnity.Runtime.UI
         /// <summary>Enable/disable floating animation.</summary>
         public void EnableFloat(bool enabled)
         {
-            _floatEnabled = enabled;
+            m_FloatEnabled = enabled;
 
-            if (!_floatEnabled)
+            if (!m_FloatEnabled)
             {
-                if (_fooni != null)
+                if (m_Fooni != null)
                 {
                     // Reset translation when disabled (visual reset)
-                    _fooni.style.translate = new Translate(0, 0, 0);
+                    m_Fooni.style.translate = new Translate(0, 0, 0);
                 }
-                _ticker?.Pause();
+                m_Ticker?.Pause();
                 return;
             }
 
-            if (_ticker == null)
+            if (m_Ticker == null)
             {
                 StartTicker();
             }
-            _ticker?.Resume();
+            m_Ticker?.Resume();
         }
 
         /// <summary>Set floating amplitude in pixels.</summary>
         public void SetFloatAmplitude(float amplitudePx)
         {
-            _amplitude = Mathf.Max(0f, amplitudePx);
+            m_Amplitude = Mathf.Max(0f, amplitudePx);
         }
 
         /// <summary>Set floating period in seconds.</summary>
         public void SetFloatPeriod(float periodSeconds)
         {
-            _periodSec = Mathf.Max(0.1f, periodSeconds);
+            m_PeriodSec = Mathf.Max(0.1f, periodSeconds);
         }
 
         /// <summary>Nudge vertically by delta pixels (instant add).</summary>
         public void NudgeY(float deltaPx)
         {
-            if (_fooni == null) return;
-            float current = _fooni.resolvedStyle.translate.y;
-            _fooni.style.translate = new Translate(0, current + deltaPx, 0);
+            if (m_Fooni == null) return;
+            float current = m_Fooni.resolvedStyle.translate.y;
+            m_Fooni.style.translate = new Translate(0, current + deltaPx, 0);
         }
 
         /// <summary>Emit a "Fooni/Say" custom event with message for VS graphs.</summary>
@@ -115,19 +116,19 @@ namespace FUnity.Runtime.UI
         // ===== Internal: schedule-based floating =====
         private void StartTicker()
         {
-            _ticker?.Pause();
-            if (_fooni == null) return;
+            m_Ticker?.Pause();
+            if (m_Fooni == null) return;
 
-            _phase = 0f;
-            _ticker = _fooni.schedule.Execute(() =>
+            m_Phase = 0f;
+            m_Ticker = m_Fooni.schedule.Execute(() =>
             {
-                if (!_floatEnabled || _periodSec <= 0f) return;
+                if (!m_FloatEnabled || m_PeriodSec <= 0f) return;
 
-                _phase += Time.deltaTime / _periodSec;
-                if (_phase > 1f) _phase -= 1f;
+                m_Phase += Time.deltaTime / m_PeriodSec;
+                if (m_Phase > 1f) m_Phase -= 1f;
 
-                float offset = Mathf.Sin(_phase * Mathf.PI * 2f) * _amplitude;
-                _fooni.style.translate = new Translate(0, offset, 0);
+                float offset = Mathf.Sin(m_Phase * Mathf.PI * 2f) * m_Amplitude;
+                m_Fooni.style.translate = new Translate(0, offset, 0);
             }).Every(16); // ~60 FPS
         }
     }

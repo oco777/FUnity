@@ -50,9 +50,9 @@ namespace FUnity.EditorTools
             // 5) Ensure FooniController
             var controller = go.GetComponent<FooniController>() ?? Undo.AddComponent<FooniController>(go);
 
-            // 6) Wire controller.uiDocument = doc (SerializedObject is safer for private field)
+            // 6) Wire controller.m_UIDocument = doc (SerializedObject is safer for private field)
             var so = new SerializedObject(controller);
-            var prop = so.FindProperty("uiDocument");
+            var prop = so.FindProperty("m_UIDocument");
             if (prop != null && prop.objectReferenceValue != doc)
             {
                 prop.objectReferenceValue = doc;

@@ -15,7 +15,7 @@ namespace FUnity.UI
 
         public new class UxmlTraits : VisualElement.UxmlTraits
         {
-            private readonly UxmlStringAttributeDescription _textAttribute = new()
+            private readonly UxmlStringAttributeDescription m_TextAttribute = new()
             {
                 name = "text",
                 defaultValue = string.Empty
@@ -27,7 +27,7 @@ namespace FUnity.UI
 
                 if (ve is BlockElement block)
                 {
-                    block.Text = _textAttribute.GetValueFromBag(bag, cc);
+                    block.Text = m_TextAttribute.GetValueFromBag(bag, cc);
                 }
             }
         }
@@ -35,16 +35,16 @@ namespace FUnity.UI
         public static readonly string UssClassName = "block";
         public static readonly string LabelUssClassName = "block__label";
 
-        private readonly Label _label;
+        private readonly Label m_Label;
 
         public string Text
         {
-            get => _label?.text ?? string.Empty;
+            get => m_Label?.text ?? string.Empty;
             set
             {
-                if (_label != null)
+                if (m_Label != null)
                 {
-                    _label.text = value ?? string.Empty;
+                    m_Label.text = value ?? string.Empty;
                 }
             }
         }
@@ -57,15 +57,15 @@ namespace FUnity.UI
             style.justifyContent = Justify.Center;
             style.alignItems = Align.Center;
 
-            _label = new Label
+            m_Label = new Label
             {
                 pickingMode = PickingMode.Ignore
             };
-            _label.AddToClassList(LabelUssClassName);
-            _label.style.unityTextAlign = TextAnchor.MiddleCenter;
-            _label.style.flexGrow = 1f;
+            m_Label.AddToClassList(LabelUssClassName);
+            m_Label.style.unityTextAlign = TextAnchor.MiddleCenter;
+            m_Label.style.flexGrow = 1f;
 
-            Add(_label);
+            Add(m_Label);
         }
     }
 }

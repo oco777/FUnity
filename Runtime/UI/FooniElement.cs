@@ -16,7 +16,7 @@ namespace FUnity.Runtime.UI
         private const string StyleResourcePath = "UI/FooniElement";
         private const string FooniTexturePath = "Characters/Fooni";
         private const string FooniImageName = "fooni-image";
-        private Image _image;
+        private Image m_Image;
 
         // Initializes the element layout and animation.
         public FooniElement()
@@ -53,8 +53,8 @@ namespace FUnity.Runtime.UI
         // Caches the Fooni image element for later updates.
         private void CacheImageElement()
         {
-            _image = this.Q<Image>(name: FooniImageName) ?? this.Q<Image>(className: FooniImageName);
-            if (_image == null)
+            m_Image = this.Q<Image>(name: FooniImageName) ?? this.Q<Image>(className: FooniImageName);
+            if (m_Image == null)
             {
                 Debug.LogWarning("FooniElement: Unable to find Image element with name or class 'fooni-image'.");
             }
@@ -63,7 +63,7 @@ namespace FUnity.Runtime.UI
         // Loads the character texture from the Resources folder.
         private void LoadCharacter()
         {
-            if (_image == null)
+            if (m_Image == null)
             {
                 return;
             }
@@ -75,7 +75,7 @@ namespace FUnity.Runtime.UI
                 return;
             }
 
-            _image.image = texture;
+            m_Image.image = texture;
         }
     }
 }
