@@ -212,17 +212,18 @@ namespace FUnity.Core
             ve.style.left     = data.InitialPosition.x;             // X
             ve.style.top      = data.InitialPosition.y;             // Y
 
-            if (data.Size.x > 0f)
-            {
-                ve.style.width = data.Size.x;
-            }
-
-            if (data.Size.y > 0f)
-            {
-                ve.style.height = data.Size.y;
-            }
-
             // Inline sizing wins against USS. Prevent flex layout overrides.
+            var _size = data.Size;
+            if (_size.x > 0f)
+                ve.style.width = _size.x;
+            else
+                ve.style.width = StyleKeyword.Auto;
+
+            if (_size.y > 0f)
+                ve.style.height = _size.y;
+            else
+                ve.style.height = StyleKeyword.Auto;
+
             ve.style.flexGrow = 0f;
             ve.style.flexShrink = 0f;
 
