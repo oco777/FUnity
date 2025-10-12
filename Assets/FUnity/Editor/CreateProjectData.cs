@@ -23,9 +23,13 @@ namespace FUnity.EditorTools
             var stagePath = $"{dir}/FUnityStageData.asset";
             AssetDatabase.CreateAsset(stage, stagePath);
 
-            var actor = ScriptableObject.CreateInstance<FUnityActorData>();
-            var actorPath = $"{dir}/FUnityActorData_Fooni.asset";
-            AssetDatabase.CreateAsset(actor, actorPath);
+            var actor = ConfigureFooniActorData();
+
+            var duplicateActorPath = $"{dir}/FUnityActorData_Fooni.asset";
+            if (AssetDatabase.LoadAssetAtPath<FUnityActorData>(duplicateActorPath) != null)
+            {
+                AssetDatabase.DeleteAsset(duplicateActorPath);
+            }
 
             var so = new SerializedObject(project);
             so.FindProperty("m_stage").objectReferenceValue = stage;
@@ -35,17 +39,17 @@ namespace FUnity.EditorTools
             actorsProp.GetArrayElementAtIndex(0).objectReferenceValue = actor;
             so.ApplyModifiedProperties();
 
-            ConfigureFooniActorData();
+            Debug.Log("[FUnity] Default Project Data: FUnityActorData_Fooni configured.");
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             Selection.activeObject = project;
 
-            Debug.Log("✅ Created & linked: FUnityProjectData + Stage/Actor assets under Assets/Resources");
+            Debug.Log("✅ Created & linked: Project/Stage assets under Assets/Resources, actor under Assets/FUnity/Data/Actors");
         }
 
-        private static void ConfigureFooniActorData()
+        private static FUnityActorData ConfigureFooniActorData()
         {
             EnsureFolder("Assets/FUnity");
             EnsureFolder("Assets/FUnity/Data");
@@ -83,7 +87,7 @@ namespace FUnity.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(actorObj);
 
-            Debug.Log("[FUnity] Default Project Data: FUnityActorData_Fooni configured.");
+            return actorObj;
         }
 
         private static void EnsureFolder(string path)
