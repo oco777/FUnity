@@ -50,13 +50,6 @@ namespace FUnity.EditorTools
                 AssetDatabase.CreateAsset(panel, panelPath);
             }
 
-            // 3) PanelSettings に Theme を積む（重複チェック）
-            if (panel != null && theme != null && panel.themeStyleSheets != null && !panel.themeStyleSheets.Contains(theme))
-            {
-                panel.themeStyleSheets.Add(theme);
-                EditorUtility.SetDirty(panel);
-            }
-
             /* ---- Stage の BackgroundImage を設定（最小差分） ---- */
             var bgTex = LoadFirst<Texture2D>(new[]
             {
