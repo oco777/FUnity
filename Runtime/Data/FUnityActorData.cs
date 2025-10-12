@@ -16,6 +16,7 @@ namespace FUnity.Runtime.Core
         [SerializeField] private StyleSheet m_ElementStyle;
 
         [Header("Layout")]
+        [Tooltip("Actor element size in pixels. Set 0 or negative to defer to USS/UXML.")]
         [SerializeField] private Vector2 m_size = new Vector2(128, 128);
 
         public string DisplayName => m_displayName;
