@@ -52,6 +52,65 @@ namespace FUnity.Core
 #endif
         }
 
+        private void Start()
+        {
+            // Resolve UIDocument
+            var doc = m_UIDocument != null ? m_UIDocument : GetComponent<UIDocument>();
+            if (doc == null)
+            {
+                Debug.LogError("[FUnity] UIDocument not found on FUnityManager GameObject.");
+                return;
+            }
+
+            var root = doc.rootVisualElement;
+            if (root == null)
+            {
+                Debug.LogError("[FUnity] UIDocument.rootVisualElement returned null.");
+                return;
+            }
+
+            // Resolve ProjectData
+            if (m_Project == null)
+            {
+                m_Project = Resources.Load<FUnityProjectData>("FUnityProjectData");
+            }
+
+            if (m_Project == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityProjectData not found. Skipping Project-driven UI setup.");
+                return;
+            }
+
+            // Apply Stage
+            ApplyStage(root, m_Project.Stage);
+
+            // Create & add actors
+            if (m_Project.Actors != null)
+            {
+                foreach (var actor in m_Project.Actors)
+                {
+                    if (actor == null)
+                    {
+                        Debug.LogWarning("[FUnity] Encountered null actor entry in ProjectData.");
+                        continue;
+                    }
+
+                    var actorVE = CreateActorElement(actor);
+                    if (actorVE != null)
+                    {
+                        root.Add(actorVE);
+                        AttachControllerIfNeeded(actorVE, actor);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[FUnity] Failed to create actor element for '{actor.DisplayName}'.");
+                    }
+                }
+            }
+
+            Debug.Log($"[FUnity] Project-driven load completed. Actors={(m_Project.Actors?.Count ?? 0)}");
+        }
+
         private void EnsureFUnityUI()
         {
             m_FUnityUI = GameObject.Find("FUnity UI");
@@ -102,6 +161,87 @@ namespace FUnity.Core
 #endif
 
             return null;
+        }
+
+        private void ApplyStage(VisualElement root, FUnityStageData stage)
+        {
+            if (root == null || stage == null)
+            {
+                return;
+            }
+
+            root.style.backgroundColor = stage.BackgroundColor;
+        }
+
+        private VisualElement CreateActorElement(FUnityActorData data)
+        {
+            if (data == null)
+            {
+                return null;
+            }
+
+            var element = new FooniElement
+            {
+                name = string.IsNullOrEmpty(data.DisplayName) ? "FUnityActor" : data.DisplayName
+            };
+
+            if (data.Portrait != null)
+            {
+                element.style.backgroundImage = new StyleBackground(data.Portrait);
+            }
+
+            element.style.width = 128;
+            element.style.height = 128;
+            element.style.translate = new Translate(data.InitialPosition.x, data.InitialPosition.y, 0f);
+
+            return element;
+        }
+
+        private void AttachControllerIfNeeded(VisualElement actorVE, FUnityActorData data)
+        {
+            if (actorVE == null)
+            {
+                return;
+            }
+
+            FooniController controller = null;
+
+            if (m_UIDocument != null)
+            {
+                controller = m_UIDocument.GetComponent<FooniController>();
+            }
+
+            if (controller == null && m_FUnityUI != null)
+            {
+                controller = m_FUnityUI.GetComponent<FooniController>();
+            }
+
+            if (controller == null)
+            {
+                var go = GameObject.Find("FUnity UI");
+                if (go != null)
+                {
+                    controller = go.GetComponent<FooniController>();
+                }
+            }
+
+            if (controller == null)
+            {
+                Debug.LogWarning("[FUnity] FooniController not found. Actor binding skipped.");
+                return;
+            }
+
+            if (controller.BoundElement != null && controller.BoundElement != actorVE)
+            {
+                Debug.LogWarning("[FUnity] FooniController already bound to another element. Rebinding to the latest actor.");
+            }
+
+            controller.BindActorElement(actorVE);
+
+            if (data != null)
+            {
+                controller.EnableFloat(data.FloatAnimation);
+            }
         }
 
 #if UNITY_VISUAL_SCRIPTING
