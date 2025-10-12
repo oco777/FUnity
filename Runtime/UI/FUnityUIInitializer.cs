@@ -167,28 +167,13 @@ namespace FUnity.Runtime.UI
             Debug.Log("🧱 FUnityUIInitializer: Block palette spawned.");
         }
 
-#if UNITY_2023_2_OR_NEWER
-        // NOTE: UI Toolkit's IStyle.gap is available only in Unity 2023.2 and newer.
+        // NOTE: We don't call IStyle.gap at all to avoid compile-time dependency across versions.
         private static void SetChildrenGap(VisualElement parent, float gap)
         {
             if (parent == null)
             {
                 return;
             }
-
-            parent.style.gap = gap;
-        }
-#else
-        // NOTE: UI Toolkit's IStyle.gap is unavailable prior to Unity 2023.2, so emulate spacing via margins.
-        private static void SetChildrenGap(VisualElement parent, float gap)
-        {
-            if (parent == null)
-            {
-                return;
-            }
-
-            int index = 0;
-            int childCount = parent.childCount;
 
             foreach (var child in parent.Children())
             {
@@ -196,18 +181,24 @@ namespace FUnity.Runtime.UI
                 child.style.marginRight = 0f;
                 child.style.marginTop = 0f;
                 child.style.marginBottom = 0f;
+            }
 
-                var direction = parent.style.flexDirection.value;
-                bool isRow = direction == FlexDirection.Row || direction == FlexDirection.RowReverse;
+            var direction = parent.style.flexDirection.value;
+            bool isRow = direction == FlexDirection.Row || direction == FlexDirection.RowReverse;
 
+            int index = 0;
+            int childCount = parent.childCount;
+            foreach (var child in parent.Children())
+            {
+                bool isLast = index == childCount - 1;
                 if (isRow)
                 {
-                    if (index < childCount - 1)
+                    if (!isLast)
                     {
                         child.style.marginRight = gap;
                     }
                 }
-                else if (index < childCount - 1)
+                else if (!isLast)
                 {
                     child.style.marginBottom = gap;
                 }
@@ -215,7 +206,6 @@ namespace FUnity.Runtime.UI
                 index++;
             }
         }
-#endif
 
         private void OnValidate()
         {
