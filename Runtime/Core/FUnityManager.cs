@@ -171,6 +171,17 @@ namespace FUnity.Core
             }
 
             root.style.backgroundColor = stage.BackgroundColor;
+
+            var texture = stage.BackgroundImage;
+            if (texture != null)
+            {
+                root.style.backgroundImage = new StyleBackground(texture);
+                root.style.unityBackgroundScaleMode = stage.BackgroundScale;
+            }
+            else
+            {
+                root.style.backgroundImage = StyleBackground.none;
+            }
         }
 
         private VisualElement CreateActorElement(FUnityActorData data)
