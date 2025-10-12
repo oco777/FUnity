@@ -11,6 +11,11 @@ namespace FUnity.Runtime.UI
     {
         [SerializeField] private UIDocument uiDocument;
 
+        public void SetUIDocument(UIDocument doc)
+        {
+            uiDocument = doc;
+        }
+
         // Cached references and animation state
         private FooniElement _fooni;
         private bool _floatEnabled = true;

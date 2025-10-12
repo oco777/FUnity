@@ -2,7 +2,10 @@
     "name": "FUnity.Runtime",
     "rootNamespace": "FUnity",
     "references": [
-        "UnityEngine.UIElementsModule"
+        "UnityEngine.UIElementsModule",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow",
+        "Unity.VisualScripting.State"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
