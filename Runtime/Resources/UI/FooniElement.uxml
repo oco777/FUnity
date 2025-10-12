@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
-    <ui:VisualElement class="fooni-container">
-        <ui:Image class="fooni-image" />
+    <ui:VisualElement name="root" class="actor fooni-container">
+        <ui:VisualElement name="portrait" class="portrait fooni-image" />
     </ui:VisualElement>
 </ui:UXML>
