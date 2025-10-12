@@ -82,7 +82,7 @@ namespace FUnity.Runtime.UI
         public void NudgeY(float deltaPx)
         {
             if (_fooni == null) return;
-            var current = _fooni.resolvedStyle.translate.y.value;
+            float current = _fooni.resolvedStyle.translate.y;
             _fooni.style.translate = new Translate(0, current + deltaPx, 0);
         }
 
