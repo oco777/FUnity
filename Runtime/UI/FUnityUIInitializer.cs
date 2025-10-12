@@ -138,7 +138,7 @@ namespace FUnity.Runtime.UI
             paletteContainer.style.paddingTop = 8f;
             paletteContainer.style.paddingBottom = 8f;
             paletteContainer.contentContainer.style.flexDirection = FlexDirection.Column;
-            paletteContainer.contentContainer.style.gap = 6f;
+            SetChildrenGap(paletteContainer.contentContainer, 6f);
 
             var paletteSource = loadProfile != null && loadProfile.BlockPalette != null && loadProfile.BlockPalette.Count > 0
                 ? loadProfile.BlockPalette
@@ -166,6 +166,56 @@ namespace FUnity.Runtime.UI
             root.Add(paletteContainer);
             Debug.Log("🧱 FUnityUIInitializer: Block palette spawned.");
         }
+
+#if UNITY_2023_2_OR_NEWER
+        // NOTE: UI Toolkit's IStyle.gap is available only in Unity 2023.2 and newer.
+        private static void SetChildrenGap(VisualElement parent, float gap)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            parent.style.gap = gap;
+        }
+#else
+        // NOTE: UI Toolkit's IStyle.gap is unavailable prior to Unity 2023.2, so emulate spacing via margins.
+        private static void SetChildrenGap(VisualElement parent, float gap)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            int index = 0;
+            int childCount = parent.childCount;
+
+            foreach (var child in parent.Children())
+            {
+                child.style.marginLeft = 0f;
+                child.style.marginRight = 0f;
+                child.style.marginTop = 0f;
+                child.style.marginBottom = 0f;
+
+                var direction = parent.style.flexDirection.value;
+                bool isRow = direction == FlexDirection.Row || direction == FlexDirection.RowReverse;
+
+                if (isRow)
+                {
+                    if (index < childCount - 1)
+                    {
+                        child.style.marginRight = gap;
+                    }
+                }
+                else if (index < childCount - 1)
+                {
+                    child.style.marginBottom = gap;
+                }
+
+                index++;
+            }
+        }
+#endif
 
         private void OnValidate()
         {
