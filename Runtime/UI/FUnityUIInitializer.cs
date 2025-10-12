@@ -2,12 +2,22 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+using FUnity.UI;
+
 namespace FUnity.Runtime.UI
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(UIDocument))]
     public class FUnityUIInitializer : MonoBehaviour
     {
+        // Provides fallback block labels when a profile does not define any.
+        private static readonly string[] DefaultBlockPalette =
+        {
+            "when green flag clicked",
+            "move 10 steps",
+            "say \"Hello!\""
+        };
+
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("uiDocument")]
         private UIDocument m_UIDocument;
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("profile")]
@@ -77,7 +87,7 @@ namespace FUnity.Runtime.UI
 
             if (loadProfile.spawnBlocks)
             {
-                Debug.LogWarning("[FUnityUIInitializer] Block UI spawning is not implemented yet.");
+                SpawnBlocks(root, loadProfile);
             }
 
             Debug.Log("✅ FUnityUIInitializer: UI loaded via UILoadProfile.");
@@ -107,6 +117,54 @@ namespace FUnity.Runtime.UI
 
             root.Add(new FooniElement());
             Debug.Log("🌈 FUnityUIInitializer: FooniElement spawned via fallback.");
+        }
+
+        private static void SpawnBlocks(VisualElement root, UILoadProfile loadProfile)
+        {
+            // Spawn a lightweight block palette so profiles can show sample blocks immediately.
+            if (root == null)
+            {
+                return;
+            }
+
+            var paletteContainer = new ScrollView
+            {
+                name = "funity-block-palette",
+                verticalScrollerVisibility = ScrollerVisibility.Auto
+            };
+            paletteContainer.AddToClassList("funity-block-palette");
+            paletteContainer.style.paddingLeft = 12f;
+            paletteContainer.style.paddingRight = 12f;
+            paletteContainer.style.paddingTop = 8f;
+            paletteContainer.style.paddingBottom = 8f;
+            paletteContainer.contentContainer.style.flexDirection = FlexDirection.Column;
+            paletteContainer.contentContainer.style.gap = 6f;
+
+            var paletteSource = loadProfile != null && loadProfile.BlockPalette != null && loadProfile.BlockPalette.Count > 0
+                ? loadProfile.BlockPalette
+                : DefaultBlockPalette;
+
+            foreach (var blockLabel in paletteSource)
+            {
+                if (string.IsNullOrWhiteSpace(blockLabel))
+                {
+                    continue;
+                }
+
+                var block = new BlockElement();
+                block.Text = blockLabel.Trim();
+                paletteContainer.Add(block);
+            }
+
+            if (paletteContainer.contentContainer.childCount == 0)
+            {
+                var fallbackBlock = new BlockElement();
+                fallbackBlock.Text = "Block";
+                paletteContainer.Add(fallbackBlock);
+            }
+
+            root.Add(paletteContainer);
+            Debug.Log("🧱 FUnityUIInitializer: Block palette spawned.");
         }
 
         private void OnValidate()
