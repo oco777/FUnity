@@ -175,43 +175,42 @@ namespace FUnity.Core
 
         private VisualElement CreateActorElement(FUnityActorData data)
         {
-            if (data == null)
-            {
-                return null;
-            }
+            if (data == null) return null;
 
-            VisualElement element = null;
+            VisualElement ve = null;
 
+            // UXML 優先。無ければ FooniElement をフォールバック
             if (data.ElementUxml != null)
             {
-                element = data.ElementUxml.Instantiate();
-
+                ve = data.ElementUxml.Instantiate();
                 if (data.ElementStyle != null)
-                {
-                    element.styleSheets.Add(data.ElementStyle);
-                }
+                    ve.styleSheets.Add(data.ElementStyle);
             }
             else
             {
-                element = new FooniElement();
+                ve = new FooniElement();
             }
 
-            var portraitTarget = element.Q<VisualElement>("portrait") ?? element;
+            // 画像設定（UXML に name="portrait" の子があればそこへ、無ければ要素自体）
+            var portraitTarget = ve.Q<VisualElement>("portrait") ?? ve;
             if (data.Portrait != null)
-            {
                 portraitTarget.style.backgroundImage = new StyleBackground(data.Portrait);
-            }
 
-            element.style.translate = new Translate(data.InitialPosition.x, data.InitialPosition.y);
+            // ★ translate ではなく、絶対配置で座標指定
+            ve.style.position = Position.Absolute;                  // レイアウトから切り離す
+            ve.style.left     = data.InitialPosition.x;             // X
+            ve.style.top      = data.InitialPosition.y;             // Y
 
+            // サイズが必要であれば（UXML/USS側で指定済みなら不要）
+            // ve.style.width  = 128;
+            // ve.style.height = 128;
+
+            // 識別用
+            ve.AddToClassList("actor");
             if (!string.IsNullOrEmpty(data.DisplayName))
-            {
-                element.name = data.DisplayName;
-            }
+                ve.name = data.DisplayName;
 
-            element.AddToClassList("actor");
-
-            return element;
+            return ve;
         }
 
         private void AttachControllerIfNeeded(VisualElement actorVE, FUnityActorData data)
