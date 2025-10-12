@@ -11,16 +11,33 @@ namespace FUnity.EditorTools
         [MenuItem("FUnity/Create/Default Project Data")]
         public static void CreateDefault()
         {
-            const string directory = "Assets/Resources";
-            const string assetPath = directory + "/FUnityProjectData.asset";
-            Directory.CreateDirectory(directory);
+            const string dir = "Assets/Resources";
+            Directory.CreateDirectory(dir);
 
-            var asset = ScriptableObject.CreateInstance<FUnityProjectData>();
-            AssetDatabase.CreateAsset(asset, assetPath);
+            var project = ScriptableObject.CreateInstance<FUnityProjectData>();
+            var projectPath = $"{dir}/FUnityProjectData.asset";
+            AssetDatabase.CreateAsset(project, projectPath);
+
+            var stage = ScriptableObject.CreateInstance<FUnityStageData>();
+            var stagePath = $"{dir}/FUnityStageData.asset";
+            AssetDatabase.CreateAsset(stage, stagePath);
+
+            var actor = ScriptableObject.CreateInstance<FUnityActorData>();
+            var actorPath = $"{dir}/FUnityActorData_Fooni.asset";
+            AssetDatabase.CreateAsset(actor, actorPath);
+
+            var so = new SerializedObject(project);
+            so.FindProperty("m_stage").objectReferenceValue = stage;
+
+            var actorsProp = so.FindProperty("m_actors");
+            actorsProp.arraySize = 1;
+            actorsProp.GetArrayElementAtIndex(0).objectReferenceValue = actor;
+            so.ApplyModifiedProperties();
+
             AssetDatabase.SaveAssets();
-            Selection.activeObject = asset;
+            Selection.activeObject = project;
 
-            Debug.Log($"✅ Created: {assetPath}");
+            Debug.Log("✅ Created & linked: FUnityProjectData + Stage/Actor assets under Assets/Resources");
         }
     }
 }
