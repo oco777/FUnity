@@ -184,53 +184,87 @@ namespace FUnity.Core
             }
         }
 
-        private VisualElement CreateActorElement(FUnityActorData data)
+        private VisualElement CreateActorElement(FUnityActorData actor)
         {
-            if (data == null) return null;
+            if (actor == null)
+            {
+                return null;
+            }
 
             VisualElement ve = null;
 
-            // UXML 優先。無ければ FooniElement をフォールバック
-            if (data.ElementUxml != null)
+            if (actor.ElementUxml != null)
             {
-                ve = data.ElementUxml.Instantiate();
-                if (data.ElementStyle != null)
-                    ve.styleSheets.Add(data.ElementStyle);
+                ve = actor.ElementUxml.Instantiate();
             }
             else
             {
                 ve = new FooniElement();
             }
 
-            // 画像設定（UXML に name="portrait" の子があればそこへ、無ければ要素自体）
-            var portraitTarget = ve.Q<VisualElement>("portrait") ?? ve;
-            if (data.Portrait != null)
-                portraitTarget.style.backgroundImage = new StyleBackground(data.Portrait);
+            if (ve == null)
+            {
+                return null;
+            }
 
-            // ★ translate ではなく、絶対配置で座標指定
-            ve.style.position = Position.Absolute;                  // レイアウトから切り離す
-            ve.style.left     = data.InitialPosition.x;             // X
-            ve.style.top      = data.InitialPosition.y;             // Y
+            if (actor.ElementStyle != null)
+            {
+                ve.styleSheets.Add(actor.ElementStyle);
+            }
 
-            // Inline sizing wins against USS. Prevent flex layout overrides.
-            var _size = data.Size;
-            if (_size.x > 0f)
-                ve.style.width = _size.x;
+            var root = ve.Q<VisualElement>("root");
+            var portrait = root != null
+                ? root.Q<VisualElement>("portrait")
+                : null;
+
+            if (portrait == null)
+            {
+                portrait = ve.Q<VisualElement>("portrait");
+            }
+
+            if (portrait != null && actor.Portrait != null)
+            {
+                portrait.style.backgroundImage = Background.FromTexture2D(actor.Portrait);
+            }
+
+            if (root != null)
+            {
+                var size = actor.Size;
+                if (size.x > 0f)
+                {
+                    root.style.width = size.x;
+                }
+                else
+                {
+                    root.style.width = StyleKeyword.Auto;
+                }
+
+                if (size.y > 0f)
+                {
+                    root.style.height = size.y;
+                }
+                else
+                {
+                    root.style.height = StyleKeyword.Auto;
+                }
+
+                root.style.flexGrow = 0f;
+                root.style.flexShrink = 0f;
+                root.AddToClassList("actor");
+                ve.AddToClassList("actor");
+            }
             else
-                ve.style.width = StyleKeyword.Auto;
+            {
+                ve.AddToClassList("actor");
+            }
 
-            if (_size.y > 0f)
-                ve.style.height = _size.y;
-            else
-                ve.style.height = StyleKeyword.Auto;
+            ve.style.position = Position.Absolute;
+            ve.style.translate = new Translate(actor.InitialPosition.x, actor.InitialPosition.y);
 
-            ve.style.flexGrow = 0f;
-            ve.style.flexShrink = 0f;
-
-            // 識別用
-            ve.AddToClassList("actor");
-            if (!string.IsNullOrEmpty(data.DisplayName))
-                ve.name = data.DisplayName;
+            if (string.IsNullOrEmpty(ve.name) && !string.IsNullOrEmpty(actor.DisplayName))
+            {
+                ve.name = actor.DisplayName;
+            }
 
             return ve;
         }
