@@ -1,6 +1,5 @@
-# FUnity (package) code style
-# Place this file at the repository root so it cascades into Runtime/, Editor/, Tests/, etc.
-
+# FUnity code style (applies to this repository)
+# Place this file at the Unity project root (next to Assets/, Packages/, ProjectSettings/, Runtime/).
 root = true
 
 [*.cs]
@@ -31,7 +30,7 @@ dotnet_naming_symbols.private_fields.applicable_modifiers       =
 dotnet_naming_style.m_prefix_style.required_prefix = m_
 dotnet_naming_style.m_prefix_style.capitalization = pascal_case
 
-# Public members should be PascalCase (fields/properties/methods/events)
+# Public members should be PascalCase
 dotnet_naming_rule.public_members_pascal.severity = suggestion
 dotnet_naming_rule.public_members_pascal.symbols  = public_members
 dotnet_naming_rule.public_members_pascal.style    = pascal_style
@@ -44,7 +43,6 @@ dotnet_naming_style.pascal_style.capitalization = pascal_case
 dotnet_naming_rule.constants_pascal.severity = suggestion
 dotnet_naming_rule.constants_pascal.symbols  = constant_fields
 dotnet_naming_rule.constants_pascal.style    = pascal_style
-
 dotnet_naming_symbols.constant_fields.applicable_kinds = field
 dotnet_naming_symbols.constant_fields.applicable_accessibilities = *
 dotnet_naming_symbols.constant_fields.required_modifiers = const
@@ -53,12 +51,10 @@ dotnet_naming_symbols.constant_fields.required_modifiers = const
 dotnet_naming_rule.static_ro_pascal.severity = suggestion
 dotnet_naming_rule.static_ro_pascal.symbols  = static_readonly_fields
 dotnet_naming_rule.static_ro_pascal.style    = pascal_style
-
 dotnet_naming_symbols.static_readonly_fields.applicable_kinds = field
 dotnet_naming_symbols.static_readonly_fields.applicable_accessibilities = *
 dotnet_naming_symbols.static_readonly_fields.required_modifiers = static, readonly
 
-# ===== Documentation (optional if StyleCop installed) =====
-# Encourage XML docs for public APIs
+# (Optional) Encourage XML docs for public APIs (if StyleCop installed)
 dotnet_diagnostic.SA1600.severity = suggestion
 dotnet_diagnostic.SA1604.severity = suggestion
