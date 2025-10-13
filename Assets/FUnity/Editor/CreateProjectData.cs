@@ -24,31 +24,32 @@ namespace FUnity.EditorTools
             var stagePath = $"{dir}/FUnityStageData.asset";
             AssetDatabase.CreateAsset(stage, stagePath);
 
-            // ---- Ensure UnityDefaultRuntimeTheme.uss (write correct USS text and reimport) ----
+            // ---- Ensure theme (prefer legacy UI Toolkit path; otherwise generate canonical) ----
             EnsureFolder("Assets/FUnity");
             EnsureFolder("Assets/FUnity/UI");
             EnsureFolder("Assets/FUnity/UI/USS");
 
+            const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss";
             const string CanonicalThemePath = "Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss";
-            const string LegacyThemeDir = "Assets/UI Toolkit/UnityThemes";
-            const string LegacyThemePath = LegacyThemeDir + "/UnityDefaultRuntimeTheme.uss";
 
-            var themeUssPath = CanonicalThemePath;
-            var needWrite = true;
-
-            if (File.Exists(themeUssPath))
+            // 1) レガシー（UI Builder 既定）側があればそれを使う
+            StyleSheet theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
+            if (theme == null)
             {
-                var firstLines = File.ReadLines(themeUssPath).Take(3).ToArray();
-                var content = File.ReadAllText(themeUssPath).Trim();
-                if (!firstLines.Any(l => l.TrimStart().StartsWith("---")) && !string.IsNullOrEmpty(content))
+                // 2) 無ければ FUnity 側のテーマファイルを確保（内容が壊れていたら上書き）
+                var needWrite = true;
+                if (File.Exists(CanonicalThemePath))
                 {
-                    needWrite = false;
+                    var firstLines = File.ReadLines(CanonicalThemePath).Take(3).ToArray();
+                    var content = File.ReadAllText(CanonicalThemePath).Trim();
+                    if (!firstLines.Any(l => l.TrimStart().StartsWith("---")) && !string.IsNullOrEmpty(content))
+                    {
+                        needWrite = false;
+                    }
                 }
-            }
-
-            if (needWrite)
-            {
-                var ussText = @"/* Unity Default Runtime Theme (safe minimal)
+                if (needWrite)
+                {
+                    var ussText = @"/* Unity Default Runtime Theme (safe minimal)
    - No YAML front matter, no unsupported at-rules.
    - Avoids shorthand traps; uses explicit px where needed.
    - Keep it minimal; project-specific styles can be layered later.
@@ -77,51 +78,36 @@ Button {
     -unity-background-scale-mode: scale-to-fit;
 }
 ";
-
-                File.WriteAllText(themeUssPath, ussText, System.Text.Encoding.UTF8);
-                AssetDatabase.ImportAsset(themeUssPath);
+                    File.WriteAllText(CanonicalThemePath, ussText, System.Text.Encoding.UTF8);
+                    AssetDatabase.ImportAsset(CanonicalThemePath);
+                }
+                theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(CanonicalThemePath);
+                if (theme == null)
+                {
+                    Debug.LogWarning("[FUnity] UnityDefaultRuntimeTheme.uss could not be loaded.");
+                }
             }
 
-            // ---- Remove duplicate theme under 'Assets/UI Toolkit/UnityThemes' if exists ----
-            var legacyTheme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
-            if (legacyTheme != null)
-            {
-                AssetDatabase.DeleteAsset(LegacyThemePath);
-                TryDeleteIfEmpty(LegacyThemeDir);
-                TryDeleteIfEmpty("Assets/UI Toolkit");
-            }
-
-            // 以降は必ず CanonicalThemePath を基準に Load して使う
-            var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(CanonicalThemePath);
-            if (theme == null)
-            {
-                Debug.LogWarning("[FUnity] UnityDefaultRuntimeTheme.uss could not be loaded after write.");
-            }
-
-            // ---- Ensure PanelSettings (auto-create if not exists) ----
-            var panelPath = "Assets/FUnity/UI/FUnityPanelSettings.asset";
-            var panel = AssetDatabase.LoadAssetAtPath<PanelSettings>(panelPath);
+            // ---- Ensure PanelSettings asset ----
+            const string PanelPath = "Assets/FUnity/UI/FUnityPanelSettings.asset";
+            var panel = AssetDatabase.LoadAssetAtPath<PanelSettings>(PanelPath);
             if (panel == null)
             {
                 panel = ScriptableObject.CreateInstance<PanelSettings>();
-                // 任意の初期値（必要なら）
-                //  panel.scaleMode = PanelScaleMode.ScaleWithScreenSize; // 既定のままでOKならコメントのまま
-                AssetDatabase.CreateAsset(panel, panelPath);
+                AssetDatabase.CreateAsset(panel, PanelPath);
             }
 
-            // ---- Assign Theme to PanelSettings if the API exposes it ----
+            // ---- Assign theme to PanelSettings (SerializedObject for API differences) ----
             if (panel != null && theme != null)
             {
                 var soPanel = new SerializedObject(panel);
                 SerializedProperty themeProp = null;
 
-                // 候補 1: 配列 themeStyleSheets（新API系）
+                // 候補 1: 配列 themeStyleSheets（新API）
                 themeProp = soPanel.FindProperty("themeStyleSheets");
-
-                // 候補 2: 内部名 m_ThemeStyleSheets（バージョン差異対策）
+                // 候補 2: 内部名 m_ThemeStyleSheets（差異対策）
                 if (themeProp == null) themeProp = soPanel.FindProperty("m_ThemeStyleSheets");
-
-                // 候補 3: 単数 themeStyleSheet（旧API系; ObjectRef）
+                // 候補 3: 単数 themeStyleSheet（旧API）
                 if (themeProp == null) themeProp = soPanel.FindProperty("themeStyleSheet");
 
                 var assigned = false;
@@ -129,7 +115,7 @@ Button {
                 {
                     if (themeProp.propertyType == SerializedPropertyType.ObjectReference)
                     {
-                        // 単数フィールドに代入
+                        // 単数フィールド
                         if (themeProp.objectReferenceValue != theme)
                         {
                             themeProp.objectReferenceValue = theme;
@@ -142,47 +128,33 @@ Button {
                         bool exists = false;
                         for (int i = 0; i < themeProp.arraySize; i++)
                         {
-                            var elementProp = themeProp.GetArrayElementAtIndex(i);
-                            if (elementProp != null && elementProp.objectReferenceValue == theme)
-                            {
-                                exists = true;
-                                break;
-                            }
+                            var e = themeProp.GetArrayElementAtIndex(i);
+                            if (e != null && e.objectReferenceValue == theme) { exists = true; break; }
                         }
                         if (!exists)
                         {
                             int idx = themeProp.arraySize;
                             themeProp.InsertArrayElementAtIndex(idx);
                             var newElement = themeProp.GetArrayElementAtIndex(idx);
-                            if (newElement != null)
-                            {
-                                newElement.objectReferenceValue = theme;
-                            }
+                            if (newElement != null) newElement.objectReferenceValue = theme;
                             assigned = true;
                         }
                     }
-
                     if (assigned)
                     {
                         soPanel.ApplyModifiedPropertiesWithoutUndo();
                         EditorUtility.SetDirty(panel);
-                        Debug.Log("[FUnity] UnityDefaultRuntimeTheme assigned to PanelSettings.");
+                        Debug.Log("[FUnity] UnityDefaultRuntimeTheme assigned to FUnityPanelSettings.");
                     }
                     else
                     {
-                        Debug.Log("[FUnity] PanelSettings theme already set or unchanged.");
+                        Debug.Log("[FUnity] FUnityPanelSettings theme already set or unchanged.");
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("[FUnity] PanelSettings does not expose a theme field. Falling back to UILoadProfile.uss.");
-                    TryAddThemeToUILoadProfile(theme); // フォールバック
+                    Debug.LogWarning("[FUnity] PanelSettings does not expose a theme field; skipping assignment.");
                 }
-            }
-            else if (theme != null)
-            {
-                // PanelSettings が取得できなかった場合でもフォールバックしておく
-                TryAddThemeToUILoadProfile(theme);
             }
 
             /* ---- Stage の BackgroundImage を設定（最小差分） ---- */
@@ -337,55 +309,7 @@ Button {
             return null;
         }
 
-        private static void TryAddThemeToUILoadProfile(StyleSheet theme)
-        {
-            if (theme == null) return;
-
-            // 既定プロファイル候補
-            var profilePath = "Assets/FUnity/Configs/UIProfiles/UIProfile_Default.asset";
-            var profile = AssetDatabase.LoadAssetAtPath<FUnity.Runtime.UI.UILoadProfile>(profilePath);
-            if (profile == null)
-            {
-                // なければ検索
-                var guid = AssetDatabase.FindAssets("t:FUnity.Runtime.UI.UILoadProfile").FirstOrDefault();
-                if (!string.IsNullOrEmpty(guid))
-                {
-                    var path = AssetDatabase.GUIDToAssetPath(guid);
-                    profile = AssetDatabase.LoadAssetAtPath<FUnity.Runtime.UI.UILoadProfile>(path);
-                }
-            }
-
-            if (profile == null)
-            {
-                Debug.LogWarning("[FUnity] UILoadProfile not found. Theme will not be auto-applied.");
-                return;
-            }
-
-            if (profile.uss == null)
-            {
-                Debug.LogWarning("[FUnity] UILoadProfile.uss list is null. Theme will not be auto-applied.");
-                return;
-            }
-
-            if (!profile.uss.Contains(theme))
-            {
-                profile.uss.Add(theme);
-                EditorUtility.SetDirty(profile);
-                AssetDatabase.SaveAssets();
-                Debug.Log("[FUnity] UnityDefaultRuntimeTheme added to UILoadProfile.uss (fallback).");
-            }
-        }
-
-        private static void TryDeleteIfEmpty(string folderPath)
-        {
-            if (!AssetDatabase.IsValidFolder(folderPath)) return;
-
-            var guids = AssetDatabase.FindAssets(string.Empty, new[] { folderPath });
-            if (guids == null || guids.Length == 0)
-            {
-                AssetDatabase.DeleteAsset(folderPath);
-            }
-        }
+        
     }
 }
 #endif
