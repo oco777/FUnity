@@ -7,13 +7,22 @@ using UnityEditor;
 
 namespace FUnity.UI
 {
+    /// <summary>
+    /// ランタイム開始前に PanelSettings を Resources から確保し、Editor 時はテーマ割当まで自動化する。
+    /// UNITY_EDITOR 外でも参照できるよう ScriptableObject を生成済みに保つ。
+    /// </summary>
     public static class PanelSettingsInitializer
     {
         private const string ResourceName = "FUnityPanelSettings";
+        // Resources 配下に常駐させるため、Assets/Resources を基準に正規パスを構築する。
         private static readonly string ResourceDirectory = Path.Combine("Assets", "Resources");
         private static readonly string AssetPath = Path.Combine(ResourceDirectory, ResourceName + ".asset");
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        /// <summary>
+        /// 実行前に PanelSettings をロードし、存在しない場合は生成・保存まで行う。
+        /// Editor 環境では UI Builder 既定テーマを割り当て、UI Document へ一括配布する。
+        /// </summary>
         public static void EnsurePanelSettings()
         {
             var panelSettings = Resources.Load<PanelSettings>(ResourceName);
@@ -23,6 +32,7 @@ namespace FUnity.UI
 #if UNITY_EDITOR
                 if (!Directory.Exists(ResourceDirectory))
                 {
+                    // 既存プロジェクトに Resources が無いケースを想定し、書き込み前に生成する。
                     Directory.CreateDirectory(ResourceDirectory);
                 }
 
@@ -32,12 +42,14 @@ namespace FUnity.UI
             }
 
 #if UNITY_EDITOR
-            // ---- Assign UI Builder default theme to Resources/FUnityPanelSettings ----
+            // UI Builder 旧テーマ（.tss）が残っている場合のみ Resources 側へコピーする。
             const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss";
             var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
             if (theme != null && panelSettings != null)
             {
                 var so = new SerializedObject(panelSettings);
+                /* Unity バージョン差異対策。themeStyleSheet → m_ThemeStyleSheet → themeUss の順で探索し、
+                   最終手段として再度 themeStyleSheet を参照する（重複回避） */
                 var themeProp =
                       so.FindProperty("themeStyleSheet")
                    ?? so.FindProperty("m_ThemeStyleSheet")
@@ -94,6 +106,7 @@ namespace FUnity.UI
             var uiDocuments = Object.FindObjectsOfType<UIDocument>();
             if (uiDocuments == null || uiDocuments.Length == 0)
             {
+                // UI Document がシーンに無い場合は配布処理が不要なため終了する。
                 return;
             }
 
@@ -101,6 +114,7 @@ namespace FUnity.UI
             {
                 if (uiDocument != null && uiDocument.panelSettings == null)
                 {
+                    // PanelSettings を持たない UI Document のみに付与し、ユーザー設定を上書きしない。
                     uiDocument.panelSettings = panelSettings;
                 }
             }
