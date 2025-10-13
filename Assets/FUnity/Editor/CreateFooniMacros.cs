@@ -1,8 +1,8 @@
 #if UNITY_EDITOR
 using System.IO;
+using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEngine;
 using Unity.VisualScripting;
 
 namespace FUnity.EditorTools
@@ -32,11 +32,15 @@ namespace FUnity.EditorTools
             var sayRunner = EnsureRunner("Fooni VS Say Runner", sayMacro);
 
             EditorSceneManager.MarkSceneDirty(floatRunner.scene);
-            Debug.Log($"✅ Created/updated Fooni macros and runners.\n" +
-                      $"- Macro: {FloatMacroPath}\n" +
-                      $"- Macro: {SayMacroPath}\n" +
-                      $"- Runner objects: '{floatRunner.name}', '{sayRunner.name}'\n" +
-                      "Note: Ensure a FooniController exists under 'FUnity UI' in the scene.");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log(
+                "[FUnity] Created or updated Fooni macros and runners.\n" +
+                $"- Macro: {FloatMacroPath}\n" +
+                $"- Macro: {SayMacroPath}\n" +
+                $"- Runner objects: '{floatRunner.name}', '{sayRunner.name}'\n" +
+                "Ensure a FooniController exists under 'FUnity UI' in the scene.");
         }
 
         private static ScriptGraphAsset LoadOrCreateMacro(string path, string _)
@@ -47,7 +51,6 @@ namespace FUnity.EditorTools
                 macro = ScriptableObject.CreateInstance<ScriptGraphAsset>();
                 macro.graph = new FlowGraph();
                 AssetDatabase.CreateAsset(macro, path);
-                AssetDatabase.SaveAssets();
             }
 
             if (macro.graph == null)
@@ -106,16 +109,16 @@ namespace FUnity.EditorTools
                 comment = Undo.AddComponent<FUnityInspectorComment>(go);
             }
 
-            bool changed = false;
-            if (comment.title != "Setup Reminder")
+            var changed = false;
+            if (comment.Title != "Setup Reminder")
             {
-                comment.title = "Setup Reminder";
+                comment.Title = "Setup Reminder";
                 changed = true;
             }
 
-            if (comment.comment != RunnerHelpMessage)
+            if (comment.Comment != RunnerHelpMessage)
             {
-                comment.comment = RunnerHelpMessage;
+                comment.Comment = RunnerHelpMessage;
                 changed = true;
             }
 

@@ -1,242 +1,122 @@
 #if UNITY_EDITOR
 using System.IO;
 using System.Linq;
-using FUnity.Runtime.Core;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEditor;
+using FUnity.Runtime.Core;
 
 namespace FUnity.EditorTools
 {
     public static class CreateProjectData
     {
+        private const string ResourcesFolderPath = "Assets/Resources";
+        private const string FUnityFolderPath = "Assets/FUnity";
+        private const string FUnityUiFolderPath = FUnityFolderPath + "/UI";
+        private const string FUnityUiUssFolderPath = FUnityUiFolderPath + "/USS";
+        private const string ProjectAssetPath = ResourcesFolderPath + "/FUnityProjectData.asset";
+        private const string StageAssetPath = ResourcesFolderPath + "/FUnityStageData.asset";
+
+        // Prefer the legacy UI Builder theme first; fall back to the canonical FUnity-managed copy if missing.
+        private const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss";
+        private const string CanonicalThemePath = FUnityUiUssFolderPath + "/UnityDefaultRuntimeTheme.uss";
+
+        private const string PanelSettingsAssetPath = FUnityUiFolderPath + "/FUnityPanelSettings.asset";
+        private const string DuplicateActorResourcePath = ResourcesFolderPath + "/FUnityActorData_Fooni.asset";
+        private const string ActorRootFolderPath = "Assets/FUnity/Data";
+        private const string ActorDataFolderPath = ActorRootFolderPath + "/Actors";
+        private const string ActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Fooni.asset";
+
+        private static readonly string[] StageBackgroundCandidates =
+        {
+            "Assets/FUnity/Art/Backgrounds/Background_01.png",
+            "Packages/com.papacoder.funity/Runtime/Art/Backgrounds/Background_01.png",
+            "Packages/com.papacoder.funity/Art/Backgrounds/Background_01.png"
+        };
+
+        private static readonly string[] FooniPortraitCandidates =
+        {
+            "Assets/FUnity/Art/Characters/Fooni.png",
+            "Packages/com.papacoder.funity/Runtime/Art/Characters/Fooni.png"
+        };
+
+        private static readonly string[] FooniElementUxmlCandidates =
+        {
+            "Assets/FUnity/UI/UXML/FooniElement.uxml",
+            "Packages/com.papacoder.funity/Runtime/UI/UXML/FooniElement.uxml"
+        };
+
+        private static readonly string[] FooniElementStyleCandidates =
+        {
+            "Assets/FUnity/UI/USS/FooniElement.uss",
+            "Packages/com.papacoder.funity/Runtime/UI/USS/FooniElement.uss"
+        };
+
+        private const string BackgroundSearchFilter = "t:Texture2D Background_01";
+        private const string FooniPortraitSearchFilter = "t:Texture2D Fooni";
+        private const string FooniElementUxmlSearchFilter = "t:VisualTreeAsset FooniElement";
+        private const string FooniElementStyleSearchFilter = "t:StyleSheet FooniElement";
+
         [MenuItem("FUnity/Create/Default Project Data")]
         public static void CreateDefault()
         {
-            const string dir = "Assets/Resources";
-            Directory.CreateDirectory(dir);
+            Directory.CreateDirectory(ResourcesFolderPath);
 
             var project = ScriptableObject.CreateInstance<FUnityProjectData>();
-            var projectPath = $"{dir}/FUnityProjectData.asset";
-            AssetDatabase.CreateAsset(project, projectPath);
+            AssetDatabase.CreateAsset(project, ProjectAssetPath);
 
             var stage = ScriptableObject.CreateInstance<FUnityStageData>();
-            var stagePath = $"{dir}/FUnityStageData.asset";
-            AssetDatabase.CreateAsset(stage, stagePath);
+            AssetDatabase.CreateAsset(stage, StageAssetPath);
 
-            // ---- Ensure theme (prefer legacy UI Toolkit path; otherwise generate canonical) ----
-            EnsureFolder("Assets/FUnity");
-            EnsureFolder("Assets/FUnity/UI");
-            EnsureFolder("Assets/FUnity/UI/USS");
+            EnsureFolder(FUnityFolderPath);
+            EnsureFolder(FUnityUiFolderPath);
+            EnsureFolder(FUnityUiUssFolderPath);
 
-            const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss";
-            const string CanonicalThemePath = "Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss";
+            var theme = EnsureThemeStyleSheet();
+            var panelSettings = EnsurePanelSettingsAsset();
+            AssignThemeToPanelSettings(panelSettings, theme);
 
-            // 1) レガシー（UI Builder 既定）側があればそれを使う
-            StyleSheet theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
-            if (theme == null)
-            {
-                // 2) 無ければ FUnity 側のテーマファイルを確保（内容が壊れていたら上書き）
-                var needWrite = true;
-                if (File.Exists(CanonicalThemePath))
-                {
-                    var firstLines = File.ReadLines(CanonicalThemePath).Take(3).ToArray();
-                    var content = File.ReadAllText(CanonicalThemePath).Trim();
-                    if (!firstLines.Any(l => l.TrimStart().StartsWith("---")) && !string.IsNullOrEmpty(content))
-                    {
-                        needWrite = false;
-                    }
-                }
-                if (needWrite)
-                {
-                    var ussText = @"/* Unity Default Runtime Theme (safe minimal)
-   - No YAML front matter, no unsupported at-rules.
-   - Avoids shorthand traps; uses explicit px where needed.
-   - Keep it minimal; project-specific styles can be layered later.
-*/
-
-/* Base label/text */
-Label {
-    font-size: 14px;
-}
-
-/* Buttons baseline */
-Button {
-    min-width: 80px;
-    min-height: 24px;
-}
-
-/* Actor template defaults */
-.actor {
-    flex-shrink: 0;
-}
-
-.portrait {
-    width: 100%;
-    height: 100%;
-    /* Keep aspect and fit inside parent */
-    -unity-background-scale-mode: scale-to-fit;
-}
-";
-                    File.WriteAllText(CanonicalThemePath, ussText, System.Text.Encoding.UTF8);
-                    AssetDatabase.ImportAsset(CanonicalThemePath);
-                }
-                theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(CanonicalThemePath);
-                if (theme == null)
-                {
-                    Debug.LogWarning("[FUnity] UnityDefaultRuntimeTheme.uss could not be loaded.");
-                }
-            }
-
-            // ---- Ensure PanelSettings asset ----
-            const string PanelPath = "Assets/FUnity/UI/FUnityPanelSettings.asset";
-            var panel = AssetDatabase.LoadAssetAtPath<PanelSettings>(PanelPath);
-            if (panel == null)
-            {
-                panel = ScriptableObject.CreateInstance<PanelSettings>();
-                AssetDatabase.CreateAsset(panel, PanelPath);
-            }
-
-            // ---- Assign theme to PanelSettings (SerializedObject for API differences) ----
-            if (panel != null && theme != null)
-            {
-                var soPanel = new SerializedObject(panel);
-                SerializedProperty themeProp = null;
-
-                // 候補 1: 配列 themeStyleSheets（新API）
-                themeProp = soPanel.FindProperty("themeStyleSheets");
-                // 候補 2: 内部名 m_ThemeStyleSheets（差異対策）
-                if (themeProp == null) themeProp = soPanel.FindProperty("m_ThemeStyleSheets");
-                // 候補 3: 単数 themeStyleSheet（旧API）
-                if (themeProp == null) themeProp = soPanel.FindProperty("themeStyleSheet");
-
-                var assigned = false;
-                if (themeProp != null)
-                {
-                    if (themeProp.propertyType == SerializedPropertyType.ObjectReference)
-                    {
-                        // 単数フィールド
-                        if (themeProp.objectReferenceValue != theme)
-                        {
-                            themeProp.objectReferenceValue = theme;
-                            assigned = true;
-                        }
-                    }
-                    else if (themeProp.isArray)
-                    {
-                        // 配列に重複なく追加
-                        bool exists = false;
-                        for (int i = 0; i < themeProp.arraySize; i++)
-                        {
-                            var e = themeProp.GetArrayElementAtIndex(i);
-                            if (e != null && e.objectReferenceValue == theme) { exists = true; break; }
-                        }
-                        if (!exists)
-                        {
-                            int idx = themeProp.arraySize;
-                            themeProp.InsertArrayElementAtIndex(idx);
-                            var newElement = themeProp.GetArrayElementAtIndex(idx);
-                            if (newElement != null) newElement.objectReferenceValue = theme;
-                            assigned = true;
-                        }
-                    }
-                    if (assigned)
-                    {
-                        soPanel.ApplyModifiedPropertiesWithoutUndo();
-                        EditorUtility.SetDirty(panel);
-                        Debug.Log("[FUnity] UnityDefaultRuntimeTheme assigned to FUnityPanelSettings.");
-                    }
-                    else
-                    {
-                        Debug.Log("[FUnity] FUnityPanelSettings theme already set or unchanged.");
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("[FUnity] PanelSettings does not expose a theme field; skipping assignment.");
-                }
-            }
-
-            /* ---- Stage の BackgroundImage を設定（最小差分） ---- */
-            var bgTex = LoadFirst<Texture2D>(new[]
-            {
-                "Assets/FUnity/Art/Backgrounds/Background_01.png",
-                "Packages/com.papacoder.funity/Runtime/Art/Backgrounds/Background_01.png",
-                "Packages/com.papacoder.funity/Art/Backgrounds/Background_01.png",
-            }, "t:Texture2D Background_01");
-
-            var soStage = new SerializedObject(stage);
-            var bgProp = soStage.FindProperty("m_backgroundImage"); // FUnityStageData の Serialized 名
-            if (bgProp != null)
-            {
-                bgProp.objectReferenceValue = bgTex;
-                soStage.ApplyModifiedPropertiesWithoutUndo();
-                EditorUtility.SetDirty(stage);
-            }
+            AssignStageBackground(stage);
 
             var actor = ConfigureFooniActorData();
-
-            var duplicateActorPath = $"{dir}/FUnityActorData_Fooni.asset";
-            if (AssetDatabase.LoadAssetAtPath<FUnityActorData>(duplicateActorPath) != null)
-            {
-                AssetDatabase.DeleteAsset(duplicateActorPath);
-            }
-
-            var so = new SerializedObject(project);
-            so.FindProperty("m_stage").objectReferenceValue = stage;
-
-            var actorsProp = so.FindProperty("m_actors");
-            actorsProp.arraySize = 1;
-            actorsProp.GetArrayElementAtIndex(0).objectReferenceValue = actor;
-            so.ApplyModifiedProperties();
-
-            Debug.Log("[FUnity] Default Project Data: FUnityActorData_Fooni configured.");
+            RemoveDuplicateActorResource();
+            LinkProjectData(project, stage, actor);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             Selection.activeObject = project;
 
-            Debug.Log("✅ Created & linked: Project/Stage assets under Assets/Resources, actor under Assets/FUnity/Data/Actors");
+            Debug.Log("[FUnity] Created default project data assets and linked the Fooni actor.");
         }
 
         private static FUnityActorData ConfigureFooniActorData()
         {
-            EnsureFolder("Assets/FUnity");
-            EnsureFolder("Assets/FUnity/Data");
-            EnsureFolder("Assets/FUnity/Data/Actors");
+            EnsureFolder(FUnityFolderPath);
+            EnsureFolder(ActorRootFolderPath);
+            EnsureFolder(ActorDataFolderPath);
 
-            const string actorPath = "Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset";
-            var actorObj = AssetDatabase.LoadAssetAtPath<FUnityActorData>(actorPath);
+            var actorObj = AssetDatabase.LoadAssetAtPath<FUnityActorData>(ActorAssetPath);
             if (actorObj == null)
             {
                 actorObj = ScriptableObject.CreateInstance<FUnityActorData>();
-                AssetDatabase.CreateAsset(actorObj, actorPath);
+                AssetDatabase.CreateAsset(actorObj, ActorAssetPath);
             }
 
-            var so = new SerializedObject(actorObj);
-            SetString(so, "m_displayName", "Fooni");
+            var serializedActor = new SerializedObject(actorObj);
+            var changed = false;
 
-            SetObject(so, "m_portrait", LoadFirst<Texture2D>(new[]
+            changed |= SetString(serializedActor, "m_displayName", "Fooni");
+            changed |= SetObject(serializedActor, "m_portrait", LoadFirst<Texture2D>(FooniPortraitCandidates, FooniPortraitSearchFilter));
+            changed |= SetObject(serializedActor, "m_ElementUxml", LoadFirst<VisualTreeAsset>(FooniElementUxmlCandidates, FooniElementUxmlSearchFilter));
+            changed |= SetObject(serializedActor, "m_ElementStyle", LoadFirst<StyleSheet>(FooniElementStyleCandidates, FooniElementStyleSearchFilter));
+
+            if (changed)
             {
-                "Assets/FUnity/Art/Characters/Fooni.png",
-                "Packages/com.papacoder.funity/Runtime/Art/Characters/Fooni.png"
-            }, "t:Texture2D Fooni"));
-
-            SetObject(so, "m_ElementUxml", LoadFirst<VisualTreeAsset>(new[]
-            {
-                "Assets/FUnity/UI/UXML/FooniElement.uxml",
-                "Packages/com.papacoder.funity/Runtime/UI/UXML/FooniElement.uxml"
-            }, "t:VisualTreeAsset FooniElement"));
-
-            SetObject(so, "m_ElementStyle", LoadFirst<StyleSheet>(new[]
-            {
-                "Assets/FUnity/UI/USS/FooniElement.uss",
-                "Packages/com.papacoder.funity/Runtime/UI/USS/FooniElement.uss"
-            }, "t:StyleSheet FooniElement"));
-
-            so.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(actorObj);
+                serializedActor.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(actorObj);
+                AssetDatabase.SaveAssets();
+            }
 
             return actorObj;
         }
@@ -262,22 +142,28 @@ Button {
             }
         }
 
-        private static void SetString(SerializedObject so, string property, string value)
+        private static bool SetString(SerializedObject serializedObject, string propertyName, string value)
         {
-            var prop = so.FindProperty(property);
-            if (prop != null)
+            var property = serializedObject.FindProperty(propertyName);
+            if (property == null || property.stringValue == value)
             {
-                prop.stringValue = value;
+                return false;
             }
+
+            property.stringValue = value;
+            return true;
         }
 
-        private static void SetObject(SerializedObject so, string property, Object obj)
+        private static bool SetObject(SerializedObject serializedObject, string propertyName, Object value)
         {
-            var prop = so.FindProperty(property);
-            if (prop != null)
+            var property = serializedObject.FindProperty(propertyName);
+            if (property == null || property.objectReferenceValue == value)
             {
-                prop.objectReferenceValue = obj;
+                return false;
             }
+
+            property.objectReferenceValue = value;
+            return true;
         }
 
         private static T LoadFirst<T>(string[] candidatePaths, string searchFilter) where T : Object
@@ -309,7 +195,232 @@ Button {
             return null;
         }
 
-        
+        private static StyleSheet EnsureThemeStyleSheet()
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
+            if (theme != null)
+            {
+                return theme;
+            }
+
+            if (!File.Exists(CanonicalThemePath) || NeedsCanonicalThemeRefresh())
+            {
+                WriteCanonicalTheme();
+            }
+
+            theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(CanonicalThemePath);
+            if (theme == null)
+            {
+                Debug.LogWarning("[FUnity] UnityDefaultRuntimeTheme.uss could not be loaded.");
+            }
+
+            return theme;
+        }
+
+        private static bool NeedsCanonicalThemeRefresh()
+        {
+            var firstLines = File.ReadLines(CanonicalThemePath).Take(3).ToArray();
+            var content = File.ReadAllText(CanonicalThemePath).Trim();
+            return firstLines.Any(l => l.TrimStart().StartsWith("---")) || string.IsNullOrEmpty(content);
+        }
+
+        private static void WriteCanonicalTheme()
+        {
+            const string ussText = "/* Unity Default Runtime Theme (safe minimal)\n"
+                + "   - No YAML front matter, no unsupported at-rules.\n"
+                + "   - Avoids shorthand traps; uses explicit px where needed.\n"
+                + "   - Keep it minimal; project-specific styles can be layered later.\n"
+                + "*/\n\n"
+                + "/* Base label/text */\n"
+                + "Label {\n"
+                + "    font-size: 14px;\n"
+                + "}\n\n"
+                + "/* Buttons baseline */\n"
+                + "Button {\n"
+                + "    min-width: 80px;\n"
+                + "    min-height: 24px;\n"
+                + "}\n\n"
+                + "/* Actor template defaults */\n"
+                + ".actor {\n"
+                + "    flex-shrink: 0;\n"
+                + "}\n\n"
+                + ".portrait {\n"
+                + "    width: 100%;\n"
+                + "    height: 100%;\n"
+                + "    /* Keep aspect and fit inside parent */\n"
+                + "    -unity-background-scale-mode: scale-to-fit;\n"
+                + "}\n";
+
+            File.WriteAllText(CanonicalThemePath, ussText, System.Text.Encoding.UTF8);
+            AssetDatabase.ImportAsset(CanonicalThemePath);
+        }
+
+        private static PanelSettings EnsurePanelSettingsAsset()
+        {
+            var panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>(PanelSettingsAssetPath);
+            if (panelSettings != null)
+            {
+                return panelSettings;
+            }
+
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            AssetDatabase.CreateAsset(panelSettings, PanelSettingsAssetPath);
+            return panelSettings;
+        }
+
+        private static void AssignThemeToPanelSettings(PanelSettings panelSettings, StyleSheet theme)
+        {
+            if (panelSettings == null || theme == null)
+            {
+                return;
+            }
+
+            var serializedPanel = new SerializedObject(panelSettings);
+            var themeProperty = FindThemeProperty(serializedPanel);
+            if (themeProperty == null)
+            {
+                Debug.LogWarning("[FUnity] PanelSettings does not expose a theme field; skipping assignment.");
+                return;
+            }
+
+            var changed = false;
+            if (themeProperty.propertyType == SerializedPropertyType.ObjectReference)
+            {
+                if (themeProperty.objectReferenceValue != theme)
+                {
+                    themeProperty.objectReferenceValue = theme;
+                    changed = true;
+                }
+            }
+            else if (themeProperty.isArray)
+            {
+                var exists = false;
+                for (var i = 0; i < themeProperty.arraySize; i++)
+                {
+                    var element = themeProperty.GetArrayElementAtIndex(i);
+                    if (element != null && element.objectReferenceValue == theme)
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    var insertIndex = themeProperty.arraySize;
+                    themeProperty.InsertArrayElementAtIndex(insertIndex);
+                    var element = themeProperty.GetArrayElementAtIndex(insertIndex);
+                    if (element != null)
+                    {
+                        element.objectReferenceValue = theme;
+                        changed = true;
+                    }
+                }
+            }
+
+            if (!changed)
+            {
+                return;
+            }
+
+            serializedPanel.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(panelSettings);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static SerializedProperty FindThemeProperty(SerializedObject serializedPanel)
+        {
+            var property = serializedPanel.FindProperty("themeStyleSheets");
+            if (property == null)
+            {
+                property = serializedPanel.FindProperty("m_ThemeStyleSheets");
+            }
+
+            if (property == null)
+            {
+                property = serializedPanel.FindProperty("themeStyleSheet");
+            }
+
+            return property;
+        }
+
+        private static void AssignStageBackground(FUnityStageData stage)
+        {
+            if (stage == null)
+            {
+                return;
+            }
+
+            var texture = LoadFirst<Texture2D>(StageBackgroundCandidates, BackgroundSearchFilter);
+            if (texture == null)
+            {
+                return;
+            }
+
+            var serializedStage = new SerializedObject(stage);
+            var backgroundProperty = serializedStage.FindProperty("m_backgroundImage");
+            if (backgroundProperty == null || backgroundProperty.objectReferenceValue == texture)
+            {
+                return;
+            }
+
+            backgroundProperty.objectReferenceValue = texture;
+            serializedStage.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(stage);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static void RemoveDuplicateActorResource()
+        {
+            if (AssetDatabase.LoadAssetAtPath<FUnityActorData>(DuplicateActorResourcePath) != null)
+            {
+                AssetDatabase.DeleteAsset(DuplicateActorResourcePath);
+            }
+        }
+
+        private static void LinkProjectData(FUnityProjectData project, FUnityStageData stage, FUnityActorData actor)
+        {
+            if (project == null)
+            {
+                return;
+            }
+
+            var serializedProject = new SerializedObject(project);
+            var changed = SetObject(serializedProject, "m_stage", stage);
+
+            var actorsProperty = serializedProject.FindProperty("m_actors");
+            if (actorsProperty != null)
+            {
+                if (!actorsProperty.isArray)
+                {
+                    Debug.LogWarning("[FUnity] Project data actors field is not an array; cannot link Fooni actor.");
+                }
+                else
+                {
+                    if (actorsProperty.arraySize != 1)
+                    {
+                        actorsProperty.arraySize = 1;
+                        changed = true;
+                    }
+
+                    var element = actorsProperty.GetArrayElementAtIndex(0);
+                    if (element != null && element.objectReferenceValue != actor)
+                    {
+                        element.objectReferenceValue = actor;
+                        changed = true;
+                    }
+                }
+            }
+
+            if (!changed)
+            {
+                return;
+            }
+
+            serializedProject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(project);
+            AssetDatabase.SaveAssets();
+        }
     }
 }
 #endif

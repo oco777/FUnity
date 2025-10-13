@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
 using System.Linq;
-using FUnity.Runtime.UI;
-using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using FUnity.Runtime.UI;
 
 namespace FUnity.EditorTools
 {
@@ -23,7 +23,7 @@ namespace FUnity.EditorTools
             var scene = EditorSceneManager.GetActiveScene();
             if (!scene.IsValid())
             {
-                Debug.LogError("❌ No valid active scene. Open a scene and re-run.");
+                Debug.LogError("[FUnity] No valid active scene. Open a scene and re-run.");
                 return;
             }
 
@@ -32,7 +32,7 @@ namespace FUnity.EditorTools
             if (go == null)
             {
                 go = new GameObject(TargetGoName);
-                Debug.Log($"ℹ️ Created GameObject '{TargetGoName}' in scene '{scene.name}'.");
+                Debug.Log($"[FUnity] Created GameObject '{TargetGoName}' in scene '{scene.name}'.");
             }
 
             // 3) Remove all FUnityUIInitializer in the scene (safe cleanup)
@@ -57,14 +57,15 @@ namespace FUnity.EditorTools
             {
                 prop.objectReferenceValue = doc;
                 so.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(controller);
             }
 
             // 7) Save scene
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
 
-            Debug.Log($"✅ Removed FUnityUIInitializer (count: {removed}). " +
-                      $"Ensured UIDocument + FooniController on '{TargetGoName}' in scene '{scene.name}'.");
+            Debug.Log(
+                $"[FUnity] Removed {removed} FUnityUIInitializer component(s) and ensured UIDocument + FooniController on '{TargetGoName}' in scene '{scene.name}'.");
             Selection.activeObject = go;
         }
     }
