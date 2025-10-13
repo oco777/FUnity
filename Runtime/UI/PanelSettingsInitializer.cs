@@ -33,14 +33,15 @@ namespace FUnity.UI
 
 #if UNITY_EDITOR
             // ---- Assign UI Builder default theme to Resources/FUnityPanelSettings ----
-            const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss";
+            const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss";
             var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
             if (theme != null && panelSettings != null)
             {
                 var so = new SerializedObject(panelSettings);
                 var themeProp =
-                      so.FindProperty("themeStyleSheets")
-                   ?? so.FindProperty("m_ThemeStyleSheets")
+                      so.FindProperty("themeStyleSheet")
+                   ?? so.FindProperty("m_ThemeStyleSheet")
+                   ?? so.FindProperty("themeUss")
                    ?? so.FindProperty("themeStyleSheet");
 
                 bool assigned = false;
