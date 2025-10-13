@@ -1,8 +1,9 @@
+#if UNITY_EDITOR
 using System.Linq;
-using FUnity.Runtime.UI;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEditor;
+using FUnity.Runtime.UI;
 
 namespace FUnity.EditorTools
 {
@@ -17,18 +18,21 @@ namespace FUnity.EditorTools
         public static void Rebind()
         {
             var go = GameObject.Find("FUnity UI");
-            if (!go)
+            if (go == null)
             {
-                Debug.LogError("❌ GameObject 'FUnity UI' not found in scene.");
+                Debug.LogError("[FUnity] GameObject 'FUnity UI' not found in scene.");
                 return;
             }
 
             // Remove all missing components
-            int before = go.GetComponents<Component>().Count(c => c == null);
+            var before = go.GetComponents<Component>().Count(component => component == null);
             if (before > 0)
+            {
                 GameObjectUtility.RemoveMonoBehavioursWithMissingScript(go);
-            int after = go.GetComponents<Component>().Count(c => c == null);
-            int removed = before - after;
+            }
+
+            var after = go.GetComponents<Component>().Count(component => component == null);
+            var removed = before - after;
 
             // Ensure UIDocument
             var doc = go.GetComponent<UIDocument>() ?? go.AddComponent<UIDocument>();
@@ -38,27 +42,30 @@ namespace FUnity.EditorTools
 
             // Try assign any UILoadProfile
             var guid = AssetDatabase.FindAssets("t:UILoadProfile").FirstOrDefault();
-            bool profileAssigned = false;
+            var profileAssigned = false;
             if (!string.IsNullOrEmpty(guid))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var profile = AssetDatabase.LoadAssetAtPath<UILoadProfile>(path);
                 if (profile != null)
                 {
-                    var so = new SerializedObject(init);
-                    var p = so.FindProperty("m_Profile");
-                    if (p != null)
+                    var serializedInitializer = new SerializedObject(init);
+                    var profileProperty = serializedInitializer.FindProperty("m_Profile");
+                    if (profileProperty != null && profileProperty.objectReferenceValue != profile)
                     {
-                        p.objectReferenceValue = profile;
-                        so.ApplyModifiedPropertiesWithoutUndo();
+                        profileProperty.objectReferenceValue = profile;
+                        serializedInitializer.ApplyModifiedPropertiesWithoutUndo();
+                        EditorUtility.SetDirty(init);
                         profileAssigned = true;
                     }
                 }
             }
 
             EditorUtility.SetDirty(go);
-            Debug.Log($"✅ Rebound FUnity UI. Removed missing: {removed}. Profile assigned: {profileAssigned}");
+            Debug.Log(
+                $"[FUnity] Rebound FUnity UI. Removed missing components: {removed}. Profile assigned: {profileAssigned}.");
             Selection.activeObject = go;
         }
     }
 }
+#endif

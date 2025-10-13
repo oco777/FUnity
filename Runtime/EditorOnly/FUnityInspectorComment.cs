@@ -8,9 +8,24 @@ namespace FUnity.EditorTools
     [ExecuteAlways]
     public sealed class FUnityInspectorComment : MonoBehaviour
     {
-        public string title = "Setup Reminder";
+        [SerializeField]
+        private string m_title = "Setup Reminder";
+
+        [SerializeField]
         [TextArea(2, 10)]
-        public string comment;
+        private string m_comment;
+
+        public string Title
+        {
+            get => m_title;
+            set => m_title = value;
+        }
+
+        public string Comment
+        {
+            get => m_comment;
+            set => m_comment = value;
+        }
     }
 }
 #endif
