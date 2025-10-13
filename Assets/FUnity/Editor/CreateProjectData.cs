@@ -29,7 +29,11 @@ namespace FUnity.EditorTools
             EnsureFolder("Assets/FUnity/UI");
             EnsureFolder("Assets/FUnity/UI/USS");
 
-            var themeUssPath = "Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss";
+            const string CanonicalThemePath = "Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss";
+            const string LegacyThemeDir = "Assets/UI Toolkit/UnityThemes";
+            const string LegacyThemePath = LegacyThemeDir + "/UnityDefaultRuntimeTheme.uss";
+
+            var themeUssPath = CanonicalThemePath;
             var needWrite = true;
 
             if (File.Exists(themeUssPath))
@@ -78,7 +82,17 @@ Button {
                 AssetDatabase.ImportAsset(themeUssPath);
             }
 
-            var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(themeUssPath);
+            // ---- Remove duplicate theme under 'Assets/UI Toolkit/UnityThemes' if exists ----
+            var legacyTheme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
+            if (legacyTheme != null)
+            {
+                AssetDatabase.DeleteAsset(LegacyThemePath);
+                TryDeleteIfEmpty(LegacyThemeDir);
+                TryDeleteIfEmpty("Assets/UI Toolkit");
+            }
+
+            // 以降は必ず CanonicalThemePath を基準に Load して使う
+            var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(CanonicalThemePath);
             if (theme == null)
             {
                 Debug.LogWarning("[FUnity] UnityDefaultRuntimeTheme.uss could not be loaded after write.");
@@ -359,6 +373,17 @@ Button {
                 EditorUtility.SetDirty(profile);
                 AssetDatabase.SaveAssets();
                 Debug.Log("[FUnity] UnityDefaultRuntimeTheme added to UILoadProfile.uss (fallback).");
+            }
+        }
+
+        private static void TryDeleteIfEmpty(string folderPath)
+        {
+            if (!AssetDatabase.IsValidFolder(folderPath)) return;
+
+            var guids = AssetDatabase.FindAssets(string.Empty, new[] { folderPath });
+            if (guids == null || guids.Length == 0)
+            {
+                AssetDatabase.DeleteAsset(folderPath);
             }
         }
     }
