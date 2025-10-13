@@ -95,6 +95,82 @@ Button {
                 AssetDatabase.CreateAsset(panel, panelPath);
             }
 
+            // ---- Assign Theme to PanelSettings if the API exposes it ----
+            if (panel != null && theme != null)
+            {
+                var soPanel = new SerializedObject(panel);
+                SerializedProperty themeProp = null;
+
+                // 候補 1: 配列 themeStyleSheets（新API系）
+                themeProp = soPanel.FindProperty("themeStyleSheets");
+
+                // 候補 2: 内部名 m_ThemeStyleSheets（バージョン差異対策）
+                if (themeProp == null) themeProp = soPanel.FindProperty("m_ThemeStyleSheets");
+
+                // 候補 3: 単数 themeStyleSheet（旧API系; ObjectRef）
+                if (themeProp == null) themeProp = soPanel.FindProperty("themeStyleSheet");
+
+                var assigned = false;
+                if (themeProp != null)
+                {
+                    if (themeProp.propertyType == SerializedPropertyType.ObjectReference)
+                    {
+                        // 単数フィールドに代入
+                        if (themeProp.objectReferenceValue != theme)
+                        {
+                            themeProp.objectReferenceValue = theme;
+                            assigned = true;
+                        }
+                    }
+                    else if (themeProp.isArray)
+                    {
+                        // 配列に重複なく追加
+                        bool exists = false;
+                        for (int i = 0; i < themeProp.arraySize; i++)
+                        {
+                            var elementProp = themeProp.GetArrayElementAtIndex(i);
+                            if (elementProp != null && elementProp.objectReferenceValue == theme)
+                            {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if (!exists)
+                        {
+                            int idx = themeProp.arraySize;
+                            themeProp.InsertArrayElementAtIndex(idx);
+                            var newElement = themeProp.GetArrayElementAtIndex(idx);
+                            if (newElement != null)
+                            {
+                                newElement.objectReferenceValue = theme;
+                            }
+                            assigned = true;
+                        }
+                    }
+
+                    if (assigned)
+                    {
+                        soPanel.ApplyModifiedPropertiesWithoutUndo();
+                        EditorUtility.SetDirty(panel);
+                        Debug.Log("[FUnity] UnityDefaultRuntimeTheme assigned to PanelSettings.");
+                    }
+                    else
+                    {
+                        Debug.Log("[FUnity] PanelSettings theme already set or unchanged.");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("[FUnity] PanelSettings does not expose a theme field. Falling back to UILoadProfile.uss.");
+                    TryAddThemeToUILoadProfile(theme); // フォールバック
+                }
+            }
+            else if (theme != null)
+            {
+                // PanelSettings が取得できなかった場合でもフォールバックしておく
+                TryAddThemeToUILoadProfile(theme);
+            }
+
             /* ---- Stage の BackgroundImage を設定（最小差分） ---- */
             var bgTex = LoadFirst<Texture2D>(new[]
             {
@@ -245,6 +321,45 @@ Button {
 
             Debug.LogWarning($"[FUnity] Asset not found: {typeof(T).Name} ({searchFilter})");
             return null;
+        }
+
+        private static void TryAddThemeToUILoadProfile(StyleSheet theme)
+        {
+            if (theme == null) return;
+
+            // 既定プロファイル候補
+            var profilePath = "Assets/FUnity/Configs/UIProfiles/UIProfile_Default.asset";
+            var profile = AssetDatabase.LoadAssetAtPath<FUnity.Runtime.UI.UILoadProfile>(profilePath);
+            if (profile == null)
+            {
+                // なければ検索
+                var guid = AssetDatabase.FindAssets("t:FUnity.Runtime.UI.UILoadProfile").FirstOrDefault();
+                if (!string.IsNullOrEmpty(guid))
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    profile = AssetDatabase.LoadAssetAtPath<FUnity.Runtime.UI.UILoadProfile>(path);
+                }
+            }
+
+            if (profile == null)
+            {
+                Debug.LogWarning("[FUnity] UILoadProfile not found. Theme will not be auto-applied.");
+                return;
+            }
+
+            if (profile.uss == null)
+            {
+                Debug.LogWarning("[FUnity] UILoadProfile.uss list is null. Theme will not be auto-applied.");
+                return;
+            }
+
+            if (!profile.uss.Contains(theme))
+            {
+                profile.uss.Add(theme);
+                EditorUtility.SetDirty(profile);
+                AssetDatabase.SaveAssets();
+                Debug.Log("[FUnity] UnityDefaultRuntimeTheme added to UILoadProfile.uss (fallback).");
+            }
         }
     }
 }
