@@ -1,256 +1,115 @@
-# 🎨 FUnity — Fun × Unity  
-_A Scratch-inspired visual programming environment for Unity._
+# FUnity — Fun × Unity
 
----
+> UI Toolkit ベースの Scratch 風学習環境で、子どもたちの創造力を引き出す。
 
-## 🌐 Language  
-🇯🇵 [日本語版を読む](#日本語版) | 🇺🇸 [English Version](#english-version)
+![FUnity overview placeholder](docs/images/readme-hero.png)
 
----
+> TODO: スクリーンショットを差し替える。
 
-<a id="日本語版"></a>
+## 目次
+- [プロジェクト概要](#プロジェクト概要)
+- [システム要件](#システム要件)
+- [インストール方法](#インストール方法)
+- [クイックスタート](#クイックスタート)
+- [自動生成されるアセット](#自動生成されるアセット)
+- [UI テーマ適用戦略](#ui-テーマ適用戦略)
+- [アクター UI テンプレート](#アクター-ui-テンプレート)
+- [トラブルシュート](#トラブルシュート)
+- [既知の制限と今後の予定](#既知の制限と今後の予定)
+- [ドキュメント](#ドキュメント)
+- [ライセンス](#ライセンス)
+- [貢献方法](#貢献方法)
 
-# 🇯🇵 日本語版 — FUnity（フーニティ）
+## プロジェクト概要
+- FUnity は Unity と UI Toolkit を用いたビジュアルプログラミング学習環境。
+- Create → Default Project Data で学習用の舞台・俳優・UI を一括生成する。
+- PanelSettings と Theme を安全に初期化し、実行時の見た目をすぐ確認できる。
 
-**Fun × Unity — 子どもたちのための、楽しく学べるビジュアルプログラミング環境**
+## システム要件
+- Unity 6 (6000.x) 以降。
+- .NET Standard 2.1 互換ランタイム。
+- UI Toolkit / UI Builder パッケージ。
 
-![Fooni](https://raw.githubusercontent.com/oco777/FUnity/a44577a60c0e3e6f32e8277b2ce32d0608b4e12e/Art/Characters/Fooni.png)
-
----
-
-## 🌟 プロジェクト概要
-
-**FUnity（フーニティ）** は、Unity と UI Toolkit を使って  
-子どもたちが「Scratchのようにブロックを組み合わせて遊びながら学べる」  
-教育用プログラミング環境を目指したオープンソースプロジェクトです。
-
-> 「学びを、もっと楽しく、もっと自由に。」
-
----
-
-## 🧩 主な特徴
-
-- 🎮 **Unity上で動作**：UI Toolkitを活用したモダンなUI。
-- 🧱 **ブロック式スクリプティング**：Scratch風の学びやすい構造。
-- 🧠 **キャラクターによるナビゲーション**：やさしく世界を案内。
-- 🧰 **サンプルシーン付き**：インポートするだけですぐ体験可能。
-
----
-
-## 🧙 キャラクター紹介
-
-| キャラクター | 役割 | 画像 |
-|---------------|------|------|
-| 🌬️ **フーニー（Fooni）** | チュートリアル案内役。風の精霊で、ふわふわと浮かびながら学びの世界を案内。 | ![Fooni](https://raw.githubusercontent.com/oco777/FUnity/a44577a60c0e3e6f32e8277b2ce32d0608b4e12e/Art/Characters/Fooni.png) |
-| 🥷 **ドジョウ忍者（Dojo Ninja）** | アクション担当。挑戦する楽しさを子どもに伝える。 | ![DojoNinja](https://raw.githubusercontent.com/oco777/FUnity/a44577a60c0e3e6f32e8277b2ce32d0608b4e12e/Art/Characters/DojoNinja.png) |
-| 🦄 **ユニくん（Uni-kun）** | アイデア担当。AIと創造の化身。 | ![UniKun](https://raw.githubusercontent.com/oco777/FUnity/a44577a60c0e3e6f32e8277b2ce32d0608b4e12e/Art/Characters/Uni-kun.png) |
-
----
-
-## 🧰 動作環境
-
-- **Unity 6.0 (6000.0) 以降**
-- **UI Toolkit** パッケージ（自動解決されます）
-
----
-
-## 📦 インストール方法（UPM経由）
-
-Unity の `Packages/manifest.json` に以下を追加します：
+## インストール方法
+### Unity Package Manager (Git URL)
+- `Packages/manifest.json` の `dependencies` に次を追加する。
 
 ```json
 "com.papacoder.funity": "https://github.com/oco777/FUnity.git"
 ```
 
-これで FUnity が Unity Package Manager 経由で導入されます。  
-**Package Manager** ウィンドウから **Samples → Basic Scene** をインポートすれば、  
-すぐに動作サンプルを体験できます。
+### Git Submodule
+- 既存プロジェクトのルートで次を実行する。
 
----
-
-## 🔧 ローカル開発
-
-1. 本リポジトリをクローンします。
-2. Unity プロジェクトの `Packages/manifest.json` に次を追加：
-   ```json
-   "com.papacoder.funity": "file:../FUnity"
-   ```
-3. Unity を起動すると、変更内容が即座に反映されます。
-
----
-
-## 🧩 サンプル内容
-
-`Samples~/BasicScene` に含まれるサンプルでは以下を確認できます：
-
-- `WorkspaceHUD`：UI Toolkitで構成されたHUD表示。
-- `BlockElement`：Scratch風ブロックの表示要素。
-- `SampleController`：コンソール出力サンプル。
-
----
-
-## 🗂️ リポジトリ構成
-
-| フォルダ | 内容 |
-|-----------|------|
-| `Runtime/` | 実行用コード（Core / UI / Blocks） |
-| `UXML/` | UI Toolkit レイアウト定義 |
-| `USS/` | スタイルシート（テーマ・配色） |
-| `Art/` | キャラクター画像やロゴ素材 |
-| `Docs/` | 設計資料・キャラクター設定 |
-| `Samples~/` | サンプルシーン・チュートリアル |
-| `AGENTS.md` | Codex / AIエージェント設定ファイル |
-
----
-
-## 🧠 Codex対応：エージェント設計
-
-| エージェント名 | 担当範囲 |
-|----------------|-----------|
-| 🎨 `UIAgent` | UXML・USS・UI改善 |
-| 🧱 `BlockAgent` | ビジュアルスクリプティング処理 |
-| ⚙️ `CoreAgent` | GameManagerなど基盤コード |
-| 🖼️ `ArtAgent` | アート・ロゴ・デザイン整備 |
-
-CodexなどAIペアプログラマーと連携することで、  
-自動生成や提案を安全かつ体系的に行える構造です。
-
----
-
-## 📜 ライセンス
-
-本プロジェクトは [MIT License](LICENSE.md) のもとで公開されています。
-
----
-
-## 👤 作者情報
-
-- 作者：**パパコーダー**  
-- Webサイト：[https://papacoder.net](https://papacoder.net)  
-- テーマ：**「学びを、もっと楽しく、もっと自由に。」**
-
----
-
-> 🚀 **FUnity** は、プログラミングの最初の一歩を「創造の楽しさ」に変えるツールです。  
-> 子どもたちが「風のように」自由に学び、作る喜びを感じられる世界を目指しています。
-
----
-
-<a id="english-version"></a>
-
-# 🇺🇸 English Version — FUnity
-
-**Fun × Unity — A visual programming toolkit that brings Scratch-like learning to Unity.**
-
-![FUnity Banner](https://raw.githubusercontent.com/oco777/FUnity/a44577a60c0e3e6f32e8277b2ce32d0608b4e12e/Art/Characters/Fooni.png)
-
----
-
-## 🌟 Overview
-
-**FUnity** is an educational open-source project built with Unity and UI Toolkit.  
-It enables children to learn programming through visual, block-based interactions similar to Scratch.
-
-> “Learn with freedom, and have fun while creating.”
-
----
-
-## 🧩 Features
-
-- 🎮 Works natively inside **Unity**
-- 🧱 **Block-based scripting** using UI Toolkit
-- 🧠 Character-based navigation and tutorial guidance
-- 🧰 Includes **sample scenes** for immediate exploration
-
----
-
-## 🧙 Characters
-
-| Character | Role | Image |
-|------------|------|-------|
-| 🌬️ **Fooni** | Wind spirit and main guide of FUnity. | ![Fooni](https://raw.githubusercontent.com/oco777/FUnity/a44577a60c0e3e6f32e8277b2ce32d0608b4e12e/Art/Characters/Fooni.png) |
-| 🥷 **Dojo Ninja** | Teaches the joy of challenge and persistence. | ![DojoNinja](https://raw.githubusercontent.com/oco777/FUnity/a44577a60c0e3e6f32e8277b2ce32d0608b4e12e/Art/Characters/DojoNinja.png) |
-| 🦄 **Uni-kun** | A curious unicorn symbolizing AI and creativity. | ![UniKun](https://raw.githubusercontent.com/oco777/FUnity/a44577a60c0e3e6f32e8277b2ce32d0608b4e12e/Art/Characters/Uni-kun.png) |
-
----
-
-## 🧰 Requirements
-
-- Unity **6.0 (6000.0)** or newer  
-- UI Toolkit package (`com.unity.ui`)
-
----
-
-## 📦 Installation via UPM
-
-Add the following line to your `Packages/manifest.json`:
-
-```json
-"com.papacoder.funity": "https://github.com/oco777/FUnity.git"
+```bash
+git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.funity
 ```
 
-Then, open **Package Manager → Samples → Basic Scene**  
-to import a ready-to-play example.
+### パッケージ参照
+- 任意の Git タグやコミットを `.tgz` として取得し、`manifest.json` へファイル参照を追加する。
+- 例：
 
----
+```json
+"com.papacoder.funity": "file:../packages/FUnity-0.2.0.tgz"
+```
 
-## 🔧 Local Development
+## クイックスタート
+### サンプルシーンの再生
+- Package Manager → Samples → **FUnitySample** をインポートする。
+- `Assets/FUnity/Samples/FUnitySample.unity` を開き再生する。
+- UI Toolkit 上にブロック UI と俳優ウィンドウが表示される。
 
-1. Clone this repository beside your Unity project.
-2. Reference it locally in your `manifest.json`:
-   ```json
-   "com.papacoder.funity": "file:../FUnity"
-   ```
-3. Launch Unity — edits in FUnity will sync instantly.
+### 既定データの生成
+- メニュー **FUnity → Create → Default Project Data** を選ぶ。
+- 次のアセットが `Assets/FUnity/` 配下に生成される。
+  - `Data/Project/FUnityProjectData.asset`
+  - `Data/Stages/FUnityStageData.asset`（背景に `Art/Backgrounds/Background_01.png` を適用）
+  - `Data/Actors/FUnityActorData_Fooni.asset`
+  - `UI/FUnityPanelSettings.asset`
+  - `UI/USS/UnityDefaultRuntimeTheme.uss`
+- 生成後にシーンを再生すると PanelSettingsInitializer が Theme を割り当てる。
 
----
+## 自動生成されるアセット
+- `CreateProjectData.CreateDefault()` が Stage 背景・俳優・PanelSettings を初期化する。
+- StageData は `Background_01.png` を参照し、背景が未設定でも最小構成で表示する。
+- ActorData は Portrait/UXML/USS を候補パス優先＋探索で決定する。
+- PanelSettings は Editor 実行時に自動生成され、Theme を割り当て済みで保存される。
 
-## 🧩 Samples
+## UI テーマ適用戦略
+- UI Builder 標準の `Assets/UI Toolkit/UnityThemes/Unity Default Runtime Theme.uss` を最優先で利用する。
+- 上記が無い場合は `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` を生成し、最小限のスタイルを提供する。
+- `PanelSettingsInitializer.EnsurePanelSettings()` が Editor 実行時に `Resources/FUnityPanelSettings.asset` を配置し Theme を設定する。
+- ビルドに含める場合は Editor で生成された Theme アセットをプロジェクトに保持する。
 
-- `WorkspaceHUD`: UI Toolkit HUD example  
-- `BlockElement`: Scratch-style visual block  
-- `SampleController`: Console message sample
+## アクター UI テンプレート
+- 俳優 UI は UXML の A 案（`name="root"` と `name="portrait"`）を前提とする。
+- `CreateActorElement()` が `name="root"` のサイズ調整と `name="portrait"` の画像差し替えを行う。
+- Portrait 画像は `Assets/FUnity/Art/Characters/` の PNG を推奨する。
+- USS は `Assets/FUnity/UI/USS/` に保存し、アセット化した Theme から参照する。
 
----
+## トラブルシュート
+- USS の `Unsupported selector format: '---'` が出たら Theme USS を削除し、メニューから再生成する。
+- Theme 名の表記ゆれ（`Unity Default Runtime Theme.uss` と `UnityDefaultRuntimeTheme.uss`）は `FUnity/UI/USS/` 配下を採用する。
+- Actor や Theme のアセットが重複した場合は Legacy フォルダを削除して一元管理する。
 
-## 🗂️ Repository Layout
+## 既知の制限と今後の予定
+- UI Builder 依存アセットは Editor でのみ生成されるため、CI での自動生成は未対応（TODO）。
+- 俳優テンプレートのカスタム差し替え例を Docs に追加予定（TODO）。
+- ブロックプログラミングの日本語教材化を検討中（TODO）。
 
-| Folder | Description |
-|---------|-------------|
-| `Runtime/` | Core runtime (Core / UI / Blocks) |
-| `UXML/` | UI layout definitions |
-| `USS/` | Style sheets for UI Toolkit |
-| `Art/` | Logos, characters, and design assets |
-| `Docs/` | Design docs and character profiles |
-| `Samples~/` | Example scenes and scripts |
-| `AGENTS.md` | Codex AI agent configuration |
+## ドキュメント
+- [環境構築ガイド](Docs/setup.md)
+- [UI テーマ適用戦略](Docs/ui-theme.md)
+- [既定データの構成](Docs/data-defaults.md)
+- [俳優 UI テンプレート](Docs/actor-template.md)
+- [トラブルシュート集](Docs/troubleshooting.md)
+- [コーディング規約](Docs/conventions.md)
+- [FAQ](Docs/faq.md)
 
----
+## ライセンス
+- 本プロジェクトは [MIT License](LICENSE.md) に従う。
 
-## 🧠 Codex Agents
-
-| Agent | Description |
-|--------|-------------|
-| 🎨 `UIAgent` | UI layout and styling (UXML/USS) |
-| 🧱 `BlockAgent` | Visual scripting functionality |
-| ⚙️ `CoreAgent` | Core systems and initialization |
-| 🖼️ `ArtAgent` | Artwork, logo, and visual identity |
-
----
-
-## 📜 License
-
-Released under the [MIT License](LICENSE.md).
-
----
-
-## 👤 Author
-
-- **Papacoder**  
-- Website: [https://papacoder.net](https://papacoder.net)  
-- Theme: “Making learning more fun and more free.”
-
----
-
-> 🚀 **FUnity** turns a child’s first step into programming into a joyful act of creation.  
-> We aim to create a world where learning flows as freely as the wind.
+## 貢献方法
+- Issue と Pull Request は歓迎する。
+- `.github/ISSUE_TEMPLATE/documentation.md` を使い、再現手順とスクリーンショットを添付する。
+- コーディング規約と UNITY_EDITOR ガードの方針は [Docs/conventions.md](Docs/conventions.md) を参照する。
