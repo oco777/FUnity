@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Core
 
         [Header("Background")]
         [SerializeField] private Texture2D m_backgroundImage;
-        [SerializeField] private ScaleMode m_backgroundScale = ScaleMode.ScaleToFit;
+        [SerializeField] private ScaleMode m_backgroundScale = ScaleMode.ScaleAndCrop;
 
         public string StageName => m_stageName;
         public Color BackgroundColor => m_backgroundColor;
