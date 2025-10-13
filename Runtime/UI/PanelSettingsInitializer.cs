@@ -1,5 +1,4 @@
 using System.IO;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 #if UNITY_EDITOR
@@ -33,51 +32,16 @@ namespace FUnity.UI
             }
 
 #if UNITY_EDITOR
+            // ---- Assign UI Builder default theme to Resources/FUnityPanelSettings ----
             const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss";
-            const string CanonicalThemeDir = "Assets/FUnity/UI/USS";
-            const string CanonicalThemePath = CanonicalThemeDir + "/UnityDefaultRuntimeTheme.uss";
-
-            if (!Directory.Exists(CanonicalThemeDir))
-            {
-                Directory.CreateDirectory(CanonicalThemeDir);
-            }
-
             var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
-            if (theme == null)
-            {
-                bool needWrite = !File.Exists(CanonicalThemePath);
-                if (!needWrite)
-                {
-                    var firstLines = File.ReadLines(CanonicalThemePath).Take(3).ToArray();
-                    var content = File.ReadAllText(CanonicalThemePath).Trim();
-                    if (firstLines.Any(l => l.TrimStart().StartsWith("---")) || string.IsNullOrEmpty(content))
-                    {
-                        needWrite = true;
-                    }
-                }
-
-                if (needWrite)
-                {
-                    File.WriteAllText(CanonicalThemePath,
-@"/* Unity Default Runtime Theme (safe minimal) */
-Label { font-size: 14px; }
-Button { min-width: 80px; min-height: 24px; }
-.actor { flex-shrink: 0; }
-.portrait { width: 100%; height: 100%; -unity-background-scale-mode: scale-to-fit; }
-", System.Text.Encoding.UTF8);
-                    AssetDatabase.ImportAsset(CanonicalThemePath);
-                }
-
-                theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(CanonicalThemePath);
-            }
-
             if (theme != null && panelSettings != null)
             {
-                var soPanel = new SerializedObject(panelSettings);
-                SerializedProperty themeProp =
-                      soPanel.FindProperty("themeStyleSheets")
-                   ?? soPanel.FindProperty("m_ThemeStyleSheets")
-                   ?? soPanel.FindProperty("themeStyleSheet");
+                var so = new SerializedObject(panelSettings);
+                var themeProp =
+                      so.FindProperty("themeStyleSheets")
+                   ?? so.FindProperty("m_ThemeStyleSheets")
+                   ?? so.FindProperty("themeStyleSheet");
 
                 bool assigned = false;
                 if (themeProp != null)
@@ -95,8 +59,8 @@ Button { min-width: 80px; min-height: 24px; }
                         bool exists = false;
                         for (int i = 0; i < themeProp.arraySize; i++)
                         {
-                            var element = themeProp.GetArrayElementAtIndex(i);
-                            if (element != null && element.objectReferenceValue == theme)
+                            var e = themeProp.GetArrayElementAtIndex(i);
+                            if (e != null && e.objectReferenceValue == theme)
                             {
                                 exists = true;
                                 break;
@@ -105,9 +69,9 @@ Button { min-width: 80px; min-height: 24px; }
 
                         if (!exists)
                         {
-                            int index = themeProp.arraySize;
-                            themeProp.InsertArrayElementAtIndex(index);
-                            var newElement = themeProp.GetArrayElementAtIndex(index);
+                            int idx = themeProp.arraySize;
+                            themeProp.InsertArrayElementAtIndex(idx);
+                            var newElement = themeProp.GetArrayElementAtIndex(idx);
                             if (newElement != null)
                             {
                                 newElement.objectReferenceValue = theme;
@@ -115,13 +79,13 @@ Button { min-width: 80px; min-height: 24px; }
                             assigned = true;
                         }
                     }
+                }
 
-                    if (assigned)
-                    {
-                        soPanel.ApplyModifiedPropertiesWithoutUndo();
-                        EditorUtility.SetDirty(panelSettings);
-                        AssetDatabase.SaveAssets();
-                    }
+                if (assigned)
+                {
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(panelSettings);
+                    AssetDatabase.SaveAssets();
                 }
             }
 #endif
