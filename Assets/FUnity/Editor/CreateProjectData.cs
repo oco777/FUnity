@@ -8,10 +8,8 @@ using FUnity.Runtime.Core;
 
 namespace FUnity.EditorTools
 {
-    /// <summary>
-    /// FUnity の初期データ一式を Editor メニューから生成し、既定アセットを相互リンクさせる。
-    /// Editor 実行前提のため UnityEditor API への依存を許容する。
-    /// </summary>
+    // プロジェクト/Stage/Actor/UI を一括生成する初期化コマンド。新規導入直後やサンプル起動前に実行する。UNITY_EDITOR 前提。
+    // CreateDefaultUIProfile で整えるロード設定と組み合わせ、FUnity 学習用シーンの最低限の土台を揃える。
     public static class CreateProjectData
     {
         private const string ResourcesFolderPath = "Assets/Resources";
@@ -21,7 +19,7 @@ namespace FUnity.EditorTools
         private const string ProjectAssetPath = ResourcesFolderPath + "/FUnityProjectData.asset";
         private const string StageAssetPath = ResourcesFolderPath + "/FUnityStageData.asset";
 
-        // UI Builder 旧配置を最優先し、存在しなければ FUnity 管理下の正規コピーへフォールバックする。
+        // Theme は UI Builder 標準配置（Legacy）を最優先し、無ければ FUnity 配下の正規 USS を生成して使用する。
         private const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss";
         private const string CanonicalThemePath = FUnityUiUssFolderPath + "/UnityDefaultRuntimeTheme.uss";
 
@@ -31,6 +29,7 @@ namespace FUnity.EditorTools
         private const string ActorDataFolderPath = ActorRootFolderPath + "/Actors";
         private const string ActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Fooni.asset";
 
+        // 背景テクスチャはプロジェクト直下の正規パスを優先し、無ければパッケージ同梱版から順に探す。
         private static readonly string[] StageBackgroundCandidates =
         {
             "Assets/FUnity/Art/Backgrounds/Background_01.png",
@@ -38,6 +37,7 @@ namespace FUnity.EditorTools
             "Packages/com.papacoder.funity/Art/Backgrounds/Background_01.png"
         };
 
+        // Fooni 用ポートレート/UXML/USS も正規パス→パッケージの順で探し、テンプレート想定の root/portrait 要素を持つファイルを期待する。
         private static readonly string[] FooniPortraitCandidates =
         {
             "Assets/FUnity/Art/Characters/Fooni.png",
@@ -61,11 +61,14 @@ namespace FUnity.EditorTools
         private const string FooniElementUxmlSearchFilter = "t:VisualTreeAsset FooniElement";
         private const string FooniElementStyleSearchFilter = "t:StyleSheet FooniElement";
 
-        /// <summary>
-        /// Resources 以下にプロジェクト用 ScriptableObject と関連 Actor/Stage を生成し既定値を流し込む。
-        /// テーマや PanelSettings を AssetDatabase で操作するため実行後に SaveAssets/Refresh を行う。
-        /// </summary>
+        // FUnity → Create → Default Project Data。ProjectData/StageData/ActorData/PanelSettings を生成し相互リンクする。
         [MenuItem("FUnity/Create/Default Project Data")]
+        /// <summary>
+        /// - Resources/Assets/FUnity 配下を作成し、Project/Stage/Actor の ScriptableObject を用意する。
+        /// - UI Theme は正規/旧配置から探索し、PanelSettings を確保して SerializedObject 経由で割り当てる。
+        /// - Stage 背景に Art/Backgrounds/Background_01.* を設定し、ActorData_Fooni に Portrait/UXML/USS を適用する。
+        /// - 不足アセットは警告にとどめて続行し、最後に SaveAssets/Refresh で AssetDatabase の状態を確定させる。
+        /// </summary>
         public static void CreateDefault()
         {
             Directory.CreateDirectory(ResourcesFolderPath);
@@ -99,8 +102,8 @@ namespace FUnity.EditorTools
         }
 
         /// <summary>
-        /// Fooni 用 ActorData を確保し、既存リソースの候補パスから見つかったアセットへ差し替える。
-        /// 旧 Resources 版が残っている場合は後続で削除するため、ここでは生成のみを担う。
+        /// Fooni ActorData を確保し、候補パスと GUID 検索で集めた Portrait/UXML/USS を割り当てる。テンプレート構造は root/portrait 要素を前提。
+        /// 旧 Resources 版が残る場合でも生成を優先し、削除は RemoveDuplicateActorResource に委ねる。
         /// </summary>
         private static FUnityActorData ConfigureFooniActorData()
         {
@@ -115,6 +118,7 @@ namespace FUnity.EditorTools
                 AssetDatabase.CreateAsset(actorObj, ActorAssetPath);
             }
 
+            // SerializedObject 経由で m_displayName など内部プロパティにアクセスし、Unity のバージョン差異を吸収する。
             var serializedActor = new SerializedObject(actorObj);
             var changed = false;
 
@@ -316,7 +320,7 @@ namespace FUnity.EditorTools
         }
 
         /// <summary>
-        /// PanelSettings の theme フィールドに指定テーマを割り当て、存在チェック済みなら重複追加を避ける。
+        /// PanelSettings の theme フィールドに指定テーマを割り当てる。SerializedObject を介し、Unity バージョン差異や配列型にも対応する。
         /// theme が null の場合は ScriptableObject を汚さないよう即時終了する。
         /// </summary>
         private static void AssignThemeToPanelSettings(PanelSettings panelSettings, StyleSheet theme)
@@ -327,6 +331,7 @@ namespace FUnity.EditorTools
                 return;
             }
 
+            // SerializedObject を使い、公開 API の差異を無視して theme 関連フィールドを動的に操作する。
             var serializedPanel = new SerializedObject(panelSettings);
             var themeProperty = FindThemeProperty(serializedPanel);
             if (themeProperty == null)
@@ -382,8 +387,8 @@ namespace FUnity.EditorTools
         }
 
         /// <summary>
-        /// Unity バージョン差異に対応するため、themeStyleSheets → m_ThemeStyleSheets → themeStyleSheet の順で探す。
-        /// UI Builder API の内部名が変わっても対応できるようフォールバックを多段化している。
+        /// themeStyleSheets → m_ThemeStyleSheets → themeStyleSheet の順で探索し、新旧 API 名と内部フィールドを網羅する。
+        /// Unity のバージョン差異を吸収するため、SerializedObject を介した動的アクセスを採用する。
         /// </summary>
         private static SerializedProperty FindThemeProperty(SerializedObject serializedPanel)
         {
@@ -402,7 +407,7 @@ namespace FUnity.EditorTools
         }
 
         /// <summary>
-        /// StageData に背景テクスチャを結び付ける。候補が無ければ既存設定を維持する。
+        /// StageData に学習用背景 Background_01 を割り当てる。候補が無ければ既存設定を維持する。
         /// Resources 直下の背景を想定するため、null なら SerializedObject 生成を避ける。
         /// </summary>
         private static void AssignStageBackground(FUnityStageData stage)
@@ -420,6 +425,7 @@ namespace FUnity.EditorTools
                 return;
             }
 
+            // SerializedObject によって非公開フィールド m_backgroundImage にアクセスし、互換性を確保する。
             var serializedStage = new SerializedObject(stage);
             var backgroundProperty = serializedStage.FindProperty("m_backgroundImage");
             if (backgroundProperty == null || backgroundProperty.objectReferenceValue == texture)
@@ -435,8 +441,7 @@ namespace FUnity.EditorTools
         }
 
         /// <summary>
-        /// Resources 内に残った旧 Fooni ActorData を削除し、重複ロードを防ぐ。
-        /// FUnityActorData_Fooni.asset が存在する場合のみ AssetDatabase.DeleteAsset を実行する。
+        /// Resources 内に残った旧 Fooni ActorData を削除し、重複ロードを防ぐ。.gitkeep 等は残しつつ対象アセットのみ削除する。
         /// </summary>
         private static void RemoveDuplicateActorResource()
         {
@@ -458,6 +463,7 @@ namespace FUnity.EditorTools
                 return;
             }
 
+            // SerializedObject を介して m_stage や m_actors といった内部名プロパティを一括更新する。
             var serializedProject = new SerializedObject(project);
             var changed = SetObject(serializedProject, "m_stage", stage);
 
