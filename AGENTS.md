@@ -13,7 +13,7 @@ UIブロック、ビジュアルスクリプティング、キャラクター演
 | `Runtime/` | ランタイムコード（UI, Core, GameManagerなど） |
 | `USS/` | UI Toolkit スタイル定義 |
 | `UXML/` | UI Toolkit レイアウト定義 |
-| `Samples~/BasicScene/` | サンプルシーン（block.uxmlなどの表示確認用） |
+| `Samples~/BasicScene/` | サンプルシーン（FUnityManager 単体での最小表示を確認） |
 | `Art/` | キャラクターやロゴなどのアート素材 |
 | `Docs/` | ドキュメント、キャラクター設定、設計資料など |
 

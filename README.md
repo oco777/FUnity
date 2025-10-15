@@ -24,6 +24,7 @@
 - FUnity は Unity と UI Toolkit を用いたビジュアルプログラミング学習環境。
 - Create → Default Project Data で学習用の舞台・俳優・UI を一括生成する。
 - PanelSettings と Theme を安全に初期化し、実行時の見た目をすぐ確認できる。
+- ランタイムでは **FUnityManager** が `FUnity UI` GameObject と UIDocument を生成し、UI 初期化を一手に引き受ける。
 
 ## システム要件
 - Unity 6 (6000.x) 以降。
@@ -57,8 +58,8 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
 ### サンプルシーンの再生
 - Package Manager → Samples → **FUnitySample** をインポートする。
 - `Assets/FUnity/Samples/FUnitySample.unity` を開き再生する。
-- シーンには **FUnityManager** だけを配置しておけばよく、再生開始時に FUnityManager が `FUnity UI` GameObject と UIDocument を自動生成する。
-- UI Toolkit 上にブロック UI と俳優ウィンドウが表示される。
+- シーンには **FUnityManager** だけを配置しておけばよく、再生開始時に FUnityManager が `FUnity UI` GameObject と UIDocument を自動生成する。追加の初期化コンポーネントは不要。
+- 再生すると背景（`Background_01`）とフーニーの俳優 UI が表示される。ブロック UI は現行パッケージには含まれず、今後の拡張候補として扱う。
 
 ### 既定データの生成
 - メニュー **FUnity → Create → Default Project Data** を選ぶ。
@@ -97,7 +98,7 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
 ## 既知の制限と今後の予定
 - UI Builder 依存アセットは Editor でのみ生成されるため、CI での自動生成は未対応（TODO）。
 - 俳優テンプレートのカスタム差し替え例を Docs に追加予定（TODO）。
-- ブロックプログラミングの日本語教材化を検討中（TODO）。
+- ブロック UI / ビジュアルスクリプティング機能は未提供（拡張候補、教材化を検討中）。
 
 ## ドキュメント
 - [環境構築ガイド](Docs/setup.md)
