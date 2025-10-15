@@ -9,3 +9,7 @@
     height: 100%;
     -unity-background-scale-mode: scale-to-fit;
 }
+
+.actor-root {
+    position: absolute;
+}
