@@ -58,7 +58,7 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
 ### サンプルシーンの再生
 - Package Manager → Samples → **FUnitySample** をインポートする。
 - `Assets/FUnity/Samples/FUnitySample.unity` を開き再生する。
-- シーンには **FUnityManager** だけを配置しておけばよく、再生開始時に FUnityManager が `FUnity UI` GameObject と UIDocument を自動生成する。追加の初期化コンポーネントは不要。
+- シーンには **FUnityManager** だけを配置しておけばよく、再生開始時に FUnityManager が `FUnity UI` GameObject と UIDocument を自動生成する。追加の初期化コンポーネントは不要で、旧来の `WorkspaceHUD` は利用しない。
 - 再生すると背景（`Background_01`）とフーニーの俳優 UI が表示される。ブロック UI は現行パッケージには含まれず、今後の拡張候補として扱う。
 
 ### 既定データの生成
