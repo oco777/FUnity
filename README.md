@@ -57,6 +57,7 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
 ### サンプルシーンの再生
 - Package Manager → Samples → **FUnitySample** をインポートする。
 - `Assets/FUnity/Samples/FUnitySample.unity` を開き再生する。
+- シーンには **FUnityManager** だけを配置しておけばよく、再生開始時に FUnityManager が `FUnity UI` GameObject と UIDocument を自動生成する。
 - UI Toolkit 上にブロック UI と俳優ウィンドウが表示される。
 
 ### 既定データの生成
@@ -68,6 +69,7 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
   - `UI/FUnityPanelSettings.asset`
   - `UI/USS/UnityDefaultRuntimeTheme.uss`
 - 生成後にシーンを再生すると PanelSettingsInitializer が Theme を割り当てる。
+- FUnityManager はこれらのデータを参照しつつ、実行時に `FUnity UI`（UIDocument 付き）を自動生成して最小構成の背景とフーニーを表示する。
 
 ## 自動生成されるアセット
 - `CreateProjectData.CreateDefault()` が Stage 背景・俳優・PanelSettings を初期化する。

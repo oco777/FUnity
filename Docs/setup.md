@@ -32,12 +32,14 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
 ### 3. サンプルシーンの確認
 - Package Manager → Samples → **FUnitySample** をインポートする。
 - `Assets/FUnity/Samples/FUnitySample.unity` を開いて再生する。
+- シーンには **FUnityManager** を 1 体置くだけでよく、再生開始時に `FUnity UI` GameObject と UIDocument が自動生成される。
 - ブロック UI・俳優ウィンドウ・背景表示を確認する。
 
 ### 4. Default Project Data の生成
 - メニュー **FUnity → Create → Default Project Data** を選ぶ。
 - `Assets/FUnity/` 配下に Project/Stage/Actor/PanelSettings/Theme が生成される。
 - 生成直後にシーンを再生して Theme が割り当てられたか確認する。
+- FUnityManager が Resources からデータを読み、実行時に `FUnity UI` を生成して背景とフーニーを表示する。
 
 ## 補足
 - StageData は `Art/Backgrounds/Background_01.png` を背景として設定する。
