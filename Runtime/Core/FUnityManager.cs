@@ -121,6 +121,9 @@ namespace FUnity.Core
 
             m_UIDocument = m_FUnityUI.GetComponent<UIDocument>() ?? m_FUnityUI.AddComponent<UIDocument>();
 
+            EnsureFooniUIBridge(m_FUnityUI);
+            EnsureScriptMachine(m_FUnityUI);
+
             if (m_UIDocument.panelSettings == null)
             {
                 var panelSettings = FindDefaultPanelSettings();
@@ -137,6 +140,42 @@ namespace FUnity.Core
 
             var controller = m_FUnityUI.GetComponent<FooniController>() ?? m_FUnityUI.AddComponent<FooniController>();
             controller.SetUIDocument(m_UIDocument);
+        }
+
+        private static void EnsureFooniUIBridge(GameObject uiGO)
+        {
+            if (uiGO == null)
+            {
+                return;
+            }
+
+            if (!uiGO.TryGetComponent(out FUnity.Runtime.Input.FooniUIBridge _))
+            {
+                uiGO.AddComponent<FUnity.Runtime.Input.FooniUIBridge>();
+                Debug.Log("[FUnity] Added FooniUIBridge to 'FUnity UI'.");
+            }
+        }
+
+        private static void EnsureScriptMachine(GameObject uiGO)
+        {
+            if (uiGO == null)
+            {
+                return;
+            }
+
+            var scriptMachineType = System.Type.GetType("Unity.VisualScripting.ScriptMachine, Unity.VisualScripting")
+                ?? System.Type.GetType("Unity.VisualScripting.ScriptMachine, Unity.VisualScripting.Core");
+
+            if (scriptMachineType == null)
+            {
+                return;
+            }
+
+            if (uiGO.GetComponent(scriptMachineType) == null)
+            {
+                uiGO.AddComponent(scriptMachineType);
+                Debug.Log("[FUnity] Added ScriptMachine to 'FUnity UI'.");
+            }
         }
 
         private PanelSettings FindDefaultPanelSettings()
