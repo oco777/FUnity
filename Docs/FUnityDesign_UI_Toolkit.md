@@ -84,6 +84,7 @@ public class FUnityStageData
 ## 🧱 実行時構造
 
 ### 🎮 FUnityManager
+FUnityManager はシーンに 1 体置くだけで、起動時に `FUnity UI` GameObject を生成し UIDocument と PanelSettings を紐付ける。Resources 配下の ProjectData や Stage/Actor 情報を読み込み、最小構成の背景とフーニーを表示する役割を担う。
 ```csharp
 public class FUnityManager : MonoBehaviour
 {
