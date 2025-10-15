@@ -2,7 +2,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace FUnity
+namespace FUnity.Runtime.Input
 {
     [RequireComponent(typeof(UIDocument))]
     public class FooniUIBridge : MonoBehaviour
