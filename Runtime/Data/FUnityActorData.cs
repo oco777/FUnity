@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.VisualScripting;
 
 namespace FUnity.Runtime.Core
 {
@@ -19,6 +20,9 @@ namespace FUnity.Runtime.Core
         [Tooltip("Actor element size in pixels. Set 0 or negative to defer to USS/UXML.")]
         [SerializeField] private Vector2 m_size = new Vector2(128, 128);
 
+        [Header("Visual Scripting")]
+        [SerializeField] private ScriptGraphAsset m_scriptGraph;
+
         public string DisplayName => m_displayName;
         public Texture2D Portrait => m_portrait;
         public Vector2 InitialPosition => m_initialPosition;
@@ -26,5 +30,6 @@ namespace FUnity.Runtime.Core
         public VisualTreeAsset ElementUxml => m_ElementUxml;
         public StyleSheet ElementStyle => m_ElementStyle;
         public Vector2 Size => m_size;
+        public ScriptGraphAsset ScriptGraph => m_scriptGraph;
     }
 }
