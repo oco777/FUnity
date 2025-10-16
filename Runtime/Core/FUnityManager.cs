@@ -46,6 +46,8 @@ namespace FUnity.Core
                     CreateRunner(runner);
                 }
             }
+
+            SpawnActorRunnersFromProjectData();
         }
 
         private void Start()
@@ -367,6 +369,72 @@ namespace FUnity.Core
             if (!Variables.Object(go).IsDefined("FUnityUI") && m_FUnityUI != null)
             {
                 Variables.Object(go).Set("FUnityUI", m_FUnityUI);
+            }
+        }
+
+        private void SpawnActorRunnersFromProjectData()
+        {
+            var project = m_Project;
+            if (project == null)
+            {
+                project = Resources.Load<FUnityProjectData>("FUnityProjectData");
+                if (project != null)
+                {
+                    m_Project = project;
+                }
+            }
+
+            if (project == null || project.Actors == null || project.Actors.Count == 0)
+            {
+                Debug.Log("[FUnity] No actors to spawn.");
+                return;
+            }
+
+            Transform parent = null;
+            GameObject uiGameObject = null;
+            if (m_FUnityUI != null)
+            {
+                parent = m_FUnityUI.transform;
+                uiGameObject = m_FUnityUI;
+            }
+            else
+            {
+                var uiRoot = GameObject.Find("FUnity UI");
+                if (uiRoot != null)
+                {
+                    parent = uiRoot.transform;
+                    uiGameObject = uiRoot;
+                }
+            }
+
+            foreach (var actor in project.Actors)
+            {
+                if (actor == null)
+                {
+                    continue;
+                }
+
+                var go = new GameObject($"ActorRunner - {actor.DisplayName}");
+                if (parent != null)
+                {
+                    go.transform.SetParent(parent, false);
+                }
+
+                var machine = go.AddComponent<ScriptMachine>();
+                if (actor.ScriptGraph != null)
+                {
+                    machine.nest.source = GraphSource.Macro;
+                    machine.nest.macro = actor.ScriptGraph;
+                }
+                else
+                {
+                    Debug.LogWarning($"[FUnity] '{actor.DisplayName}' has no ScriptGraph assigned. Runner created without macro.");
+                }
+
+                if (!Variables.Object(go).IsDefined("FUnityUI") && uiGameObject != null)
+                {
+                    Variables.Object(go).Set("FUnityUI", uiGameObject);
+                }
             }
         }
     }

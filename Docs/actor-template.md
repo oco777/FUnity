@@ -10,6 +10,7 @@
 - UXML は `name="root"` と `name="portrait"` を持つ A 案テンプレートを使用する。
 - `CreateActorElement()` が `root` サイズと `portrait` 画像を自動調整する。
 - USS は Theme から参照し、FUnity 配下で一元管理する。
+- ActorData の **ScriptGraph** に Macro を設定しておくと、実行時に `ActorRunner - <Actor名>` GameObject が `FUnity UI` 配下に生成され、割り当てたグラフが ScriptMachine で動作する。
 
 ## 手順
 ### 1. UXML テンプレートの構成
@@ -45,6 +46,11 @@
 - Portrait 用 PNG は `Assets/FUnity/Art/Characters/` に配置する。
 - 推奨ファイル名は `Fooni.png` など ActorData 名と一致させる。
 - 透明背景の 512px 以上の画像を使用すると UI 表示が安定する。
+
+### 4. Visual Scripting の割り当て
+- ActorData を選択し、Inspector の **Visual Scripting** セクションで `ScriptGraph` フィールドを設定する。
+- 再生時に FUnityManager が `ScriptMachine` を持つランナー GameObject を生成し、ここで設定した Macro を `machine.nest.macro` に割り当てる。
+- ScriptGraph 未設定の場合は警告ログが出るが、ランナー自体は生成される。
 
 ## 補足
 - 追加フィールドを作成する場合も `name` 属性を用いて参照可能にする。

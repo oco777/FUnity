@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
+using Unity.VisualScripting;
 using FUnity.Runtime.Core;
 
 namespace FUnity.EditorTools
@@ -28,6 +29,7 @@ namespace FUnity.EditorTools
         private const string ActorRootFolderPath = "Assets/FUnity/Data";
         private const string ActorDataFolderPath = ActorRootFolderPath + "/Actors";
         private const string ActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Fooni.asset";
+        private const string FooniScriptGraphSearchFilter = "t:ScriptGraphAsset Fooni_FloatSetup";
 
         // 背景テクスチャはプロジェクト直下の正規パスを優先し、無ければパッケージ同梱版から順に探す。
         private static readonly string[] StageBackgroundCandidates =
@@ -54,6 +56,11 @@ namespace FUnity.EditorTools
         {
             "Assets/FUnity/UI/USS/FooniElement.uss",
             "Packages/com.papacoder.funity/Runtime/UI/USS/FooniElement.uss"
+        };
+
+        private static readonly string[] FooniScriptGraphCandidates =
+        {
+            "Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset"
         };
 
         private const string BackgroundSearchFilter = "t:Texture2D Background_01";
@@ -126,6 +133,17 @@ namespace FUnity.EditorTools
             changed |= SetObject(serializedActor, "m_portrait", LoadFirst<Texture2D>(FooniPortraitCandidates, FooniPortraitSearchFilter));
             changed |= SetObject(serializedActor, "m_ElementUxml", LoadFirst<VisualTreeAsset>(FooniElementUxmlCandidates, FooniElementUxmlSearchFilter));
             changed |= SetObject(serializedActor, "m_ElementStyle", LoadFirst<StyleSheet>(FooniElementStyleCandidates, FooniElementStyleSearchFilter));
+
+            var scriptGraphProperty = serializedActor.FindProperty("m_scriptGraph");
+            if (scriptGraphProperty != null && scriptGraphProperty.objectReferenceValue == null)
+            {
+                var defaultScriptGraph = LoadFirst<ScriptGraphAsset>(FooniScriptGraphCandidates, FooniScriptGraphSearchFilter);
+                if (defaultScriptGraph != null)
+                {
+                    scriptGraphProperty.objectReferenceValue = defaultScriptGraph;
+                    changed = true;
+                }
+            }
 
             if (changed)
             {

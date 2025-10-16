@@ -65,6 +65,7 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
 - シーンには **FUnityManager** だけを配置しておけばよく、再生開始時に FUnityManager が `FUnity UI` GameObject と UIDocument を自動生成する。追加の初期化コンポーネントは不要で、旧来の `WorkspaceHUD` は利用しない。
 - 再生すると背景（`Background_01`）とフーニーの俳優 UI が表示される。ブロック UI は現行パッケージには含まれず、今後の拡張候補として扱う。
 - 実行時に FUnityManager が `ScriptMachine` と `FooniUIBridge` を `FUnity UI` に自動付与し、サンプルの Visual Scripting グラフでフーニーを移動できる。
+- ProjectData に登録された Actor ごとに `ActorRunner - <Actor名>` GameObject が `FUnity UI` 配下に生成され、ActorData の **ScriptGraph** に設定した Macro が ScriptMachine に割り当てられる。ScriptGraph が空の場合は警告ログのみで生成は継続する。
 
 ### 既定データの生成
 - メニュー **FUnity → Create → Default Project Data** を選ぶ。
