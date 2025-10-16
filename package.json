@@ -19,7 +19,8 @@
     "url": "https://github.com/oco777/FUnity.git"
   },
   "dependencies": {
-    "com.unity.ui": "1.0.0"
+    "com.unity.ui": "1.0.0",
+    "com.unity.visualscripting": "1.9.7"
   },
   "samples": [
     {

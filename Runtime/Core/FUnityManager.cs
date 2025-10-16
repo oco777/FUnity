@@ -2,11 +2,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.UI;
 using FUnity.Runtime.Core;
+using Unity.VisualScripting;
 #if UNITY_EDITOR
 using UnityEditor;
-#endif
-#if UNITY_VISUAL_SCRIPTING
-using Unity.VisualScripting;
 #endif
 
 namespace FUnity.Core
@@ -36,7 +34,6 @@ namespace FUnity.Core
                 EnsureFUnityUI();
             }
 
-#if UNITY_VISUAL_SCRIPTING
             if (m_Project != null && m_Project.runners != null)
             {
                 foreach (var runner in m_Project.runners)
@@ -49,7 +46,6 @@ namespace FUnity.Core
                     CreateRunner(runner);
                 }
             }
-#endif
         }
 
         private void Start()
@@ -163,17 +159,9 @@ namespace FUnity.Core
                 return;
             }
 
-            var scriptMachineType = System.Type.GetType("Unity.VisualScripting.ScriptMachine, Unity.VisualScripting")
-                ?? System.Type.GetType("Unity.VisualScripting.ScriptMachine, Unity.VisualScripting.Core");
-
-            if (scriptMachineType == null)
+            if (!uiGO.TryGetComponent(out ScriptMachine _))
             {
-                return;
-            }
-
-            if (uiGO.GetComponent(scriptMachineType) == null)
-            {
-                uiGO.AddComponent(scriptMachineType);
+                uiGO.AddComponent<ScriptMachine>();
                 Debug.Log("[FUnity] Added ScriptMachine to 'FUnity UI'.");
             }
         }
@@ -355,7 +343,6 @@ namespace FUnity.Core
             }
         }
 
-#if UNITY_VISUAL_SCRIPTING
         private void CreateRunner(FUnityProjectData.RunnerEntry entry)
         {
             var go = new GameObject(string.IsNullOrEmpty(entry.name) ? "FUnity VS Runner" : entry.name);
@@ -382,6 +369,5 @@ namespace FUnity.Core
                 Variables.Object(go).Set("FUnityUI", m_FUnityUI);
             }
         }
-#endif
     }
 }

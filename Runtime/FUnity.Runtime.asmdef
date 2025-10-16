@@ -5,7 +5,8 @@
         "UnityEngine.UIElementsModule",
         "Unity.VisualScripting.Core",
         "Unity.VisualScripting.Flow",
-        "Unity.VisualScripting.State"
+        "Unity.VisualScripting.State",
+        "Unity.VisualScripting.Antlr3.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

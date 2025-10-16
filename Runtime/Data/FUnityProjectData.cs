@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-#if UNITY_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-#endif
 
 namespace FUnity.Runtime.Core
 {
@@ -13,9 +11,7 @@ namespace FUnity.Runtime.Core
         public class RunnerEntry
         {
             public string name = "FUnity VS Runner";
-#if UNITY_VISUAL_SCRIPTING
             public ScriptGraphAsset macro;
-#endif
             [System.Serializable]
             public class ObjectVar
             {
