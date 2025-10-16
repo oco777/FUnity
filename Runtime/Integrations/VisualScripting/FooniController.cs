@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.VisualScripting;
 
 namespace FUnity.Runtime.UI
 {
@@ -165,9 +166,7 @@ namespace FUnity.Runtime.UI
         /// <summary>Emit a "Fooni/Say" custom event with message for VS graphs.</summary>
         public void Say(string message)
         {
-#if UNITY_VISUAL_SCRIPTING
-            Unity.VisualScripting.CustomEvent.Trigger(gameObject, "Fooni/Say", message);
-#endif
+            CustomEvent.Trigger(gameObject, "Fooni/Say", message);
             Debug.Log($"Fooni says: {message}");
         }
 

@@ -25,11 +25,13 @@
 - Create → Default Project Data で学習用の舞台・俳優・UI を一括生成する。
 - PanelSettings と Theme を安全に初期化し、実行時の見た目をすぐ確認できる。
 - ランタイムでは **FUnityManager** が `FUnity UI` GameObject と UIDocument を生成し、UI 初期化を一手に引き受ける。
+- Visual Scripting 1.9.7+ を前提とし、VS グラフから FUnity のアクターを直接制御できる。
 
 ## システム要件
 - Unity 6 (6000.x) 以降。
 - .NET Standard 2.1 互換ランタイム。
 - UI Toolkit / UI Builder パッケージ。
+- Unity Visual Scripting 1.9.7 以降（FUnity の依存関係として自動導入される）。
 
 ## インストール方法
 ### Unity Package Manager (Git URL)
@@ -38,6 +40,8 @@
 ```json
 "com.papacoder.funity": "https://github.com/oco777/FUnity.git"
 ```
+
+> ℹ️ Visual Scripting パッケージ（`com.unity.visualscripting`）は FUnity の依存関係として自動的に導入されます。
 
 ### Git Submodule
 - 既存プロジェクトのルートで次を実行する。
@@ -60,6 +64,7 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
 - `Assets/FUnity/Samples/FUnitySample.unity` を開き再生する。
 - シーンには **FUnityManager** だけを配置しておけばよく、再生開始時に FUnityManager が `FUnity UI` GameObject と UIDocument を自動生成する。追加の初期化コンポーネントは不要で、旧来の `WorkspaceHUD` は利用しない。
 - 再生すると背景（`Background_01`）とフーニーの俳優 UI が表示される。ブロック UI は現行パッケージには含まれず、今後の拡張候補として扱う。
+- 実行時に FUnityManager が `ScriptMachine` と `FooniUIBridge` を `FUnity UI` に自動付与し、サンプルの Visual Scripting グラフでフーニーを移動できる。
 
 ### 既定データの生成
 - メニュー **FUnity → Create → Default Project Data** を選ぶ。
