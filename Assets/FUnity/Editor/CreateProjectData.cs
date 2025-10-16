@@ -62,6 +62,7 @@ namespace FUnity.EditorTools
         {
             "Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset"
         };
+        private const string FooniScriptGraphFolder = "Assets/FUnity/VisualScripting/Macros";
 
         private const string BackgroundSearchFilter = "t:Texture2D Background_01";
         private const string FooniPortraitSearchFilter = "t:Texture2D Fooni";
@@ -138,10 +139,25 @@ namespace FUnity.EditorTools
             if (scriptGraphProperty != null && scriptGraphProperty.objectReferenceValue == null)
             {
                 var defaultScriptGraph = LoadFirst<ScriptGraphAsset>(FooniScriptGraphCandidates, FooniScriptGraphSearchFilter);
+
+                if (defaultScriptGraph == null)
+                {
+                    EnsureFolder(FooniScriptGraphFolder);
+                    var targetPath = FooniScriptGraphCandidates.FirstOrDefault();
+                    if (!string.IsNullOrEmpty(targetPath))
+                    {
+                        defaultScriptGraph = CreateScriptGraphAsset(targetPath);
+                    }
+                }
+
                 if (defaultScriptGraph != null)
                 {
                     scriptGraphProperty.objectReferenceValue = defaultScriptGraph;
                     changed = true;
+                }
+                else
+                {
+                    Debug.LogWarning("[FUnity] Failed to assign or create a ScriptGraph for Fooni actor.");
                 }
             }
 
@@ -153,6 +169,46 @@ namespace FUnity.EditorTools
             }
 
             return actorObj;
+        }
+
+        /// <summary>
+        /// 指定パスに ScriptGraphAsset を作成し、既に存在する場合はそれを返す。
+        /// </summary>
+        private static ScriptGraphAsset CreateScriptGraphAsset(string assetPath)
+        {
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                return null;
+            }
+
+            var existing = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var directory = Path.GetDirectoryName(assetPath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                var normalized = directory.Replace("\\", "/");
+                EnsureFolder(normalized);
+
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+            }
+
+            var macro = ScriptableObject.CreateInstance<ScriptGraphAsset>();
+            macro.graph = new FlowGraph();
+
+            AssetDatabase.CreateAsset(macro, assetPath);
+            EditorUtility.SetDirty(macro);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log($"[FUnity] Created ScriptGraphAsset: {assetPath}");
+            return macro;
         }
 
         /// <summary>
