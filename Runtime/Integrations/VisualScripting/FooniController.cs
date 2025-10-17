@@ -1,3 +1,4 @@
+// Updated: 2025-02-14
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
@@ -5,14 +6,30 @@ using Unity.VisualScripting;
 namespace FUnity.Runtime.UI
 {
     /// <summary>
-    /// Bridge MonoBehaviour so Unity Visual Scripting can control FooniElement (UI Toolkit).
-    /// Exposes simple public APIs that become VS units automatically.
+    /// UI Toolkit の <see cref="FooniElement"/> を Unity Visual Scripting から制御する View 向けブリッジ。
     /// </summary>
+    /// <remarks>
+    /// 依存関係: <see cref="UIDocument"/>, <see cref="FooniElement"/>, Unity Visual Scripting <see cref="CustomEvent"/>
+    /// 想定ライフサイクル: <see cref="FUnity.Core.FUnityManager"/> によって UI GameObject に付与され、Awake で UIDocument を解決
+    ///     した後に Presenter から <see cref="BindActorElement"/> が呼び出される。ビジネスロジックは保持せず、View 操作とイベント発行のみに徹する。
+    /// </remarks>
     public class FooniController : MonoBehaviour
     {
+        /// <summary>
+        /// 制御対象の <see cref="UIDocument"/>。null の場合は <see cref="Awake"/> で同一 GameObject から補完する。
+        /// </summary>
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("uiDocument")]
         private UIDocument m_UIDocument;
 
+        /// <summary>
+        /// 制御対象の UIDocument を外部から差し替える。
+        /// </summary>
+        /// <param name="doc">UI Toolkit ドキュメント。null を渡すと後続の Awake で再解決する。</param>
+        /// <example>
+        /// <code>
+        /// controller.SetUIDocument(GetComponent&lt;UIDocument&gt;());
+        /// </code>
+        /// </example>
         public void SetUIDocument(UIDocument doc)
         {
             m_UIDocument = doc;
@@ -29,8 +46,14 @@ namespace FUnity.Runtime.UI
 
         private IVisualElementScheduledItem m_Ticker;
 
+        /// <summary>
+        /// 現在バインドされている UI Toolkit 要素。
+        /// </summary>
         public VisualElement BoundElement => m_BoundElement;
 
+        /// <summary>
+        /// UIDocument と既存の FooniElement を探索し、未バインド時は Presenter からの通知を待つ。
+        /// </summary>
         private void Awake()
         {
             // Ensure UIDocument and root
@@ -57,6 +80,9 @@ namespace FUnity.Runtime.UI
             }
         }
 
+        /// <summary>
+        /// 浮遊アニメーションが有効な場合にスケジューラを起動する。
+        /// </summary>
         private void OnEnable()
         {
             if (!m_FloatEnabled || m_BoundElement == null)
@@ -74,6 +100,9 @@ namespace FUnity.Runtime.UI
             }
         }
 
+        /// <summary>
+        /// 無効化時にはスケジューラを一時停止する。
+        /// </summary>
         private void OnDisable()
         {
             m_Ticker?.Pause();
@@ -81,7 +110,15 @@ namespace FUnity.Runtime.UI
 
         // ===== Visual Scripting APIs (auto-exposed as units) =====
 
-        /// <summary>Bind an existing actor VisualElement for control.</summary>
+        /// <summary>
+        /// Presenter や Visual Scripting から俳優要素を結び付ける。
+        /// </summary>
+        /// <param name="ve">制御対象の VisualElement。</param>
+        /// <example>
+        /// <code>
+        /// controller.BindActorElement(actorElement);
+        /// </code>
+        /// </example>
         public void BindActorElement(VisualElement ve)
         {
             if (ve == null)
@@ -107,7 +144,15 @@ namespace FUnity.Runtime.UI
             }
         }
 
-        /// <summary>Enable/disable floating animation.</summary>
+        /// <summary>
+        /// 浮遊アニメーションの有効/無効を切り替える。
+        /// </summary>
+        /// <param name="enabled">true で有効化。</param>
+        /// <example>
+        /// <code>
+        /// controller.EnableFloat(false);
+        /// </code>
+        /// </example>
         public void EnableFloat(bool enabled)
         {
             m_FloatEnabled = enabled;
@@ -137,13 +182,29 @@ namespace FUnity.Runtime.UI
             m_Ticker?.Resume();
         }
 
-        /// <summary>Set floating amplitude in pixels.</summary>
+        /// <summary>
+        /// 浮遊の振幅（px）を設定する。負値は 0 に切り上げる。
+        /// </summary>
+        /// <param name="amplitudePx">上下方向の変位量（px）。</param>
+        /// <example>
+        /// <code>
+        /// controller.SetFloatAmplitude(20f);
+        /// </code>
+        /// </example>
         public void SetFloatAmplitude(float amplitudePx)
         {
             m_Amplitude = Mathf.Max(0f, amplitudePx);
         }
 
-        /// <summary>Set floating period in seconds.</summary>
+        /// <summary>
+        /// 浮遊周期（秒）を設定する。0.1 秒より短い値は 0.1 秒に制限する。
+        /// </summary>
+        /// <param name="periodSeconds">1 周あたりの時間。</param>
+        /// <example>
+        /// <code>
+        /// controller.SetFloatPeriod(2.5f);
+        /// </code>
+        /// </example>
         public void SetFloatPeriod(float periodSeconds)
         {
             m_PeriodSec = Mathf.Max(0.1f, periodSeconds);
@@ -154,7 +215,15 @@ namespace FUnity.Runtime.UI
             }
         }
 
-        /// <summary>Nudge vertically by delta pixels (instant add).</summary>
+        /// <summary>
+        /// Y 軸方向に即時的なオフセットを加算する。
+        /// </summary>
+        /// <param name="deltaPx">加算するピクセル量。</param>
+        /// <example>
+        /// <code>
+        /// controller.NudgeY(-8f);
+        /// </code>
+        /// </example>
         public void NudgeY(float deltaPx)
         {
             if (m_BoundElement == null) return;
@@ -163,7 +232,15 @@ namespace FUnity.Runtime.UI
             ApplyTranslation();
         }
 
-        /// <summary>Emit a "Fooni/Say" custom event with message for VS graphs.</summary>
+        /// <summary>
+        /// Visual Scripting グラフへカスタムイベント <c>Fooni/Say</c> を発行する。
+        /// </summary>
+        /// <param name="message">イベントに添付するメッセージ。</param>
+        /// <example>
+        /// <code>
+        /// controller.Say("Hello!");
+        /// </code>
+        /// </example>
         public void Say(string message)
         {
             CustomEvent.Trigger(gameObject, "Fooni/Say", message);
@@ -171,6 +248,9 @@ namespace FUnity.Runtime.UI
         }
 
         // ===== Internal: schedule-based floating =====
+        /// <summary>
+        /// UI Toolkit のスケジューラを使用して浮遊アニメーションを更新する。
+        /// </summary>
         private void StartTicker()
         {
             m_Ticker?.Pause();
@@ -191,6 +271,9 @@ namespace FUnity.Runtime.UI
             }).Every(16); // ~60 FPS
         }
 
+        /// <summary>
+        /// 現在のベース位置と浮遊オフセットを <see cref="VisualElement.style"/> に反映する。
+        /// </summary>
         private void ApplyTranslation()
         {
             if (m_BoundElement == null)
@@ -201,6 +284,11 @@ namespace FUnity.Runtime.UI
             m_BoundElement.style.translate = new Translate(m_BaseTranslation.x, m_BaseTranslation.y + m_CurrentOffset, m_BaseTranslation.z);
         }
 
+        /// <summary>
+        /// 要素が既に保持している translate 値を初期値として取得する。
+        /// </summary>
+        /// <param name="element">対象要素。</param>
+        /// <returns>translate のベース値。</returns>
         private static Vector3 ResolveBaseTranslation(VisualElement element)
         {
             if (element == null)
