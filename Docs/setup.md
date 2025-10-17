@@ -16,7 +16,7 @@ FUnity を既存プロジェクトへ追加し、サンプルの背景とフー�
 
 ## パッケージ導入
 1. Package Manager を開き、左上の **+** ボタンから **Add package from git URL...** を選択します。
-2. 通常は `https://github.com/papacoder/FUnity.git` を入力します。特定バージョンを固定したい場合は `https://github.com/papacoder/FUnity.git#v0.1.0` のようにタグを指定します。
+2. 通常は `https://github.com/oco777/FUnity.git` を入力します。特定バージョンを固定したい場合は `https://github.com/oco777/FUnity.git#v0.1.0` のようにタグを指定します。
 3. 依存パッケージとして `com.unity.visualscripting` が自動追加されることを確認します。
 4. 既存プロジェクトでソースを保持したい場合は Git サブモジュールとして `Packages/com.papacoder.funity` に追加しても構いません。
 

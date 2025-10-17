@@ -5,7 +5,7 @@
 ![FUnity overview](docs/images/readme-hero.png)
 
 ## 現状機能サマリ
-- UPM の Git URL（`https://github.com/papacoder/FUnity.git`）で導入可能。タグ指定（例：`#v0.1.0`）によるバージョン固定にも対応。
+- UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.1.0`）によるバージョン固定にも対応。
 - Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/Default Project Data**）で初期データを生成。
 - `Art/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
 - `FUnityManager` がシーン起動時に “FUnity UI” GameObject と `UIDocument` を構築し、必要なブリッジや `ScriptMachine` を付与。
@@ -34,14 +34,14 @@
 `Packages/manifest.json` の `dependencies` に次のエントリを追加します。
 
 ```json
-"com.papacoder.funity": "https://github.com/papacoder/FUnity.git"
+"com.papacoder.funity": "https://github.com/oco777/FUnity.git"
 ```
 
 ### バージョンを固定したい場合
 特定のタグに固定したい場合は、`#タグ名` を付けます。
 
 ```json
-"com.papacoder.funity": "https://github.com/papacoder/FUnity.git#v0.1.0"
+"com.papacoder.funity": "https://github.com/oco777/FUnity.git#v0.1.0"
 ```
 
 > ℹ️ Visual Scripting は必須依存のため、`#if UNITY_VISUAL_SCRIPTING` などのガードは不要です。パッケージ導入時に `com.unity.visualscripting` が自動インストールされます。
