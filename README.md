@@ -2,130 +2,87 @@
 
 > UI Toolkit ベースの Scratch 風学習環境で、子どもたちの創造力を引き出す。
 
-![FUnity overview placeholder](docs/images/readme-hero.png)
+![FUnity overview](docs/images/readme-hero.png)
 
-> TODO: スクリーンショットを差し替える。
+## 現状機能サマリ
+- UPM の Git URL（`https://github.com/papacoder/FUnity.git`）で導入可能。タグ指定（例：`#v0.1.0`）によるバージョン固定にも対応。
+- Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/Default Project Data**）で初期データを生成。
+- `Art/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
+- `FUnityManager` がシーン起動時に “FUnity UI” GameObject と `UIDocument` を構築し、必要なブリッジや `ScriptMachine` を付与。
+- Unity Visual Scripting を **必須依存**とし、Macro が無い場合でも `Fooni_FloatSetup.asset` を自動生成して割り当てる。
 
 ## 目次
-- [プロジェクト概要](#プロジェクト概要)
 - [システム要件](#システム要件)
-- [インストール方法](#インストール方法)
+- [インストール（UPM/Git）](#インストールupmgit)
 - [クイックスタート](#クイックスタート)
-- [自動生成されるアセット](#自動生成されるアセット)
-- [UI テーマ適用戦略](#ui-テーマ適用戦略)
-- [アクター UI テンプレート](#アクター-ui-テンプレート)
-- [トラブルシュート](#トラブルシュート)
-- [既知の制限と今後の予定](#既知の制限と今後の予定)
+- [Default Project Data が行うこと](#default-project-data-が行うこと)
+- [ランタイム構築フロー](#ランタイム構築フロー)
+- [Visual Scripting での移動例](#visual-scripting-での移動例)
+- [トラブルシューティング早見表](#トラブルシューティング早見表)
 - [ドキュメント](#ドキュメント)
 - [ライセンス](#ライセンス)
 - [貢献方法](#貢献方法)
 
-## プロジェクト概要
-- FUnity は Unity と UI Toolkit を用いたビジュアルプログラミング学習環境。
-- Create → Default Project Data で学習用の舞台・俳優・UI を一括生成する。
-- PanelSettings と Theme を安全に初期化し、実行時の見た目をすぐ確認できる。
-- ランタイムでは **FUnityManager** が `FUnity UI` GameObject と UIDocument を生成し、UI 初期化を一手に引き受ける。
-- Visual Scripting 1.9.7+ を前提とし、VS グラフから FUnity のアクターを直接制御できる。
-
 ## システム要件
 - Unity 6 (6000.x) 以降。
 - .NET Standard 2.1 互換ランタイム。
-- UI Toolkit / UI Builder パッケージ。
-- Unity Visual Scripting 1.9.7 以降（FUnity の依存関係として自動導入される）。
+- UI Toolkit / UI Builder。
+- Unity Visual Scripting 1.9.7 以降（FUnity の依存として自動追加される）。
 
-## インストール方法
-### Unity Package Manager (Git URL)
-- `Packages/manifest.json` の `dependencies` に次を追加する。
-
-```json
-"com.papacoder.funity": "https://github.com/oco777/FUnity.git"
-```
-
-> ℹ️ Visual Scripting パッケージ（`com.unity.visualscripting`）は FUnity の依存関係として自動的に導入されます。
-
-### Git Submodule
-- 既存プロジェクトのルートで次を実行する。
-
-```bash
-git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.funity
-```
-
-### パッケージ参照
-- 任意の Git タグやコミットを `.tgz` として取得し、`manifest.json` へファイル参照を追加する。
-- 例：
+## インストール（UPM/Git）
+### Git URL を直接指定する場合
+`Packages/manifest.json` の `dependencies` に次のエントリを追加します。
 
 ```json
-"com.papacoder.funity": "file:../packages/FUnity-0.2.0.tgz"
+"com.papacoder.funity": "https://github.com/papacoder/FUnity.git"
 ```
+
+### バージョンを固定したい場合
+特定のタグに固定したい場合は、`#タグ名` を付けます。
+
+```json
+"com.papacoder.funity": "https://github.com/papacoder/FUnity.git#v0.1.0"
+```
+
+> ℹ️ Visual Scripting は必須依存のため、`#if UNITY_VISUAL_SCRIPTING` などのガードは不要です。パッケージ導入時に `com.unity.visualscripting` が自動インストールされます。
 
 ## クイックスタート
-### サンプルシーンの再生
-- Package Manager → Samples → **FUnitySample** をインポートする。
-- `Assets/FUnity/Samples/FUnitySample.unity` を開き再生する。
-- シーンには **FUnityManager** だけを配置しておけばよく、再生開始時に FUnityManager が `FUnity UI` GameObject と UIDocument を自動生成する。追加の初期化コンポーネントは不要で、旧来の `WorkspaceHUD` は利用しない。
-- 再生すると背景（`Background_01`）とフーニーの俳優 UI が表示される。ブロック UI は現行パッケージには含まれず、今後の拡張候補として扱う。
-- 実行時に FUnityManager が `ScriptMachine` と `FooniUIBridge` を `FUnity UI` に自動付与し、サンプルの Visual Scripting グラフでフーニーを移動できる。
-- ProjectData に登録された Actor ごとに `ActorRunner - <Actor名>` GameObject が `FUnity UI` 配下に生成され、ActorData の **ScriptGraph** に設定した Macro が ScriptMachine に割り当てられる。ScriptGraph が空の場合は警告ログのみで生成は継続する。
+1. Package Manager を開き、**Samples → BasicScene** の **Import** を押して `Samples~/BasicScene/FUnitySample.unity` を開きます。
+2. メニュー **FUnity > Create > Default Project Data** を実行し、プロジェクト既定データを生成します。
+3. シーンを再生すると背景画像（`Background_01.png`）とフーニーの俳優 UI が表示され、サンプル Macro による移動が動作します。
 
-### ランタイムアーキテクチャ（MVP）
-- **Model**：`FUnityProjectData` / `FUnityActorData` などの ScriptableObject が静的設定を提供し、`ActorState` が実行中の位置・速度を保持する。
-- **View**：`ActorView`（UI Toolkit 専用の薄い MonoBehaviour）が `FooniUIBridge` を通じて UI の `left/top` を更新し、描画のみに責務を限定する。
-- **Presenter**：`ActorPresenter` が入力ベクトルを `ActorState` に反映し、`IActorView` 経由で UI を更新。入力取得は `InputPresenter` に分離し、Visual Scripting からは `VSPresenterBridge.VS_Move(dir, dt)` を呼び出す。
-- **Composition Root**：`FUnityManager` が ScriptableObject を読み込み、UI を生成し、各 Presenter/State/View を束ねて `Update()` 内で `Tick()` を呼ぶ。詳しくは [Docs/mvp-overview.md](Docs/mvp-overview.md) を参照。
+## Default Project Data が行うこと
+`Assets/FUnity/Editor/CreateProjectData.cs` の **Create Default Project Data** は、既存リソースを尊重しつつ以下を保証します。
+- `Resources/FUnityProjectData.asset` と `Resources/FUnityStageData.asset` を生成し、ステージ背景に `Art/Backgrounds/Background_01.png` を設定。
+- `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss` が存在する場合はそれを `FUnityPanelSettings.asset`（`Assets/FUnity/UI/`）の ThemeStyleSheet に割り当て。存在しなければ `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` を生成し、同アセットに設定。
+- `Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset` を作成し、既存の重複リソース（`Assets/Resources/FUnityActorData_Fooni.asset` など）を検出して削除。Portrait/UXML/USS を既定テンプレートに割り当てます。
+- `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` を探索し、無ければ新規作成。生成した Macro を `FUnityActorData_Fooni` の ScriptGraph に登録します。
 
-### 既定データの生成
-- メニュー **FUnity → Create → Default Project Data** を選ぶ。
-- 次のアセットが `Assets/FUnity/` 配下に生成される。
-  - `Data/Project/FUnityProjectData.asset`
-  - `Data/Stages/FUnityStageData.asset`（背景に `Art/Backgrounds/Background_01.png` を適用）
-  - `Data/Actors/FUnityActorData_Fooni.asset`
-  - `UI/FUnityPanelSettings.asset`
-  - `UI/USS/UnityDefaultRuntimeTheme.uss`
-- 生成後にシーンを再生すると PanelSettingsInitializer が Theme を割り当てる。
-- FUnityManager はこれらのデータを参照しつつ、実行時に `FUnity UI`（UIDocument 付き）を自動生成して最小構成の背景とフーニーを表示する。
+## ランタイム構築フロー
+- シーンに `FUnityManager` を 1 体置くだけで、再生開始時に “FUnity UI” GameObject と `UIDocument` を生成。
+- `FUnityManager` は `FUnityProjectData` を参照して各 Actor Runner を生成し、`ScriptMachine` と `FooniUIBridge`、`VSPresenterBridge` など必要なコンポーネントを自動付与します。
+- Actor ごとに `FUnityActorData` に設定された Macro が `ScriptMachine` に割り当てられ、`ActorPresenter` が `ActorState` と `ActorView` を橋渡しします。
+- Visual Scripting を用いず C# だけで動作させたい場合も、Presenter 層でロジックを完結させることで UI 更新と分離できます。
 
-## 自動生成されるアセット
-- `CreateProjectData.CreateDefault()` が Stage 背景・俳優・PanelSettings を初期化する。
-- StageData は `Background_01.png` を参照し、背景が未設定でも最小構成で表示する。
-- ActorData は Portrait/UXML/USS を候補パス優先＋探索で決定する。
-- PanelSettings は Editor 実行時に自動生成され、Theme を割り当て済みで保存される。
+## Visual Scripting での移動例
+- サンプル Macro（`Fooni_FloatSetup`）では、`On Update` → `Get Axis (Horizontal/Vertical)` → `Vector2`（Y を `*-1` で反転）→ `FooniUIBridge.NudgeByDefaultSpeed(dir, deltaTime)` の流れで移動量を計算します。
+- 入力 API は `FUnity.Runtime.Input` と `UnityEngine.Input` の名前空間が衝突しやすいため、`UnityEngine.Input.GetAxisRaw` のように完全修飾呼び出しを推奨します。
 
-## UI テーマ適用戦略
-- UI Builder 標準の `Assets/UI Toolkit/UnityThemes/Unity Default Runtime Theme.uss` を最優先で利用する。
-- 上記が無い場合は `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` を生成し、最小限のスタイルを提供する。
-- `PanelSettingsInitializer.EnsurePanelSettings()` が Editor 実行時に `Resources/FUnityPanelSettings.asset` を配置し Theme を設定する。
-- ビルドに含める場合は Editor で生成された Theme アセットをプロジェクトに保持する。
-
-## アクター UI テンプレート
-- 俳優 UI は UXML の A 案（`name="root"` と `name="portrait"`）を前提とする。
-- `CreateActorElement()` が `name="root"` のサイズ調整と `name="portrait"` の画像差し替えを行う。
-- Portrait 画像は `Assets/FUnity/Art/Characters/` の PNG を推奨する。
-- USS は `Assets/FUnity/UI/USS/` に保存し、アセット化した Theme から参照する。
-
-## トラブルシュート
-- USS の `Unsupported selector format: '---'` が出たら Theme USS を削除し、メニューから再生成する。
-- Theme 名の表記ゆれ（`Unity Default Runtime Theme.uss` と `UnityDefaultRuntimeTheme.uss`）は `FUnity/UI/USS/` 配下を採用する。
-- Actor や Theme のアセットが重複した場合は Legacy フォルダを削除して一元管理する。
-
-## 既知の制限と今後の予定
-- UI Builder 依存アセットは Editor でのみ生成されるため、CI での自動生成は未対応（TODO）。
-- 俳優テンプレートのカスタム差し替え例を Docs に追加予定（TODO）。
-- ブロック UI / ビジュアルスクリプティング機能は未提供（拡張候補、教材化を検討中）。
+## トラブルシューティング早見表
+- `CS0234`（`Input.GetAxisRaw` が見つからない）: `UnityEngine.Input.GetAxisRaw` と完全修飾するか、`using UInput = UnityEngine.Input;` を追加します。
+- テーマが null のまま: `Assets/UI Toolkit/UnityThemes/` を確認し、存在しない場合は Default Project Data を再実行して `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` が生成されることを確認します。
+- 俳優 UI が表示されない: `FooniElement.uxml` で `name="root"` と `name="actor-root"` が設定されているか確認し、`FooniUIBridge` が要素を取得できるようにします。
 
 ## ドキュメント
-- [環境構築ガイド](Docs/setup.md)
-- [UI テーマ適用戦略](Docs/ui-theme.md)
+- [導入手順](Docs/setup.md)
 - [既定データの構成](Docs/data-defaults.md)
-- [俳優 UI テンプレート](Docs/actor-template.md)
+- [UI テーマ適用戦略](Docs/ui-theme.md)
 - [トラブルシュート集](Docs/troubleshooting.md)
-- [コーディング規約](Docs/conventions.md)
-- [FAQ](Docs/faq.md)
 - [MVP アーキテクチャ概要](Docs/mvp-overview.md)
 
 ## ライセンス
-- 本プロジェクトは [MIT License](LICENSE.md) に従う。
+- 本プロジェクトは [MIT License](LICENSE.md) に従います。
 
 ## 貢献方法
-- Issue と Pull Request は歓迎する。
-- `.github/ISSUE_TEMPLATE/documentation.md` を使い、再現手順とスクリーンショットを添付する。
-- コーディング規約と UNITY_EDITOR ガードの方針は [Docs/conventions.md](Docs/conventions.md) を参照する。
+- Issue と Pull Request を歓迎します。まずは課題を記載し、再現手順・スクリーンショットを添付してください。
+- コーディング規約とコメント方針は [Docs/conventions.md](Docs/conventions.md) を参照してください。
