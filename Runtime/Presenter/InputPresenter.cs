@@ -9,8 +9,8 @@ namespace FUnity.Runtime.Presenter
     {
         public Vector2 ReadMove()
         {
-            var x = Input.GetAxisRaw("Horizontal");
-            var y = -Input.GetAxisRaw("Vertical");
+            var x = UnityEngine.Input.GetAxisRaw("Horizontal");
+            var y = -UnityEngine.Input.GetAxisRaw("Vertical");
             return new Vector2(x, y);
         }
     }
