@@ -25,6 +25,10 @@ namespace FUnity.Runtime.Input
             TryBind();
         }
 
+        public bool HasBoundElement => _actorRoot != null;
+
+        public VisualElement BoundElement => _actorRoot;
+
         public bool TryBind()
         {
             if (_ui == null)
@@ -39,32 +43,23 @@ namespace FUnity.Runtime.Input
 
             var root = _ui.rootVisualElement;
             _actorRoot = null;
-
             if (!string.IsNullOrEmpty(rootName))
             {
-                _actorRoot = root.Q<VisualElement>(rootName);
+                BindElement(root.Q<VisualElement>(rootName));
             }
 
             if (_actorRoot == null && !string.IsNullOrEmpty(rootClass))
             {
-                _actorRoot = root.Query<VisualElement>(className: rootClass).First();
-            }
-
-            if (_actorRoot != null)
-            {
-                _actorRoot.focusable = true;
-                if (float.IsNaN(_actorRoot.resolvedStyle.left))
-                {
-                    _actorRoot.style.left = 100;
-                }
-
-                if (float.IsNaN(_actorRoot.resolvedStyle.top))
-                {
-                    _actorRoot.style.top = 100;
-                }
+                BindElement(root.Query<VisualElement>(className: rootClass).First());
             }
 
             return _actorRoot != null;
+        }
+
+        public void BindElement(VisualElement element)
+        {
+            _actorRoot = element;
+            ConfigureActorRoot(_actorRoot);
         }
 
         public Vector2 GetPosition()
@@ -108,6 +103,26 @@ namespace FUnity.Runtime.Input
         public void NudgeByDefaultSpeed(Vector2 dir, float deltaTime)
         {
             NudgeBySpeed(dir, defaultSpeed, deltaTime);
+        }
+
+        private void ConfigureActorRoot(VisualElement element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            element.focusable = true;
+
+            if (float.IsNaN(element.resolvedStyle.left))
+            {
+                element.style.left = 0f;
+            }
+
+            if (float.IsNaN(element.resolvedStyle.top))
+            {
+                element.style.top = 0f;
+            }
         }
 
         private Vector2 ClampToPanel(Vector2 pos, Vector2 size)

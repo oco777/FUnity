@@ -67,6 +67,12 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
 - 実行時に FUnityManager が `ScriptMachine` と `FooniUIBridge` を `FUnity UI` に自動付与し、サンプルの Visual Scripting グラフでフーニーを移動できる。
 - ProjectData に登録された Actor ごとに `ActorRunner - <Actor名>` GameObject が `FUnity UI` 配下に生成され、ActorData の **ScriptGraph** に設定した Macro が ScriptMachine に割り当てられる。ScriptGraph が空の場合は警告ログのみで生成は継続する。
 
+### ランタイムアーキテクチャ（MVP）
+- **Model**：`FUnityProjectData` / `FUnityActorData` などの ScriptableObject が静的設定を提供し、`ActorState` が実行中の位置・速度を保持する。
+- **View**：`ActorView`（UI Toolkit 専用の薄い MonoBehaviour）が `FooniUIBridge` を通じて UI の `left/top` を更新し、描画のみに責務を限定する。
+- **Presenter**：`ActorPresenter` が入力ベクトルを `ActorState` に反映し、`IActorView` 経由で UI を更新。入力取得は `InputPresenter` に分離し、Visual Scripting からは `VSPresenterBridge.VS_Move(dir, dt)` を呼び出す。
+- **Composition Root**：`FUnityManager` が ScriptableObject を読み込み、UI を生成し、各 Presenter/State/View を束ねて `Update()` 内で `Tick()` を呼ぶ。詳しくは [Docs/mvp-overview.md](Docs/mvp-overview.md) を参照。
+
 ### 既定データの生成
 - メニュー **FUnity → Create → Default Project Data** を選ぶ。
 - 次のアセットが `Assets/FUnity/` 配下に生成される。
@@ -114,6 +120,7 @@ git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.fu
 - [トラブルシュート集](Docs/troubleshooting.md)
 - [コーディング規約](Docs/conventions.md)
 - [FAQ](Docs/faq.md)
+- [MVP アーキテクチャ概要](Docs/mvp-overview.md)
 
 ## ライセンス
 - 本プロジェクトは [MIT License](LICENSE.md) に従う。
