@@ -12,6 +12,7 @@
 - 壊れた USS や重複アセットを再生成・整理する手順を整備。
 
 ### Docs
+- docs: update Runtime XML comments to clarify MVP responsibilities and UI Toolkit constraints.
 - docs: update README and Docs to reflect current initialization flow, theme resolution, and VS macro auto-creation.
 - README と Docs/ 配下を最新の実装と運用に合わせて全面更新。
 - コーディング規約とトラブルシュートを明文化。

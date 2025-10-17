@@ -1,3 +1,4 @@
+// Updated: 2025-02-14
 using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -8,21 +9,27 @@ using UnityEditor;
 namespace FUnity.UI
 {
     /// <summary>
-    /// ランタイム開始前に PanelSettings を Resources から確保し、Editor 時はテーマ割当まで自動化する。
-    /// UNITY_EDITOR 外でも参照できるよう ScriptableObject を生成済みに保つ。
+    /// UI Toolkit の <see cref="PanelSettings"/> アセットを初期化し、ランタイム/エディタ双方で利用できるよう保証するユーティリティ。
     /// </summary>
+    /// <remarks>
+    /// 依存関係: Resources/FUnityPanelSettings.asset, UnityEditor（テーマ割り当て時）
+    /// 想定ライフサイクル: ランタイム起動前 (<see cref="RuntimeInitializeOnLoadMethodAttribute"/>) に 1 度実行。
+    /// View 層の基盤構築に該当し、ビジネスロジックは含まない。
+    /// </remarks>
     public static class PanelSettingsInitializer
     {
+        /// <summary>検索・生成対象となる PanelSettings アセット名。</summary>
         private const string ResourceName = "FUnityPanelSettings";
-        // Resources 配下に常駐させるため、Assets/Resources を基準に正規パスを構築する。
+
+        /// <summary>Resources 配下に常駐させるため、Assets/Resources を基準に正規パスを構築する。</summary>
         private static readonly string ResourceDirectory = Path.Combine("Assets", "Resources");
         private static readonly string AssetPath = Path.Combine(ResourceDirectory, ResourceName + ".asset");
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         /// <summary>
         /// 実行前に PanelSettings をロードし、存在しない場合は生成・保存まで行う。
         /// Editor 環境では UI Builder 既定テーマを割り当て、UI Document へ一括配布する。
         /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void EnsurePanelSettings()
         {
             var panelSettings = Resources.Load<PanelSettings>(ResourceName);

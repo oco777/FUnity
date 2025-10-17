@@ -1,3 +1,4 @@
+// Updated: 2025-02-14
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,29 +16,57 @@ using UnityEditor;
 namespace FUnity.Core
 {
     /// <summary>
-    /// 起動時に FUnity UI（UIDocument + FooniController）と VS Runner を動的生成。
+    /// FUnity ランタイム全体をオーケストレーションする Presenter 層の MonoBehaviour。
+    /// UI ドキュメント、俳優、Visual Scripting Runner を初期化し、入力から Model/View への一方向フローを維持する。
     /// </summary>
+    /// <remarks>
+    /// 依存関係: <see cref="FUnityProjectData"/>, <see cref="UIDocument"/>, <see cref="FooniController"/>, <see cref="ActorPresenter"/>
+    /// 想定ライフサイクル: シーン常駐。Awake で必要な GameObject を生成し、Start で Stage/Actor を構築、Update で Presenter
+    ///     に入力を流す。
+    /// スレッド/GC: Unity メインスレッド専用。生成物は MonoBehaviour と ScriptableObject のみ。
+    /// </remarks>
     public sealed class FUnityManager : MonoBehaviour
     {
+        /// <summary>
+        /// 制御対象の <see cref="UIDocument"/>。Inspector で未設定の場合は Awake/Start で探索する。
+        /// </summary>
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("uiDocument")]
         private UIDocument m_UIDocument;
 
+        /// <summary>
+        /// プロジェクト設定アセット。null の場合は Resources からロードする。
+        /// </summary>
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("project")]
         private FUnityProjectData m_Project;
 
+        /// <summary>生成・確保した UI ルート GameObject。</summary>
         private GameObject m_FUnityUI;
 
+        /// <summary>俳優ごとの Presenter インスタンス。</summary>
         private readonly List<ActorPresenter> m_ActorPresenters = new List<ActorPresenter>();
+
+        /// <summary>生成済み俳優 UI 要素と設定のペア。</summary>
         private readonly List<ActorVisual> m_ActorVisuals = new List<ActorVisual>();
+
+        /// <summary>入力ベクトルを提供する Presenter。</summary>
         private InputPresenter m_InputPresenter;
+
+        /// <summary>Visual Scripting との仲介役。</summary>
         private VSPresenterBridge m_VsBridge;
 
         private struct ActorVisual
         {
+            /// <summary>俳優設定。</summary>
             public FUnityActorData Data;
+
+            /// <summary>生成された UI Toolkit 要素。</summary>
             public VisualElement Element;
         }
 
+        /// <summary>
+        /// Resources から設定アセットを探索し、UI ルートと Presenter ブリッジを生成する。
+        /// Visual Scripting Runner もこの段階でスポーンする。
+        /// </summary>
         private void Awake()
         {
             if (m_Project == null)
@@ -67,6 +96,9 @@ namespace FUnity.Core
             SpawnActorRunnersFromProjectData();
         }
 
+        /// <summary>
+        /// UI ドキュメントからルート要素を取得し、ステージ設定と俳優要素を構築する。
+        /// </summary>
         private void Start()
         {
             // Resolve UIDocument
@@ -136,6 +168,9 @@ namespace FUnity.Core
             InitializeActorPresenters();
         }
 
+        /// <summary>
+        /// 毎フレーム入力ベクトルを取得し、俳優 Presenter 群へ伝搬させる。
+        /// </summary>
         private void Update()
         {
             if (m_ActorPresenters.Count == 0 || m_InputPresenter == null)
@@ -152,6 +187,9 @@ namespace FUnity.Core
             }
         }
 
+        /// <summary>
+        /// FUnity UI ルート GameObject を生成し、必須コンポーネント（UIDocument, FooniController, ScriptMachine 等）を確保する。
+        /// </summary>
         private void EnsureFUnityUI()
         {
             m_FUnityUI = GameObject.Find("FUnity UI");
@@ -183,6 +221,9 @@ namespace FUnity.Core
             controller.SetUIDocument(m_UIDocument);
         }
 
+        /// <summary>
+        /// Visual Scripting から Presenter を呼び出す <see cref="VSPresenterBridge"/> を確保する。
+        /// </summary>
         private void EnsurePresenterBridge()
         {
             if (m_FUnityUI == null)
@@ -198,6 +239,9 @@ namespace FUnity.Core
             m_VsBridge = m_FUnityUI.GetComponent<VSPresenterBridge>() ?? m_FUnityUI.AddComponent<VSPresenterBridge>();
         }
 
+        /// <summary>
+        /// 生成済みの UI 要素に対して Presenter を組み立て、入力ブリッジへ登録する。
+        /// </summary>
         private void InitializeActorPresenters()
         {
             if (m_FUnityUI == null || m_ActorVisuals.Count == 0)
@@ -244,6 +288,13 @@ namespace FUnity.Core
             }
         }
 
+        /// <summary>
+        /// 俳優 UI 要素に <see cref="ActorView"/> と <see cref="FooniUIBridge"/> を紐付ける。
+        /// </summary>
+        /// <param name="visual">俳優設定と要素のペア。</param>
+        /// <param name="bridgeCache">再利用するブリッジのキャッシュ。</param>
+        /// <param name="bridgeIndex">現在のキャッシュ使用位置。</param>
+        /// <returns>構成済みの <see cref="ActorView"/>。失敗時は null。</returns>
         private ActorView CreateOrConfigureActorView(ActorVisual visual, List<FooniUIBridge> bridgeCache, ref int bridgeIndex)
         {
             if (m_FUnityUI == null)
@@ -274,6 +325,10 @@ namespace FUnity.Core
             return view;
         }
 
+        /// <summary>
+        /// FUnity UI GameObject に <see cref="FooniUIBridge"/> が存在することを保証する。
+        /// </summary>
+        /// <param name="uiGO">対象 GameObject。</param>
         private static void EnsureFooniUIBridge(GameObject uiGO)
         {
             if (uiGO == null)
@@ -288,6 +343,10 @@ namespace FUnity.Core
             }
         }
 
+        /// <summary>
+        /// Visual Scripting 実行のため <see cref="ScriptMachine"/> を付与する。
+        /// </summary>
+        /// <param name="uiGO">対象 GameObject。</param>
         private static void EnsureScriptMachine(GameObject uiGO)
         {
             if (uiGO == null)
@@ -302,6 +361,10 @@ namespace FUnity.Core
             }
         }
 
+        /// <summary>
+        /// Resources またはアセットデータベースから既定の PanelSettings を探索する。
+        /// </summary>
+        /// <returns>見つかった PanelSettings。無い場合は null。</returns>
         private PanelSettings FindDefaultPanelSettings()
         {
             var panelSettings = Resources.Load<PanelSettings>("FUnityPanelSettings");
@@ -326,6 +389,11 @@ namespace FUnity.Core
             return null;
         }
 
+        /// <summary>
+        /// ステージ設定を UI ルートへ反映し、背景色・背景画像を適用する。
+        /// </summary>
+        /// <param name="root">UI Toolkit ルート要素。</param>
+        /// <param name="stage">ステージ設定。</param>
         private void ApplyStage(VisualElement root, FUnityStageData stage)
         {
             if (root == null || stage == null)
@@ -338,6 +406,7 @@ namespace FUnity.Core
             var texture = stage.BackgroundImage;
             if (texture != null)
             {
+                // NOTE: UI Toolkit では StyleBackground.none が使用できないため、毎回 Texture2D から生成する。
                 root.style.backgroundImage = new StyleBackground(texture);
                 root.style.unityBackgroundScaleMode = stage.BackgroundScale;
             }
@@ -347,6 +416,11 @@ namespace FUnity.Core
             }
         }
 
+        /// <summary>
+        /// 俳優設定から UI Toolkit 要素を生成し、サイズやスタイルを適用する。
+        /// </summary>
+        /// <param name="actor">俳優設定。</param>
+        /// <returns>生成した要素。失敗時は null。</returns>
         private VisualElement CreateActorElement(FUnityActorData actor)
         {
             if (actor == null)
@@ -434,6 +508,11 @@ namespace FUnity.Core
             return ve;
         }
 
+        /// <summary>
+        /// <see cref="FooniController"/> に俳優要素をバインドし、浮遊アニメーション設定を同期する。
+        /// </summary>
+        /// <param name="actorVE">俳優 UI 要素。</param>
+        /// <param name="data">俳優設定。</param>
         private void AttachControllerIfNeeded(VisualElement actorVE, FUnityActorData data)
         {
             if (actorVE == null)
@@ -481,6 +560,10 @@ namespace FUnity.Core
             }
         }
 
+        /// <summary>
+        /// Visual Scripting Runner を生成し、定義されたマクロや変数を適用する。
+        /// </summary>
+        /// <param name="entry">Runner 設定。</param>
         private void CreateRunner(FUnityProjectData.RunnerEntry entry)
         {
             var go = new GameObject(string.IsNullOrEmpty(entry.name) ? "FUnity VS Runner" : entry.name);
@@ -518,6 +601,9 @@ namespace FUnity.Core
             }
         }
 
+        /// <summary>
+        /// 俳優設定ごとに Visual Scripting Runner を生成し、UI/Presenter 参照を注入する。
+        /// </summary>
         private void SpawnActorRunnersFromProjectData()
         {
             var project = m_Project;
