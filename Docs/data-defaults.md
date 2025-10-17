@@ -1,41 +1,29 @@
 # 既定データの構成
 
+**FUnity/Create/Default Project Data** が生成・更新するアセットと、その配置パスを整理します。
+
 ## 目次
-- [要点](#要点)
-- [手順](#手順)
-- [補足](#補足)
-- [参考](#参考)
+- [生成されるアセット一覧](#生成されるアセット一覧)
+- [俳優データの後処理](#俳優データの後処理)
+- [関連ドキュメント](#関連ドキュメント)
 
-## 要点
-- `CreateProjectData.CreateDefault()` が Project/Stage/Actor/PanelSettings/Theme を生成する。
-- StageData は `Background_01.png` を背景に使用し、欠損時は TODO を残す。
-- ActorData は Portrait/UXML/USS を候補パス優先で割り当て、足りない項目は探索する。
-
-## 手順
-### 1. 生成コマンド
-- メニュー **FUnity → Create → Default Project Data** を実行する。
-- 既存アセットがある場合は上書きせず、新規ファイルとして配置する。
-
-### 2. 生成されるアセット
-| アセット | パス | 内容 |
+## 生成されるアセット一覧
+| アセット | パス | 説明 |
 |----------|------|------|
-| FUnityProjectData | `Assets/FUnity/Data/Project/FUnityProjectData.asset` | システム全体の参照を保持する。 |
-| FUnityStageData | `Assets/FUnity/Data/Stages/FUnityStageData.asset` | 背景に `Art/Backgrounds/Background_01.png` を設定する。 |
-| FUnityActorData_Fooni | `Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset` | Portrait/UXML/USS を自動割当する。 |
-| FUnityPanelSettings | `Assets/FUnity/UI/FUnityPanelSettings.asset` | PanelSettings と Theme 参照を持つ。 |
-| UnityDefaultRuntimeTheme | `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` | フォールバック Theme。 |
+| `FUnityProjectData.asset` | `Assets/Resources/FUnityProjectData.asset` | プロジェクト全体のステージ・俳優参照をまとめる ScriptableObject。既定で `FUnityStageData` と `FUnityActorData_Fooni` を登録。 |
+| `FUnityStageData.asset` | `Assets/Resources/FUnityStageData.asset` | 背景画像として `Art/Backgrounds/Background_01.png` を設定し、ステージのカラースキームを既定化。 |
+| `FUnityPanelSettings.asset` | `Assets/FUnity/UI/FUnityPanelSettings.asset` | `PanelSettings` を生成し、ThemeStyleSheet に Unity 既定 Theme または FUnity 生成 Theme を割り当てる。 |
+| `FUnityActorData_Fooni.asset` | `Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset` | Portrait/UXML/USS を既定テンプレートで割り当て、ScriptGraph に `Fooni_FloatSetup.asset` を設定。 |
+| `Fooni_FloatSetup.asset` | `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` | Visual Scripting の Macro。既存ファイルが無い場合に自動生成され、`FUnityActorData_Fooni` へ割り当てられる。 |
 
-### 3. 俳優データの割当ルール
-- Portrait は `Assets/FUnity/Art/Characters/Fooni.png` を最優先で参照する。
-- UXML は `Assets/FUnity/UXML/FUnityActorPortrait.uxml` を想定し、`name="root"/"portrait"` を持つテンプレを選択する。
-- USS は `Assets/FUnity/USS/FUnityActorPortrait.uss` を候補とし、見つからない場合は TODO コメントを残す。
+> `FUnityProjectData.asset` と `FUnityStageData.asset` は `Assets/Resources/` 直下に生成され、`Resources.Load` で即座に参照できるようになっています。差分管理のため、バージョン管理では `Assets/Resources/` 配下を追跡してください。
 
-## 補足
-- Stage 背景が欠けている場合は `TODO: 背景差し替え` を `FUnityStageData` に記録する。（TODO）
-- 俳優データの探索は候補リスト→リソース検索の順で実行する。
-- PanelSettings は `Resources/FUnityPanelSettings.asset` にコピーされ、再生時に Theme を付与する。
+## 俳優データの後処理
+- 既存の `Assets/Resources/FUnityActorData_Fooni.asset` が見つかった場合は自動で削除し、`Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset` のみに統一されます。
+- Portrait/UXML/USS は `Assets/FUnity/Art/Characters/`、`Assets/FUnity/UI/UXML/`、`Assets/FUnity/UI/USS/` を優先的に参照します。欠落している場合はログで警告し、最小構成で生成します。
+- Macro が見つからない場合は `Assets/FUnity/VisualScripting/Macros/` に `Fooni_FloatSetup.asset` を新規作成し、`ScriptMachine` へ即時割り当てされます。
 
-## 参考
-- [環境構築ガイド](setup.md)
+## 関連ドキュメント
+- [導入手順](setup.md)
 - [UI テーマ適用戦略](ui-theme.md)
-- [俳優 UI テンプレート](actor-template.md)
+- [トラブルシュート集](troubleshooting.md)

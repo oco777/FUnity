@@ -1,55 +1,40 @@
-# 環境構築ガイド
+# 導入手順（Setup）
+
+FUnity を既存プロジェクトへ追加し、サンプルの背景とフーニー表示までを一気に体験するための手順です。
 
 ## 目次
-- [要点](#要点)
-- [手順](#手順)
-- [補足](#補足)
-- [参考](#参考)
+- [前提環境](#前提環境)
+- [パッケージ導入](#パッケージ導入)
+- [サンプルシーンの確認](#サンプルシーンの確認)
+- [Default Project Data の生成](#default-project-data-の生成)
+- [補足情報](#補足情報)
 
-## 要点
-- Unity 6 (6000.x) と .NET Standard 2.1 を満たす環境を用意する。
-- FUnity パッケージを UPM もしくはサブモジュールで導入する。
-- サンプルシーンと Default Project Data を利用して挙動を確認する。
-- Unity Visual Scripting 1.9.7 以降が必須（FUnity を導入すると依存関係として自動追加される）。
+## 前提環境
+- Unity 6 (6000.x) 以降と .NET Standard 2.1 互換ランタイム。
+- UI Toolkit / UI Builder パッケージ。
+- Unity Visual Scripting 1.9.7 以降（FUnity の依存として自動導入されるため、`#if UNITY_VISUAL_SCRIPTING` などの条件分岐は不要）。
 
-## 手順
-### 1. 必須ソフトウェア
-- Unity Hub から Unity 6 LTS をインストールする。
-- UI Toolkit と UI Builder パッケージを Package Manager で有効化する。
-- Visual Scripting パッケージは FUnity の依存関係として取得されるが、既存プロジェクトで無効化している場合は有効化しておく。
+## パッケージ導入
+1. Package Manager を開き、左上の **+** ボタンから **Add package from git URL...** を選択します。
+2. 通常は `https://github.com/papacoder/FUnity.git` を入力します。特定バージョンを固定したい場合は `https://github.com/papacoder/FUnity.git#v0.1.0` のようにタグを指定します。
+3. 依存パッケージとして `com.unity.visualscripting` が自動追加されることを確認します。
+4. 既存プロジェクトでソースを保持したい場合は Git サブモジュールとして `Packages/com.papacoder.funity` に追加しても構いません。
 
-### 2. パッケージ導入
-- `Packages/manifest.json` に Git URL を追加する。
+## サンプルシーンの確認
+1. Package Manager で **FUnity** パッケージを選び、**Samples → BasicScene → Import** を実行します。
+2. `Samples~/BasicScene/FUnitySample.unity` を開き、シーンに `FUnityManager` が存在することを確認します（追加の GameObject は不要です）。
+3. 再生すると `FUnityManager` が “FUnity UI” GameObject と `UIDocument`、`ScriptMachine`、`FooniUIBridge` を自動生成し、背景とフーニーが表示されます。
 
-```json
-"com.papacoder.funity": "https://github.com/oco777/FUnity.git"
-```
+## Default Project Data の生成
+1. メニュー **FUnity > Create > Default Project Data** を実行します。
+2. 以下が自動生成されます。
+   - `Resources/FUnityProjectData.asset` / `Resources/FUnityStageData.asset`
+   - `Assets/FUnity/UI/FUnityPanelSettings.asset`（既存 Theme を優先して割り当て）
+   - `Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset`
+   - `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset`（見つからない場合は新規作成）
+3. シーンを再生して背景とフーニー表示を確認します。`FUnityActorData_Fooni` の ScriptGraph には自動的に `Fooni_FloatSetup.asset` が設定されます。
 
-- 既存環境でソースを保持したい場合は次を実行する。
-
-```bash
-git submodule add https://github.com/oco777/FUnity.git Packages/com.papacoder.funity
-```
-
-### 3. サンプルシーンの確認
-- Package Manager → Samples → **FUnitySample** をインポートする。
-- `Assets/FUnity/Samples/FUnitySample.unity` を開いて再生する。
-- シーンには **FUnityManager** を 1 体置くだけでよく、再生開始時に `FUnity UI` GameObject と UIDocument が自動生成される。
-- ブロック UI・俳優ウィンドウ・背景表示を確認する。
-- `FUnity UI` には `ScriptMachine` と `FooniUIBridge` が自動付与され、同梱の Visual Scripting グラフからフーニーを移動できる。
-
-### 4. Default Project Data の生成
-- メニュー **FUnity → Create → Default Project Data** を選ぶ。
-- `Assets/FUnity/` 配下に Project/Stage/Actor/PanelSettings/Theme が生成される。
-- 生成直後にシーンを再生して Theme が割り当てられたか確認する。
-- FUnityManager が Resources からデータを読み、実行時に `FUnity UI` を生成して背景とフーニーを表示する。
-
-## 補足
-- StageData は `Art/Backgrounds/Background_01.png` を背景として設定する。
-- ActorData は `FUnityActorData_Fooni` を生成し、Portrait/UXML/USS を候補優先で解決する。
-- PanelSettings は Editor 実行時に Theme を割り当て、Resources に保存する。
-
-## 参考
-- [UI テーマ適用戦略](ui-theme.md)
-- [既定データの構成](data-defaults.md)
-- [トラブルシュート集](troubleshooting.md)
+## 補足情報
+- Default Project Data 実行時に `Assets/Resources/FUnityActorData_Fooni.asset` が存在すると、重複防止のために削除されます。
+- Theme の優先度は `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss` → `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` の順です。
+- 入力 API を Visual Scripting で呼び出す際は `UnityEngine.Input.GetAxisRaw` のように完全修飾名を使うと、`FUnity.Runtime.Input` と衝突しません。
