@@ -1,7 +1,12 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.UI;
 using FUnity.Runtime.Core;
+using FUnity.Runtime.Model;
+using FUnity.Runtime.View;
+using FUnity.Runtime.Presenter;
+using FUnity.Runtime.Input;
 using Unity.VisualScripting;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -22,6 +27,17 @@ namespace FUnity.Core
 
         private GameObject m_FUnityUI;
 
+        private readonly List<ActorPresenter> m_ActorPresenters = new List<ActorPresenter>();
+        private readonly List<ActorVisual> m_ActorVisuals = new List<ActorVisual>();
+        private InputPresenter m_InputPresenter;
+        private VSPresenterBridge m_VsBridge;
+
+        private struct ActorVisual
+        {
+            public FUnityActorData Data;
+            public VisualElement Element;
+        }
+
         private void Awake()
         {
             if (m_Project == null)
@@ -32,6 +48,7 @@ namespace FUnity.Core
             if (m_Project == null || m_Project.ensureFUnityUI)
             {
                 EnsureFUnityUI();
+                EnsurePresenterBridge();
             }
 
             if (m_Project != null && m_Project.runners != null)
@@ -82,6 +99,9 @@ namespace FUnity.Core
             // Apply Stage
             ApplyStage(root, m_Project.Stage);
 
+            m_ActorVisuals.Clear();
+            m_ActorPresenters.Clear();
+
             // Create & add actors
             if (m_Project.Actors != null)
             {
@@ -98,6 +118,11 @@ namespace FUnity.Core
                     {
                         root.Add(actorVE);
                         AttachControllerIfNeeded(actorVE, actor);
+                        m_ActorVisuals.Add(new ActorVisual
+                        {
+                            Data = actor,
+                            Element = actorVE
+                        });
                     }
                     else
                     {
@@ -107,6 +132,24 @@ namespace FUnity.Core
             }
 
             Debug.Log($"[FUnity] Project-driven load completed. Actors={(m_Project.Actors?.Count ?? 0)}");
+
+            InitializeActorPresenters();
+        }
+
+        private void Update()
+        {
+            if (m_ActorPresenters.Count == 0 || m_InputPresenter == null)
+            {
+                return;
+            }
+
+            var move = m_InputPresenter.ReadMove();
+            var deltaTime = Time.deltaTime;
+
+            foreach (var presenter in m_ActorPresenters)
+            {
+                presenter.Tick(deltaTime, move);
+            }
         }
 
         private void EnsureFUnityUI()
@@ -138,6 +181,97 @@ namespace FUnity.Core
 
             var controller = m_FUnityUI.GetComponent<FooniController>() ?? m_FUnityUI.AddComponent<FooniController>();
             controller.SetUIDocument(m_UIDocument);
+        }
+
+        private void EnsurePresenterBridge()
+        {
+            if (m_FUnityUI == null)
+            {
+                m_FUnityUI = GameObject.Find("FUnity UI");
+            }
+
+            if (m_FUnityUI == null)
+            {
+                return;
+            }
+
+            m_VsBridge = m_FUnityUI.GetComponent<VSPresenterBridge>() ?? m_FUnityUI.AddComponent<VSPresenterBridge>();
+        }
+
+        private void InitializeActorPresenters()
+        {
+            if (m_FUnityUI == null || m_ActorVisuals.Count == 0)
+            {
+                return;
+            }
+
+            if (m_VsBridge == null)
+            {
+                EnsurePresenterBridge();
+            }
+
+            if (m_InputPresenter == null)
+            {
+                m_InputPresenter = new InputPresenter();
+            }
+
+            var bridgeCache = new List<FooniUIBridge>(m_FUnityUI.GetComponents<FooniUIBridge>());
+            var bridgeIndex = 0;
+
+            foreach (var visual in m_ActorVisuals)
+            {
+                if (visual.Element == null)
+                {
+                    continue;
+                }
+
+                var view = CreateOrConfigureActorView(visual, bridgeCache, ref bridgeIndex);
+                if (view == null)
+                {
+                    continue;
+                }
+
+                var state = new ActorState();
+                var presenter = new ActorPresenter();
+                presenter.Initialize(visual.Data, state, view);
+
+                m_ActorPresenters.Add(presenter);
+            }
+
+            if (m_VsBridge != null)
+            {
+                m_VsBridge.Target = m_ActorPresenters.Count > 0 ? m_ActorPresenters[0] : null;
+            }
+        }
+
+        private ActorView CreateOrConfigureActorView(ActorVisual visual, List<FooniUIBridge> bridgeCache, ref int bridgeIndex)
+        {
+            if (m_FUnityUI == null)
+            {
+                return null;
+            }
+
+            FooniUIBridge bridge;
+            if (bridgeIndex < bridgeCache.Count)
+            {
+                bridge = bridgeCache[bridgeIndex];
+            }
+            else
+            {
+                bridge = m_FUnityUI.AddComponent<FooniUIBridge>();
+                bridgeCache.Add(bridge);
+            }
+
+            bridgeIndex++;
+
+            if (visual.Data != null)
+            {
+                bridge.defaultSpeed = Mathf.Max(0f, visual.Data.MoveSpeed);
+            }
+
+            var view = m_FUnityUI.AddComponent<ActorView>();
+            view.Configure(bridge, visual.Element);
+            return view;
         }
 
         private static void EnsureFooniUIBridge(GameObject uiGO)
@@ -288,7 +422,9 @@ namespace FUnity.Core
             }
 
             ve.style.position = Position.Absolute;
-            ve.style.translate = new Translate(actor.InitialPosition.x, actor.InitialPosition.y);
+            ve.style.left = actor.InitialPosition.x;
+            ve.style.top = actor.InitialPosition.y;
+            ve.style.translate = new Translate(0f, 0f);
 
             if (string.IsNullOrEmpty(ve.name) && !string.IsNullOrEmpty(actor.DisplayName))
             {
@@ -370,6 +506,16 @@ namespace FUnity.Core
             {
                 Variables.Object(go).Set("FUnityUI", m_FUnityUI);
             }
+
+            if (m_VsBridge == null)
+            {
+                EnsurePresenterBridge();
+            }
+
+            if (!Variables.Object(go).IsDefined("VSPresenterBridge") && m_VsBridge != null)
+            {
+                Variables.Object(go).Set("VSPresenterBridge", m_VsBridge);
+            }
         }
 
         private void SpawnActorRunnersFromProjectData()
@@ -407,6 +553,11 @@ namespace FUnity.Core
                 }
             }
 
+            if (m_VsBridge == null)
+            {
+                EnsurePresenterBridge();
+            }
+
             foreach (var actor in project.Actors)
             {
                 if (actor == null)
@@ -434,6 +585,11 @@ namespace FUnity.Core
                 if (!Variables.Object(go).IsDefined("FUnityUI") && uiGameObject != null)
                 {
                     Variables.Object(go).Set("FUnityUI", uiGameObject);
+                }
+
+                if (!Variables.Object(go).IsDefined("VSPresenterBridge") && m_VsBridge != null)
+                {
+                    Variables.Object(go).Set("VSPresenterBridge", m_VsBridge);
                 }
             }
         }

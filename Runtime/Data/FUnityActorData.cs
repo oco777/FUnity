@@ -10,6 +10,7 @@ namespace FUnity.Runtime.Core
         [SerializeField] private string m_displayName = "Fooni";
         [SerializeField] private Texture2D m_portrait;          // UI表示用など
         [SerializeField] private Vector2 m_initialPosition = new Vector2(0, 0);
+        [SerializeField] private float m_moveSpeed = 300f;
         [SerializeField] private bool m_floatAnimation = true;   // ふわふわの初期状態
 
         [Header("UI Template (optional)")]
@@ -26,6 +27,7 @@ namespace FUnity.Runtime.Core
         public string DisplayName => m_displayName;
         public Texture2D Portrait => m_portrait;
         public Vector2 InitialPosition => m_initialPosition;
+        public float MoveSpeed => m_moveSpeed;
         public bool FloatAnimation => m_floatAnimation;
         public VisualTreeAsset ElementUxml => m_ElementUxml;
         public StyleSheet ElementStyle => m_ElementStyle;
