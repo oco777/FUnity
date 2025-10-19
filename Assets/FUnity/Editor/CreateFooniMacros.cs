@@ -98,10 +98,10 @@ namespace FUnity.EditorTools
 
             if (name == "Fooni VS Float Runner")
             {
-                var controller = go.GetComponent<FooniController>();
+                var controller = go.GetComponent<FUnity.Runtime.Integrations.VisualScripting.FooniController>();
                 if (controller == null)
                 {
-                    controller = Undo.AddComponent<FooniController>(go);
+                    controller = Undo.AddComponent<FUnity.Runtime.Integrations.VisualScripting.FooniController>(go);
                     EditorUtility.SetDirty(controller);
                     Debug.Log("[FUnity] Added FooniController to runner: " + go.name);
                 }
