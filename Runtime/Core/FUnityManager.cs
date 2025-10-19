@@ -284,6 +284,7 @@ namespace FUnity.Core
                 var state = new ActorState();
                 var presenter = new ActorPresenter();
                 presenter.Initialize(visual.Data, state, view);
+                view.SetActorPresenter(presenter);
 
                 m_ActorPresenters.Add(presenter);
 

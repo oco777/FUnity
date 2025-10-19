@@ -54,6 +54,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>View の境界イベントに購読済みかどうか。</summary>
         private bool m_IsSubscribedToBounds;
 
+        /// <summary>ステージのピクセル境界（左上原点）。</summary>
+        public Rect StageBoundsPx => m_StageBoundsPx;
+
         /// <summary>
         /// モデルとビューを初期化し、初期位置・速度・ポートレートを反映する。
         /// </summary>
@@ -201,6 +204,32 @@ namespace FUnity.Runtime.Presenter
         public void MoveBy(Vector2 delta)
         {
             ApplyDelta(delta);
+        }
+
+        /// <summary>
+        /// 指定した座標を現在のクランプ矩形に合わせて補正する。境界未設定時は入力値を返す。
+        /// </summary>
+        /// <param name="positionPx">補正対象の座標（px）。</param>
+        /// <param name="clampedPx">クランプ後の座標。</param>
+        /// <returns>クランプを実行した場合は <c>true</c>。</returns>
+        public bool TryClampPosition(Vector2 positionPx, out Vector2 clampedPx)
+        {
+            if (!m_HasPositionBounds)
+            {
+                clampedPx = positionPx;
+                return false;
+            }
+
+            var minX = m_PositionBoundsPx.xMin;
+            var minY = m_PositionBoundsPx.yMin;
+            var maxX = m_PositionBoundsPx.xMax;
+            var maxY = m_PositionBoundsPx.yMax;
+
+            var clampedX = Mathf.Clamp(positionPx.x, minX, maxX);
+            var clampedY = Mathf.Clamp(positionPx.y, minY, maxY);
+
+            clampedPx = new Vector2(clampedX, clampedY);
+            return true;
         }
 
         /// <summary>

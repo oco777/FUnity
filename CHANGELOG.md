@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- feat(core): move clamping to state mutation; deprecate FooniUIBridge.ClampToPanel().
 - PanelSettingsInitializer.EnsurePanelSettings() による Theme 自動割当（Editor 実行時）。
 - feat(vs): scratch-ready bridge & macros（Custom Event 標準化、StageBackgroundService、Scratch Starter メニュー、マクロ雛形）。
 
@@ -11,6 +12,7 @@
 - ActorPresenter でステージ境界を保持し、ActorState 更新時に座標をクランプするよう統合。UI 側の `FooniUIBridge.ClampToPanel` は非推奨化。
 
 ### Fixed
+- fix(input): add System namespace or qualify [System.Obsolete].
 - 壊れた USS や重複アセットを再生成・整理する手順を整備。
 
 ### Docs

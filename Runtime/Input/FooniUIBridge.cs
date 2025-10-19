@@ -1,7 +1,9 @@
 // Updated: 2025-02-14
+using System; // for ObsoleteAttribute
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
+using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.Input
 {
@@ -39,6 +41,12 @@ namespace FUnity.Runtime.Input
 
         private UIDocument _ui;
         private VisualElement _actorRoot;
+
+        /// <summary>Presenter ベースのクランプへフォワードする対象。</summary>
+        private ActorPresenter m_ActorPresenter;
+
+        /// <summary>非推奨 API の警告を既に表示したかどうか。</summary>
+        private bool m_HasLoggedClampWarning;
 
         /// <summary>
         /// <see cref="UIDocument"/> をキャッシュする。
@@ -112,6 +120,15 @@ namespace FUnity.Runtime.Input
         {
             _actorRoot = element;
             ConfigureActorRoot(_actorRoot);
+        }
+
+        /// <summary>
+        /// 座標クランプを担う Presenter を設定し、旧 API 経由のフォワード先として保持する。
+        /// </summary>
+        /// <param name="presenter">割り当てる <see cref="ActorPresenter"/>。</param>
+        public void SetActorPresenter(ActorPresenter presenter)
+        {
+            m_ActorPresenter = presenter;
         }
 
         /// <summary>
@@ -285,44 +302,36 @@ namespace FUnity.Runtime.Input
         }
 
         /// <summary>
-        /// スクリーン境界内に収まるよう座標を制限する。`RuntimePanelUtils.ScreenToPanel` のみを利用し、
-        /// 入力がパネル座標 / スクリーン座標のいずれでも安全にクランプできるよう差分から上限を算出する。
+        /// 旧 API 互換のクランプ処理。Presenter 層へ処理を委譲し、将来の削除に備える。
         /// </summary>
-        /// <param name="pos">希望座標。パネル座標またはスクリーン座標（px）。</param>
-        /// <param name="size">要素サイズ（px）。</param>
-        /// <returns>クランプ後のパネル座標。</returns>
-        [Obsolete("FooniUIBridge.ClampToPanel は廃止予定です。ActorPresenter 経由で座標クランプを行ってください。")]
-        private Vector2 ClampToPanel(Vector2 pos, Vector2 size)
+        /// <param name="posPx">左上原点座標系での希望座標（px）。</param>
+        /// <returns>Presenter によってクランプされた座標。</returns>
+        [Obsolete("Deprecated: Clamp moved to state mutation in Presenter/Model path. Use ActorPresenter.SetActorPositionClamped(...) or VSPresenterBridge route instead.")]
+        public Vector2 ClampToPanel(Vector2 posPx)
         {
-            if (_actorRoot == null)
+            if (!m_HasLoggedClampWarning)
             {
-                return pos;
+                Debug.LogWarning("[FUnity] FooniUIBridge.ClampToPanel is obsolete. Clamping has moved to Presenter/Model path.");
+                m_HasLoggedClampWarning = true;
             }
 
-            Debug.LogWarning("[FUnity] FooniUIBridge.ClampToPanel は廃止予定です。Presenter の SetPositionClamped を利用してください。");
+            return ForwardClampToPresenter(posPx);
+        }
 
-            if (!TryGetPanelBounds(out var stageBounds))
+        /// <summary>
+        /// Presenter 側にフォワードしてクランプ済み座標を取得する。Presenter 未設定時は入力値を返す。
+        /// </summary>
+        /// <param name="posPx">左上原点座標系での希望座標（px）。</param>
+        /// <returns>Presenter が算出したクランプ済み座標。Presenter 未設定時は入力値。</returns>
+        private Vector2 ForwardClampToPresenter(Vector2 posPx)
+        {
+            if (m_ActorPresenter == null)
             {
-                return pos;
+                Debug.LogWarning("[FUnity] FooniUIBridge.ClampToPanel のフォワード先 Presenter が未設定です。");
+                return posPx;
             }
 
-            var panel = _actorRoot.panel;
-            if (panel == null)
-            {
-                return pos;
-            }
-
-            var panelOrigin = RuntimePanelUtils.ScreenToPanel(panel, Vector2.zero);
-            var elementPanelCorner = RuntimePanelUtils.ScreenToPanel(panel, size);
-            var elementPanelSize = new Vector2(Mathf.Abs(elementPanelCorner.x - panelOrigin.x), Mathf.Abs(elementPanelCorner.y - panelOrigin.y));
-
-            var maxX = Mathf.Max(stageBounds.xMin, stageBounds.xMax - elementPanelSize.x);
-            var maxY = Mathf.Max(stageBounds.yMin, stageBounds.yMax - elementPanelSize.y);
-
-            var clampedX = Mathf.Clamp(pos.x, stageBounds.xMin, maxX);
-            var clampedY = Mathf.Clamp(pos.y, stageBounds.yMin, maxY);
-
-            return new Vector2(clampedX, clampedY);
+            return m_ActorPresenter.TryClampPosition(posPx, out var clamped) ? clamped : posPx;
         }
     }
 }
