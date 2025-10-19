@@ -66,6 +66,7 @@ public sealed class ActorState
 ## Unity / Visual Scripting に関する注意
 - FUnity は **Visual Scripting を必須**とし、API を**直参照**（`using Unity.VisualScripting;`）
 - `ScriptMachine` の付与・グラフ割当などは **Presenter から直接ではなく**、ブリッジや初期化コードで行う
+- ツールや初期化コードでシーンルート（例: "FUnity UI"）に `ScriptMachine` をサイレント追加しない。Runner や対象 GameObject に明示配置する。
 - プリプロセッサ `#if UNITY_VISUAL_SCRIPTING` は原則 **不要**（必須依存のため）
 - 名前空間の衝突に注意（例：`FUnity.Runtime.Input` と `UnityEngine.Input`）  
   → **`UnityEngine.Input` を明示**または `using UInput = UnityEngine.Input;` エイリアスを使用

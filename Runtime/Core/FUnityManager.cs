@@ -200,7 +200,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// FUnity UI ルート GameObject を生成し、必須コンポーネント（UIDocument, ScriptMachine 等）を確保する。
+        /// FUnity UI ルート GameObject を生成し、必須コンポーネント（UIDocument 等）を確保する。
         /// </summary>
         private void EnsureFUnityUI()
         {
@@ -213,7 +213,6 @@ namespace FUnity.Core
             m_UIDocument = m_FUnityUI.GetComponent<UIDocument>() ?? m_FUnityUI.AddComponent<UIDocument>();
 
             EnsureFooniUIBridge(m_FUnityUI);
-            EnsureScriptMachine(m_FUnityUI);
             EnsureTimerService();
 
             if (m_UIDocument.panelSettings == null)
@@ -418,24 +417,6 @@ namespace FUnity.Core
             {
                 uiGO.AddComponent<FUnity.Runtime.Input.FooniUIBridge>();
                 Debug.Log("[FUnity] Added FooniUIBridge to 'FUnity UI'.");
-            }
-        }
-
-        /// <summary>
-        /// Visual Scripting 実行のため <see cref="ScriptMachine"/> を付与する。
-        /// </summary>
-        /// <param name="uiGO">対象 GameObject。</param>
-        private static void EnsureScriptMachine(GameObject uiGO)
-        {
-            if (uiGO == null)
-            {
-                return;
-            }
-
-            if (!uiGO.TryGetComponent(out ScriptMachine _))
-            {
-                uiGO.AddComponent<ScriptMachine>();
-                Debug.Log("[FUnity] Added ScriptMachine to 'FUnity UI'.");
             }
         }
 

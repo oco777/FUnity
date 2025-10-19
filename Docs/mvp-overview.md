@@ -26,7 +26,7 @@ FUnity のランタイム層は Model–View–Presenter (MVP) に基づいて�
 - **FUnityManager** (`Runtime/Core/FUnityManager.cs`) が初期化の起点です。
   1. `Resources.Load` で `FUnityProjectData` を読み込み、ステージと俳優データを収集します。
   2. `UIDocument` を持つ “FUnity UI” GameObject を生成し、`FUnityPanelSettings.asset` を割り当てます。
-  3. 各俳優に対して `ActorState` / `ActorView` / `ActorPresenter` を組み立て、`ScriptMachine` と `FooniUIBridge` を接続します。
+  3. 各俳優に対して `ActorState` / `ActorView` / `ActorPresenter` を組み立て、Runner 側の `ScriptMachine` と `FooniUIBridge` を接続します。
 4. Visual Scripting Runner に配置した `ActorPresenterAdapter`（旧称 `FooniController`）と `ActorPresenter` を結び付け、Visual Scripting グラフからの命令を Presenter に委譲できるようにします。
 
 ## Visual Scripting からの呼び出し
