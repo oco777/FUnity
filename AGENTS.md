@@ -82,4 +82,33 @@ public sealed class ActorState
 - [ ] 既存の挙動（背景＋フーニー表示、VS 連携）が壊れていない
 - [ ] サンプルシーンで移動が確認できる
 
+## Docs: VS Scratch Mapping の更新ポリシー
+
+**対象:** Visual Scripting の Scratch 互換ユニットおよび関連 API の変更  
+（例）`Runtime/Integrations/VisualScripting/Units/**`, `FooniController`, `ActorPresenter` のメソッド名/引数/UnitTitle 変更 など
+
+**原則:** これらに変更が入った場合は、**`Docs/VS_Scratch_Mapping.md` を同一 PR 内で更新**してください。
+
+### 更新手順
+1. 変更点を確認
+   - 追加/改名/削除された Unit の `UnitTitle` / カテゴリ `Scratch/` `Fooni/` を洗い出す
+   - 日本語表示（Scratch のブロック名に相当）との対応がズレていないか確認
+2. ドキュメントを更新
+   - `Docs/VS_Scratch_Mapping.md` の表に **追加/改名/削除**の差分を反映
+   - 必要に応じて概要・備考を更新
+3. 自動生成ルートがある場合
+   - 用意している Editor/スクリプト（UnitTitle 走査）で再生成し、手修正を最小化
+
+### PR チェックリスト（抜粋）
+- [ ] VS Unit/タイトル/カテゴリの変更が `Docs/VS_Scratch_Mapping.md` に反映されている
+- [ ] 追加/改名/削除の差分が表に反映され、リンク切れ・表崩れがない
+- [ ] 変更点に合わせた説明（例：「Forever は1フレーム待機」など）を更新
+
+**Commit 例:**
+```
+docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
+```
+
+> 備考: 上記ルールは `Docs/README.md` や `CONTRIBUTING.md` にも転載して構いません。
+
 ---
