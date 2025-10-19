@@ -27,7 +27,8 @@
 - **Presenter**
   - 入力やイベントを受けて **Model を更新し、View に反映**
   - 可能な限り **MonoBehaviour にしない**（テスト容易化）。必要時のみアダプタを用意
-  - **座標クランプなどの状態整合性は Presenter/Model の更新経路で完結させる**（View 側での `ClampToPanel` は非推奨）
+- **座標クランプなどの状態整合性は Presenter/Model の更新経路で完結させる**（View 側での `ClampToPanel` は非推奨）
+  - View 側の `FooniUIBridge.ClampToPanel` は互換目的のみに残っており、Presenter へのフォワードで即時警告を出す
 - **Visual Scripting**  
   - VS から Presenter を呼ぶブリッジを用意してもよい（例：`VSPresenterBridge`）  
   - 直接 View をいじるグラフは可だが、**推奨は Presenter 経由**

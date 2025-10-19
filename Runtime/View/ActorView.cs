@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Input;
+using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.View
 {
@@ -106,6 +107,20 @@ namespace FUnity.Runtime.View
 
             RegisterGeometryCallbacks();
             NotifyStageBounds();
+        }
+
+        /// <summary>
+        /// Presenter 参照を UI ブリッジに伝達し、旧 API 互換のフォールバック経路を確保する。
+        /// </summary>
+        /// <param name="presenter">紐付ける <see cref="ActorPresenter"/>。</param>
+        public void SetActorPresenter(ActorPresenter presenter)
+        {
+            if (m_Bridge == null)
+            {
+                return;
+            }
+
+            m_Bridge.SetActorPresenter(presenter);
         }
 
         /// <summary>
