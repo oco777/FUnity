@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using FUnity.Runtime.Presenter;
 
-namespace FUnity.Runtime.UI
+namespace FUnity.Runtime.Integrations.VisualScripting
 {
     /// <summary>
     /// UI Toolkit の <see cref="FooniElement"/> を Unity Visual Scripting から制御する View 向けブリッジ。
