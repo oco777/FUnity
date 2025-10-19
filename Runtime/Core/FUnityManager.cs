@@ -632,41 +632,25 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// 俳優設定ごとに Visual Scripting Runner を生成し、UI/Presenter 参照を注入する。
+        /// 俳優設定ごとに Visual Scripting Runner を生成し、必要なコンポーネントと参照を付与する。
         /// </summary>
         private void SpawnActorRunnersFromProjectData()
         {
-            var project = m_Project;
-            if (project == null)
+            if (m_Project == null)
             {
-                project = Resources.Load<FUnityProjectData>("FUnityProjectData");
-                if (project != null)
-                {
-                    m_Project = project;
-                }
+                m_Project = Resources.Load<FUnityProjectData>("FUnityProjectData");
             }
 
-            if (project == null || project.Actors == null || project.Actors.Count == 0)
+            if (m_Project == null)
             {
-                Debug.Log("[FUnity] No actors to spawn.");
+                Debug.LogWarning("[FUnity] FUnityProjectData not found. Skip runner spawn.");
                 return;
             }
 
-            Transform parent = null;
-            GameObject uiGameObject = null;
-            if (m_FUnityUI != null)
+            if (m_Project.Actors == null || m_Project.Actors.Count == 0)
             {
-                parent = m_FUnityUI.transform;
-                uiGameObject = m_FUnityUI;
-            }
-            else
-            {
-                var uiRoot = GameObject.Find("FUnity UI");
-                if (uiRoot != null)
-                {
-                    parent = uiRoot.transform;
-                    uiGameObject = uiRoot;
-                }
+                Debug.Log("[FUnity] No actors to spawn.");
+                return;
             }
 
             if (m_VsBridge == null)
@@ -674,39 +658,147 @@ namespace FUnity.Core
                 EnsurePresenterBridge();
             }
 
-            foreach (var actor in project.Actors)
+            foreach (var actor in m_Project.Actors)
             {
                 if (actor == null)
                 {
                     continue;
                 }
 
-                var go = new GameObject($"ActorRunner - {actor.DisplayName}");
-                if (parent != null)
+                var runner = CreateActorRunner(actor);
+                if (runner == null)
                 {
-                    go.transform.SetParent(parent, false);
+                    continue;
                 }
 
-                var machine = go.AddComponent<ScriptMachine>();
-                if (actor.ScriptGraph != null)
+                ConfigureScriptMachine(runner, actor.ScriptGraph);
+                ConfigureFooniController(runner, actor);
+
+                var objectVariables = Variables.Object(runner);
+                if (m_FUnityUI != null && !objectVariables.IsDefined("FUnityUI"))
                 {
-                    machine.nest.source = GraphSource.Macro;
-                    machine.nest.macro = actor.ScriptGraph;
+                    objectVariables.Set("FUnityUI", m_FUnityUI);
+                }
+
+                if (m_VsBridge != null && !objectVariables.IsDefined("VSPresenterBridge"))
+                {
+                    objectVariables.Set("VSPresenterBridge", m_VsBridge);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 俳優ごとの Runner GameObject を生成または再利用し、基礎的な設定を行う。
+        /// </summary>
+        /// <param name="actor">対象の俳優設定。</param>
+        /// <returns>生成または再利用した Runner。失敗時は null。</returns>
+        private GameObject CreateActorRunner(FUnityActorData actor)
+        {
+            if (actor == null)
+            {
+                return null;
+            }
+
+            var name = $"{actor.DisplayName} VS Runner";
+            var runner = GameObject.Find(name) ?? new GameObject(name);
+            runner.tag = "Untagged";
+            runner.layer = 0;
+
+            if (runner.transform.parent != transform)
+            {
+                runner.transform.SetParent(transform, false);
+            }
+
+            return runner;
+        }
+
+        /// <summary>
+        /// Runner に <see cref="ScriptMachine"/> を付与し、マクロを割り当てる。
+        /// </summary>
+        /// <param name="runner">構成対象の Runner。</param>
+        /// <param name="macro">適用する Visual Scripting マクロ。</param>
+        private void ConfigureScriptMachine(GameObject runner, ScriptGraphAsset macro)
+        {
+            if (runner == null)
+            {
+                return;
+            }
+
+            var machine = runner.GetComponent<ScriptMachine>();
+            if (machine == null)
+            {
+                machine = runner.AddComponent<ScriptMachine>();
+            }
+
+            if (macro == null)
+            {
+                Debug.LogWarning($"[FUnity] ScriptGraph is null. Runner='{runner.name}'");
+                return;
+            }
+
+            machine.nest.source = GraphSource.Macro;
+            machine.nest.macro = macro;
+
+            Debug.Log($"[FUnity] Spawned actor runner: {runner.name}");
+        }
+
+        /// <summary>
+        /// Runner に <see cref="FooniController"/> と <see cref="UIDocument"/> を設定し、俳優固有の UI を適用する。
+        /// </summary>
+        /// <param name="runner">構成対象の Runner。</param>
+        /// <param name="actor">俳優設定。</param>
+        private void ConfigureFooniController(GameObject runner, FUnityActorData actor)
+        {
+            if (runner == null || actor == null)
+            {
+                return;
+            }
+
+            var controller = runner.GetComponent<FooniController>();
+            if (controller == null)
+            {
+                controller = runner.AddComponent<FooniController>();
+            }
+
+            var document = runner.GetComponent<UIDocument>();
+            if (document == null)
+            {
+                document = runner.AddComponent<UIDocument>();
+            }
+
+            controller.SetUIDocument(document);
+
+            if (document.panelSettings == null)
+            {
+                PanelSettings panelSettings = null;
+                if (m_UIDocument != null && m_UIDocument.panelSettings != null)
+                {
+                    panelSettings = m_UIDocument.panelSettings;
                 }
                 else
                 {
-                    Debug.LogWarning($"[FUnity] '{actor.DisplayName}' has no ScriptGraph assigned. Runner created without macro.");
+                    panelSettings = FindObjectOfType<PanelSettings>();
                 }
 
-                if (!Variables.Object(go).IsDefined("FUnityUI") && uiGameObject != null)
+                if (panelSettings != null)
                 {
-                    Variables.Object(go).Set("FUnityUI", uiGameObject);
+                    document.panelSettings = panelSettings;
                 }
+            }
 
-                if (!Variables.Object(go).IsDefined("VSPresenterBridge") && m_VsBridge != null)
-                {
-                    Variables.Object(go).Set("VSPresenterBridge", m_VsBridge);
-                }
+            if (actor.ElementUxml != null)
+            {
+                document.visualTreeAsset = actor.ElementUxml;
+            }
+            else
+            {
+                document.visualTreeAsset = null;
+                Debug.LogWarning($"[FUnity] ElementUxml is null. Runner='{runner.name}'");
+            }
+
+            if (!actor.FloatAnimation)
+            {
+                controller.EnableFloat(false);
             }
         }
     }
