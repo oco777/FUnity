@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - PanelSettingsInitializer.EnsurePanelSettings() による Theme 自動割当（Editor 実行時）。
+- feat(vs): scratch-ready bridge & macros（Custom Event 標準化、StageBackgroundService、Scratch Starter メニュー、マクロ雛形）。
 
 ### Changed
 - Theme の正規パスを `Assets/FUnity/UI/USS/` に統一し、UI Builder 既定テーマを優先する運用に更新。

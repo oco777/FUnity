@@ -1,4 +1,4 @@
-// Updated: 2025-02-14
+// Updated: 2025-03-03
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -8,22 +8,24 @@ namespace FUnity.Runtime.UI
     /// Fooni キャラクターを表示する UI Toolkit カスタム要素。View レイヤーの再利用可能な部品。
     /// </summary>
     /// <remarks>
-    /// 依存関係: Resources/UI/FooniElement (UXML/USS), Resources/Characters/Fooni (Texture2D)
-    /// 想定ライフサイクル: UI ドキュメントの生成時にインスタンス化され、<see cref="FUnity.Core.FUnityManager"/> から俳優要素とし
-    ///     て利用される。UI Toolkit の仕様上、<c>[UxmlElement]</c> を付与するクラスは <c>partial</c> 修飾子が必須である。
+    /// 依存関係: Resources/UI/ActorElement (UXML/USS), Resources/UI/FooniElement (追加装飾), Resources/Characters/Fooni (Texture2D)
+    /// 想定ライフサイクル: UI ドキュメントの生成時にインスタンス化され、<see cref="FUnity.Core.FUnityManager"/> から俳優要素として利用される。
+    /// UI Toolkit の仕様上、<c>[UxmlElement]</c> を付与するクラスは <c>partial</c> 修飾子が必須である。
     /// 背景画像の割当には <see cref="StyleBackground"/> の `new StyleBackground(Texture2D)` コンストラクタを使用する。
     /// </remarks>
     [UxmlElement]
     public partial class FooniElement : VisualElement
     {
-        // NOTE:
-        // FooniElement は見た目専用の UI 要素です。
-        // アニメーションや時間変化は FooniController に集約しました（Visual Scripting から制御）。
+        /// <summary>共通俳優レイアウトの Resources 内パス。</summary>
+        private const string BaseVisualTreeResourcePath = "UI/ActorElement";
 
-        /// <summary>複製する UXML アセットの Resources 内パス。</summary>
-        private const string VisualTreeResourcePath = "UI/FooniElement";
+        /// <summary>共通俳優スタイルの Resources 内パス。</summary>
+        private const string BaseStyleResourcePath = "UI/ActorElement";
 
-        /// <summary>適用する USS アセットの Resources 内パス。</summary>
+        /// <summary>Fooni 固有レイアウトの Resources 内パス。</summary>
+        private const string VisualTreeResourcePath = null;
+
+        /// <summary>Fooni 固有スタイルの Resources 内パス。</summary>
         private const string StyleResourcePath = "UI/FooniElement";
 
         /// <summary>標準ポートレート画像の Resources 内パス（拡張子不要）。</summary>
@@ -50,24 +52,53 @@ namespace FUnity.Runtime.UI
         /// </summary>
         private void InitializeLayout()
         {
-            var visualTree = Resources.Load<VisualTreeAsset>(VisualTreeResourcePath);
+            CloneTree(BaseVisualTreeResourcePath);
+            ApplyStyle(BaseStyleResourcePath);
+            CloneTree(VisualTreeResourcePath);
+            ApplyStyle(StyleResourcePath);
+        }
+
+        /// <summary>
+        /// Resources から VisualTreeAsset を読み込み、自身に複製する。
+        /// </summary>
+        /// <param name="resourcePath">Resources 内のパス。</param>
+        private void CloneTree(string resourcePath)
+        {
+            if (string.IsNullOrEmpty(resourcePath))
+            {
+                return;
+            }
+
+            var visualTree = Resources.Load<VisualTreeAsset>(resourcePath);
             if (visualTree != null)
             {
                 visualTree.CloneTree(this);
             }
             else
             {
-                Debug.LogWarning($"FooniElement: Unable to load VisualTreeAsset at Resources/{VisualTreeResourcePath}.");
+                Debug.LogWarning($"FooniElement: Unable to load VisualTreeAsset at Resources/{resourcePath}.");
+            }
+        }
+
+        /// <summary>
+        /// Resources から StyleSheet を読み込み、要素へ追加する。
+        /// </summary>
+        /// <param name="resourcePath">Resources 内のパス。</param>
+        private void ApplyStyle(string resourcePath)
+        {
+            if (string.IsNullOrEmpty(resourcePath))
+            {
+                return;
             }
 
-            var styleSheet = Resources.Load<StyleSheet>(StyleResourcePath);
+            var styleSheet = Resources.Load<StyleSheet>(resourcePath);
             if (styleSheet != null)
             {
                 styleSheets.Add(styleSheet);
             }
             else
             {
-                Debug.LogWarning($"FooniElement: Unable to load StyleSheet at Resources/{StyleResourcePath}.");
+                Debug.LogWarning($"FooniElement: Unable to load StyleSheet at Resources/{resourcePath}.");
             }
         }
 

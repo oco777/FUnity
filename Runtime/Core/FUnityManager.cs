@@ -54,6 +54,12 @@ namespace FUnity.Core
         /// <summary>Visual Scripting との仲介役。</summary>
         private VSPresenterBridge m_VsBridge;
 
+        /// <summary>ステージ背景適用を担当するサービス。</summary>
+        private readonly StageBackgroundService m_StageBackgroundService = new StageBackgroundService();
+
+        /// <summary>遅延実行を提供するタイマーサービス。</summary>
+        private TimerServiceBehaviour m_TimerService;
+
         private struct ActorVisual
         {
             /// <summary>俳優設定。</summary>
@@ -114,6 +120,12 @@ namespace FUnity.Core
             {
                 Debug.LogError("[FUnity] UIDocument.rootVisualElement returned null.");
                 return;
+            }
+
+            m_StageBackgroundService.Configure(root);
+            if (m_VsBridge != null)
+            {
+                m_VsBridge.SetStageBackgroundService(m_StageBackgroundService);
             }
 
             // Resolve ProjectData
@@ -202,6 +214,7 @@ namespace FUnity.Core
 
             EnsureFooniUIBridge(m_FUnityUI);
             EnsureScriptMachine(m_FUnityUI);
+            EnsureTimerService();
 
             if (m_UIDocument.panelSettings == null)
             {
@@ -237,6 +250,14 @@ namespace FUnity.Core
             }
 
             m_VsBridge = m_FUnityUI.GetComponent<VSPresenterBridge>() ?? m_FUnityUI.AddComponent<VSPresenterBridge>();
+            if (m_VsBridge != null)
+            {
+                m_VsBridge.SetStageBackgroundService(m_StageBackgroundService);
+                if (m_TimerService != null)
+                {
+                    m_VsBridge.SetTimerService(m_TimerService);
+                }
+            }
         }
 
         /// <summary>
@@ -362,6 +383,25 @@ namespace FUnity.Core
         }
 
         /// <summary>
+        /// 遅延実行サービス <see cref="TimerServiceBehaviour"/> を FUnity UI GameObject に確保する。
+        /// Visual Scripting からのタイマー利用を統一するため、常に同一インスタンスを提供する。
+        /// </summary>
+        private void EnsureTimerService()
+        {
+            if (m_FUnityUI == null)
+            {
+                return;
+            }
+
+            m_TimerService = m_FUnityUI.GetComponent<TimerServiceBehaviour>() ?? m_FUnityUI.AddComponent<TimerServiceBehaviour>();
+
+            if (m_VsBridge != null)
+            {
+                m_VsBridge.SetTimerService(m_TimerService);
+            }
+        }
+
+        /// <summary>
         /// Resources またはアセットデータベースから既定の PanelSettings を探索する。
         /// </summary>
         /// <returns>見つかった PanelSettings。無い場合は null。</returns>
@@ -401,19 +441,8 @@ namespace FUnity.Core
                 return;
             }
 
-            root.style.backgroundColor = stage.BackgroundColor;
-
-            var texture = stage.BackgroundImage;
-            if (texture != null)
-            {
-                // NOTE: UI Toolkit では StyleBackground.none が使用できないため、毎回 Texture2D から生成する。
-                root.style.backgroundImage = new StyleBackground(texture);
-                root.style.unityBackgroundScaleMode = stage.BackgroundScale;
-            }
-            else
-            {
-                root.style.backgroundImage = new StyleBackground();
-            }
+            m_StageBackgroundService.SetBackgroundColor(stage.BackgroundColor);
+            m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScale);
         }
 
         /// <summary>

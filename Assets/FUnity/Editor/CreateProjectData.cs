@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -29,7 +30,9 @@ namespace FUnity.EditorTools
         private const string ActorRootFolderPath = "Assets/FUnity/Data";
         private const string ActorDataFolderPath = ActorRootFolderPath + "/Actors";
         private const string ActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Fooni.asset";
+        private const string ScratchActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Starter.asset";
         private const string FooniScriptGraphSearchFilter = "t:ScriptGraphAsset Fooni_FloatSetup";
+        private const string ScratchRunnerMacroSearchFilter = "t:ScriptGraphAsset MoveWithArrow";
 
         // 背景テクスチャはプロジェクト直下の正規パスを優先し、無ければパッケージ同梱版から順に探す。
         private static readonly string[] StageBackgroundCandidates =
@@ -49,13 +52,19 @@ namespace FUnity.EditorTools
         private static readonly string[] FooniElementUxmlCandidates =
         {
             "Assets/FUnity/UI/UXML/FooniElement.uxml",
-            "Packages/com.papacoder.funity/Runtime/UI/UXML/FooniElement.uxml"
+            "Assets/FUnity/UI/UXML/ActorElement.uxml",
+            "Packages/com.papacoder.funity/Runtime/UI/UXML/FooniElement.uxml",
+            "Packages/com.papacoder.funity/Runtime/Resources/UI/FooniElement.uxml",
+            "Packages/com.papacoder.funity/Runtime/Resources/UI/ActorElement.uxml"
         };
 
         private static readonly string[] FooniElementStyleCandidates =
         {
             "Assets/FUnity/UI/USS/FooniElement.uss",
-            "Packages/com.papacoder.funity/Runtime/UI/USS/FooniElement.uss"
+            "Assets/FUnity/UI/USS/ActorElement.uss",
+            "Packages/com.papacoder.funity/Runtime/UI/USS/FooniElement.uss",
+            "Packages/com.papacoder.funity/Runtime/Resources/UI/FooniElement.uss",
+            "Packages/com.papacoder.funity/Runtime/Resources/UI/ActorElement.uss"
         };
 
         private static readonly string[] FooniScriptGraphCandidates =
@@ -63,6 +72,12 @@ namespace FUnity.EditorTools
             "Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset"
         };
         private const string FooniScriptGraphFolder = "Assets/FUnity/VisualScripting/Macros";
+        private static readonly string[] ScratchRunnerMacroCandidates =
+        {
+            "Assets/FUnity/VisualScripting/Macros/MoveWithArrow.asset",
+            "Packages/com.papacoder.funity/VisualScripting/Macros/MoveWithArrow.asset",
+            "Packages/com.papacoder.funity/Runtime/VisualScripting/Macros/MoveWithArrow.asset"
+        };
 
         private const string BackgroundSearchFilter = "t:Texture2D Background_01";
         private const string FooniPortraitSearchFilter = "t:Texture2D Fooni";
@@ -107,6 +122,34 @@ namespace FUnity.EditorTools
             Selection.activeObject = project;
 
             Debug.Log("[FUnity] Created default project data assets and linked the Fooni actor.");
+        }
+
+        [MenuItem("FUnity/Create/Scratch Starter (Actor+Stage+VS)")]
+        /// <summary>
+        /// Scratch 本の練習に必要な Project/Stage/Actor/Runner を一括生成する。
+        /// 既存アセットは尊重しつつ、Starter 用 ActorData と VS Runner を最低限構成する。
+        /// </summary>
+        public static void CreateScratchStarter()
+        {
+            CreateDefault();
+
+            var project = AssetDatabase.LoadAssetAtPath<FUnityProjectData>(ProjectAssetPath);
+            var stage = AssetDatabase.LoadAssetAtPath<FUnityStageData>(StageAssetPath);
+            var actor = ConfigureScratchActorData();
+
+            AssignStageBackground(stage);
+            LinkProjectData(project, stage, actor);
+            ConfigureScratchRunner(project);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            if (project != null)
+            {
+                Selection.activeObject = project;
+            }
+
+            Debug.Log("[FUnity] Created Scratch starter assets (Project / Stage / Actor / Runner).");
         }
 
         /// <summary>
@@ -169,6 +212,80 @@ namespace FUnity.EditorTools
             }
 
             return actorObj;
+        }
+
+        /// <summary>
+        /// Scratch Starter 向けの ActorData を確保し、初期位置・サイズを標準化する。
+        /// Portrait/UXML/USS は Fooni と同じ候補を流用し、浮遊アニメーションは無効化する。
+        /// </summary>
+        private static FUnityActorData ConfigureScratchActorData()
+        {
+            EnsureFolder(FUnityFolderPath);
+            EnsureFolder(ActorRootFolderPath);
+            EnsureFolder(ActorDataFolderPath);
+
+            var actorObj = AssetDatabase.LoadAssetAtPath<FUnityActorData>(ScratchActorAssetPath);
+            if (actorObj == null)
+            {
+                actorObj = ScriptableObject.CreateInstance<FUnityActorData>();
+                AssetDatabase.CreateAsset(actorObj, ScratchActorAssetPath);
+            }
+
+            var serializedActor = new SerializedObject(actorObj);
+            var changed = false;
+
+            changed |= SetString(serializedActor, "m_displayName", "Scratch Starter");
+            changed |= SetObject(serializedActor, "m_portrait", LoadFirst<Texture2D>(FooniPortraitCandidates, FooniPortraitSearchFilter));
+            changed |= SetObject(serializedActor, "m_ElementUxml", LoadFirst<VisualTreeAsset>(FooniElementUxmlCandidates, FooniElementUxmlSearchFilter));
+            changed |= SetObject(serializedActor, "m_ElementStyle", LoadFirst<StyleSheet>(FooniElementStyleCandidates, FooniElementStyleSearchFilter));
+            changed |= SetVector2(serializedActor, "m_initialPosition", new Vector2(240f, 200f));
+            changed |= SetVector2(serializedActor, "m_size", new Vector2(180f, 180f));
+            changed |= SetFloat(serializedActor, "m_moveSpeed", 240f);
+            changed |= SetBool(serializedActor, "m_floatAnimation", false);
+
+            if (changed)
+            {
+                serializedActor.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(actorObj);
+                AssetDatabase.SaveAssets();
+            }
+
+            return actorObj;
+        }
+
+        /// <summary>
+        /// Scratch Starter 用の Visual Scripting Runner 定義を <see cref="FUnityProjectData"/> に書き込む。
+        /// 既存リストは 1 件に揃え、MoveWithArrow マクロを割り当てる。
+        /// </summary>
+        private static void ConfigureScratchRunner(FUnityProjectData project)
+        {
+            if (project == null)
+            {
+                return;
+            }
+
+            if (project.runners == null)
+            {
+                project.runners = new List<FUnityProjectData.RunnerEntry>();
+            }
+
+            var macro = LoadFirst<ScriptGraphAsset>(ScratchRunnerMacroCandidates, ScratchRunnerMacroSearchFilter);
+
+            if (project.runners.Count == 0)
+            {
+                project.runners.Add(new FUnityProjectData.RunnerEntry());
+            }
+
+            var entry = project.runners[0];
+            entry.name = "Scratch VS Runner";
+            entry.macro = macro;
+
+            if (entry.objectVariables == null)
+            {
+                entry.objectVariables = new List<FUnityProjectData.RunnerEntry.ObjectVar>();
+            }
+
+            EditorUtility.SetDirty(project);
         }
 
         /// <summary>
@@ -268,6 +385,56 @@ namespace FUnity.EditorTools
             }
 
             property.objectReferenceValue = value;
+            return true;
+        }
+
+        /// <summary>
+        /// Vector2 プロパティを更新する補助。値が同一の場合は変更しない。
+        /// </summary>
+        private static bool SetVector2(SerializedObject serializedObject, string propertyName, Vector2 value)
+        {
+            var property = serializedObject.FindProperty(propertyName);
+            if (property == null)
+            {
+                return false;
+            }
+
+            if (property.vector2Value == value)
+            {
+                return false;
+            }
+
+            property.vector2Value = value;
+            return true;
+        }
+
+        /// <summary>
+        /// float プロパティを更新する補助。差分がある場合のみ書き込む。
+        /// </summary>
+        private static bool SetFloat(SerializedObject serializedObject, string propertyName, float value)
+        {
+            var property = serializedObject.FindProperty(propertyName);
+            if (property == null || Mathf.Approximately(property.floatValue, value))
+            {
+                return false;
+            }
+
+            property.floatValue = value;
+            return true;
+        }
+
+        /// <summary>
+        /// bool プロパティの値を更新する。既に同じ値なら変更フラグは立てない。
+        /// </summary>
+        private static bool SetBool(SerializedObject serializedObject, string propertyName, bool value)
+        {
+            var property = serializedObject.FindProperty(propertyName);
+            if (property == null || property.boolValue == value)
+            {
+                return false;
+            }
+
+            property.boolValue = value;
             return true;
         }
 

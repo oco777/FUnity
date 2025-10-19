@@ -1,8 +1,9 @@
 {
     "name": "FUnity.Runtime",
-    "rootNamespace": "FUnity",
+    "rootNamespace": "FUnity.Runtime",
     "references": [
         "UnityEngine.UIElementsModule",
+        "Unity.VisualScripting",
         "Unity.VisualScripting.Core",
         "Unity.VisualScripting.Flow",
         "Unity.VisualScripting.State",

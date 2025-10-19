@@ -1,4 +1,4 @@
-// Updated: 2025-02-14
+// Updated: 2025-03-03
 using UnityEngine;
 
 namespace FUnity.Runtime.View
@@ -34,5 +34,24 @@ namespace FUnity.Runtime.View
         /// </code>
         /// </example>
         void SetPortrait(Sprite sprite);
+
+        /// <summary>
+        /// 幅と高さを指定し、俳優要素のサイズを更新する。
+        /// </summary>
+        /// <param name="size">幅・高さ（px）。負値は 0 として扱う。</param>
+        void SetSize(Vector2 size);
+
+        /// <summary>
+        /// 等倍基準のスケール値を適用する。
+        /// </summary>
+        /// <param name="scale">適用するスケール。0 より大きい値を想定。</param>
+        void SetScale(float scale);
+
+        /// <summary>
+        /// 吹き出しテキストを表示する。指定時間経過後は自動で非表示にする。
+        /// </summary>
+        /// <param name="message">表示するメッセージ。</param>
+        /// <param name="seconds">表示継続時間（秒）。</param>
+        void ShowSpeech(string message, float seconds);
     }
 }
