@@ -41,7 +41,7 @@ public static class CreateFooniFloatMacro
             var macro = ScriptableObject.CreateInstance<ScriptGraphAsset>();
             var graph = new FlowGraph();
             macro.graph = graph;
-            macro.title = "Fooni Float Setup";
+            macro.name = "Fooni_FloatSetup";
 
             var onStart = new Start();
             var getComponent = new GetComponent
