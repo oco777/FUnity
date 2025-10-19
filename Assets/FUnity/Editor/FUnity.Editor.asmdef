@@ -1,18 +1,19 @@
 {
-  "name": "FUnity.Editor",
-  "rootNamespace": "FUnity",
-  "references": [
-    "FUnity.Runtime",
-    "Unity.VisualScripting.Core",
-    "Unity.VisualScripting.Flow",
-    "Unity.VisualScripting.State",
-    "Unity.VisualScripting.Antlr3.Runtime"
-  ],
-  "includePlatforms": [
-    "Editor"
-  ],
-  "autoReferenced": true,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "noEngineReferences": false
+    "name": "FUnity.Editor",
+    "rootNamespace": "FUnity",
+    "references": [
+        "FUnity.Runtime",
+        "Unity.VisualScripting",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow",
+        "Unity.VisualScripting.State",
+        "Unity.VisualScripting.Antlr3.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "autoReferenced": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "noEngineReferences": false
 }
