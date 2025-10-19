@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.UI
 {
@@ -15,11 +16,22 @@ namespace FUnity.Runtime.UI
     /// </remarks>
     public class FooniController : MonoBehaviour
     {
+        /// <summary>「1 歩」をピクセル換算するためのスケール（px/歩）。</summary>
+        private const float StepToPixels = 10f;
+
         /// <summary>
         /// 制御対象の <see cref="UIDocument"/>。null の場合は <see cref="Awake"/> で同一 GameObject から補完する。
         /// </summary>
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("uiDocument")]
         private UIDocument m_UIDocument;
+
+        /// <summary>Visual Scripting からの移動命令を委譲する Presenter。未設定時は <see cref="MoveSteps"/> を拒否する。</summary>
+        [SerializeField]
+        private ActorPresenter m_ActorPresenter;
+
+        /// <summary>現在の向き（度）。0=右, 90=上, 180=左, 270=下。</summary>
+        [SerializeField]
+        private float m_DirectionDeg = 90f;
 
         /// <summary>
         /// 制御対象の UIDocument を外部から差し替える。
@@ -142,6 +154,52 @@ namespace FUnity.Runtime.UI
             {
                 StartTicker();
             }
+        }
+
+        /// <summary>
+        /// Visual Scripting 経由で移動を指示する Presenter を設定する。
+        /// </summary>
+        /// <param name="presenter">俳優の Model と View を調停する Presenter。</param>
+        public void SetActorPresenter(ActorPresenter presenter)
+        {
+            m_ActorPresenter = presenter;
+            if (presenter == null)
+            {
+                Debug.LogWarning("[FUnity] FooniController: ActorPresenter が未設定のため移動命令を転送できません。");
+            }
+        }
+
+        /// <summary>
+        /// 現在の向きを度単位で設定する。0=右、90=上、180=左、270=下 として扱う。
+        /// </summary>
+        /// <param name="degrees">設定する角度（度）。</param>
+        public void SetDirection(float degrees)
+        {
+            m_DirectionDeg = degrees;
+        }
+
+        /// <summary>
+        /// Scratch の「〇歩動かす」に相当する移動を実行する。現在の向きに沿って steps×10px 分だけ瞬間的に移動させる。
+        /// </summary>
+        /// <param name="steps">移動する歩数。負値を指定すると逆方向へ移動する。</param>
+        public void MoveSteps(float steps)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] FooniController: ActorPresenter が未設定のため MoveSteps を実行できません。");
+                return;
+            }
+
+            var radians = m_DirectionDeg * Mathf.Deg2Rad;
+            var direction = new Vector2(Mathf.Cos(radians), -Mathf.Sin(radians));
+            var deltaPx = direction * (steps * StepToPixels);
+
+            if (deltaPx.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return;
+            }
+
+            m_ActorPresenter.MoveByPixels(deltaPx);
         }
 
         /// <summary>

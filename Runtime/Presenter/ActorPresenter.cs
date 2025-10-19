@@ -133,18 +133,29 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 現在位置から相対移動させる。
+        /// 現在位置からピクセル単位の差分を加算し、即座に View へ反映する。
+        /// Visual Scripting の「〇歩動かす」ブロックからの呼び出しを想定し、Presenter 経由で Model を更新する。
         /// </summary>
-        /// <param name="delta">移動量。</param>
-        public void MoveBy(Vector2 delta)
+        /// <param name="deltaPx">加算する移動量（px）。右+ / 下+ の座標系を想定。</param>
+        public void MoveByPixels(Vector2 deltaPx)
         {
             if (m_State == null || m_View == null)
             {
                 return;
             }
 
-            m_State.Position += delta;
+            m_State.Position += deltaPx;
             m_View.SetPosition(m_State.Position);
+        }
+
+        /// <summary>
+        /// 現在位置から相対移動させる。
+        /// 既存の API 互換性を維持しつつ <see cref="MoveByPixels"/> に処理を委譲する。
+        /// </summary>
+        /// <param name="delta">移動量。</param>
+        public void MoveBy(Vector2 delta)
+        {
+            MoveByPixels(delta);
         }
 
         /// <summary>
