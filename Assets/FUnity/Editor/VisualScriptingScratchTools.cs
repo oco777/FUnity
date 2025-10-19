@@ -97,7 +97,7 @@ namespace FUnity.EditorTools
 
         [MenuItem("FUnity/VS/Create Scratch Macros")]
         /// <summary>
-        /// Scratch の定番レシピを再現するマクロ雛形を作成し、Graph コメントで使い方を記載する。
+        /// Scratch の定番レシピを再現するマクロ雛形を作成し、利用手順をコンソールに案内する。
         /// </summary>
         public static void CreateScratchMacros()
         {
@@ -119,26 +119,39 @@ namespace FUnity.EditorTools
                     asset.graph = new FlowGraph();
                 }
 
-                asset.graph.title = title;
+                asset.graph.title = $"{title} (Inspector & Console Guide)";
                 asset.graph.units.Clear();
-                asset.graph.comments.Clear();
-
-                var comment = new GraphComment
-                {
-                    title = title,
-                    text = instructions,
-                    position = new Vector2(0f, 0f),
-                    size = new Vector2(560f, 200f)
-                };
-                asset.graph.comments.Add(comment);
 
                 EditorUtility.SetDirty(asset);
+
+                LogScratchMacroInstructions(path, title, instructions);
             }
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log("[FUnity] Scratch macro templates were created/updated. Refer to the embedded instructions for wiring examples.");
+            Debug.Log("[FUnity] Scratch macro templates were created/updated. 各マクロの使い方は Console ログおよびランナーの Inspector コメントを参照してください。");
+        }
+
+        /// <summary>
+        /// マクロの生成経路と配線手順を Console ログに書き出す。
+        /// </summary>
+        /// <param name="assetPath">生成・更新したマクロアセットのパス。</param>
+        /// <param name="title">マクロのタイトル。</param>
+        /// <param name="instructions">配線に関する手順テキスト。</param>
+        private static void LogScratchMacroInstructions(string assetPath, string title, string instructions)
+        {
+            if (string.IsNullOrEmpty(assetPath) || string.IsNullOrEmpty(title))
+            {
+                Debug.LogWarning("[FUnity] Scratch macro log skipped because title or path was empty.");
+                return;
+            }
+
+            var detail = string.IsNullOrEmpty(instructions)
+                ? "（手順テキストが定義されていません）"
+                : instructions;
+
+            Debug.Log($"[FUnity] Macro created: {title}\nAsset Path: {assetPath}\n配線ヒント:\n{detail}\n※ ランナーの Inspector には FUnityInspectorComment で同じ案内を表示してください。");
         }
     }
 }
