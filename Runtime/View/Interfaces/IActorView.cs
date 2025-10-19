@@ -1,4 +1,5 @@
 // Updated: 2025-03-03
+using System;
 using UnityEngine;
 
 namespace FUnity.Runtime.View
@@ -13,6 +14,12 @@ namespace FUnity.Runtime.View
     /// </remarks>
     public interface IActorView
     {
+        /// <summary>
+        /// ステージ領域（UI Toolkit パネル内の有効描画範囲）が更新された際に発火するイベント。
+        /// Presenter はこのイベントを購読し、境界更新後に Model 側のクランプ値を調整する。
+        /// </summary>
+        event Action<Rect> StageBoundsChanged;
+
         /// <summary>
         /// 左上原点（px）での座標を UI 上に反映する。
         /// </summary>
@@ -53,5 +60,19 @@ namespace FUnity.Runtime.View
         /// <param name="message">表示するメッセージ。</param>
         /// <param name="seconds">表示継続時間（秒）。</param>
         void ShowSpeech(string message, float seconds);
+
+        /// <summary>
+        /// 現在のステージ境界（px）を取得する。取得に成功した場合のみ <c>true</c> を返す。
+        /// </summary>
+        /// <param name="boundsPx">左上原点ベースの境界矩形。</param>
+        /// <returns>境界を取得できた場合は <c>true</c>。</returns>
+        bool TryGetStageBounds(out Rect boundsPx);
+
+        /// <summary>
+        /// 表示中の俳優要素のピクセルサイズを取得する。レイアウト未確定時は既定値を返す。
+        /// </summary>
+        /// <param name="sizePx">幅・高さ（px）。</param>
+        /// <returns>取得できた場合は <c>true</c>。</returns>
+        bool TryGetVisualSize(out Vector2 sizePx);
     }
 }

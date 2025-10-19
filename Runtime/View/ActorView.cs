@@ -1,4 +1,5 @@
 // Updated: 2025-03-03
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Input;
@@ -20,6 +21,11 @@ namespace FUnity.Runtime.View
     public sealed class ActorView : MonoBehaviour, IActorView
     {
         /// <summary>
+        /// ステージ境界が更新された際に Presenter へ通知するイベント。<see cref="Configure"/> 直後とジオメトリ変化時に発火する。
+        /// </summary>
+        public event Action<Rect> StageBoundsChanged;
+
+        /// <summary>
         /// UI Toolkit 要素へ座標・背景画像を反映するためのブリッジ。
         /// <see cref="Configure(FooniUIBridge, VisualElement)"/> で差し替え可能。
         /// </summary>
@@ -39,6 +45,12 @@ namespace FUnity.Runtime.View
 
         /// <summary>吹き出し非表示を遅延実行するスケジュール項目。</summary>
         private IVisualElementScheduledItem m_SpeechHideItem;
+
+        /// <summary>パネル全体の GeometryChangedEvent を購読する際に利用するルート要素。</summary>
+        private VisualElement m_PanelRoot;
+
+        /// <summary>GeometryChangedEvent の登録済みかどうかを示すフラグ。</summary>
+        private bool m_GeometryCallbacksRegistered;
 
         /// <summary>
         /// コンポーネントがリセットされた際に既存の <see cref="FooniUIBridge"/> を再取得する。
@@ -77,6 +89,8 @@ namespace FUnity.Runtime.View
                 }
             }
 
+            UnregisterGeometryCallbacks();
+
             m_BoundElement = element;
             if (m_Bridge != null && element != null)
             {
@@ -89,6 +103,9 @@ namespace FUnity.Runtime.View
             {
                 m_SpeechLabel.style.display = DisplayStyle.None;
             }
+
+            RegisterGeometryCallbacks();
+            NotifyStageBounds();
         }
 
         /// <summary>
@@ -116,6 +133,38 @@ namespace FUnity.Runtime.View
             }
 
             m_Bridge.SetPosition(pos);
+        }
+
+        /// <summary>
+        /// 現在推定できるステージ境界を返す。UI 要素とパネルがバインドされていない場合は失敗する。
+        /// </summary>
+        /// <param name="boundsPx">左上原点ベースの境界。</param>
+        /// <returns>取得できた場合は <c>true</c>。</returns>
+        public bool TryGetStageBounds(out Rect boundsPx)
+        {
+            boundsPx = default;
+            if (m_Bridge == null)
+            {
+                return false;
+            }
+
+            return m_Bridge.TryGetPanelBounds(out boundsPx);
+        }
+
+        /// <summary>
+        /// 現在の俳優要素のピクセルサイズを返す。レイアウト前は既定値を返す。
+        /// </summary>
+        /// <param name="sizePx">幅・高さ（px）。</param>
+        /// <returns>取得できた場合は <c>true</c>。</returns>
+        public bool TryGetVisualSize(out Vector2 sizePx)
+        {
+            sizePx = default;
+            if (m_Bridge == null)
+            {
+                return false;
+            }
+
+            return m_Bridge.TryGetElementPixelSize(out sizePx);
         }
 
         /// <summary>
@@ -174,6 +223,8 @@ namespace FUnity.Runtime.View
             {
                 m_RootElement.style.height = StyleKeyword.Auto;
             }
+
+            NotifyStageBounds();
         }
 
         /// <summary>
@@ -189,6 +240,8 @@ namespace FUnity.Runtime.View
 
             var safeScale = Mathf.Max(0.01f, scale);
             m_RootElement.style.scale = new StyleScale(new Scale(new Vector3(safeScale, safeScale, 1f)));
+
+            NotifyStageBounds();
         }
 
         /// <summary>
@@ -224,6 +277,93 @@ namespace FUnity.Runtime.View
         private static long SecToMs(float seconds)
         {
             return (long)(Mathf.Max(0f, seconds) * 1000f);
+        }
+
+        /// <summary>
+        /// MonoBehaviour の破棄時に GeometryChangedEvent の購読を解除する。
+        /// </summary>
+        private void OnDestroy()
+        {
+            UnregisterGeometryCallbacks();
+        }
+
+        /// <summary>
+        /// GeometryChangedEvent を購読し、ステージ境界の再計算契機を確保する。
+        /// </summary>
+        private void RegisterGeometryCallbacks()
+        {
+            if (m_BoundElement != null && !m_GeometryCallbacksRegistered)
+            {
+                m_BoundElement.RegisterCallback<GeometryChangedEvent>(OnElementGeometryChanged);
+                m_GeometryCallbacksRegistered = true;
+            }
+
+            var panelRoot = m_BoundElement?.panel?.visualTree;
+            if (panelRoot == null || panelRoot == m_PanelRoot)
+            {
+                return;
+            }
+
+            if (m_PanelRoot != null)
+            {
+                m_PanelRoot.UnregisterCallback<GeometryChangedEvent>(OnPanelGeometryChanged);
+            }
+
+            m_PanelRoot = panelRoot;
+            m_PanelRoot.RegisterCallback<GeometryChangedEvent>(OnPanelGeometryChanged);
+        }
+
+        /// <summary>
+        /// 要素自体のジオメトリ変化を捕捉し、境界再計算を促す。
+        /// </summary>
+        /// <param name="evt">UI Toolkit が発行する GeometryChangedEvent。</param>
+        private void OnElementGeometryChanged(GeometryChangedEvent evt)
+        {
+            NotifyStageBounds();
+        }
+
+        /// <summary>
+        /// パネル全体のジオメトリ変化を受け取り、境界通知を行う。
+        /// </summary>
+        /// <param name="evt">UI Toolkit から渡されるイベント。</param>
+        private void OnPanelGeometryChanged(GeometryChangedEvent evt)
+        {
+            NotifyStageBounds();
+        }
+
+        /// <summary>
+        /// 現在取得可能なステージ境界を Presenter へ通知する。
+        /// </summary>
+        private void NotifyStageBounds()
+        {
+            if (StageBoundsChanged == null)
+            {
+                return;
+            }
+
+            if (TryGetStageBounds(out var bounds))
+            {
+                StageBoundsChanged.Invoke(bounds);
+            }
+        }
+
+        /// <summary>
+        /// GeometryChangedEvent の購読を解除し、リソースリークを防ぐ。
+        /// </summary>
+        private void UnregisterGeometryCallbacks()
+        {
+            if (m_BoundElement != null && m_GeometryCallbacksRegistered)
+            {
+                m_BoundElement.UnregisterCallback<GeometryChangedEvent>(OnElementGeometryChanged);
+            }
+
+            m_GeometryCallbacksRegistered = false;
+
+            if (m_PanelRoot != null)
+            {
+                m_PanelRoot.UnregisterCallback<GeometryChangedEvent>(OnPanelGeometryChanged);
+                m_PanelRoot = null;
+            }
         }
     }
 }
