@@ -11,6 +11,7 @@
 - Theme の正規パスを `Assets/FUnity/UI/USS/` に統一し、UI Builder 既定テーマを優先する運用に更新。
 - Visual Scripting を必須依存に変更し、ランタイムから `UNITY_VISUAL_SCRIPTING` ガードと反射ベースの初期化を撤廃。
 - ActorPresenter でステージ境界を保持し、ActorState 更新時に座標をクランプするよう統合。UI 側の `FooniUIBridge.ClampToPanel` は非推奨化。
+- refactor(editor): stop auto-attaching ActorPresenterAdapter to 'FUnity UI' and expose explicit assignment in FUnityManager.
 
 ### Fixed
 - fix(input): add System namespace or qualify [System.Obsolete].
@@ -22,6 +23,7 @@
 - README と Docs/ 配下を最新の実装と運用に合わせて全面更新。
 - コーディング規約とトラブルシュートを明文化。
 - Visual Scripting が前提となった手順とクイックスタートを追記。
+- docs: update setup/troubleshooting guidance to remove hard dependency on 'FUnity UI' hosting ActorPresenterAdapter.
 
 ## [0.1.0] - 2024-05-04
 ### Added

@@ -13,7 +13,7 @@ namespace FUnity.EditorTools
         private const string MacroDir = "Assets/FUnity/VisualScripting/Macros";
         private const string FloatMacroPath = MacroDir + "/Fooni_FloatSetup.asset";
         private const string SayMacroPath = MacroDir + "/Fooni_SayOnKey.asset";
-        private const string RunnerHelpMessage = "Ensure 'FUnity UI' contains an ActorPresenterAdapter (旧 FooniController) component before running.";
+        private const string RunnerHelpMessage = "Assign an ActorPresenterAdapter (旧 FooniController) to a GameObject used by your VS graph before running.";
 
         [MenuItem("FUnity/VS/Create Fooni Macros & Runner")]
         public static void CreateMacrosAndRunners()
@@ -41,7 +41,7 @@ namespace FUnity.EditorTools
                 $"- Macro: {FloatMacroPath}\n" +
                 $"- Macro: {SayMacroPath}\n" +
                 $"- Runner objects: '{floatRunner.name}', '{sayRunner.name}'\n" +
-                "Ensure an ActorPresenterAdapter exists under 'FUnity UI' in the scene.");
+                "Assign an ActorPresenterAdapter (旧 FooniController) to the runner or another referenced GameObject.");
         }
 
         private static ScriptGraphAsset LoadOrCreateMacro(string path, string _)

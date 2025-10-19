@@ -29,6 +29,7 @@ Default Project Data 実行後やサンプルシーン再生時に発生しや�
   - `Assets/FUnity/UI/UXML/FooniElement.uxml` のルート要素に `name="root"`、俳優の表示領域に `name="actor-root"` が設定されているか。
   - `FUnityActorData_Fooni.asset` の Portrait/UXML/USS 参照が実在するか。
   - `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` が `FUnityActorData_Fooni` の ScriptGraph に割り当てられているか。
+  - シーンに `ActorPresenterAdapter` (旧 FooniController) が存在し、`FUnityManager` の **Default Actor Presenter Adapter** フィールドまたは Visual Scripting グラフの変数から参照されているか。
 - 対処: Default Project Data を再生成すると参照が再設定されます。UXML の name 属性が欠けている場合は手動で修正してください。
 
 ## 関連ドキュメント

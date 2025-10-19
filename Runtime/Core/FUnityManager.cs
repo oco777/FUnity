@@ -40,11 +40,20 @@ namespace FUnity.Core
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("project")]
         private FUnityProjectData m_Project;
 
+        /// <summary>
+        /// Visual Scripting から参照する既定の <see cref="ActorPresenterAdapter"/>。Inspector で明示設定し、未設定時はシーン内を探索する。
+        /// </summary>
+        [SerializeField]
+        private ActorPresenterAdapter m_DefaultActorPresenterAdapter;
+
         /// <summary>生成・確保した UI ルート GameObject。</summary>
         private GameObject m_FUnityUI;
 
         /// <summary>俳優ごとの Presenter インスタンス。</summary>
         private readonly List<ActorPresenter> m_ActorPresenters = new List<ActorPresenter>();
+
+        /// <summary>ActorPresenterAdapter 未割り当て時に重複警告を避けるフラグ。</summary>
+        private bool m_LoggedMissingAdapter;
 
         /// <summary>俳優設定と Presenter を対応付けるマップ。</summary>
         private readonly Dictionary<FUnityActorData, ActorPresenter> m_ActorPresenterMap = new Dictionary<FUnityActorData, ActorPresenter>();
@@ -91,6 +100,7 @@ namespace FUnity.Core
             {
                 EnsureFUnityUI();
                 EnsurePresenterBridge();
+                ResolveDefaultActorPresenterAdapter();
             }
 
             if (m_Project != null && m_Project.runners != null)
@@ -134,6 +144,8 @@ namespace FUnity.Core
             {
                 m_VsBridge.SetStageBackgroundService(m_StageBackgroundService);
             }
+
+            ResolveDefaultActorPresenterAdapter();
 
             // Resolve ProjectData
             if (m_Project == null)
@@ -188,7 +200,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// FUnity UI ルート GameObject を生成し、必須コンポーネント（UIDocument, ActorPresenterAdapter, ScriptMachine 等）を確保する。
+        /// FUnity UI ルート GameObject を生成し、必須コンポーネント（UIDocument, ScriptMachine 等）を確保する。
         /// </summary>
         private void EnsureFUnityUI()
         {
@@ -217,8 +229,61 @@ namespace FUnity.Core
                     Debug.LogWarning("[FUnity] FUnityPanelSettings not found. Place a PanelSettings asset named 'FUnityPanelSettings' under Resources or import the sample so it can be found in the Editor.");
                 }
             }
+        }
 
-            var controller = m_FUnityUI.GetComponent<ActorPresenterAdapter>() ?? m_FUnityUI.AddComponent<ActorPresenterAdapter>();
+        /// <summary>
+        /// 既定の <see cref="ActorPresenterAdapter"/> を Inspector 指定優先で確保し、未確定ならシーン内から既存コンポーネントを探索する。
+        /// </summary>
+        private void ResolveDefaultActorPresenterAdapter()
+        {
+            if (m_DefaultActorPresenterAdapter != null)
+            {
+                return;
+            }
+
+            if (m_UIDocument != null)
+            {
+                var candidate = m_UIDocument.GetComponent<ActorPresenterAdapter>();
+                if (candidate != null)
+                {
+                    m_DefaultActorPresenterAdapter = candidate;
+                    m_LoggedMissingAdapter = false;
+                    return;
+                }
+            }
+
+            if (m_FUnityUI != null)
+            {
+                var candidate = m_FUnityUI.GetComponent<ActorPresenterAdapter>();
+                if (candidate != null)
+                {
+                    m_DefaultActorPresenterAdapter = candidate;
+                    m_LoggedMissingAdapter = false;
+                    return;
+                }
+            }
+
+            var adapters = FindObjectsOfType<ActorPresenterAdapter>();
+            if (adapters != null)
+            {
+                foreach (var adapter in adapters)
+                {
+                    if (adapter == null)
+                    {
+                        continue;
+                    }
+
+                    m_DefaultActorPresenterAdapter = adapter;
+                    m_LoggedMissingAdapter = false;
+                    return;
+                }
+            }
+
+            if (!m_LoggedMissingAdapter)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter (旧 FooniController) is not assigned. Assign one to FUnityManager or reference it from your Visual Scripting graph.");
+                m_LoggedMissingAdapter = true;
+            }
         }
 
         /// <summary>
@@ -541,30 +606,12 @@ namespace FUnity.Core
                 return;
             }
 
-            ActorPresenterAdapter controller = null;
-
-            if (m_UIDocument != null)
-            {
-                controller = m_UIDocument.GetComponent<ActorPresenterAdapter>();
-            }
-
-            if (controller == null && m_FUnityUI != null)
-            {
-                controller = m_FUnityUI.GetComponent<ActorPresenterAdapter>();
-            }
+            ResolveDefaultActorPresenterAdapter();
+            var controller = m_DefaultActorPresenterAdapter;
 
             if (controller == null)
             {
-                var go = GameObject.Find("FUnity UI");
-                if (go != null)
-                {
-                    controller = go.GetComponent<ActorPresenterAdapter>();
-                }
-            }
-
-            if (controller == null)
-            {
-                Debug.LogWarning("[FUnity] ActorPresenterAdapter (FooniController) not found. Actor binding skipped.");
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter (旧 FooniController) not found. Assign one in the scene to bind actor elements.");
                 return;
             }
 
