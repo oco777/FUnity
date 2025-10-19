@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using Unity.VisualScripting;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.EditorTools
 {
@@ -93,6 +94,17 @@ namespace FUnity.EditorTools
             if (machineDirty)
             {
                 EditorUtility.SetDirty(machine);
+            }
+
+            if (name == "Fooni VS Float Runner")
+            {
+                var controller = go.GetComponent<FooniController>();
+                if (controller == null)
+                {
+                    controller = Undo.AddComponent<FooniController>(go);
+                    EditorUtility.SetDirty(controller);
+                    Debug.Log("[FUnity] Added FooniController to runner: " + go.name);
+                }
             }
 
             EnsureInspectorHelp(go);
