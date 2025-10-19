@@ -238,11 +238,12 @@ namespace FUnity.Runtime.Input
         }
 
         /// <summary>
-        /// スクリーン境界内に収まるよう座標を制限する。クランプ後はパネル座標へ戻す。
+        /// スクリーン境界内に収まるよう座標を制限する。`RuntimePanelUtils.ScreenToPanel` のみを利用し、
+        /// 入力がパネル座標 / スクリーン座標のいずれでも安全にクランプできるよう差分から上限を算出する。
         /// </summary>
-        /// <param name="pos">希望座標。</param>
+        /// <param name="pos">希望座標。パネル座標またはスクリーン座標（px）。</param>
         /// <param name="size">要素サイズ（px）。</param>
-        /// <returns>クランプ後の座標。</returns>
+        /// <returns>クランプ後のパネル座標。</returns>
         private Vector2 ClampToPanel(Vector2 pos, Vector2 size)
         {
             if (!clampToPanel || _actorRoot == null)
@@ -256,14 +257,24 @@ namespace FUnity.Runtime.Input
                 return pos;
             }
 
-            var screenPos = RuntimePanelUtils.PanelToScreen(panel, pos);
-            var screenWidth = Screen.width;
-            var screenHeight = Screen.height;
-            var maxX = Mathf.Max(0f, screenWidth - size.x);
-            var maxY = Mathf.Max(0f, screenHeight - size.y);
-            screenPos.x = Mathf.Clamp(screenPos.x, 0f, maxX);
-            screenPos.y = Mathf.Clamp(screenPos.y, 0f, maxY);
-            return RuntimePanelUtils.ScreenToPanel(panel, screenPos);
+            var panelOrigin = RuntimePanelUtils.ScreenToPanel(panel, Vector2.zero);
+            var panelScreenMax = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(Screen.width, Screen.height));
+            var panelMin = new Vector2(Mathf.Min(panelOrigin.x, panelScreenMax.x), Mathf.Min(panelOrigin.y, panelScreenMax.y));
+            var panelMax = new Vector2(Mathf.Max(panelOrigin.x, panelScreenMax.x), Mathf.Max(panelOrigin.y, panelScreenMax.y));
+
+            var elementPanelCorner = RuntimePanelUtils.ScreenToPanel(panel, size);
+            var elementPanelSize = new Vector2(Mathf.Abs(elementPanelCorner.x - panelOrigin.x), Mathf.Abs(elementPanelCorner.y - panelOrigin.y));
+
+            var panelPosFromScreen = RuntimePanelUtils.ScreenToPanel(panel, pos);
+            var useScreenConversion = (panelPosFromScreen - pos).sqrMagnitude > 0.01f;
+            var panelPos = useScreenConversion ? panelPosFromScreen : pos;
+
+            var maxX = Mathf.Max(panelMin.x, panelMax.x - elementPanelSize.x);
+            var maxY = Mathf.Max(panelMin.y, panelMax.y - elementPanelSize.y);
+            var clampedX = Mathf.Clamp(panelPos.x, panelMin.x, maxX);
+            var clampedY = Mathf.Clamp(panelPos.y, panelMin.y, maxY);
+
+            return new Vector2(clampedX, clampedY);
         }
     }
 }
