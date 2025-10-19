@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using FUnity.Runtime.Presenter;
+using FUnity.Runtime.UI;
 
 namespace FUnity.Runtime.Integrations.VisualScripting
 {
