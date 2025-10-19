@@ -23,7 +23,7 @@ FUnity を既存プロジェクトへ追加し、サンプルの背景とフー�
 ## サンプルシーンの確認
 1. Package Manager で **FUnity** パッケージを選び、**Samples → BasicScene → Import** を実行します。
 2. `Samples~/BasicScene/FUnitySample.unity` を開き、シーンに `FUnityManager` が存在することを確認します（追加の GameObject は不要です）。
-3. 再生すると `FUnityManager` が “FUnity UI” GameObject と `UIDocument`、`ScriptMachine`、`FooniUIBridge` を自動生成し、背景とフーニーが表示されます。
+3. 再生すると `FUnityManager` が “FUnity UI” GameObject と `UIDocument`、`FooniUIBridge` を自動構成し、背景とフーニーが表示されます。`ScriptMachine` はグラフを実行する Runner やアクター用 GameObject に配置してください。
 4. サンプルでは `FUnity Actor Adapter` GameObject に `ActorPresenterAdapter` (旧 FooniController) を明示的に配置し、`FUnityManager` の **Default Actor Presenter Adapter** フィールドへ割り当てています。自身のシーンでも任意の GameObject に同コンポーネントを追加し、参照を設定してください。
 
 ## Default Project Data の生成
@@ -39,4 +39,4 @@ FUnity を既存プロジェクトへ追加し、サンプルの背景とフー�
 - Default Project Data 実行時に `Assets/Resources/FUnityActorData_Fooni.asset` が存在すると、重複防止のために削除されます。
 - Theme の優先度は `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss` → `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` の順です。
 - 入力 API を Visual Scripting で呼び出す際は `UnityEngine.Input.GetAxisRaw` のように完全修飾名を使うと、`FUnity.Runtime.Input` と衝突しません。
-- `ActorPresenterAdapter` は自動追加されません。Visual Scripting グラフから参照する GameObject（例: Runner 本体、`FUnity UI` とは別の管理オブジェクト）に明示的に付与し、`FUnityManager` もしくはグラフの変数として指定してください。
+- `ActorPresenterAdapter` や `ScriptMachine` は自動追加されません。Visual Scripting グラフを実行する Runner（または対象 GameObject）に明示的に付与し、`FUnityManager` もしくはグラフの変数として指定してください。
