@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
-using FUnity.Runtime.UI;
+using FUnity.Runtime.Integrations.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Model;
 using FUnity.Runtime.View;

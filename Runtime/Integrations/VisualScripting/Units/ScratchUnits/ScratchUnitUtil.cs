@@ -1,6 +1,6 @@
 // Updated: 2025-10-19
 using UnityEngine;
-using FUnity.Runtime.UI;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
