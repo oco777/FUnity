@@ -39,6 +39,21 @@ namespace FUnity.Runtime.Presenter
         /// <summary>現在のスケール。等倍は 1。</summary>
         private float m_CurrentScale = 1f;
 
+        /// <summary>Presenter が保持するステージ領域（左上原点座標系）。</summary>
+        private Rect m_StageBoundsPx = new Rect(0f, 0f, 0f, 0f);
+
+        /// <summary>俳優の左上座標をクランプするための矩形。</summary>
+        private Rect m_PositionBoundsPx = new Rect(0f, 0f, 0f, 0f);
+
+        /// <summary>直近で取得した俳優要素の描画サイズ（px）。</summary>
+        private Vector2 m_LastMeasuredSizePx = Vector2.zero;
+
+        /// <summary>境界計算が完了しているかどうか。</summary>
+        private bool m_HasPositionBounds;
+
+        /// <summary>View の境界イベントに購読済みかどうか。</summary>
+        private bool m_IsSubscribedToBounds;
+
         /// <summary>
         /// モデルとビューを初期化し、初期位置・速度・ポートレートを反映する。
         /// </summary>
@@ -55,10 +70,13 @@ namespace FUnity.Runtime.Presenter
             var resolvedState = state ?? new ActorState();
             var shouldInitializeDirection = state == null;
 
+            DetachViewEvents();
+
             m_State = resolvedState;
             m_View = view;
 
-            m_State.Position = data != null ? data.InitialPosition : Vector2.zero;
+            var initialPosition = data != null ? data.InitialPosition : Vector2.zero;
+            m_State.SetPositionUnchecked(initialPosition);
             m_State.Speed = Mathf.Max(0f, data != null ? GetConfiguredSpeed(data) : 300f);
             if (shouldInitializeDirection)
             {
@@ -67,6 +85,10 @@ namespace FUnity.Runtime.Presenter
 
             m_BaseSize = data != null ? data.Size : Vector2.zero;
             m_CurrentScale = 1f;
+            m_LastMeasuredSizePx = Vector2.zero;
+            m_StageBoundsPx = new Rect(0f, 0f, 0f, 0f);
+            m_PositionBoundsPx = new Rect(0f, 0f, 0f, 0f);
+            m_HasPositionBounds = false;
 
             if (m_View != null)
             {
@@ -89,6 +111,11 @@ namespace FUnity.Runtime.Presenter
                 }
 
                 m_View.SetScale(m_CurrentScale);
+
+                AttachViewEvents();
+                UpdateRenderedSizeFromView();
+                RefreshStageBoundsFromView();
+                ClampStateToBounds();
                 m_View.SetPosition(m_State.Position);
             }
         }
@@ -105,14 +132,14 @@ namespace FUnity.Runtime.Presenter
         /// </example>
         public void Tick(float deltaTime, Vector2 inputDir)
         {
-            if (m_State == null || m_View == null)
+            if (m_State == null)
             {
                 return;
             }
 
             if (deltaTime <= 0f)
             {
-                m_View.SetPosition(m_State.Position);
+                m_View?.SetPosition(m_State.Position);
                 return;
             }
 
@@ -124,10 +151,12 @@ namespace FUnity.Runtime.Presenter
 
             if (direction.sqrMagnitude > 0f && m_State.Speed > 0f)
             {
-                m_State.Position += direction * (m_State.Speed * deltaTime);
+                var delta = direction * (m_State.Speed * deltaTime);
+                ApplyDelta(delta);
+                return;
             }
 
-            m_View.SetPosition(m_State.Position);
+            m_View?.SetPosition(m_State.Position);
         }
 
         /// <summary>
@@ -137,7 +166,7 @@ namespace FUnity.Runtime.Presenter
         /// <param name="position">適用する座標。</param>
         public void SetPosition(Vector2 position)
         {
-            SetPositionPixels(position);
+            ApplyPosition(position);
         }
 
         /// <summary>
@@ -161,13 +190,7 @@ namespace FUnity.Runtime.Presenter
         /// <param name="deltaPx">加算する移動量（px）。右+ / 下+ の座標系を想定。</param>
         public void MoveByPixels(Vector2 deltaPx)
         {
-            if (m_State == null || m_View == null)
-            {
-                return;
-            }
-
-            m_State.Position += deltaPx;
-            m_View.SetPosition(m_State.Position);
+            ApplyDelta(deltaPx);
         }
 
         /// <summary>
@@ -177,7 +200,7 @@ namespace FUnity.Runtime.Presenter
         /// <param name="delta">移動量。</param>
         public void MoveBy(Vector2 delta)
         {
-            AddPositionPixels(delta);
+            ApplyDelta(delta);
         }
 
         /// <summary>
@@ -201,13 +224,15 @@ namespace FUnity.Runtime.Presenter
         /// <param name="scale">等倍=1 としたスケール値。</param>
         public void SetScale(float scale)
         {
-            if (m_View == null)
+            m_CurrentScale = Mathf.Max(0.01f, scale);
+
+            if (m_View != null)
             {
-                return;
+                m_View.SetScale(m_CurrentScale);
             }
 
-            m_CurrentScale = Mathf.Max(0.01f, scale);
-            m_View.SetScale(m_CurrentScale);
+            UpdateRenderedSizeFromView();
+            ClampStateToBounds();
         }
 
         /// <summary>
@@ -216,14 +241,16 @@ namespace FUnity.Runtime.Presenter
         /// <param name="size">幅・高さ（px）。負値の場合は無視される。</param>
         public void SetSize(Vector2 size)
         {
-            if (m_View == null)
-            {
-                return;
-            }
-
             var clamped = new Vector2(Mathf.Max(0f, size.x), Mathf.Max(0f, size.y));
             m_BaseSize = clamped;
-            m_View.SetSize(clamped);
+
+            if (m_View != null)
+            {
+                m_View.SetSize(clamped);
+            }
+
+            UpdateRenderedSizeFromView();
+            ClampStateToBounds();
         }
 
         /// <summary>
@@ -242,7 +269,8 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// VisualTreeAsset を指定して俳優 UI を構築し、必要な PanelSettings を適用する。Runner 側に UIDocument を直接付与せず、Presenter が責務を担う。
+        /// VisualTreeAsset を指定して俳優 UI を構築し、必要な PanelSettings を適用する。Runner 側に UIDocument を直接付与せず、
+        /// Presenter が責務を担う。
         /// </summary>
         /// <param name="owner">UIDocument を保持する GameObject。null の場合は処理を中止する。</param>
         /// <param name="template">俳優のルート要素を記述した UXML。null の場合は警告を出して既存レイアウトを維持する。</param>
@@ -290,7 +318,7 @@ namespace FUnity.Runtime.Presenter
         /// <param name="steps">移動する歩数。負値の場合は逆方向へ移動する。</param>
         public void MoveSteps(float steps)
         {
-            if (m_State == null || m_View == null)
+            if (m_State == null)
             {
                 return;
             }
@@ -309,7 +337,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            MoveByPixels(delta);
+            ApplyDelta(delta);
         }
 
         /// <summary>
@@ -318,13 +346,7 @@ namespace FUnity.Runtime.Presenter
         /// <param name="positionPx">適用する座標（px）。右=+X、下=+Y。</param>
         public void SetPositionPixels(Vector2 positionPx)
         {
-            if (m_State == null || m_View == null)
-            {
-                return;
-            }
-
-            m_State.Position = positionPx;
-            m_View.SetPosition(m_State.Position);
+            ApplyPosition(positionPx);
         }
 
         /// <summary>
@@ -333,7 +355,7 @@ namespace FUnity.Runtime.Presenter
         /// <param name="deltaPx">加算する差分（px）。</param>
         public void AddPositionPixels(Vector2 deltaPx)
         {
-            MoveByPixels(deltaPx);
+            ApplyDelta(deltaPx);
         }
 
         /// <summary>
@@ -362,6 +384,178 @@ namespace FUnity.Runtime.Presenter
             }
 
             m_State.DirectionDeg = degrees;
+        }
+
+        /// <summary>
+        /// View の StageBoundsChanged へ購読し、境界更新時に Model のクランプを再計算する。
+        /// </summary>
+        private void AttachViewEvents()
+        {
+            if (m_View == null || m_IsSubscribedToBounds)
+            {
+                return;
+            }
+
+            m_View.StageBoundsChanged += OnStageBoundsChanged;
+            m_IsSubscribedToBounds = true;
+        }
+
+        /// <summary>
+        /// View の StageBoundsChanged から購読解除し、Presenter が不要なイベントを受け取らないようにする。
+        /// </summary>
+        private void DetachViewEvents()
+        {
+            if (m_View != null && m_IsSubscribedToBounds)
+            {
+                m_View.StageBoundsChanged -= OnStageBoundsChanged;
+            }
+
+            m_IsSubscribedToBounds = false;
+        }
+
+        /// <summary>
+        /// View から報告されたステージ境界を受け取り、クランプ矩形を再計算する。
+        /// </summary>
+        /// <param name="boundsPx">左上原点で表現されたステージ境界。</param>
+        private void OnStageBoundsChanged(Rect boundsPx)
+        {
+            m_StageBoundsPx = NormalizeRect(boundsPx);
+            UpdatePositionBoundsInternal();
+            ClampStateToBounds();
+        }
+
+        /// <summary>
+        /// View からステージ境界を再取得する。未取得の場合はクランプを無効化する。
+        /// </summary>
+        private void RefreshStageBoundsFromView()
+        {
+            if (m_View != null && m_View.TryGetStageBounds(out var bounds))
+            {
+                OnStageBoundsChanged(bounds);
+            }
+            else
+            {
+                m_HasPositionBounds = false;
+            }
+        }
+
+        /// <summary>
+        /// View 側の現在サイズを取得し、クランプ矩形の再計算に利用する。
+        /// </summary>
+        private void UpdateRenderedSizeFromView()
+        {
+            if (m_View != null && m_View.TryGetVisualSize(out var measured) && measured.sqrMagnitude > 0f)
+            {
+                m_LastMeasuredSizePx = measured;
+            }
+            else if (m_BaseSize.x > 0f || m_BaseSize.y > 0f)
+            {
+                m_LastMeasuredSizePx = m_BaseSize * m_CurrentScale;
+            }
+            else
+            {
+                m_LastMeasuredSizePx = Vector2.zero;
+            }
+
+            UpdatePositionBoundsInternal();
+        }
+
+        /// <summary>
+        /// ステージ境界と俳優サイズからクランプ矩形を計算する。
+        /// </summary>
+        private void UpdatePositionBoundsInternal()
+        {
+            if (m_StageBoundsPx.width <= 0f && m_StageBoundsPx.height <= 0f)
+            {
+                m_HasPositionBounds = false;
+                return;
+            }
+
+            var size = m_LastMeasuredSizePx;
+            var width = Mathf.Max(0f, size.x);
+            var height = Mathf.Max(0f, size.y);
+
+            var minX = m_StageBoundsPx.xMin;
+            var minY = m_StageBoundsPx.yMin;
+            var maxX = Mathf.Max(minX, m_StageBoundsPx.xMax - width);
+            var maxY = Mathf.Max(minY, m_StageBoundsPx.yMax - height);
+
+            m_PositionBoundsPx = Rect.MinMaxRect(minX, minY, maxX, maxY);
+            m_HasPositionBounds = true;
+        }
+
+        /// <summary>
+        /// 現在の境界設定を用いて Model の位置をクランプし、View に同期する。
+        /// </summary>
+        private void ClampStateToBounds()
+        {
+            if (m_State == null || !m_HasPositionBounds)
+            {
+                return;
+            }
+
+            m_State.SetPositionClamped(m_State.Position, m_PositionBoundsPx);
+            m_View?.SetPosition(m_State.Position);
+        }
+
+        /// <summary>
+        /// 指定座標を Model へ適用し、必要に応じてクランプして View に反映する。
+        /// </summary>
+        /// <param name="positionPx">適用する座標。</param>
+        private void ApplyPosition(Vector2 positionPx)
+        {
+            if (m_State == null)
+            {
+                return;
+            }
+
+            if (m_HasPositionBounds)
+            {
+                m_State.SetPositionClamped(positionPx, m_PositionBoundsPx);
+            }
+            else
+            {
+                m_State.SetPositionUnchecked(positionPx);
+            }
+
+            m_View?.SetPosition(m_State.Position);
+        }
+
+        /// <summary>
+        /// 指定差分を Model へ加算し、必要に応じてクランプした結果を View に反映する。
+        /// </summary>
+        /// <param name="deltaPx">加算する差分。</param>
+        private void ApplyDelta(Vector2 deltaPx)
+        {
+            if (m_State == null)
+            {
+                return;
+            }
+
+            if (m_HasPositionBounds)
+            {
+                m_State.AddPositionClamped(deltaPx, m_PositionBoundsPx);
+            }
+            else
+            {
+                m_State.SetPositionUnchecked(m_State.Position + deltaPx);
+            }
+
+            m_View?.SetPosition(m_State.Position);
+        }
+
+        /// <summary>
+        /// Rect の最小最大を正規化し、計算時のマイナス幅を回避する。
+        /// </summary>
+        /// <param name="rect">正規化対象の矩形。</param>
+        /// <returns>Min/Max が昇順となる矩形。</returns>
+        private static Rect NormalizeRect(Rect rect)
+        {
+            var minX = Mathf.Min(rect.xMin, rect.xMax);
+            var minY = Mathf.Min(rect.yMin, rect.yMax);
+            var maxX = Mathf.Max(rect.xMin, rect.xMax);
+            var maxY = Mathf.Max(rect.yMin, rect.yMax);
+            return Rect.MinMaxRect(minX, minY, maxX, maxY);
         }
     }
 }

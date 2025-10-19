@@ -139,10 +139,57 @@ namespace FUnity.Runtime.Input
                 return;
             }
 
-            var size = GetElementPixelSize(_actorRoot);
-            var clamped = ClampToPanel(pos, size);
-            _actorRoot.style.left = clamped.x;
-            _actorRoot.style.top = clamped.y;
+            _actorRoot.style.left = pos.x;
+            _actorRoot.style.top = pos.y;
+        }
+
+        /// <summary>
+        /// パネル全体の描画範囲を取得する。左上原点（px）で表現され、右方向と下方向を正とする。
+        /// </summary>
+        /// <param name="boundsPx">取得したパネル境界。</param>
+        /// <returns>パネルが有効で境界を算出できた場合は <c>true</c>。</returns>
+        public bool TryGetPanelBounds(out Rect boundsPx)
+        {
+            boundsPx = default;
+
+            if (_actorRoot == null)
+            {
+                return false;
+            }
+
+            var panel = _actorRoot.panel;
+            if (panel == null)
+            {
+                return false;
+            }
+
+            var panelOrigin = RuntimePanelUtils.ScreenToPanel(panel, Vector2.zero);
+            var panelScreenMax = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(Screen.width, Screen.height));
+
+            var minX = Mathf.Min(panelOrigin.x, panelScreenMax.x);
+            var minY = Mathf.Min(panelOrigin.y, panelScreenMax.y);
+            var maxX = Mathf.Max(panelOrigin.x, panelScreenMax.x);
+            var maxY = Mathf.Max(panelOrigin.y, panelScreenMax.y);
+
+            boundsPx = Rect.MinMaxRect(minX, minY, maxX, maxY);
+            return true;
+        }
+
+        /// <summary>
+        /// 現在の俳優要素のピクセルサイズを取得する。レイアウトが未解決の場合は解決済みスタイルを参照する。
+        /// </summary>
+        /// <param name="sizePx">幅・高さ（px）。</param>
+        /// <returns>要素がバインドされている場合は <c>true</c>。</returns>
+        public bool TryGetElementPixelSize(out Vector2 sizePx)
+        {
+            if (_actorRoot == null)
+            {
+                sizePx = Vector2.zero;
+                return false;
+            }
+
+            sizePx = GetElementPixelSize(_actorRoot);
+            return true;
         }
 
         /// <summary>
@@ -244,9 +291,17 @@ namespace FUnity.Runtime.Input
         /// <param name="pos">希望座標。パネル座標またはスクリーン座標（px）。</param>
         /// <param name="size">要素サイズ（px）。</param>
         /// <returns>クランプ後のパネル座標。</returns>
+        [Obsolete("FooniUIBridge.ClampToPanel は廃止予定です。ActorPresenter 経由で座標クランプを行ってください。")]
         private Vector2 ClampToPanel(Vector2 pos, Vector2 size)
         {
-            if (!clampToPanel || _actorRoot == null)
+            if (_actorRoot == null)
+            {
+                return pos;
+            }
+
+            Debug.LogWarning("[FUnity] FooniUIBridge.ClampToPanel は廃止予定です。Presenter の SetPositionClamped を利用してください。");
+
+            if (!TryGetPanelBounds(out var stageBounds))
             {
                 return pos;
             }
@@ -258,21 +313,14 @@ namespace FUnity.Runtime.Input
             }
 
             var panelOrigin = RuntimePanelUtils.ScreenToPanel(panel, Vector2.zero);
-            var panelScreenMax = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(Screen.width, Screen.height));
-            var panelMin = new Vector2(Mathf.Min(panelOrigin.x, panelScreenMax.x), Mathf.Min(panelOrigin.y, panelScreenMax.y));
-            var panelMax = new Vector2(Mathf.Max(panelOrigin.x, panelScreenMax.x), Mathf.Max(panelOrigin.y, panelScreenMax.y));
-
             var elementPanelCorner = RuntimePanelUtils.ScreenToPanel(panel, size);
             var elementPanelSize = new Vector2(Mathf.Abs(elementPanelCorner.x - panelOrigin.x), Mathf.Abs(elementPanelCorner.y - panelOrigin.y));
 
-            var panelPosFromScreen = RuntimePanelUtils.ScreenToPanel(panel, pos);
-            var useScreenConversion = (panelPosFromScreen - pos).sqrMagnitude > 0.01f;
-            var panelPos = useScreenConversion ? panelPosFromScreen : pos;
+            var maxX = Mathf.Max(stageBounds.xMin, stageBounds.xMax - elementPanelSize.x);
+            var maxY = Mathf.Max(stageBounds.yMin, stageBounds.yMax - elementPanelSize.y);
 
-            var maxX = Mathf.Max(panelMin.x, panelMax.x - elementPanelSize.x);
-            var maxY = Mathf.Max(panelMin.y, panelMax.y - elementPanelSize.y);
-            var clampedX = Mathf.Clamp(panelPos.x, panelMin.x, maxX);
-            var clampedY = Mathf.Clamp(panelPos.y, panelMin.y, maxY);
+            var clampedX = Mathf.Clamp(pos.x, stageBounds.xMin, maxX);
+            var clampedY = Mathf.Clamp(pos.y, stageBounds.yMin, maxY);
 
             return new Vector2(clampedX, clampedY);
         }
