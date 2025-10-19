@@ -98,10 +98,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             m_Enter = ControlInputCoroutine("enter", OnEnterCoroutine);
             m_Body = ControlOutput("body");
+
+            Succession(m_Enter, m_Body);
         }
 
         /// <summary>
         /// 停止条件が提供されるまで body ポートを無限に呼び出します。
+        /// 各反復の後には 1 フレーム待機して描画更新へ制御を返します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <returns>無限ループを行う列挙子。</returns>
@@ -110,6 +113,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             while (true)
             {
                 yield return m_Body;
+                yield return null;
             }
         }
     }
