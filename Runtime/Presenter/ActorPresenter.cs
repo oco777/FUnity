@@ -133,6 +133,20 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 現在の座標を取得する。Presenter 未初期化時は原点を返す。
+        /// </summary>
+        /// <returns>現在の座標（px）。</returns>
+        public Vector2 GetPosition()
+        {
+            if (m_State == null)
+            {
+                return Vector2.zero;
+            }
+
+            return m_State.Position;
+        }
+
+        /// <summary>
         /// 現在位置からピクセル単位の差分を加算し、即座に View へ反映する。
         /// Visual Scripting の「〇歩動かす」ブロックからの呼び出しを想定し、Presenter 経由で Model を更新する。
         /// </summary>

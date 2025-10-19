@@ -179,6 +179,15 @@ namespace FUnity.Runtime.UI
         }
 
         /// <summary>
+        /// 現在の向きを度単位で取得する。0=右、90=上、180=左、270=下 を想定する。
+        /// </summary>
+        /// <returns>現在の向き（度）。</returns>
+        public float GetDirection()
+        {
+            return m_DirectionDeg;
+        }
+
+        /// <summary>
         /// Scratch の「〇歩動かす」に相当する移動を実行する。現在の向きに沿って steps×10px 分だけ瞬間的に移動させる。
         /// </summary>
         /// <param name="steps">移動する歩数。負値を指定すると逆方向へ移動する。</param>
@@ -193,6 +202,56 @@ namespace FUnity.Runtime.UI
             var radians = m_DirectionDeg * Mathf.Deg2Rad;
             var direction = new Vector2(Mathf.Cos(radians), -Mathf.Sin(radians));
             var deltaPx = direction * (steps * StepToPixels);
+
+            if (deltaPx.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return;
+            }
+
+            m_ActorPresenter.MoveByPixels(deltaPx);
+        }
+
+        /// <summary>
+        /// 俳優の絶対座標をピクセル単位で取得する。
+        /// </summary>
+        /// <returns>現在の座標（px）。Presenter が未接続の場合は <see cref="Vector2.zero"/> を返す。</returns>
+        public Vector2 GetPositionPixels()
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] FooniController: ActorPresenter が未設定のため GetPositionPixels を実行できません。");
+                return Vector2.zero;
+            }
+
+            return m_ActorPresenter.GetPosition();
+        }
+
+        /// <summary>
+        /// 俳優の絶対座標をピクセル単位で設定する。
+        /// </summary>
+        /// <param name="positionPx">適用する座標（px）。右=+X、下=+Y。</param>
+        public void SetPositionPixels(Vector2 positionPx)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] FooniController: ActorPresenter が未設定のため SetPositionPixels を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.SetPosition(positionPx);
+        }
+
+        /// <summary>
+        /// 俳優の座標にピクセル単位の差分を加算する。
+        /// </summary>
+        /// <param name="deltaPx">加算する座標差分（px）。右=+X、下=+Y。</param>
+        public void AddPositionPixels(Vector2 deltaPx)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] FooniController: ActorPresenter が未設定のため AddPositionPixels を実行できません。");
+                return;
+            }
 
             if (deltaPx.sqrMagnitude <= Mathf.Epsilon)
             {
