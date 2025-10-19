@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "com.unity.visualscripting": "1.9.7",
+    "com.unity.ui": "1.0.0"
+  }
+}

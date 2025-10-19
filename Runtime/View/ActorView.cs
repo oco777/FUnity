@@ -1,4 +1,4 @@
-// Updated: 2025-02-14
+// Updated: 2025-03-03
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Input;
@@ -30,6 +30,15 @@ namespace FUnity.Runtime.View
         /// Presenter から指定された UI Toolkit 要素。`Configure` 呼び出し後に <see cref="SetPortrait"/> が利用する。
         /// </summary>
         private VisualElement m_BoundElement;
+
+        /// <summary>サイズ・吹き出し適用対象となるルート要素。</summary>
+        private VisualElement m_RootElement;
+
+        /// <summary>吹き出しテキストを表示するラベル。</summary>
+        private Label m_SpeechLabel;
+
+        /// <summary>吹き出し非表示を遅延実行するスケジュール項目。</summary>
+        private IVisualElementScheduledItem m_SpeechHideItem;
 
         /// <summary>
         /// コンポーネントがリセットされた際に既存の <see cref="FooniUIBridge"/> を再取得する。
@@ -72,6 +81,13 @@ namespace FUnity.Runtime.View
             if (m_Bridge != null && element != null)
             {
                 m_Bridge.BindElement(element);
+            }
+
+            m_RootElement = element?.Q<VisualElement>("root") ?? element;
+            m_SpeechLabel = m_RootElement?.Q<Label>("speech") ?? element?.Q<Label>("speech");
+            if (m_SpeechLabel != null)
+            {
+                m_SpeechLabel.style.display = DisplayStyle.None;
             }
         }
 
@@ -128,6 +144,74 @@ namespace FUnity.Runtime.View
             {
                 portrait.style.backgroundImage = new StyleBackground(sprite);
             }
+        }
+
+        /// <summary>
+        /// 指定したサイズをルート要素へ適用する。
+        /// </summary>
+        /// <param name="size">幅・高さ（px）。</param>
+        public void SetSize(Vector2 size)
+        {
+            if (m_RootElement == null)
+            {
+                return;
+            }
+
+            if (size.x > 0f)
+            {
+                m_RootElement.style.width = size.x;
+            }
+            else
+            {
+                m_RootElement.style.width = StyleKeyword.Auto;
+            }
+
+            if (size.y > 0f)
+            {
+                m_RootElement.style.height = size.y;
+            }
+            else
+            {
+                m_RootElement.style.height = StyleKeyword.Auto;
+            }
+        }
+
+        /// <summary>
+        /// スケールを UI Toolkit の `style.scale` で適用する。
+        /// </summary>
+        /// <param name="scale">適用するスケール。</param>
+        public void SetScale(float scale)
+        {
+            if (m_RootElement == null)
+            {
+                return;
+            }
+
+            var safeScale = Mathf.Max(0.01f, scale);
+            m_RootElement.style.scale = new StyleScale(new Scale(new Vector3(safeScale, safeScale, 1f)));
+        }
+
+        /// <summary>
+        /// 吹き出しを表示し、指定秒数後に自動で非表示へ戻す。
+        /// </summary>
+        /// <param name="message">表示するテキスト。</param>
+        /// <param name="seconds">表示時間。</param>
+        public void ShowSpeech(string message, float seconds)
+        {
+            if (m_SpeechLabel == null)
+            {
+                return;
+            }
+
+            m_SpeechLabel.text = message ?? string.Empty;
+            m_SpeechLabel.style.display = DisplayStyle.Flex;
+
+            m_SpeechHideItem?.Pause();
+            m_SpeechHideItem = m_SpeechLabel.schedule.Execute(() =>
+            {
+                m_SpeechLabel.style.display = DisplayStyle.None;
+            });
+            m_SpeechHideItem.StartingIn(Mathf.Max(0.1f, seconds));
         }
     }
 }

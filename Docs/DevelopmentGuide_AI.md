@@ -129,6 +129,24 @@ git commit -m "Add dynamic UI generation via StageElement and ActorElement (#12)
 
 ---
 
+## 🧾 Scratch本対応ガイド
+
+- **Custom Event 命名規則**：`"{Domain}/{Action}"` を基本とし、Visual Scripting から `VSPresenterBridge` の以下メソッドを呼び出す。
+
+| Scratchブロック | Custom Event | C# ルート |
+|------------------|--------------|-----------|
+| 「x座標を～にする」 | `Actor/SetPosition` | `VSPresenterBridge.OnActorSetPosition(x, y)` → `ActorPresenter.SetPosition` |
+| 「x座標を～ずつ変える」 | `Actor/MoveBy` | `VSPresenterBridge.OnActorMoveBy(dx, dy)` → `ActorPresenter.MoveBy` |
+| 「～と言う」 | `Actor/Say` | `VSPresenterBridge.OnActorSay` → `ActorView.ShowSpeech` |
+| 「大きさを～％にする」 | `Actor/SetSize` | `VSPresenterBridge.OnActorSetScale` → `ActorPresenter.SetScale` |
+| 「背景を～にする」 | `Stage/SetBackground` | `StageBackgroundService.SetBackground` |
+
+- **AOT 対策**：`Assets/Link.xml` に `VSPresenterBridge` / `StageBackgroundService` / `TimerServiceBehaviour` を列挙し、IL2CPP でもリフレクション呼び出しが剥がれないようにする。
+- **Stage 背景**：`StageBackgroundService` が UI Toolkit ルートに `backgroundImage` / `backgroundColor` を適用する。Presenter 層から `ApplyStage` を呼ぶだけで Scratch の「背景を変える」に相当。
+- **タイマー**：`TimerServiceBehaviour.Invoke(delay, Action)` を介して `InvokeCustomEventAfter` が動作する。Scratch の「n 秒後」を Visual Scripting の Custom Event で再現できる。
+- **マクロ雛形**：エディタメニュー **FUnity > VS > Create Scratch Macros** で `SayOnKey` / `MoveWithArrow` など 5 種のテンプレートを生成。Graph コメントに `VSPresenterBridge` との結線例を掲載している。
+- **Starter データ**：**FUnity > Create > Scratch Starter (Actor+Stage+VS)** が `FUnityActorData_Starter` と Runner を自動生成。生成された Runner は `ScriptMachine` と Object 変数 `VSPresenterBridge` を保持し、即座にノード編集が可能。
+
 ## 💡 上級テクニック
 
 | シーン | コツ |
