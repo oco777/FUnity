@@ -18,12 +18,12 @@ namespace FUnity.Core
 {
     /// <summary>
     /// FUnity ランタイム全体をオーケストレーションする Presenter 層の MonoBehaviour。
-    /// UI ドキュメント、俳優、Visual Scripting Runner を初期化し、入力から Model/View への一方向フローを維持する。
+    /// UI ドキュメント、俳優、Visual Scripting Runner を初期化し、Visual Scripting から Presenter への命令経路を構築する。
     /// </summary>
     /// <remarks>
     /// 依存関係: <see cref="FUnityProjectData"/>, <see cref="UIDocument"/>, <see cref="FooniController"/>, <see cref="ActorPresenter"/>
-    /// 想定ライフサイクル: シーン常駐。Awake で必要な GameObject を生成し、Start で Stage/Actor を構築、Update で Presenter
-    ///     に入力を流す。
+    /// 想定ライフサイクル: シーン常駐。Awake で必要な GameObject を生成し、Start で Stage/Actor を構築、その後は Visual Scripting
+    ///     グラフから Presenter へ命令が流入する。
     /// スレッド/GC: Unity メインスレッド専用。生成物は MonoBehaviour と ScriptableObject のみ。
     /// </remarks>
     public sealed class FUnityManager : MonoBehaviour
@@ -54,9 +54,6 @@ namespace FUnity.Core
 
         /// <summary>生成済み俳優 UI 要素と設定のペア。</summary>
         private readonly List<ActorVisual> m_ActorVisuals = new List<ActorVisual>();
-
-        /// <summary>入力ベクトルを提供する Presenter。</summary>
-        private InputPresenter m_InputPresenter;
 
         /// <summary>Visual Scripting との仲介役。</summary>
         private VSPresenterBridge m_VsBridge;
@@ -191,25 +188,6 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// 毎フレーム入力ベクトルを取得し、俳優 Presenter 群へ伝搬させる。
-        /// </summary>
-        private void Update()
-        {
-            if (m_ActorPresenters.Count == 0 || m_InputPresenter == null)
-            {
-                return;
-            }
-
-            var move = m_InputPresenter.ReadMove();
-            var deltaTime = Time.deltaTime;
-
-            foreach (var presenter in m_ActorPresenters)
-            {
-                presenter.Tick(deltaTime, move);
-            }
-        }
-
-        /// <summary>
         /// FUnity UI ルート GameObject を生成し、必須コンポーネント（UIDocument, FooniController, ScriptMachine 等）を確保する。
         /// </summary>
         private void EnsureFUnityUI()
@@ -270,7 +248,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// 生成済みの UI 要素に対して Presenter を組み立て、入力ブリッジへ登録する。
+        /// 生成済みの UI 要素に対して Presenter を組み立て、Visual Scripting ブリッジへ登録する。
         /// </summary>
         private void InitializeActorPresenters()
         {
@@ -282,11 +260,6 @@ namespace FUnity.Core
             if (m_VsBridge == null)
             {
                 EnsurePresenterBridge();
-            }
-
-            if (m_InputPresenter == null)
-            {
-                m_InputPresenter = new InputPresenter();
             }
 
             var bridgeCache = new List<FooniUIBridge>(m_FUnityUI.GetComponents<FooniUIBridge>());

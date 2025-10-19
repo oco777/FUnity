@@ -19,18 +19,17 @@ FUnity のランタイム層は Model–View–Presenter (MVP) に基づいて�
 - **FooniUIBridge** (`Runtime/View/FooniUIBridge.cs`): UXML 上の `name="root"` / `name="actor-root"` を取得し、`UIDocument` に適用された Theme と連携します。
 
 ## Presenter 層
-- **ActorPresenter** (`Runtime/Presenter/ActorPresenter.cs`): 入力ベクトルを `ActorState` に反映し、`IActorView` に描画を指示します。初期化時に ScriptableObject のデータを取り込みます。
-- **InputPresenter** (`Runtime/Presenter/InputPresenter.cs`): 現行 Input Manager から `UnityEngine.Input.GetAxisRaw` を通じて入力を取得します。新 Input System へ置き換える際はここを差し替えます。
-- **VSPresenterBridge** (`Runtime/Presenter/VSPresenterBridge.cs`): Visual Scripting Graph から `VS_Move(dir, deltaTime)` を呼び出すためのブリッジ。`ScriptMachine` の `Variables.Object` に登録され、Macro から Presenter にアクセスできます。
+- **ActorPresenter** (`Runtime/Presenter/ActorPresenter.cs`): 入力や命令を `ActorState` に反映し、`IActorView` に描画を指示します。初期化時に ScriptableObject のデータを取り込みます。
+- **VSPresenterBridge** (`Runtime/Presenter/VSPresenterBridge.cs`): Visual Scripting Graph から Presenter API を呼び出すためのブリッジ。`ScriptMachine` の `Variables.Object` に登録され、Macro から Presenter にアクセスできます。
 
 ## Composition Root
 - **FUnityManager** (`Runtime/Core/FUnityManager.cs`) が初期化の起点です。
   1. `Resources.Load` で `FUnityProjectData` を読み込み、ステージと俳優データを収集します。
   2. `UIDocument` を持つ “FUnity UI” GameObject を生成し、`FUnityPanelSettings.asset` を割り当てます。
   3. 各俳優に対して `ActorState` / `ActorView` / `ActorPresenter` を組み立て、`ScriptMachine` と `FooniUIBridge` を接続します。
-  4. `Update()` 内で `InputPresenter.ReadMove()` を呼び、`ActorPresenter.Tick(deltaTime, inputDir)` を実行します。
+  4. Visual Scripting Runner に配置した `FooniController` と `ActorPresenter` を結び付け、Visual Scripting グラフからの命令を Presenter に委譲できるようにします。
 
 ## Visual Scripting からの呼び出し
 - Default Project Data が `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` を用意し、`FUnityActorData_Fooni` の ScriptGraph に設定します。
-- Macro からは `Variables.Object("VSPresenterBridge")` を取得し、`VS_Move` を呼び出すことで Presenter を経由した移動処理が走ります。
+- Macro からは `Variables.Object("VSPresenterBridge")` を取得し、`Actor/MoveBy` などの Custom Event を介して Presenter を呼び出します。もしくは `FooniController` を取得し、`MoveSteps` や `SetPositionPixels` といった API を直接呼び出すこともできます。
 - Presenter 層を経由することで、Visual Scripting と C# 双方から同じロジックを再利用でき、MVP の責務分離を維持できます。
