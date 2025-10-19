@@ -211,7 +211,19 @@ namespace FUnity.Runtime.View
             {
                 m_SpeechLabel.style.display = DisplayStyle.None;
             });
-            m_SpeechHideItem.StartingIn(Mathf.Max(0.1f, seconds));
+            // UI Toolkit スケジューラはミリ秒 long を要求するため、秒 float を ms long に変換
+            m_SpeechHideItem.StartingIn(SecToMs(Mathf.Max(0.1f, seconds)));
+        }
+
+        /// <summary>
+        /// UI Toolkit のスケジューラへ渡す時間を秒からミリ秒へ変換するヘルパー。
+        /// 負数が渡された場合でも 0 以上に正規化した上で long 型を返す。
+        /// </summary>
+        /// <param name="seconds">秒単位で指定された時間。</param>
+        /// <returns>ミリ秒単位へ変換した値。</returns>
+        private static long SecToMs(float seconds)
+        {
+            return (long)(Mathf.Max(0f, seconds) * 1000f);
         }
     }
 }
