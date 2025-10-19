@@ -1,6 +1,7 @@
 <linker>
   <assembly fullname="FUnity.Runtime">
     <type fullname="FUnity.Runtime.Presenter.VSPresenterBridge" preserve="all"/>
+    <type fullname="FUnity.Runtime.Integrations.VisualScripting.ActorPresenterAdapter" preserve="all"/>
     <type fullname="FUnity.Runtime.Integrations.VisualScripting.FooniController" preserve="all"/>
     <type fullname="FUnity.Runtime.View.ActorView" preserve="all"/>
     <type fullname="FUnity.Runtime.Presenter.StageBackgroundService" preserve="all"/>

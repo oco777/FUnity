@@ -6,7 +6,7 @@ using FUnity.Runtime.Integrations.VisualScripting;
 namespace FUnity.Runtime.Integrations.VisualScripting.Units
 {
     /// <summary>
-    /// <see cref="FooniController.EnableFloat"/> を呼び出して浮遊アニメーションの有効・無効を切り替えるカスタム Unit です。
+    /// <see cref="ActorPresenterAdapter.EnableFloat"/> を呼び出して浮遊アニメーションの有効・無効を切り替えるカスタム Unit です。
     /// 制御ポートは enter/exit、値ポートは target/on を使用します。
     /// </summary>
     [UnitTitle("Fooni/Enable Float")]
@@ -21,7 +21,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>処理対象の <see cref="FooniController"/> を受け取る ValueInput です。</summary>
+        /// <summary>処理対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -49,14 +49,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
 
-            m_Target = ValueInput<FooniController>("target", (FooniController)null);
+            m_Target = ValueInput<ActorPresenterAdapter>("target", (ActorPresenterAdapter)null);
             m_On = ValueInput<bool>("on", true);
 
             Succession(m_Enter, m_Exit);
         }
 
         /// <summary>
-        /// enter 制御信号を受け取った際に FooniController を解決し、<see cref="FooniController.EnableFloat"/> を呼び出します。
+        /// enter 制御信号を受け取った際に ActorPresenterAdapter を解決し、<see cref="ActorPresenterAdapter.EnableFloat"/> を呼び出します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <returns>後続へ制御を渡す exit ポート。</returns>
@@ -65,7 +65,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
             var controller = FooniFloatUnitUtility.ResolveTargetOrFind(flow, m_Target);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Fooni_EnableFloatUnit: target FooniController not found.");
+                Debug.LogWarning("[FUnity] Fooni_EnableFloatUnit: target ActorPresenterAdapter (FooniController) not found.");
                 return m_Exit;
             }
 
@@ -77,7 +77,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
     }
 
     /// <summary>
-    /// <see cref="FooniController.SetFloatAmplitude"/> を呼び出して浮遊振幅(px)を設定するカスタム Unit です。
+    /// <see cref="ActorPresenterAdapter.SetFloatAmplitude"/> を呼び出して浮遊振幅(px)を設定するカスタム Unit です。
     /// 制御ポートは enter/exit、値ポートは target/amplitudePx を使用します。
     /// </summary>
     [UnitTitle("Fooni/Set Float Amplitude")]
@@ -92,7 +92,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>処理対象の <see cref="FooniController"/> を受け取る ValueInput です。</summary>
+        /// <summary>処理対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -120,14 +120,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
 
-            m_Target = ValueInput<FooniController>("target", (FooniController)null);
+            m_Target = ValueInput<ActorPresenterAdapter>("target", (ActorPresenterAdapter)null);
             m_AmplitudePx = ValueInput<float>("amplitudePx", 10f);
 
             Succession(m_Enter, m_Exit);
         }
 
         /// <summary>
-        /// enter 制御信号を受け取った際に FooniController を解決し、振幅設定メソッドを呼び出します。
+        /// enter 制御信号を受け取った際に ActorPresenterAdapter を解決し、振幅設定メソッドを呼び出します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <returns>後続へ制御を渡す exit ポート。</returns>
@@ -136,7 +136,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
             var controller = FooniFloatUnitUtility.ResolveTargetOrFind(flow, m_Target);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Fooni_SetFloatAmplitudeUnit: target FooniController not found.");
+                Debug.LogWarning("[FUnity] Fooni_SetFloatAmplitudeUnit: target ActorPresenterAdapter (FooniController) not found.");
                 return m_Exit;
             }
 
@@ -148,7 +148,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
     }
 
     /// <summary>
-    /// <see cref="FooniController.SetFloatPeriod"/> を呼び出して浮遊周期(sec)を設定するカスタム Unit です。
+    /// <see cref="ActorPresenterAdapter.SetFloatPeriod"/> を呼び出して浮遊周期(sec)を設定するカスタム Unit です。
     /// 制御ポートは enter/exit、値ポートは target/periodSec を使用します。
     /// </summary>
     [UnitTitle("Fooni/Set Float Period")]
@@ -163,7 +163,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>処理対象の <see cref="FooniController"/> を受け取る ValueInput です。</summary>
+        /// <summary>処理対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -191,14 +191,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
 
-            m_Target = ValueInput<FooniController>("target", (FooniController)null);
+            m_Target = ValueInput<ActorPresenterAdapter>("target", (ActorPresenterAdapter)null);
             m_PeriodSec = ValueInput<float>("periodSec", 3f);
 
             Succession(m_Enter, m_Exit);
         }
 
         /// <summary>
-        /// enter 制御信号を受け取った際に FooniController を解決し、周期設定メソッドを呼び出します。
+        /// enter 制御信号を受け取った際に ActorPresenterAdapter を解決し、周期設定メソッドを呼び出します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <returns>後続へ制御を渡す exit ポート。</returns>
@@ -207,7 +207,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
             var controller = FooniFloatUnitUtility.ResolveTargetOrFind(flow, m_Target);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Fooni_SetFloatPeriodUnit: target FooniController not found.");
+                Debug.LogWarning("[FUnity] Fooni_SetFloatPeriodUnit: target ActorPresenterAdapter (FooniController) not found.");
                 return m_Exit;
             }
 
@@ -224,30 +224,30 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units
     internal static class FooniFloatUnitUtility
     {
         /// <summary>
-        /// target ポートから <see cref="FooniController"/> を取得し、未指定の場合はシーン内から最初のインスタンスを探索します。
+        /// target ポートから <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を取得し、未指定の場合はシーン内から最初のインスタンスを探索します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <param name="targetPort">取得対象の ValueInput ポート。</param>
-        /// <returns>解決された <see cref="FooniController"/>。未検出時は null。</returns>
-        public static FooniController ResolveTargetOrFind(Flow flow, ValueInput targetPort)
+        /// <returns>解決された <see cref="ActorPresenterAdapter"/>。未検出時は null。</returns>
+        public static ActorPresenterAdapter ResolveTargetOrFind(Flow flow, ValueInput targetPort)
         {
             if (flow == null)
             {
-                return Object.FindFirstObjectByType<FooniController>();
+                return Object.FindFirstObjectByType<ActorPresenterAdapter>();
             }
 
             if (targetPort == null)
             {
-                return Object.FindFirstObjectByType<FooniController>();
+                return Object.FindFirstObjectByType<ActorPresenterAdapter>();
             }
 
-            var resolved = flow.GetValue<FooniController>(targetPort);
+            var resolved = flow.GetValue<ActorPresenterAdapter>(targetPort);
             if (resolved != null)
             {
                 return resolved;
             }
 
-            return Object.FindFirstObjectByType<FooniController>();
+            return Object.FindFirstObjectByType<ActorPresenterAdapter>();
         }
     }
 }

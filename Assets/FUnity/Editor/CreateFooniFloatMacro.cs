@@ -7,7 +7,7 @@ using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting.Units;
 
 /// <summary>
-/// FooniController の浮遊設定を行う Visual Scripting マクロをエディター上で生成するメニューを提供します。
+/// ActorPresenterAdapter（旧称 FooniController）の浮遊設定を行う Visual Scripting マクロをエディター上で生成するメニューを提供します。
 /// カスタム Unit を直列に配置し、制御線と値を接続した状態で ScriptGraphAsset を保存します。
 /// </summary>
 public static class CreateFooniFloatMacro

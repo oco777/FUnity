@@ -13,7 +13,7 @@ namespace FUnity.EditorTools
         private const string MacroDir = "Assets/FUnity/VisualScripting/Macros";
         private const string FloatMacroPath = MacroDir + "/Fooni_FloatSetup.asset";
         private const string SayMacroPath = MacroDir + "/Fooni_SayOnKey.asset";
-        private const string RunnerHelpMessage = "Ensure 'FUnity UI' contains a FooniController component before running.";
+        private const string RunnerHelpMessage = "Ensure 'FUnity UI' contains an ActorPresenterAdapter (旧 FooniController) component before running.";
 
         [MenuItem("FUnity/VS/Create Fooni Macros & Runner")]
         public static void CreateMacrosAndRunners()
@@ -21,12 +21,12 @@ namespace FUnity.EditorTools
             Directory.CreateDirectory(MacroDir);
 
             var floatMacro = LoadOrCreateMacro(FloatMacroPath,
-                "[How to wire]\nOn Start  →  Get Component (FooniController)  →  EnableFloat(true)\n" +
+                "[How to wire]\nOn Start  →  Get Component (ActorPresenterAdapter)  →  EnableFloat(true)\n" +
                 "                                     ↘ SetFloatAmplitude(10)\n" +
                 "                                     ↘ SetFloatPeriod(3)");
 
             var sayMacro = LoadOrCreateMacro(SayMacroPath,
-                "[How to wire]\nOn Keyboard (Space) → Get Component (FooniController) → Say(\"やっほー！\")\n" +
+                "[How to wire]\nOn Keyboard (Space) → Get Component (ActorPresenterAdapter) → Say(\"やっほー！\")\n" +
                 "または\nOn Custom Event (\"Fooni/Say\") → 吹き出しUIの表示処理へ");
 
             var floatRunner = EnsureRunner("Fooni VS Float Runner", floatMacro);
@@ -41,7 +41,7 @@ namespace FUnity.EditorTools
                 $"- Macro: {FloatMacroPath}\n" +
                 $"- Macro: {SayMacroPath}\n" +
                 $"- Runner objects: '{floatRunner.name}', '{sayRunner.name}'\n" +
-                "Ensure a FooniController exists under 'FUnity UI' in the scene.");
+                "Ensure an ActorPresenterAdapter exists under 'FUnity UI' in the scene.");
         }
 
         private static ScriptGraphAsset LoadOrCreateMacro(string path, string _)
@@ -98,12 +98,12 @@ namespace FUnity.EditorTools
 
             if (name == "Fooni VS Float Runner")
             {
-                var controller = go.GetComponent<FooniController>();
+                var controller = go.GetComponent<ActorPresenterAdapter>();
                 if (controller == null)
                 {
-                    controller = Undo.AddComponent<FooniController>(go);
+                    controller = Undo.AddComponent<ActorPresenterAdapter>(go);
                     EditorUtility.SetDirty(controller);
-                    Debug.Log("[FUnity] Added FooniController to runner: " + go.name);
+                    Debug.Log("[FUnity] Added ActorPresenterAdapter to runner: " + go.name);
                 }
             }
 
