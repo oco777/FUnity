@@ -33,7 +33,7 @@ namespace FUnity.Runtime.Input
         public float defaultSpeed = 300f;
 
         /// <summary>
-        /// `true` の場合、UI ドキュメントの描画領域内に座標をクランプする。
+        /// `true` の場合、スクリーン全体の範囲に座標をクランプする。
         /// </summary>
         public bool clampToPanel = true;
 
@@ -139,10 +139,43 @@ namespace FUnity.Runtime.Input
                 return;
             }
 
-            var size = new Vector2(_actorRoot.resolvedStyle.width, _actorRoot.resolvedStyle.height);
+            var size = GetElementPixelSize(_actorRoot);
             var clamped = ClampToPanel(pos, size);
             _actorRoot.style.left = clamped.x;
             _actorRoot.style.top = clamped.y;
+        }
+
+        /// <summary>
+        /// 要素のピクセルサイズを取得する。レイアウト未確定の場合は解決済みスタイル値を使用し、最低 1px を保証する。
+        /// </summary>
+        /// <param name="element">サイズを測定する UI 要素。</param>
+        /// <returns>幅・高さを格納したピクセル単位のベクトル。</returns>
+        private Vector2 GetElementPixelSize(VisualElement element)
+        {
+            if (element == null)
+            {
+                return Vector2.one;
+            }
+
+            var world = element.worldBound;
+            if (world.width > 0f && world.height > 0f)
+            {
+                return new Vector2(world.width, world.height);
+            }
+
+            var width = element.resolvedStyle.width;
+            if (float.IsNaN(width) || width <= 0f)
+            {
+                width = 1f;
+            }
+
+            var height = element.resolvedStyle.height;
+            if (float.IsNaN(height) || height <= 0f)
+            {
+                height = 1f;
+            }
+
+            return new Vector2(width, height);
         }
 
         /// <summary>
@@ -205,24 +238,32 @@ namespace FUnity.Runtime.Input
         }
 
         /// <summary>
-        /// パネル境界内に収まるよう座標を制限する。
+        /// スクリーン境界内に収まるよう座標を制限する。クランプ後はパネル座標へ戻す。
         /// </summary>
         /// <param name="pos">希望座標。</param>
         /// <param name="size">要素サイズ（px）。</param>
         /// <returns>クランプ後の座標。</returns>
         private Vector2 ClampToPanel(Vector2 pos, Vector2 size)
         {
-            if (!clampToPanel || _ui == null || _ui.rootVisualElement == null)
+            if (!clampToPanel || _actorRoot == null)
             {
                 return pos;
             }
 
-            var panel = _ui.rootVisualElement.resolvedStyle;
-            var maxX = Mathf.Max(0, panel.width - size.x);
-            var maxY = Mathf.Max(0, panel.height - size.y);
-            pos.x = Mathf.Clamp(pos.x, 0, maxX);
-            pos.y = Mathf.Clamp(pos.y, 0, maxY);
-            return pos;
+            var panel = _actorRoot.panel;
+            if (panel == null)
+            {
+                return pos;
+            }
+
+            var screenPos = RuntimePanelUtils.PanelToScreen(panel, pos);
+            var screenWidth = Screen.width;
+            var screenHeight = Screen.height;
+            var maxX = Mathf.Max(0f, screenWidth - size.x);
+            var maxY = Mathf.Max(0f, screenHeight - size.y);
+            screenPos.x = Mathf.Clamp(screenPos.x, 0f, maxX);
+            screenPos.y = Mathf.Clamp(screenPos.y, 0f, maxY);
+            return RuntimePanelUtils.ScreenToPanel(panel, screenPos);
         }
     }
 }
