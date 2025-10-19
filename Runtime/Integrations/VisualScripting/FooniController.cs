@@ -1,9 +1,8 @@
 // Updated: 2025-02-14
 using UnityEngine;
-using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using FUnity.Runtime.Presenter;
-using FUnity.Runtime.UI;
+using UnityEngine.UIElements;
 
 namespace FUnity.Runtime.Integrations.VisualScripting
 {
@@ -11,42 +10,20 @@ namespace FUnity.Runtime.Integrations.VisualScripting
     /// UI Toolkit の <see cref="FooniElement"/> を Unity Visual Scripting から制御する View 向けブリッジ。
     /// </summary>
     /// <remarks>
-    /// 依存関係: <see cref="UIDocument"/>, <see cref="FooniElement"/>, Unity Visual Scripting <see cref="CustomEvent"/>
-    /// 想定ライフサイクル: <see cref="FUnity.Core.FUnityManager"/> によって UI GameObject に付与され、Awake で UIDocument を解決
-    ///     した後に Presenter から <see cref="BindActorElement"/> が呼び出される。ビジネスロジックは保持せず、View 操作とイベント発行のみに徹する。
+    /// 依存関係: <see cref="FooniElement"/>, Unity Visual Scripting <see cref="CustomEvent"/>, <see cref="ActorPresenter"/>
+    /// 想定ライフサイクル: <see cref="FUnity.Core.FUnityManager"/> によって UI GameObject や Runner に付与され、Presenter から
+    ///     <see cref="BindActorElement"/> および <see cref="SetActorPresenter"/> が呼び出される。ビジネスロジックは保持せず、Presenter
+    ///     を経由した命令転送と View 操作に限定する。
     /// </remarks>
     public class FooniController : MonoBehaviour
     {
-        /// <summary>「1 歩」をピクセル換算するためのスケール（px/歩）。</summary>
-        private const float StepToPixels = 10f;
-
-        /// <summary>
-        /// 制御対象の <see cref="UIDocument"/>。null の場合は <see cref="Awake"/> で同一 GameObject から補完する。
-        /// </summary>
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("uiDocument")]
-        private UIDocument m_UIDocument;
-
         /// <summary>Visual Scripting からの移動命令を委譲する Presenter。未設定時は <see cref="MoveSteps"/> を拒否する。</summary>
         [SerializeField]
         private ActorPresenter m_ActorPresenter;
 
-        /// <summary>現在の向き（度）。0=右, 90=上, 180=左, 270=下。</summary>
+        /// <summary>Presenter 未接続時に保持する向き（度）。0=右, 90=上, 180=左, 270=下。</summary>
         [SerializeField]
-        private float m_DirectionDeg = 90f;
-
-        /// <summary>
-        /// 制御対象の UIDocument を外部から差し替える。
-        /// </summary>
-        /// <param name="doc">UI Toolkit ドキュメント。null を渡すと後続の Awake で再解決する。</param>
-        /// <example>
-        /// <code>
-        /// controller.SetUIDocument(GetComponent&lt;UIDocument&gt;());
-        /// </code>
-        /// </example>
-        public void SetUIDocument(UIDocument doc)
-        {
-            m_UIDocument = doc;
-        }
+        private float m_LocalDirectionDeg = 90f;
 
         // Cached references and animation state
         private VisualElement m_BoundElement;
@@ -63,35 +40,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// 現在バインドされている UI Toolkit 要素。
         /// </summary>
         public VisualElement BoundElement => m_BoundElement;
-
-        /// <summary>
-        /// UIDocument と既存の FooniElement を探索し、未バインド時は Presenter からの通知を待つ。
-        /// </summary>
-        private void Awake()
-        {
-            // Ensure UIDocument and root
-            if (!m_UIDocument) m_UIDocument = GetComponent<UIDocument>();
-            var root = m_UIDocument ? m_UIDocument.rootVisualElement : null;
-            if (root == null)
-            {
-                Debug.LogError("[FUnity] FooniController: UIDocument / rootVisualElement is missing.");
-                return;
-            }
-
-            if (m_BoundElement == null)
-            {
-                var existing = root.Q<FooniElement>();
-                if (existing != null)
-                {
-                    BindActorElement(existing);
-                    Debug.LogWarning("[FUnity] FooniController: auto-bound existing FooniElement (legacy path). Use FUnityManager-driven actors instead.");
-                }
-                else
-                {
-                    Debug.LogWarning("[FUnity] FooniController: no actor element bound. Awaiting BindActorElement from FUnityManager.");
-                }
-            }
-        }
 
         /// <summary>
         /// 浮遊アニメーションが有効な場合にスケジューラを起動する。
@@ -167,7 +115,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting
             if (presenter == null)
             {
                 Debug.LogWarning("[FUnity] FooniController: ActorPresenter が未設定のため移動命令を転送できません。");
+                return;
             }
+
+            m_ActorPresenter.SetDirection(m_LocalDirectionDeg);
         }
 
         /// <summary>
@@ -176,7 +127,15 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// <param name="degrees">設定する角度（度）。</param>
         public void SetDirection(float degrees)
         {
-            m_DirectionDeg = degrees;
+            m_LocalDirectionDeg = degrees;
+
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] FooniController: ActorPresenter が未設定のため SetDirection を転送できません。");
+                return;
+            }
+
+            m_ActorPresenter.SetDirection(degrees);
         }
 
         /// <summary>
@@ -185,7 +144,15 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// <returns>現在の向き（度）。</returns>
         public float GetDirection()
         {
-            return m_DirectionDeg;
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] FooniController: ActorPresenter が未設定のため GetDirection はローカル値を返します。");
+                return m_LocalDirectionDeg;
+            }
+
+            var direction = m_ActorPresenter.GetDirection();
+            m_LocalDirectionDeg = direction;
+            return direction;
         }
 
         /// <summary>
@@ -200,16 +167,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            var radians = m_DirectionDeg * Mathf.Deg2Rad;
-            var direction = new Vector2(Mathf.Cos(radians), -Mathf.Sin(radians));
-            var deltaPx = direction * (steps * StepToPixels);
-
-            if (deltaPx.sqrMagnitude <= Mathf.Epsilon)
-            {
-                return;
-            }
-
-            m_ActorPresenter.MoveByPixels(deltaPx);
+            m_ActorPresenter.MoveSteps(steps);
         }
 
         /// <summary>
@@ -239,7 +197,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            m_ActorPresenter.SetPosition(positionPx);
+            m_ActorPresenter.SetPositionPixels(positionPx);
         }
 
         /// <summary>
@@ -259,7 +217,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            m_ActorPresenter.MoveByPixels(deltaPx);
+            m_ActorPresenter.AddPositionPixels(deltaPx);
         }
 
         /// <summary>

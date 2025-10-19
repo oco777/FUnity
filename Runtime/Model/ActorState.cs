@@ -22,5 +22,10 @@ namespace FUnity.Runtime.Model
         /// 1 秒あたりの移動速度（px/s）。<see cref="FUnity.Runtime.Presenter.ActorPresenter"/> が <see cref="FUnity.Runtime.Core.FUnityActorData.MoveSpeed"/> を反映して管理する。
         /// </summary>
         public float Speed;
+
+        /// <summary>
+        /// 現在の向き（度）。0=右、90=上、180=左、270=下を想定し、<see cref="FUnity.Runtime.Presenter.ActorPresenter"/> が移動命令を解釈する際に利用する。
+        /// </summary>
+        public float DirectionDeg;
     }
 }

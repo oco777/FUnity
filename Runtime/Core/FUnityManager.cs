@@ -46,6 +46,12 @@ namespace FUnity.Core
         /// <summary>俳優ごとの Presenter インスタンス。</summary>
         private readonly List<ActorPresenter> m_ActorPresenters = new List<ActorPresenter>();
 
+        /// <summary>俳優設定と Presenter を対応付けるマップ。</summary>
+        private readonly Dictionary<FUnityActorData, ActorPresenter> m_ActorPresenterMap = new Dictionary<FUnityActorData, ActorPresenter>();
+
+        /// <summary>Presenter 初期化待ちの FooniController 群。</summary>
+        private readonly Dictionary<FUnityActorData, List<FooniController>> m_PendingActorControllers = new Dictionary<FUnityActorData, List<FooniController>>();
+
         /// <summary>生成済み俳優 UI 要素と設定のペア。</summary>
         private readonly List<ActorVisual> m_ActorVisuals = new List<ActorVisual>();
 
@@ -68,6 +74,9 @@ namespace FUnity.Core
 
             /// <summary>生成された UI Toolkit 要素。</summary>
             public VisualElement Element;
+
+            /// <summary>俳優設定に対応する Presenter。初期化前は null。</summary>
+            public ActorPresenter Presenter;
         }
 
         /// <summary>
@@ -232,7 +241,6 @@ namespace FUnity.Core
             }
 
             var controller = m_FUnityUI.GetComponent<FooniController>() ?? m_FUnityUI.AddComponent<FooniController>();
-            controller.SetUIDocument(m_UIDocument);
         }
 
         /// <summary>
@@ -284,8 +292,11 @@ namespace FUnity.Core
             var bridgeCache = new List<FooniUIBridge>(m_FUnityUI.GetComponents<FooniUIBridge>());
             var bridgeIndex = 0;
 
-            foreach (var visual in m_ActorVisuals)
+            m_ActorPresenterMap.Clear();
+
+            for (var i = 0; i < m_ActorVisuals.Count; i++)
             {
+                var visual = m_ActorVisuals[i];
                 if (visual.Element == null)
                 {
                     continue;
@@ -302,6 +313,12 @@ namespace FUnity.Core
                 presenter.Initialize(visual.Data, state, view);
 
                 m_ActorPresenters.Add(presenter);
+
+                m_ActorPresenterMap[visual.Data] = presenter;
+                BindPresenterToControllers(visual.Data, presenter);
+
+                visual.Presenter = presenter;
+                m_ActorVisuals[i] = visual;
             }
 
             if (m_VsBridge != null)
@@ -588,6 +605,8 @@ namespace FUnity.Core
             {
                 controller.EnableFloat(data.FloatAnimation);
             }
+
+            RegisterControllerForActor(data, controller);
         }
 
         /// <summary>
@@ -743,7 +762,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// Runner に <see cref="FooniController"/> と <see cref="UIDocument"/> を設定し、俳優固有の UI を適用する。
+        /// Runner に <see cref="FooniController"/> を設定し、俳優 Presenter との橋渡しを行う。
         /// </summary>
         /// <param name="runner">構成対象の Runner。</param>
         /// <param name="actor">俳優設定。</param>
@@ -760,46 +779,75 @@ namespace FUnity.Core
                 controller = runner.AddComponent<FooniController>();
             }
 
-            var document = runner.GetComponent<UIDocument>();
-            if (document == null)
-            {
-                document = runner.AddComponent<UIDocument>();
-            }
-
-            controller.SetUIDocument(document);
-
-            if (document.panelSettings == null)
-            {
-                PanelSettings panelSettings = null;
-                if (m_UIDocument != null && m_UIDocument.panelSettings != null)
-                {
-                    panelSettings = m_UIDocument.panelSettings;
-                }
-                else
-                {
-                    panelSettings = FindObjectOfType<PanelSettings>();
-                }
-
-                if (panelSettings != null)
-                {
-                    document.panelSettings = panelSettings;
-                }
-            }
-
-            if (actor.ElementUxml != null)
-            {
-                document.visualTreeAsset = actor.ElementUxml;
-            }
-            else
-            {
-                document.visualTreeAsset = null;
-                Debug.LogWarning($"[FUnity] ElementUxml is null. Runner='{runner.name}'");
-            }
-
             if (!actor.FloatAnimation)
             {
                 controller.EnableFloat(false);
             }
+
+            RegisterControllerForActor(actor, controller);
+        }
+
+        /// <summary>
+        /// 俳優設定に紐づく Presenter が未初期化の場合、FooniController を保留リストに追加する。Presenter 済みであれば即座に結線する。
+        /// </summary>
+        /// <param name="actor">紐付け対象の俳優設定。</param>
+        /// <param name="controller">Presenter へ命令を委譲する FooniController。</param>
+        private void RegisterControllerForActor(FUnityActorData actor, FooniController controller)
+        {
+            if (actor == null || controller == null)
+            {
+                return;
+            }
+
+            if (m_ActorPresenterMap.TryGetValue(actor, out var presenter) && presenter != null)
+            {
+                controller.SetActorPresenter(presenter);
+                return;
+            }
+
+            if (!m_PendingActorControllers.TryGetValue(actor, out var controllers))
+            {
+                controllers = new List<FooniController>();
+                m_PendingActorControllers[actor] = controllers;
+            }
+
+            if (!controllers.Contains(controller))
+            {
+                controllers.Add(controller);
+            }
+        }
+
+        /// <summary>
+        /// 初期化済みの Presenter を同一俳優の FooniController 群へ割り当てる。
+        /// </summary>
+        /// <param name="actor">対象俳優。</param>
+        /// <param name="presenter">割り当てる Presenter。</param>
+        private void BindPresenterToControllers(FUnityActorData actor, ActorPresenter presenter)
+        {
+            if (actor == null || presenter == null)
+            {
+                return;
+            }
+
+            if (!m_PendingActorControllers.TryGetValue(actor, out var controllers))
+            {
+                return;
+            }
+
+            for (var i = controllers.Count - 1; i >= 0; i--)
+            {
+                var controller = controllers[i];
+                if (controller == null)
+                {
+                    controllers.RemoveAt(i);
+                    continue;
+                }
+
+                controller.SetActorPresenter(presenter);
+            }
+
+            controllers.Clear();
+            m_PendingActorControllers.Remove(actor);
         }
     }
 }
