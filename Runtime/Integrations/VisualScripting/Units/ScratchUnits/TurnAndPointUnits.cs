@@ -20,7 +20,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>操作対象の <see cref="FooniController"/> を受け取る ValueInput です。</summary>
+        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -47,7 +47,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
-            m_Target = ValueInput<FooniController>("target", (FooniController)null);
+            m_Target = ValueInput<ActorPresenterAdapter>("target", (ActorPresenterAdapter)null);
             m_DeltaDegrees = ValueInput<float>("deltaDegrees", 15f);
 
             Succession(m_Enter, m_Exit);
@@ -60,10 +60,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<FooniController>(m_Target));
+            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<ActorPresenterAdapter>(m_Target));
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Turn Degrees: FooniController が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Turn Degrees: ActorPresenterAdapter (FooniController) が見つかりません。");
                 return m_Exit;
             }
 
@@ -89,7 +89,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>操作対象の <see cref="FooniController"/> を受け取る ValueInput です。</summary>
+        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -116,7 +116,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
-            m_Target = ValueInput<FooniController>("target", (FooniController)null);
+            m_Target = ValueInput<ActorPresenterAdapter>("target", (ActorPresenterAdapter)null);
             m_Degrees = ValueInput<float>("degrees", 90f);
 
             Succession(m_Enter, m_Exit);
@@ -129,10 +129,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<FooniController>(m_Target));
+            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<ActorPresenterAdapter>(m_Target));
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Point Direction: FooniController が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Point Direction: ActorPresenterAdapter (FooniController) が見つかりません。");
                 return m_Exit;
             }
 

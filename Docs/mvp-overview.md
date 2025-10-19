@@ -27,9 +27,9 @@ FUnity のランタイム層は Model–View–Presenter (MVP) に基づいて�
   1. `Resources.Load` で `FUnityProjectData` を読み込み、ステージと俳優データを収集します。
   2. `UIDocument` を持つ “FUnity UI” GameObject を生成し、`FUnityPanelSettings.asset` を割り当てます。
   3. 各俳優に対して `ActorState` / `ActorView` / `ActorPresenter` を組み立て、`ScriptMachine` と `FooniUIBridge` を接続します。
-  4. Visual Scripting Runner に配置した `FooniController` と `ActorPresenter` を結び付け、Visual Scripting グラフからの命令を Presenter に委譲できるようにします。
+4. Visual Scripting Runner に配置した `ActorPresenterAdapter`（旧称 `FooniController`）と `ActorPresenter` を結び付け、Visual Scripting グラフからの命令を Presenter に委譲できるようにします。
 
 ## Visual Scripting からの呼び出し
 - Default Project Data が `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` を用意し、`FUnityActorData_Fooni` の ScriptGraph に設定します。
-- Macro からは `Variables.Object("VSPresenterBridge")` を取得し、`Actor/MoveBy` などの Custom Event を介して Presenter を呼び出します。もしくは `FooniController` を取得し、`MoveSteps` や `SetPositionPixels` といった API を直接呼び出すこともできます。
+- Macro からは `Variables.Object("VSPresenterBridge")` を取得し、`Actor/MoveBy` などの Custom Event を介して Presenter を呼び出します。もしくは `ActorPresenterAdapter`（互換目的で残る `FooniController` も可）を取得し、`MoveSteps` や `SetPositionPixels` といった API を直接呼び出すこともできます。
 - Presenter 層を経由することで、Visual Scripting と C# 双方から同じロジックを再利用でき、MVP の責務分離を維持できます。

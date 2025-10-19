@@ -39,5 +39,5 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 ### 使い方メモ
 - Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置
-- `Get Component (FooniController)` でコントローラ参照を取り、各ノードに接続
-- キャラクター操作は `FooniController → ActorPresenter → View` で更新されます
+- `Get Component (ActorPresenterAdapter)` でコントローラ参照を取り、各ノードに接続（既存プロジェクトでは `FooniController` でも動作します）
+- キャラクター操作は `ActorPresenterAdapter → ActorPresenter → View` で更新されます

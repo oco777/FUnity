@@ -21,7 +21,7 @@ namespace FUnity.Core
     /// UI ドキュメント、俳優、Visual Scripting Runner を初期化し、Visual Scripting から Presenter への命令経路を構築する。
     /// </summary>
     /// <remarks>
-    /// 依存関係: <see cref="FUnityProjectData"/>, <see cref="UIDocument"/>, <see cref="FooniController"/>, <see cref="ActorPresenter"/>
+    /// 依存関係: <see cref="FUnityProjectData"/>, <see cref="UIDocument"/>, <see cref="ActorPresenterAdapter"/>（旧称 <see cref="FooniController"/>), <see cref="ActorPresenter"/>
     /// 想定ライフサイクル: シーン常駐。Awake で必要な GameObject を生成し、Start で Stage/Actor を構築、その後は Visual Scripting
     ///     グラフから Presenter へ命令が流入する。
     /// スレッド/GC: Unity メインスレッド専用。生成物は MonoBehaviour と ScriptableObject のみ。
@@ -49,8 +49,8 @@ namespace FUnity.Core
         /// <summary>俳優設定と Presenter を対応付けるマップ。</summary>
         private readonly Dictionary<FUnityActorData, ActorPresenter> m_ActorPresenterMap = new Dictionary<FUnityActorData, ActorPresenter>();
 
-        /// <summary>Presenter 初期化待ちの FooniController 群。</summary>
-        private readonly Dictionary<FUnityActorData, List<FooniController>> m_PendingActorControllers = new Dictionary<FUnityActorData, List<FooniController>>();
+        /// <summary>Presenter 初期化待ちの ActorPresenterAdapter（旧称 FooniController）群。</summary>
+        private readonly Dictionary<FUnityActorData, List<ActorPresenterAdapter>> m_PendingActorControllers = new Dictionary<FUnityActorData, List<ActorPresenterAdapter>>();
 
         /// <summary>生成済み俳優 UI 要素と設定のペア。</summary>
         private readonly List<ActorVisual> m_ActorVisuals = new List<ActorVisual>();
@@ -188,7 +188,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// FUnity UI ルート GameObject を生成し、必須コンポーネント（UIDocument, FooniController, ScriptMachine 等）を確保する。
+        /// FUnity UI ルート GameObject を生成し、必須コンポーネント（UIDocument, ActorPresenterAdapter, ScriptMachine 等）を確保する。
         /// </summary>
         private void EnsureFUnityUI()
         {
@@ -218,7 +218,7 @@ namespace FUnity.Core
                 }
             }
 
-            var controller = m_FUnityUI.GetComponent<FooniController>() ?? m_FUnityUI.AddComponent<FooniController>();
+            var controller = m_FUnityUI.GetComponent<ActorPresenterAdapter>() ?? m_FUnityUI.AddComponent<ActorPresenterAdapter>();
         }
 
         /// <summary>
@@ -530,7 +530,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// <see cref="FooniController"/> に俳優要素をバインドし、浮遊アニメーション設定を同期する。
+        /// <see cref="ActorPresenterAdapter"/>（旧称 <see cref="FooniController"/>）に俳優要素をバインドし、浮遊アニメーション設定を同期する。
         /// </summary>
         /// <param name="actorVE">俳優 UI 要素。</param>
         /// <param name="data">俳優設定。</param>
@@ -541,16 +541,16 @@ namespace FUnity.Core
                 return;
             }
 
-            FooniController controller = null;
+            ActorPresenterAdapter controller = null;
 
             if (m_UIDocument != null)
             {
-                controller = m_UIDocument.GetComponent<FooniController>();
+                controller = m_UIDocument.GetComponent<ActorPresenterAdapter>();
             }
 
             if (controller == null && m_FUnityUI != null)
             {
-                controller = m_FUnityUI.GetComponent<FooniController>();
+                controller = m_FUnityUI.GetComponent<ActorPresenterAdapter>();
             }
 
             if (controller == null)
@@ -558,19 +558,19 @@ namespace FUnity.Core
                 var go = GameObject.Find("FUnity UI");
                 if (go != null)
                 {
-                    controller = go.GetComponent<FooniController>();
+                    controller = go.GetComponent<ActorPresenterAdapter>();
                 }
             }
 
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] FooniController not found. Actor binding skipped.");
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter (FooniController) not found. Actor binding skipped.");
                 return;
             }
 
             if (controller.BoundElement != null && controller.BoundElement != actorVE)
             {
-                Debug.LogWarning("[FUnity] FooniController already bound to another element. Rebinding to the latest actor.");
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter (FooniController) already bound to another element. Rebinding to the latest actor.");
             }
 
             controller.BindActorElement(actorVE);
@@ -665,7 +665,7 @@ namespace FUnity.Core
                 }
 
                 ConfigureScriptMachine(runner, actor.ScriptGraph);
-                ConfigureFooniController(runner, actor);
+                ConfigureActorPresenterAdapter(runner, actor);
 
                 var objectVariables = Variables.Object(runner);
                 if (m_FUnityUI != null && !objectVariables.IsDefined("FUnityUI"))
@@ -736,21 +736,21 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// Runner に <see cref="FooniController"/> を設定し、俳優 Presenter との橋渡しを行う。
+        /// Runner に <see cref="ActorPresenterAdapter"/>（旧称 <see cref="FooniController"/>）を設定し、俳優 Presenter との橋渡しを行う。
         /// </summary>
         /// <param name="runner">構成対象の Runner。</param>
         /// <param name="actor">俳優設定。</param>
-        private void ConfigureFooniController(GameObject runner, FUnityActorData actor)
+        private void ConfigureActorPresenterAdapter(GameObject runner, FUnityActorData actor)
         {
             if (runner == null || actor == null)
             {
                 return;
             }
 
-            var controller = runner.GetComponent<FooniController>();
+            var controller = runner.GetComponent<ActorPresenterAdapter>();
             if (controller == null)
             {
-                controller = runner.AddComponent<FooniController>();
+                controller = runner.AddComponent<ActorPresenterAdapter>();
             }
 
             if (!actor.FloatAnimation)
@@ -762,11 +762,11 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// 俳優設定に紐づく Presenter が未初期化の場合、FooniController を保留リストに追加する。Presenter 済みであれば即座に結線する。
+        /// 俳優設定に紐づく Presenter が未初期化の場合、ActorPresenterAdapter（旧称 FooniController）を保留リストに追加する。Presenter 済みであれば即座に結線する。
         /// </summary>
         /// <param name="actor">紐付け対象の俳優設定。</param>
-        /// <param name="controller">Presenter へ命令を委譲する FooniController。</param>
-        private void RegisterControllerForActor(FUnityActorData actor, FooniController controller)
+        /// <param name="controller">Presenter へ命令を委譲する ActorPresenterAdapter。</param>
+        private void RegisterControllerForActor(FUnityActorData actor, ActorPresenterAdapter controller)
         {
             if (actor == null || controller == null)
             {
@@ -781,7 +781,7 @@ namespace FUnity.Core
 
             if (!m_PendingActorControllers.TryGetValue(actor, out var controllers))
             {
-                controllers = new List<FooniController>();
+                controllers = new List<ActorPresenterAdapter>();
                 m_PendingActorControllers[actor] = controllers;
             }
 
@@ -792,7 +792,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// 初期化済みの Presenter を同一俳優の FooniController 群へ割り当てる。
+        /// 初期化済みの Presenter を同一俳優の ActorPresenterAdapter 群へ割り当てる。
         /// </summary>
         /// <param name="actor">対象俳優。</param>
         /// <param name="presenter">割り当てる Presenter。</param>

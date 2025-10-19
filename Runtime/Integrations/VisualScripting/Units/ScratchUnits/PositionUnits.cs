@@ -20,7 +20,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>操作対象の <see cref="FooniController"/> を受け取る ValueInput です。</summary>
+        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -54,7 +54,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
-            m_Target = ValueInput<FooniController>("target", (FooniController)null);
+            m_Target = ValueInput<ActorPresenterAdapter>("target", (ActorPresenterAdapter)null);
             m_X = ValueInput<float>("x", 0f);
             m_Y = ValueInput<float>("y", 0f);
 
@@ -68,10 +68,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<FooniController>(m_Target));
+            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<ActorPresenterAdapter>(m_Target));
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Go To X,Y: FooniController が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Go To X,Y: ActorPresenterAdapter (FooniController) が見つかりません。");
                 return m_Exit;
             }
 
@@ -96,7 +96,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>操作対象の <see cref="FooniController"/> を受け取る ValueInput です。</summary>
+        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -123,7 +123,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
-            m_Target = ValueInput<FooniController>("target", (FooniController)null);
+            m_Target = ValueInput<ActorPresenterAdapter>("target", (ActorPresenterAdapter)null);
             m_DeltaX = ValueInput<float>("dx", 10f);
 
             Succession(m_Enter, m_Exit);
@@ -136,10 +136,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<FooniController>(m_Target));
+            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<ActorPresenterAdapter>(m_Target));
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Change X By: FooniController が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Change X By: ActorPresenterAdapter (FooniController) が見つかりません。");
                 return m_Exit;
             }
 
@@ -164,7 +164,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>操作対象の <see cref="FooniController"/> を受け取る ValueInput です。</summary>
+        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -191,7 +191,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
-            m_Target = ValueInput<FooniController>("target", (FooniController)null);
+            m_Target = ValueInput<ActorPresenterAdapter>("target", (ActorPresenterAdapter)null);
             m_DeltaY = ValueInput<float>("dy", 10f);
 
             Succession(m_Enter, m_Exit);
@@ -204,10 +204,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<FooniController>(m_Target));
+            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<ActorPresenterAdapter>(m_Target));
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Change Y By: FooniController が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Change Y By: ActorPresenterAdapter (FooniController) が見つかりません。");
                 return m_Exit;
             }
 

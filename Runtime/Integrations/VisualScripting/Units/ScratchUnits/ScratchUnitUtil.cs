@@ -10,18 +10,18 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     internal static class ScratchUnitUtil
     {
         /// <summary>
-        /// 明示的に指定された <see cref="FooniController"/> が存在しない場合、シーン内から最初に見つかったインスタンスを返します。
+        /// 明示的に指定された <see cref="ActorPresenterAdapter"/>（旧称 FooniController）が存在しない場合、シーン内から最初に見つかったインスタンスを返します。
         /// </summary>
         /// <param name="explicitTarget">ポートに接続されたターゲット。null の場合は自動探索を行います。</param>
-        /// <returns>解決された <see cref="FooniController"/>。見つからなかった場合は null を返します。</returns>
-        public static FooniController ResolveTarget(FooniController explicitTarget)
+        /// <returns>解決された <see cref="ActorPresenterAdapter"/>。見つからなかった場合は null を返します。</returns>
+        public static ActorPresenterAdapter ResolveTarget(ActorPresenterAdapter explicitTarget)
         {
             if (explicitTarget != null)
             {
                 return explicitTarget;
             }
 
-            return Object.FindFirstObjectByType<FooniController>();
+            return Object.FindFirstObjectByType<ActorPresenterAdapter>();
         }
 
         /// <summary>

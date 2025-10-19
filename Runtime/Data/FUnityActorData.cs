@@ -28,7 +28,7 @@ namespace FUnity.Runtime.Core
         /// <summary>移動速度（px/s）。0 未満の場合も Presenter 側でクランプされる。</summary>
         [SerializeField] private float m_moveSpeed = 300f;
 
-        /// <summary>初期状態で FooniController の浮遊アニメーションを有効にするか。</summary>
+        /// <summary>初期状態で ActorPresenterAdapter（旧称 FooniController）の浮遊アニメーションを有効にするか。</summary>
         [SerializeField] private bool m_floatAnimation = true;   // ふわふわの初期状態
 
         [Header("UI Template (optional)")]
