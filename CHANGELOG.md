@@ -2,13 +2,14 @@
 
 ## [Unreleased]
 ### Added
+- feat(vs): Units read ActorPresenterAdapter from ScriptGraphAsset variables; editor assigns via ConfigureScriptMachine.
 - feat(core): move clamping to state mutation; deprecate FooniUIBridge.ClampToPanel().
 - PanelSettingsInitializer.EnsurePanelSettings() による Theme 自動割当（Editor 実行時）。
 - feat(vs): scratch-ready bridge & macros（Custom Event 標準化、StageBackgroundService、Scratch Starter メニュー、マクロ雛形）。
 - feat(vs): Scratch Units auto-resolve & cache ActorPresenterAdapter（ポート未接続でも動作）。
-- feat(vs): Units auto-read ActorPresenterAdapter from ScriptGraphAsset Variables; add ConfigureScriptMachine; fix Flow.TryGetValue usage.
 
 ### Changed
+- refactor(vs): fix Variables.Object overload and qualify UnityEngine.Object usage in Scratch units.
 - refactor(vs): stop auto-attaching ScriptMachine to 'FUnity UI'; require explicit placement
 - refactor(core): rename FooniController to ActorPresenterAdapter with obsolete shim for gradual migration.
 - Theme の正規パスを `Assets/FUnity/UI/USS/` に統一し、UI Builder 既定テーマを優先する運用に更新。
@@ -17,6 +18,7 @@
 - refactor(editor): stop auto-attaching ActorPresenterAdapter to 'FUnity UI' and expose explicit assignment in FUnityManager.
 
 ### Fixed
+- fix(vs): replace Flow.TryGetValue/HasValue with Flow.GetValue and initialize local adapter references.
 - fix(input): add System namespace or qualify [System.Obsolete].
 - 壊れた USS や重複アセットを再生成・整理する手順を整備。
 

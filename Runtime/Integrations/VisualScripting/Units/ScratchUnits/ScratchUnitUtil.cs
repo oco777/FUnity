@@ -32,11 +32,18 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return explicitAdapter;
             }
 
-            var fromAssetVariables = TryGetFromScriptGraphAssetVariables(flow);
-            if (fromAssetVariables != null)
+            var flowGraph = flow?.stack?.graph as FlowGraph;
+            if (flowGraph != null)
             {
-                CacheAdapter(fromAssetVariables);
-                return fromAssetVariables;
+                var declarations = flowGraph.variables;
+                if (declarations != null && declarations.IsDefined("adapter"))
+                {
+                    if (declarations.Get("adapter") is ActorPresenterAdapter fromAsset && fromAsset != null)
+                    {
+                        CacheAdapter(fromAsset);
+                        return fromAsset;
+                    }
+                }
             }
 
             var fromGraphVariables = TryGetFromGraphVariables(flow);
@@ -171,42 +178,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// ScriptGraphAsset に紐付く変数からアダプタを取得します。
-        /// </summary>
-        /// <param name="flow">現在のフロー。</param>
-        /// <returns>見つかったアダプタ。存在しない場合は null。</returns>
-        private static ActorPresenterAdapter TryGetFromScriptGraphAssetVariables(Flow flow)
-        {
-            if (flow?.stack == null)
-            {
-                return null;
-            }
-
-            if (flow.stack.graph is not FlowGraph graph)
-            {
-                return null;
-            }
-
-            var declarations = graph.variables;
-            if (declarations == null)
-            {
-                return null;
-            }
-
-            if (!declarations.IsDefined("adapter"))
-            {
-                return null;
-            }
-
-            if (declarations.Get("adapter") is ActorPresenterAdapter adapter && adapter != null)
-            {
-                return adapter;
-            }
-
-            return null;
-        }
-
-        /// <summary>
         /// Object 変数（GameObject 単位）からアダプタを取得します。
         /// </summary>
         /// <param name="flow">現在のフロー。</param>
@@ -219,7 +190,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return null;
             }
 
-            var objectVariables = Variables.Object(owner, false);
+            var objectVariables = Variables.Object(owner);
             if (objectVariables == null)
             {
                 return null;
@@ -266,11 +237,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>見つかったアダプタ。存在しない場合は null。</returns>
         private static ActorPresenterAdapter FindAdapterInScene()
         {
+            ActorPresenterAdapter found = null;
 #if UNITY_6000_0_OR_NEWER
-            return Object.FindFirstObjectByType<ActorPresenterAdapter>();
+            found = UnityEngine.Object.FindFirstObjectByType<ActorPresenterAdapter>();
 #else
-            return Object.FindObjectOfType<ActorPresenterAdapter>();
+            found = UnityEngine.Object.FindObjectOfType<ActorPresenterAdapter>();
 #endif
+            return found;
         }
 
         /// <summary>
