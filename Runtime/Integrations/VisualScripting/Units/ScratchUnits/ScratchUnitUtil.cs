@@ -18,20 +18,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private static bool m_HasLoggedResolutionFailure;
 
         /// <summary>
-        /// Flow 情報と明示引数から <see cref="ActorPresenterAdapter"/> を自動的に解決します。
-        /// 優先度: 明示引数 → ScriptGraphAsset Variables → Graph Variables → Object Variables → 自身の GameObject → 静的キャッシュ → シーン検索。
+        /// Flow 情報から <see cref="ActorPresenterAdapter"/> を自動的に解決します。
+        /// 優先度: ScriptGraphAsset Variables → Graph Variables → Object Variables → 自身の GameObject → 静的キャッシュ → シーン検索。
         /// </summary>
-        /// <param name="flow">現在のフロー情報。null の場合は明示引数と静的キャッシュのみ利用します。</param>
-        /// <param name="explicitAdapter">後方互換用に接続されたアダプタ。null の場合は自動探索します。</param>
+        /// <param name="flow">現在のフロー情報。null の場合は静的キャッシュとシーン検索のみ利用します。</param>
         /// <returns>解決に成功した <see cref="ActorPresenterAdapter"/>。見つからない場合は null。</returns>
-        public static ActorPresenterAdapter ResolveAdapter(Flow flow, ActorPresenterAdapter explicitAdapter = null)
+        public static ActorPresenterAdapter ResolveAdapter(Flow flow)
         {
-            if (explicitAdapter != null)
-            {
-                CacheAdapter(explicitAdapter);
-                return explicitAdapter;
-            }
-
             var declarations = (flow?.stack?.graph as FlowGraph)?.variables;
             if (declarations != null)
             {
