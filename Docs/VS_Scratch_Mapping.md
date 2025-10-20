@@ -5,6 +5,8 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 ## 基本操作（移動／向き）
 
+> **Adapter ポートは任意:** 2025-10-19 更新より、Scratch ユニットは ActorPresenterAdapter（旧称 FooniController）を自動解決します。Self（グラフの GameObject）→ Graph Variables → シーン検索 → 明示ポートの優先で探索するため、未接続でも動作し、必要であれば従来どおりポート接続も利用できます。
+
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
 | Scratch/Change X By | x座標を ◯ ずつ変える | X 座標を相対移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
@@ -39,5 +41,5 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 ### 使い方メモ
 - Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置
-- `Get Component (ActorPresenterAdapter)` でコントローラ参照を取り、各ノードに接続（既存プロジェクトでは `FooniController` でも動作します）
+- Scratch ユニットは `ActorPresenterAdapter` ポート未接続でも、Self / Graph Variables / シーンの順に自動解決します（従来どおりポート接続も可能）。
 - キャラクター操作は `ActorPresenterAdapter → ActorPresenter → View` で更新されます
