@@ -148,17 +148,14 @@ namespace FUnity.EditorTools
                 EditorUtility.SetDirty(machine);
             }
 
-            if (macro != null && macro.graph is FlowGraph flowGraph)
+            if (macro != null)
             {
-                var declarations = flowGraph.variables;
-                if (declarations == null)
+                var declarations = EnsureGraphVariables(macro);
+                if (declarations != null)
                 {
-                    declarations = new VariableDeclarations();
-                    flowGraph.variables = declarations;
+                    declarations.Set("adapter", adapter);
+                    EditorUtility.SetDirty(macro);
                 }
-
-                declarations.Set("adapter", adapter);
-                EditorUtility.SetDirty(macro);
             }
 
             var objectVariables = Variables.Object(runner);
@@ -168,6 +165,63 @@ namespace FUnity.EditorTools
             }
 
             EditorUtility.SetDirty(runner);
+        }
+
+        /// <summary>
+        /// ScriptGraphAsset 内に保持される FlowGraph の Variables を安全に初期化します。
+        /// Unity のバージョンによっては <see cref="FlowGraph.variables"/> が読み取り専用のため、
+        /// SerializedObject 経由で managed reference を生成します。
+        /// </summary>
+        /// <param name="macro">対象の ScriptGraphAsset。</param>
+        /// <returns>利用可能な <see cref="VariableDeclarations"/>。生成に失敗した場合は null。</returns>
+        private static VariableDeclarations EnsureGraphVariables(ScriptGraphAsset macro)
+        {
+            if (macro == null)
+            {
+                Debug.LogWarning("[FUnity] ScriptGraphAsset が null のため Variables を初期化できません。");
+                return null;
+            }
+
+            if (!(macro.graph is FlowGraph flowGraph))
+            {
+                flowGraph = new FlowGraph();
+                macro.graph = flowGraph;
+                EditorUtility.SetDirty(macro);
+            }
+
+            var existing = flowGraph.variables;
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            using (var serializedMacro = new SerializedObject(macro))
+            {
+                serializedMacro.Update();
+
+                var graphProperty = serializedMacro.FindProperty("graph");
+                if (graphProperty == null)
+                {
+                    Debug.LogWarning("[FUnity] ScriptGraphAsset.graph プロパティが見つからず、Variables を生成できませんでした。");
+                    return null;
+                }
+
+                var variablesProperty = graphProperty.FindPropertyRelative("variables");
+                if (variablesProperty == null)
+                {
+                    Debug.LogWarning("[FUnity] FlowGraph.variables プロパティが見つからず、Variables を生成できませんでした。");
+                    return null;
+                }
+
+                var newDeclarations = new VariableDeclarations();
+                variablesProperty.managedReferenceValue = newDeclarations;
+                serializedMacro.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(macro);
+
+                return flowGraph.variables ?? newDeclarations;
+            }
+
+            return null;
         }
 
         private static void EnsureInspectorHelp(GameObject go)

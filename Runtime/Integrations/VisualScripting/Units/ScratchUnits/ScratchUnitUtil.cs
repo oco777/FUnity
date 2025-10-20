@@ -32,11 +32,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return explicitAdapter;
             }
 
-            var flowGraph = flow?.stack?.graph as FlowGraph;
-            if (flowGraph != null)
+            var declarations = (flow?.stack?.graph as FlowGraph)?.variables;
+            if (declarations != null)
             {
-                var declarations = flowGraph.variables;
-                if (declarations != null && declarations.IsDefined("adapter"))
+                if (declarations.IsDefined("adapter"))
                 {
                     if (declarations.Get("adapter") is ActorPresenterAdapter fromAsset && fromAsset != null)
                     {
