@@ -20,7 +20,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
+        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。未接続でも自動解決されます。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -68,7 +68,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<ActorPresenterAdapter>(m_Target));
+            var explicitAdapter = flow.HasValue(m_Target) ? flow.GetValue<ActorPresenterAdapter>(m_Target) : null;
+            var controller = ScratchUnitUtil.ResolveAdapter(flow, explicitAdapter);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Go To X,Y: ActorPresenterAdapter (FooniController) が見つかりません。");
@@ -96,7 +97,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
+        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。未接続でも自動解決されます。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -136,7 +137,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<ActorPresenterAdapter>(m_Target));
+            var explicitAdapter = flow.HasValue(m_Target) ? flow.GetValue<ActorPresenterAdapter>(m_Target) : null;
+            var controller = ScratchUnitUtil.ResolveAdapter(flow, explicitAdapter);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Change X By: ActorPresenterAdapter (FooniController) が見つかりません。");
@@ -164,7 +166,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ControlOutput m_Exit;
 
-        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。</summary>
+        /// <summary>操作対象の <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を受け取る ValueInput です。未接続でも自動解決されます。</summary>
         [DoNotSerialize]
         private ValueInput m_Target;
 
@@ -204,7 +206,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var controller = ScratchUnitUtil.ResolveTarget(flow.GetValue<ActorPresenterAdapter>(m_Target));
+            var explicitAdapter = flow.HasValue(m_Target) ? flow.GetValue<ActorPresenterAdapter>(m_Target) : null;
+            var controller = ScratchUnitUtil.ResolveAdapter(flow, explicitAdapter);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Change Y By: ActorPresenterAdapter (FooniController) が見つかりません。");
