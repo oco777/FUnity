@@ -9,6 +9,7 @@
 - feat(vs): Scratch Units auto-resolve & cache ActorPresenterAdapter（ポート未接続でも動作）。
 
 ### Changed
+- refactor(vs): remove ActorPresenterAdapter input ports from Scratch Units and rely on internal auto-resolution.
 - refactor(vs): fix Variables.Object overload and qualify UnityEngine.Object usage in Scratch units.
 - refactor(vs): stop auto-attaching ScriptMachine to 'FUnity UI'; require explicit placement
 - refactor(core): rename FooniController to ActorPresenterAdapter with obsolete shim for gradual migration.
@@ -25,6 +26,7 @@
 - fix(vs): guard ScriptGraphAsset variable resolution against null FlowGraph.variables entries.
 
 ### Docs
+- docs(vs): note Scratch Unit adapter auto-resolution and removal of Adapter ports in VS mapping.
 - docs: update Runtime XML comments to clarify MVP responsibilities and UI Toolkit constraints.
 - docs: update README and Docs to reflect current initialization flow, theme resolution, and VS macro auto-creation.
 - README と Docs/ 配下を最新の実装と運用に合わせて全面更新。
