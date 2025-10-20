@@ -68,12 +68,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            ActorPresenterAdapter explicitAdapter = null;
-            if (m_Target != null && flow.TryGetValue(m_Target, out ActorPresenterAdapter adapterFromPort))
+            ActorPresenterAdapter adapterFromPort = null;
+            if (m_Target != null)
             {
-                explicitAdapter = adapterFromPort;
+                adapterFromPort = flow.GetValue<ActorPresenterAdapter>(m_Target);
             }
-            var controller = ScratchUnitUtil.ResolveAdapter(flow, explicitAdapter);
+            var controller = ScratchUnitUtil.ResolveAdapter(flow, adapterFromPort);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Go To X,Y: ActorPresenterAdapter (FooniController) が見つかりません。");
@@ -141,12 +141,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            ActorPresenterAdapter explicitAdapter = null;
-            if (m_Target != null && flow.TryGetValue(m_Target, out ActorPresenterAdapter adapterFromPort))
+            ActorPresenterAdapter adapterFromPort = null;
+            if (m_Target != null)
             {
-                explicitAdapter = adapterFromPort;
+                adapterFromPort = flow.GetValue<ActorPresenterAdapter>(m_Target);
             }
-            var controller = ScratchUnitUtil.ResolveAdapter(flow, explicitAdapter);
+            var controller = ScratchUnitUtil.ResolveAdapter(flow, adapterFromPort);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Change X By: ActorPresenterAdapter (FooniController) が見つかりません。");
@@ -214,12 +214,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            ActorPresenterAdapter explicitAdapter = null;
-            if (m_Target != null && flow.TryGetValue(m_Target, out ActorPresenterAdapter adapterFromPort))
+            ActorPresenterAdapter adapterFromPort = null;
+            if (m_Target != null)
             {
-                explicitAdapter = adapterFromPort;
+                adapterFromPort = flow.GetValue<ActorPresenterAdapter>(m_Target);
             }
-            var controller = ScratchUnitUtil.ResolveAdapter(flow, explicitAdapter);
+            var controller = ScratchUnitUtil.ResolveAdapter(flow, adapterFromPort);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Change Y By: ActorPresenterAdapter (FooniController) が見つかりません。");

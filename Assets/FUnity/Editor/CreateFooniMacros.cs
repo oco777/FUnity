@@ -161,14 +161,13 @@ namespace FUnity.EditorTools
                 EditorUtility.SetDirty(macro);
             }
 
-            if (adapter != null)
+            var objectVariables = Variables.Object(runner);
+            if (objectVariables != null)
             {
-                var objectVariables = Variables.Object(runner, true);
-                if (objectVariables != null)
-                {
-                    objectVariables.Set("adapter", adapter);
-                }
+                objectVariables.Set("adapter", adapter);
             }
+
+            EditorUtility.SetDirty(runner);
         }
 
         private static void EnsureInspectorHelp(GameObject go)
