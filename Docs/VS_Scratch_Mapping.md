@@ -5,7 +5,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 ## 基本操作（移動／向き）
 
-> **Adapter ポートは任意:** 2025-10-19 更新より、Scratch ユニットは ActorPresenterAdapter（旧称 FooniController）を自動解決します。Self（グラフの GameObject）→ Graph Variables → シーン検索 → 明示ポートの優先で探索するため、未接続でも動作し、必要であれば従来どおりポート接続も利用できます。
+> **Adapter ポートは任意:** 2025-10-19 更新より、Scratch ユニットは ActorPresenterAdapter（旧称 FooniController）を自動解決します。ScriptGraphAsset の Variables → Graph Variables → Object Variables → Self（グラフの GameObject）→ 静的キャッシュ → シーン検索 → 明示ポートの優先で探索するため、未接続でも動作し、必要であれば従来どおりポート接続も利用できます。
 
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
@@ -41,5 +41,6 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 ### 使い方メモ
 - Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置
-- Scratch ユニットは `ActorPresenterAdapter` ポート未接続でも、Self / Graph Variables / シーンの順に自動解決します（従来どおりポート接続も可能）。
+- Scratch ユニットは `ActorPresenterAdapter` ポート未接続でも、ScriptGraphAsset Variables → Graph Variables → Object Variables → Self → 静的キャッシュ → シーン検索の順に自動解決します（従来どおりポート接続も可能）。
+- エディターの `FUnity/VS/Create Fooni Macros & Runner` は、生成された ScriptGraphAsset の Variables["adapter"] と Runner の Object Variables に ActorPresenterAdapter（旧称 FooniController）を自動で書き込みます。
 - キャラクター操作は `ActorPresenterAdapter → ActorPresenter → View` で更新されます
