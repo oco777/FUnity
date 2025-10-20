@@ -14,15 +14,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <summary>直近で解決したアダプタを保持する WeakReference です。破棄後は null になります。</summary>
         private static WeakReference<ActorPresenterAdapter> m_CachedAdapter;
 
-        /// <summary>Graph 単位でキャッシュする際に使用する隠しキー名です。</summary>
-        private const string kGraphCacheKey = "__FUnity_ActorPresenterAdapter__";
-
         /// <summary>解決失敗時の警告を重複表示しないためのフラグです。</summary>
         private static bool m_HasLoggedResolutionFailure;
 
         /// <summary>
         /// Flow 情報と明示引数から <see cref="ActorPresenterAdapter"/> を自動的に解決します。
-        /// 優先度: 明示引数 → Graph キャッシュ → 自身の GameObject → Graph Variables → 静的キャッシュ → シーン検索。
+        /// 優先度: 明示引数 → ScriptGraphAsset Variables → Graph Variables → Object Variables → 自身の GameObject → 静的キャッシュ → シーン検索。
         /// </summary>
         /// <param name="flow">現在のフロー情報。null の場合は明示引数と静的キャッシュのみ利用します。</param>
         /// <param name="explicitAdapter">後方互換用に接続されたアダプタ。null の場合は自動探索します。</param>
@@ -32,35 +29,40 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (explicitAdapter != null)
             {
                 CacheAdapter(explicitAdapter);
-                CacheGraph(flow, explicitAdapter);
                 return explicitAdapter;
             }
 
-            if (TryGetFromGraphCache(flow, out var fromGraph))
+            var fromAssetVariables = TryGetFromScriptGraphAssetVariables(flow);
+            if (fromAssetVariables != null)
             {
-                CacheAdapter(fromGraph);
-                return fromGraph;
+                CacheAdapter(fromAssetVariables);
+                return fromAssetVariables;
+            }
+
+            var fromGraphVariables = TryGetFromGraphVariables(flow);
+            if (fromGraphVariables != null)
+            {
+                CacheAdapter(fromGraphVariables);
+                return fromGraphVariables;
+            }
+
+            var fromObjectVariables = TryGetFromObjectVariables(flow);
+            if (fromObjectVariables != null)
+            {
+                CacheAdapter(fromObjectVariables);
+                return fromObjectVariables;
             }
 
             var fromSelf = TryGetFromSelf(flow);
             if (fromSelf != null)
             {
                 CacheAdapter(fromSelf);
-                CacheGraph(flow, fromSelf);
                 return fromSelf;
-            }
-
-            var fromVariables = TryGetFromGraphVariables(flow);
-            if (fromVariables != null)
-            {
-                CacheAdapter(fromVariables);
-                CacheGraph(flow, fromVariables);
-                return fromVariables;
             }
 
             if (TryGetFromStaticCache(out var cached))
             {
-                CacheGraph(flow, cached);
+                CacheAdapter(cached);
                 return cached;
             }
 
@@ -68,7 +70,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (fromScene != null)
             {
                 CacheAdapter(fromScene);
-                CacheGraph(flow, fromScene);
                 return fromScene;
             }
 
@@ -133,35 +134,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// Flow 情報から Graph キャッシュを取得します。
-        /// </summary>
-        /// <param name="flow">現在のフロー。</param>
-        /// <param name="adapter">取得したアダプタ。</param>
-        /// <returns>キャッシュが存在し有効な場合 true。</returns>
-        private static bool TryGetFromGraphCache(Flow flow, out ActorPresenterAdapter adapter)
-        {
-            adapter = null;
-            var appVariables = GetAppVariables(flow);
-            if (appVariables == null)
-            {
-                return false;
-            }
-
-            if (!appVariables.IsDefined(kGraphCacheKey))
-            {
-                return false;
-            }
-
-            if (appVariables.Get(kGraphCacheKey) is ActorPresenterAdapter cached && cached != null)
-            {
-                adapter = cached;
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// Flow 情報から Graph Variables を参照し、一般的なキーでアダプタを探します。
         /// </summary>
         /// <param name="flow">現在のフロー。</param>
@@ -199,6 +171,80 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
+        /// ScriptGraphAsset に紐付く変数からアダプタを取得します。
+        /// </summary>
+        /// <param name="flow">現在のフロー。</param>
+        /// <returns>見つかったアダプタ。存在しない場合は null。</returns>
+        private static ActorPresenterAdapter TryGetFromScriptGraphAssetVariables(Flow flow)
+        {
+            if (flow?.stack == null)
+            {
+                return null;
+            }
+
+            if (flow.stack.graph is not FlowGraph graph)
+            {
+                return null;
+            }
+
+            var declarations = graph.variables;
+            if (declarations == null)
+            {
+                return null;
+            }
+
+            if (!declarations.IsDefined("adapter"))
+            {
+                return null;
+            }
+
+            if (declarations.Get("adapter") is ActorPresenterAdapter adapter && adapter != null)
+            {
+                return adapter;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Object 変数（GameObject 単位）からアダプタを取得します。
+        /// </summary>
+        /// <param name="flow">現在のフロー。</param>
+        /// <returns>見つかったアダプタ。存在しない場合は null。</returns>
+        private static ActorPresenterAdapter TryGetFromObjectVariables(Flow flow)
+        {
+            var owner = flow?.stack?.gameObject;
+            if (owner == null)
+            {
+                return null;
+            }
+
+            var objectVariables = Variables.Object(owner, false);
+            if (objectVariables == null)
+            {
+                return null;
+            }
+
+            if (objectVariables.IsDefined("adapter"))
+            {
+                if (objectVariables.Get("adapter") is ActorPresenterAdapter adapter && adapter != null)
+                {
+                    return adapter;
+                }
+            }
+
+            if (objectVariables.IsDefined(nameof(ActorPresenterAdapter)))
+            {
+                if (objectVariables.Get(nameof(ActorPresenterAdapter)) is ActorPresenterAdapter adapter && adapter != null)
+                {
+                    return adapter;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Flow スタックが紐付く GameObject からアダプタを取得します。
         /// </summary>
         /// <param name="flow">現在のフロー。</param>
@@ -212,46 +258,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             return owner.GetComponent<ActorPresenterAdapter>();
-        }
-
-        /// <summary>
-        /// Graph 単位のキャッシュへアダプタを保存します。
-        /// </summary>
-        /// <param name="flow">現在のフロー。</param>
-        /// <param name="adapter">保存するアダプタ。</param>
-        private static void CacheGraph(Flow flow, ActorPresenterAdapter adapter)
-        {
-            var appVariables = GetAppVariables(flow);
-            if (appVariables == null || adapter == null)
-            {
-                return;
-            }
-
-            appVariables.Set(kGraphCacheKey, adapter);
-        }
-
-        /// <summary>
-        /// GraphReference.app に相当する変数領域を取得します。
-        /// </summary>
-        /// <param name="flow">現在のフロー。</param>
-        /// <returns>アプリケーション変数領域。存在しない場合は null。</returns>
-        private static Variables GetAppVariables(Flow flow)
-        {
-            if (flow?.stack == null)
-            {
-                return null;
-            }
-
-            try
-            {
-                var reference = flow.stack.ToReference();
-                return reference?.app;
-            }
-            catch (InvalidOperationException)
-            {
-                // Visual Scripting 初期化前などで参照が確立していない場合は例外が発生するため、静かにフォールバックします。
-                return null;
-            }
         }
 
         /// <summary>
@@ -277,7 +283,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            Debug.LogWarning("[FUnity] ActorPresenterAdapter を自動解決できませんでした。対象の GameObject へコンポーネントを追加するか、Graph Variables に adapter を設定してください。");
+            Debug.LogWarning("[FUnity] ActorPresenterAdapter を自動解決できませんでした。ScriptGraphAsset の Variables もしくは対象 GameObject の Object/Graph Variables に adapter を設定してください。");
             m_HasLoggedResolutionFailure = true;
         }
     }

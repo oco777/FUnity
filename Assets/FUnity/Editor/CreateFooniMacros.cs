@@ -62,6 +62,12 @@ namespace FUnity.EditorTools
             return macro;
         }
 
+        /// <summary>
+        /// ランナー用 GameObject を取得・生成し、アダプタと ScriptMachine の設定を適用します。
+        /// </summary>
+        /// <param name="name">対象 GameObject 名。</param>
+        /// <param name="macro">割り当てる ScriptGraphAsset。</param>
+        /// <returns>準備済みの GameObject。</returns>
         private static GameObject EnsureRunner(string name, ScriptGraphAsset macro)
         {
             var go = GameObject.Find(name);
@@ -71,13 +77,59 @@ namespace FUnity.EditorTools
                 Undo.RegisterCreatedObjectUndo(go, "Create Fooni Runner");
             }
 
-            var machine = go.GetComponent<ScriptMachine>();
-            if (machine == null)
+            EnsureInspectorHelp(go);
+
+            var adapter = ConfigureActorPresenterAdapter(go);
+            ConfigureScriptMachine(go, macro, adapter);
+
+            EditorUtility.SetDirty(go);
+            return go;
+        }
+
+        /// <summary>
+        /// 指定 GameObject に <see cref="ActorPresenterAdapter"/>（旧称 FooniController）を確実にアタッチします。
+        /// </summary>
+        /// <param name="runner">対象の GameObject。</param>
+        /// <returns>発見または新規追加したアダプタ。</returns>
+        private static ActorPresenterAdapter ConfigureActorPresenterAdapter(GameObject runner)
+        {
+            if (runner == null)
             {
-                machine = Undo.AddComponent<ScriptMachine>(go);
+                return null;
             }
 
-            bool machineDirty = false;
+            var adapter = runner.GetComponent<ActorPresenterAdapter>();
+            if (adapter != null)
+            {
+                return adapter;
+            }
+
+            adapter = Undo.AddComponent<ActorPresenterAdapter>(runner);
+            EditorUtility.SetDirty(adapter);
+            Debug.Log("[FUnity] Added ActorPresenterAdapter to runner: " + runner.name);
+            return adapter;
+        }
+
+        /// <summary>
+        /// ScriptMachine を設定し、ScriptGraphAsset の Variables および Object Variables にアダプタ参照を保存します。
+        /// </summary>
+        /// <param name="runner">対象 GameObject。</param>
+        /// <param name="macro">割り当てる ScriptGraphAsset。</param>
+        /// <param name="adapter">保存するアダプタ参照。</param>
+        private static void ConfigureScriptMachine(GameObject runner, ScriptGraphAsset macro, ActorPresenterAdapter adapter)
+        {
+            if (runner == null)
+            {
+                return;
+            }
+
+            var machine = runner.GetComponent<ScriptMachine>();
+            if (machine == null)
+            {
+                machine = Undo.AddComponent<ScriptMachine>(runner);
+            }
+
+            var machineDirty = false;
 
             if (machine.nest.source != GraphSource.Macro)
             {
@@ -96,21 +148,27 @@ namespace FUnity.EditorTools
                 EditorUtility.SetDirty(machine);
             }
 
-            if (name == "Fooni VS Float Runner")
+            if (macro != null && macro.graph is FlowGraph flowGraph)
             {
-                var controller = go.GetComponent<ActorPresenterAdapter>();
-                if (controller == null)
+                var declarations = flowGraph.variables;
+                if (declarations == null)
                 {
-                    controller = Undo.AddComponent<ActorPresenterAdapter>(go);
-                    EditorUtility.SetDirty(controller);
-                    Debug.Log("[FUnity] Added ActorPresenterAdapter to runner: " + go.name);
+                    declarations = new VariableDeclarations();
+                    flowGraph.variables = declarations;
                 }
+
+                declarations.Set("adapter", adapter);
+                EditorUtility.SetDirty(macro);
             }
 
-            EnsureInspectorHelp(go);
-
-            EditorUtility.SetDirty(go);
-            return go;
+            if (adapter != null)
+            {
+                var objectVariables = Variables.Object(runner, true);
+                if (objectVariables != null)
+                {
+                    objectVariables.Set("adapter", adapter);
+                }
+            }
         }
 
         private static void EnsureInspectorHelp(GameObject go)

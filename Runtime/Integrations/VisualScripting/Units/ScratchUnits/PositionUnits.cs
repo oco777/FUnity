@@ -68,7 +68,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var explicitAdapter = flow.HasValue(m_Target) ? flow.GetValue<ActorPresenterAdapter>(m_Target) : null;
+            ActorPresenterAdapter explicitAdapter = null;
+            if (m_Target != null && flow.TryGetValue(m_Target, out ActorPresenterAdapter adapterFromPort))
+            {
+                explicitAdapter = adapterFromPort;
+            }
             var controller = ScratchUnitUtil.ResolveAdapter(flow, explicitAdapter);
             if (controller == null)
             {
@@ -137,7 +141,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var explicitAdapter = flow.HasValue(m_Target) ? flow.GetValue<ActorPresenterAdapter>(m_Target) : null;
+            ActorPresenterAdapter explicitAdapter = null;
+            if (m_Target != null && flow.TryGetValue(m_Target, out ActorPresenterAdapter adapterFromPort))
+            {
+                explicitAdapter = adapterFromPort;
+            }
             var controller = ScratchUnitUtil.ResolveAdapter(flow, explicitAdapter);
             if (controller == null)
             {
@@ -206,7 +214,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var explicitAdapter = flow.HasValue(m_Target) ? flow.GetValue<ActorPresenterAdapter>(m_Target) : null;
+            ActorPresenterAdapter explicitAdapter = null;
+            if (m_Target != null && flow.TryGetValue(m_Target, out ActorPresenterAdapter adapterFromPort))
+            {
+                explicitAdapter = adapterFromPort;
+            }
             var controller = ScratchUnitUtil.ResolveAdapter(flow, explicitAdapter);
             if (controller == null)
             {

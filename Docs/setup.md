@@ -39,4 +39,5 @@ FUnity を既存プロジェクトへ追加し、サンプルの背景とフー�
 - Default Project Data 実行時に `Assets/Resources/FUnityActorData_Fooni.asset` が存在すると、重複防止のために削除されます。
 - Theme の優先度は `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss` → `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` の順です。
 - 入力 API を Visual Scripting で呼び出す際は `UnityEngine.Input.GetAxisRaw` のように完全修飾名を使うと、`FUnity.Runtime.Input` と衝突しません。
-- `ActorPresenterAdapter` や `ScriptMachine` は自動追加されません。Visual Scripting グラフを実行する Runner（または対象 GameObject）に明示的に付与し、`FUnityManager` もしくはグラフの変数として指定してください。
+- メニュー **FUnity/VS/Create Fooni Macros & Runner** を実行すると、生成された Runner に `ScriptMachine` を割り当て、関連する ScriptGraphAsset の Variables["adapter"] と Runner の Object Variables に `ActorPresenterAdapter`（旧称 FooniController）を自動で書き込みます。
+- オリジナルの Runner を作成する場合は `ActorPresenterAdapter` や `ScriptMachine` を手動で追加し、同様に ScriptGraphAsset / Object Variables に参照を設定してください。
