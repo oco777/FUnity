@@ -21,6 +21,8 @@
 - fix(vs): replace Flow.TryGetValue/HasValue with Flow.GetValue and initialize local adapter references.
 - fix(input): add System namespace or qualify [System.Obsolete].
 - 壊れた USS や重複アセットを再生成・整理する手順を整備。
+- fix(editor): avoid assigning FlowGraph.variables directly; initialize macro variables via SerializedObject managed reference.
+- fix(vs): guard ScriptGraphAsset variable resolution against null FlowGraph.variables entries.
 
 ### Docs
 - docs: update Runtime XML comments to clarify MVP responsibilities and UI Toolkit constraints.

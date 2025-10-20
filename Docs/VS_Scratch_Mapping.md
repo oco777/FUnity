@@ -5,7 +5,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 ## 基本操作（移動／向き）
 
-> **Adapter ポートは任意:** 2025-10-19 更新より、Scratch ユニットは ActorPresenterAdapter（旧称 FooniController）を自動解決します。優先度は「明示ポート → ScriptGraphAsset の Variables["adapter"] → Graph Variables → Object Variables → Self（グラフの GameObject）→ 静的キャッシュ → シーン検索」の順です。未接続でも動作し、必要であれば従来どおりポート接続も利用できます。
+> **Adapter ポートは任意:** 2025-10-19 更新より、Scratch ユニットは ActorPresenterAdapter（旧称 FooniController）を自動解決します。優先度は「明示ポート → ScriptGraphAsset の Variables["adapter"] → Graph Variables → Object Variables → Self（グラフの GameObject）→ 静的キャッシュ → シーン検索」の順です。未接続でも動作し、必要であれば従来どおりポート接続も利用できます。Editor メニューで生成されたマクロは、ScriptGraphAsset の Variables["adapter"] に ActorPresenterAdapter を自動登録します。
 
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
@@ -41,6 +41,6 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 ### 使い方メモ
 - Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置
-- Scratch ユニットは `ActorPresenterAdapter` ポート未接続でも、明示ポート → ScriptGraphAsset Variables → Graph Variables → Object Variables → Self → 静的キャッシュ → シーン検索の順に自動解決します（従来どおりポート接続も可能）。
+- Scratch ユニットは `ActorPresenterAdapter` ポート未接続でも、明示ポート → ScriptGraphAsset Variables → Graph Variables → Object Variables → Self → 静的キャッシュ → シーン検索の順に自動解決します（従来どおりポート接続も可能）。ScriptGraphAsset の Variables["adapter"] が最優先で参照され、Editor メニューで生成したランナーはこの値を自動で設定します。
 - エディターの `FUnity/VS/Create Fooni Macros & Runner` は、生成された ScriptGraphAsset の Variables["adapter"] と Runner の Object Variables に ActorPresenterAdapter（旧称 FooniController）を自動で書き込みます。
 - キャラクター操作は `ActorPresenterAdapter → ActorPresenter → View` で更新されます
