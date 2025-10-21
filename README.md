@@ -55,9 +55,7 @@
 - **FUnity > Create > Scratch Starter (Actor+Stage+VS)** を実行すると、Stage/Actor/Runner が Scratch 本の定番構成で一括生成されます。
   - `FUnityActorData_Starter` には `ActorElement.uxml/uss` と吹き出し用ラベルが割り当て済みで、`StageBackgroundService` が UI Toolkit の背景に適用されます。
   - Runner は `ScriptMachine` に空のマクロを割り当てて生成されるため、Visual Scripting グラフをすぐに編集できます。
-- Visual Scripting メニュー **FUnity > VS > Create Scratch Macros** を実行し、`SayOnKey` や `MoveWithArrow` など 5 種類のテンプレートを作成します。
-  - 各マクロには `VSPresenterBridge` の呼び出し例を Graph コメントとして記載しているため、Scratch ブロックに相当するカスタムイベント／入力の結線が確認できます。
-- ノード候補が表示されない場合は **FUnity > VS > Rebuild Unit Options** で Visual Scripting の Unit オプションを再生成してください。
+- Visual Scripting のグラフは Runner の `ScriptMachine` から新規 Macro を作成し、`VSPresenterBridge` の Custom Event を結線すると Scratch ブロック相当の操作が行えます。
 
 ## Default Project Data が行うこと
 `Assets/FUnity/Editor/CreateProjectData.cs` の **Create Default Project Data** は、既存リソースを尊重しつつ以下を保証します。
