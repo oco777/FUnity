@@ -45,9 +45,6 @@ TRANSLATION_MAP: Dict[str, str] = {
     "Scratch/Forever": "ずっと",
     "Scratch/Wait Seconds": "◯ 秒待つ",
     "Scratch/Say": "◯ と言う",
-    "Fooni/Enable Float": "ふわふわ移動をオンにする",
-    "Fooni/Set Float Amplitude": "ふわふわの振幅を ◯ にする",
-    "Fooni/Set Float Period": "ふわふわの周期を ◯ 秒にする",
 }
 
 CATEGORY_MAP: Dict[str, str] = {
@@ -65,9 +62,6 @@ CATEGORY_MAP: Dict[str, str] = {
     "Scratch/Change Y by": "基本操作",
     "Scratch/Change Y By": "基本操作",
     "Scratch/Say": "表示・演出",
-    "Fooni/Enable Float": "表示・演出",
-    "Fooni/Set Float Amplitude": "表示・演出",
-    "Fooni/Set Float Period": "表示・演出",
     "Scratch/Repeat (n)": "制御",
     "Scratch/Repeat N": "制御",
     "Scratch/Forever": "制御",
@@ -87,9 +81,6 @@ REQUIRED_TITLES: List[str] = [
     "Scratch/Forever",
     "Scratch/Wait Seconds",
     "Scratch/Say",
-    "Fooni/Enable Float",
-    "Fooni/Set Float Amplitude",
-    "Fooni/Set Float Period",
 ]
 
 

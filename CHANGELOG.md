@@ -27,6 +27,7 @@
 
 ### Removed
 - chore(editor): Visual Scripting 用のマクロ自動生成メニュー（`CreateFooniFloatMacro`, `CreateFooniMacros`, `CreateScratchStarterMacros`, `VisualScriptingScratchTools`）を撤去。
+- VS: Fooni float units removed (`Fooni_EnableFloatUnit`, `Fooni_SetFloatAmplitudeUnit`, `Fooni_SetFloatPeriodUnit`). Feature is deprecated and no longer supported.
 
 ### Docs
 - docs(vs): note Scratch Unit adapter auto-resolution and removal of Adapter ports in VS mapping.

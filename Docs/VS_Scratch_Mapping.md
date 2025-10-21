@@ -30,14 +30,11 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
-| Fooni/Enable Float | ふわふわ移動をオンにする | 浮遊アニメ開始 | 定義: Runtime/Integrations/VisualScripting/Units/FooniFloatUnits.cs |
-| Fooni/Set Float Amplitude | ふわふわの振幅を ◯ にする | 振幅の設定 | 定義: Runtime/Integrations/VisualScripting/Units/FooniFloatUnits.cs |
-| Fooni/Set Float Period | ふわふわの周期を ◯ 秒にする | 周期の設定 | 定義: Runtime/Integrations/VisualScripting/Units/FooniFloatUnits.cs |
 | Scratch/Say | ◯ と言う | 吹き出し表示 | 未実装: 対応する Unit が見つかりません |
 
 ---
 ### 補足
-- 対応表は Tools/generate_vs_scratch_mapping.py により自動生成されたログをもとにしています（自動生成日時: 2025-10-19 11:47:10）。
+- 対応表は Tools/generate_vs_scratch_mapping.py により自動生成されたログをもとにしています（自動生成日時: 2025-10-21 12:25:56）。
 
 ### 使い方メモ
 - Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置

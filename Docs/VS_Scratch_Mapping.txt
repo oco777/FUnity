@@ -1,6 +1,6 @@
 FUnity Visual Scripting 対応表（Scratch ブロック ↔ VS ノード）
 ================================================================
-自動生成日時: 2025-10-19 11:47:10
+自動生成日時: 2025-10-21 12:25:56
 生成スクリプト: Tools/generate_vs_scratch_mapping.py
 
 各行形式: VSノード名 | Scratch日本語 | 実装クラス | 備考
@@ -27,7 +27,4 @@ Scratch/Turn Degrees | ◯度回す | TurnDegreesUnit | 定義: Runtime/Integrat
 [表示・演出]
 VSノード名 | Scratch日本語 | 実装クラス | 備考
 ------------------------------------------------------------------------
-Fooni/Enable Float | ふわふわ移動をオンにする | Fooni_EnableFloatUnit | 定義: Runtime/Integrations/VisualScripting/Units/FooniFloatUnits.cs
-Fooni/Set Float Amplitude | ふわふわの振幅を ◯ にする | Fooni_SetFloatAmplitudeUnit | 定義: Runtime/Integrations/VisualScripting/Units/FooniFloatUnits.cs
-Fooni/Set Float Period | ふわふわの周期を ◯ 秒にする | Fooni_SetFloatPeriodUnit | 定義: Runtime/Integrations/VisualScripting/Units/FooniFloatUnits.cs
 Scratch/Say | ◯ と言う | (未実装) | 未実装: 対応する Unit が見つかりません
