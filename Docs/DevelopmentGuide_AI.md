@@ -144,7 +144,7 @@ git commit -m "Add dynamic UI generation via StageElement and ActorElement (#12)
 - **AOT 対策**：`Assets/Link.xml` に `VSPresenterBridge` / `StageBackgroundService` / `TimerServiceBehaviour` を列挙し、IL2CPP でもリフレクション呼び出しが剥がれないようにする。
 - **Stage 背景**：`StageBackgroundService` が UI Toolkit ルートに `backgroundImage` / `backgroundColor` を適用する。Presenter 層から `ApplyStage` を呼ぶだけで Scratch の「背景を変える」に相当。
 - **タイマー**：`TimerServiceBehaviour.Invoke(delay, Action)` を介して `InvokeCustomEventAfter` が動作する。Scratch の「n 秒後」を Visual Scripting の Custom Event で再現できる。
-- **マクロ雛形**：エディタメニュー **FUnity > VS > Create Scratch Macros** で `SayOnKey` / `MoveWithArrow` など 5 種のテンプレートを生成。Graph コメントに `VSPresenterBridge` との結線例を掲載している。
+- **マクロ雛形**：Runner に割り当てた `ScriptMachine` から新規 Macro を作成し、`VSPresenterBridge` の Custom Event を呼び出す構成で Scratch ブロックを再現する。必要に応じて `Assets/FUnity/VisualScripting/Macros` フォルダに保存して共有する。
 - **Starter データ**：**FUnity > Create > Scratch Starter (Actor+Stage+VS)** が `FUnityActorData_Starter` と Runner を自動生成。生成された Runner は `ScriptMachine` と Object 変数 `VSPresenterBridge` を保持し、即座にノード編集が可能。
 
 ## 💡 上級テクニック

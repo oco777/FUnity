@@ -25,6 +25,9 @@
 - fix(editor): avoid assigning FlowGraph.variables directly; initialize macro variables via SerializedObject managed reference.
 - fix(vs): guard ScriptGraphAsset variable resolution against null FlowGraph.variables entries.
 
+### Removed
+- chore(editor): Visual Scripting 用のマクロ自動生成メニュー（`CreateFooniFloatMacro`, `CreateFooniMacros`, `CreateScratchStarterMacros`, `VisualScriptingScratchTools`）を撤去。
+
 ### Docs
 - docs(vs): note Scratch Unit adapter auto-resolution and removal of Adapter ports in VS mapping.
 - docs: update Runtime XML comments to clarify MVP responsibilities and UI Toolkit constraints.
