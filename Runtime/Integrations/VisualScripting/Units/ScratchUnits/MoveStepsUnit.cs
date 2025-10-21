@@ -56,7 +56,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Move Steps: ActorPresenterAdapter (FooniController) が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Move Steps: ActorPresenterAdapter が見つからないため移動できません。VSPresenterBridge などからアダプタを登録してください。");
                 return m_Exit;
             }
 

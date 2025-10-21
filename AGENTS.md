@@ -88,7 +88,7 @@ public sealed class ActorState
 ## Docs: VS Scratch Mapping の更新ポリシー
 
 **対象:** Visual Scripting の Scratch 互換ユニットおよび関連 API の変更  
-（例）`Runtime/Integrations/VisualScripting/Units/**`, `FooniController`, `ActorPresenter` のメソッド名/引数/UnitTitle 変更 など
+（例）`Runtime/Integrations/VisualScripting/Units/**`, `ActorPresenterAdapter`, `VSPresenterBridge` のメソッド名/引数/UnitTitle 変更 など
 
 **原則:** これらに変更が入った場合は、**`Docs/VS_Scratch_Mapping.md` を同一 PR 内で更新**してください。
 

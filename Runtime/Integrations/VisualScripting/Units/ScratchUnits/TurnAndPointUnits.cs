@@ -56,7 +56,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Turn Degrees: ActorPresenterAdapter (FooniController) が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Turn Degrees: ActorPresenterAdapter が未解決のため回転できません。VSPresenterBridge などでアダプタを供給してください。");
                 return m_Exit;
             }
 
@@ -118,7 +118,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Point Direction: ActorPresenterAdapter (FooniController) が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Point Direction: ActorPresenterAdapter が未解決のため向きを設定できません。VSPresenterBridge などでアダプタを供給してください。");
                 return m_Exit;
             }
 

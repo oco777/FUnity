@@ -64,7 +64,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Go To X,Y: ActorPresenterAdapter (FooniController) が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Go To X,Y: ActorPresenterAdapter が未解決のため座標を設定できません。VSPresenterBridge などでアダプタを供給してください。");
                 return m_Exit;
             }
 
@@ -125,7 +125,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Change X By: ActorPresenterAdapter (FooniController) が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Change X By: ActorPresenterAdapter が未解決のため移動できません。VSPresenterBridge などでアダプタを供給してください。");
                 return m_Exit;
             }
 
@@ -186,7 +186,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Change Y By: ActorPresenterAdapter (FooniController) が見つかりません。");
+                Debug.LogWarning("[FUnity] Scratch/Change Y By: ActorPresenterAdapter が未解決のため移動できません。VSPresenterBridge などでアダプタを供給してください。");
                 return m_Exit;
             }
 

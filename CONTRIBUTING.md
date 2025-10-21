@@ -9,7 +9,7 @@ FUnity では、Visual Scripting の Scratch 互換ノード群（`Runtime/Integ
 - Unit クラスの追加・削除・改名
 - `UnitTitle("Scratch/...")` または `UnitTitle("Fooni/...")` のタイトル変更
 - Scratch ブロック対応の日本語表記（Docs 内のテキスト）に影響する変更
-- 関連 API (`ActorPresenterAdapter` / 旧 `FooniController`, `ActorPresenter`) の動作変更
+- 関連 API (`ActorPresenterAdapter` / `VSPresenterBridge`, `ActorPresenter`) の動作変更
 
 ### 更新手順
 1. 変更を確認し、`Docs/VS_Scratch_Mapping.md` に反映
