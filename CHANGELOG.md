@@ -12,7 +12,6 @@
 - refactor(vs): remove ActorPresenterAdapter input ports from Scratch Units and rely on internal auto-resolution.
 - refactor(vs): fix Variables.Object overload and qualify UnityEngine.Object usage in Scratch units.
 - refactor(vs): stop auto-attaching ScriptMachine to 'FUnity UI'; require explicit placement
-- refactor(core): rename FooniController to ActorPresenterAdapter with obsolete shim for gradual migration.
 - Theme の正規パスを `Assets/FUnity/UI/USS/` に統一し、UI Builder 既定テーマを優先する運用に更新。
 - Visual Scripting を必須依存に変更し、ランタイムから `UNITY_VISUAL_SCRIPTING` ガードと反射ベースの初期化を撤廃。
 - ActorPresenter でステージ境界を保持し、ActorState 更新時に座標をクランプするよう統合。UI 側の `FooniUIBridge.ClampToPanel` は非推奨化。
@@ -26,6 +25,8 @@
 - fix(vs): guard ScriptGraphAsset variable resolution against null FlowGraph.variables entries.
 
 ### Removed
+- Core: 旧ランタイム管理 MonoBehaviour を削除し、`FUnityManager` に一本化。
+- VS: 旧 Visual Scripting ブリッジ MonoBehaviour を削除し、`VSPresenterBridge` / `ActorPresenterAdapter` に統一。
 - chore(editor): Visual Scripting 用のマクロ自動生成メニュー（`CreateFooniFloatMacro`, `CreateFooniMacros`, `CreateScratchStarterMacros`, `VisualScriptingScratchTools`）を撤去。
 - VS: Fooni float units removed (`Fooni_EnableFloatUnit`, `Fooni_SetFloatAmplitudeUnit`, `Fooni_SetFloatPeriodUnit`). Feature is deprecated and no longer supported.
 

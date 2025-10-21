@@ -21,7 +21,7 @@ namespace FUnity.Core
     /// UI ドキュメント、俳優、Visual Scripting Runner を初期化し、Visual Scripting から Presenter への命令経路を構築する。
     /// </summary>
     /// <remarks>
-    /// 依存関係: <see cref="FUnityProjectData"/>, <see cref="UIDocument"/>, <see cref="ActorPresenterAdapter"/>（旧称 <see cref="FooniController"/>), <see cref="ActorPresenter"/>
+    /// 依存関係: <see cref="FUnityProjectData"/>, <see cref="UIDocument"/>, <see cref="ActorPresenterAdapter"/>, <see cref="ActorPresenter"/>, <see cref="VSPresenterBridge"/>
     /// 想定ライフサイクル: シーン常駐。Awake で必要な GameObject を生成し、Start で Stage/Actor を構築、その後は Visual Scripting
     ///     グラフから Presenter へ命令が流入する。
     /// スレッド/GC: Unity メインスレッド専用。生成物は MonoBehaviour と ScriptableObject のみ。
@@ -58,7 +58,7 @@ namespace FUnity.Core
         /// <summary>俳優設定と Presenter を対応付けるマップ。</summary>
         private readonly Dictionary<FUnityActorData, ActorPresenter> m_ActorPresenterMap = new Dictionary<FUnityActorData, ActorPresenter>();
 
-        /// <summary>Presenter 初期化待ちの ActorPresenterAdapter（旧称 FooniController）群。</summary>
+        /// <summary>Presenter 初期化待ちの ActorPresenterAdapter 群。</summary>
         private readonly Dictionary<FUnityActorData, List<ActorPresenterAdapter>> m_PendingActorControllers = new Dictionary<FUnityActorData, List<ActorPresenterAdapter>>();
 
         /// <summary>生成済み俳優 UI 要素と設定のペア。</summary>
@@ -280,7 +280,7 @@ namespace FUnity.Core
 
             if (!m_LoggedMissingAdapter)
             {
-                Debug.LogWarning("[FUnity] ActorPresenterAdapter (旧 FooniController) is not assigned. Assign one to FUnityManager or reference it from your Visual Scripting graph.");
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter が見つかりません。FUnityManager の Default Actor Presenter Adapter に割り当てるか、Visual Scripting グラフから参照してください。");
                 m_LoggedMissingAdapter = true;
             }
         }
@@ -576,7 +576,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// <see cref="ActorPresenterAdapter"/>（旧称 <see cref="FooniController"/>）に俳優要素をバインドし、浮遊アニメーション設定を同期する。
+        /// <see cref="ActorPresenterAdapter"/> に俳優要素をバインドし、浮遊アニメーション設定を同期する。
         /// </summary>
         /// <param name="actorVE">俳優 UI 要素。</param>
         /// <param name="data">俳優設定。</param>
@@ -592,13 +592,13 @@ namespace FUnity.Core
 
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] ActorPresenterAdapter (旧 FooniController) not found. Assign one in the scene to bind actor elements.");
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter がシーンに存在しません。俳優要素と Presenter を橋渡しするコンポーネントを配置してください。");
                 return;
             }
 
             if (controller.BoundElement != null && controller.BoundElement != actorVE)
             {
-                Debug.LogWarning("[FUnity] ActorPresenterAdapter (FooniController) already bound to another element. Rebinding to the latest actor.");
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter が他の要素に結合済みのため、最新の俳優に再バインドします。");
             }
 
             controller.BindActorElement(actorVE);
@@ -764,7 +764,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// Runner に <see cref="ActorPresenterAdapter"/>（旧称 <see cref="FooniController"/>）を設定し、俳優 Presenter との橋渡しを行う。
+        /// Runner に <see cref="ActorPresenterAdapter"/> を設定し、俳優 Presenter との橋渡しを行う。
         /// </summary>
         /// <param name="runner">構成対象の Runner。</param>
         /// <param name="actor">俳優設定。</param>
@@ -790,7 +790,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// 俳優設定に紐づく Presenter が未初期化の場合、ActorPresenterAdapter（旧称 FooniController）を保留リストに追加する。Presenter 済みであれば即座に結線する。
+        /// 俳優設定に紐づく Presenter が未初期化の場合、ActorPresenterAdapter を保留リストに追加する。Presenter 済みであれば即座に結線する。
         /// </summary>
         /// <param name="actor">紐付け対象の俳優設定。</param>
         /// <param name="controller">Presenter へ命令を委譲する ActorPresenterAdapter。</param>
