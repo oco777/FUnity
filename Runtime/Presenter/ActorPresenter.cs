@@ -24,6 +24,12 @@ namespace FUnity.Runtime.Presenter
         /// <summary>俳優の初期向き（度）。Scratch 互換で 90°=上。</summary>
         private const float DefaultDirectionDeg = 90f;
 
+        /// <summary>拡大率として許容する最小値（%）。これ未満の値は 1% に丸め込む。</summary>
+        private const float MinSizePercent = 1f;
+
+        /// <summary>拡大率として許容する最大値（%）。これより大きい値は 300% に丸め込む。</summary>
+        private const float MaxSizePercent = 300f;
+
         /// <summary>ランタイム状態を保持する Model。</summary>
         private ActorState m_State;
 
@@ -78,6 +84,21 @@ namespace FUnity.Runtime.Presenter
             m_State = resolvedState;
             m_View = view;
 
+            if (m_State != null)
+            {
+                if (m_State.SizePercent <= 0f)
+                {
+                    m_State.SizePercent = 100f;
+                }
+
+                m_State.SizePercent = Mathf.Clamp(m_State.SizePercent, MinSizePercent, MaxSizePercent);
+                m_CurrentScale = m_State.SizePercent / 100f;
+            }
+            else
+            {
+                m_CurrentScale = 1f;
+            }
+
             var initialPosition = data != null ? data.InitialPosition : Vector2.zero;
             m_State.SetPositionUnchecked(initialPosition);
             m_State.Speed = Mathf.Max(0f, data != null ? GetConfiguredSpeed(data) : 300f);
@@ -92,7 +113,6 @@ namespace FUnity.Runtime.Presenter
             }
 
             m_BaseSize = data != null ? data.Size : Vector2.zero;
-            m_CurrentScale = 1f;
             m_LastMeasuredSizePx = Vector2.zero;
             m_StageBoundsPx = new Rect(0f, 0f, 0f, 0f);
             m_PositionBoundsPx = new Rect(0f, 0f, 0f, 0f);
@@ -118,13 +138,16 @@ namespace FUnity.Runtime.Presenter
                     m_View.SetSize(m_BaseSize);
                 }
 
-                m_View.SetScale(m_CurrentScale);
                 m_View.SetRotationDegrees(m_State.RotationDeg);
 
                 AttachViewEvents();
-                UpdateRenderedSizeFromView();
                 RefreshStageBoundsFromView();
-                ClampStateToBounds();
+            }
+
+            SetSizePercent(m_State.SizePercent);
+
+            if (m_View != null)
+            {
                 m_View.SetPosition(m_State.Position);
             }
         }
@@ -254,20 +277,46 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// スケールを設定し、View の Transform に反映する。
+        /// スケールを設定し、Scratch 互換の 100% 基準へ変換して <see cref="SetSizePercent(float)"/> を呼び出す。
         /// </summary>
         /// <param name="scale">等倍=1 としたスケール値。</param>
         public void SetScale(float scale)
         {
-            m_CurrentScale = Mathf.Max(0.01f, scale);
+            SetSizePercent(scale * 100f);
+        }
+
+        /// <summary>
+        /// 拡大率（%）を絶対値で設定し、View 側へ等比スケールを反映する。
+        /// </summary>
+        /// <param name="percent">100 で等倍となる拡大率（%）。</param>
+        public void SetSizePercent(float percent)
+        {
+            var clamped = Mathf.Clamp(percent, MinSizePercent, MaxSizePercent);
+
+            if (m_State != null)
+            {
+                m_State.SizePercent = clamped;
+            }
+
+            m_CurrentScale = clamped / 100f;
 
             if (m_View != null)
             {
-                m_View.SetScale(m_CurrentScale);
+                m_View.SetSizePercent(clamped);
             }
 
             UpdateRenderedSizeFromView();
             ClampStateToBounds();
+        }
+
+        /// <summary>
+        /// 拡大率（%）を相対値で変更し、現在値に加算した結果を即時反映する。
+        /// </summary>
+        /// <param name="deltaPercent">加算する差分（%）。正で拡大、負で縮小。</param>
+        public void ChangeSizeByPercent(float deltaPercent)
+        {
+            var currentPercent = m_State != null ? m_State.SizePercent : m_CurrentScale * 100f;
+            SetSizePercent(currentPercent + deltaPercent);
         }
 
         /// <summary>

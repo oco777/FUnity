@@ -163,6 +163,40 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 俳優の大きさを絶対値（%）で設定する。Scratch の「大きさを ◯ % にする」を想定する。
+        /// </summary>
+        /// <param name="percent">100 で等倍となる拡大率（%）。</param>
+        /// <param name="actorId">将来的に複数俳優へ対応するための識別子。null で既定俳優。</param>
+        public void SetActorSizePercent(float percent, string actorId = null)
+        {
+            var presenter = ResolveActorPresenter(actorId);
+            if (presenter == null)
+            {
+                Debug.LogWarning($"[FUnity] VSPresenterBridge: ActorPresenter が未設定のため大きさを設定できません。(actorId={actorId ?? "<default>"})");
+                return;
+            }
+
+            presenter.SetSizePercent(percent);
+        }
+
+        /// <summary>
+        /// 俳優の大きさを相対値（%）で変更する。Scratch の「大きさを ◯ % ずつ変える」を想定する。
+        /// </summary>
+        /// <param name="deltaPercent">加算する拡大率（%）。正で拡大、負で縮小。</param>
+        /// <param name="actorId">将来的な複数俳優対応用の識別子。null で既定俳優。</param>
+        public void ChangeActorSizeByPercent(float deltaPercent, string actorId = null)
+        {
+            var presenter = ResolveActorPresenter(actorId);
+            if (presenter == null)
+            {
+                Debug.LogWarning($"[FUnity] VSPresenterBridge: ActorPresenter が未設定のため大きさを変更できません。(actorId={actorId ?? "<default>"})");
+                return;
+            }
+
+            presenter.ChangeSizeByPercent(deltaPercent);
+        }
+
+        /// <summary>
         /// 俳優の見た目を Scratch と同様に相対回転させる。Custom Event "Actor/TurnDegrees" を想定。
         /// </summary>
         /// <param name="degrees">加算する角度（度）。正で反時計回り。</param>

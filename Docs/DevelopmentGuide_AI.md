@@ -133,12 +133,13 @@ git commit -m "Add dynamic UI generation via StageElement and ActorElement (#12)
 
 - **Custom Event 命名規則**：`"{Domain}/{Action}"` を基本とし、Visual Scripting から `VSPresenterBridge` の以下メソッドを呼び出す。
 
-| Scratchブロック | Custom Event | C# ルート |
+| Scratchブロック | Custom Event / Unit | C# ルート |
 |------------------|--------------|-----------|
 | 「x座標を～にする」 | `Actor/SetPosition` | `VSPresenterBridge.OnActorSetPosition(x, y)` → `ActorPresenter.SetPosition` |
 | 「x座標を～ずつ変える」 | `Actor/MoveBy` | `VSPresenterBridge.OnActorMoveBy(dx, dy)` → `ActorPresenter.MoveBy` |
 | 「～と言う」 | `Actor/Say` | `VSPresenterBridge.OnActorSay` → `ActorView.ShowSpeech` |
-| 「大きさを～％にする」 | `Actor/SetSize` | `VSPresenterBridge.OnActorSetScale` → `ActorPresenter.SetScale` |
+| 「大きさを～％にする」 | `Scratch/Set Size %` | `VSPresenterBridge.SetActorSizePercent` → `ActorPresenter.SetSizePercent` |
+| 「大きさを～％ずつ変える」 | `Scratch/Change Size by %` | `VSPresenterBridge.ChangeActorSizeByPercent` → `ActorPresenter.ChangeSizeByPercent` |
 | 「背景を～にする」 | `Stage/SetBackground` | `StageBackgroundService.SetBackground` |
 
 - **AOT 対策**：`Assets/Link.xml` に `VSPresenterBridge` / `StageBackgroundService` / `TimerServiceBehaviour` を列挙し、IL2CPP でもリフレクション呼び出しが剥がれないようにする。

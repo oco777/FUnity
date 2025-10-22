@@ -34,6 +34,11 @@ namespace FUnity.Runtime.Model
         public float RotationDeg;
 
         /// <summary>
+        /// 現在の拡大率（%）。100 を等倍とし、Presenter が 1～300 % の範囲へクランプして管理する。
+        /// </summary>
+        public float SizePercent = 100f;
+
+        /// <summary>
         /// 外部から与えられた座標を指定された範囲内にクランプして保持する。
         /// </summary>
         /// <param name="pos">設定したい座標（px）。</param>
