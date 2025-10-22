@@ -21,6 +21,33 @@ namespace FUnity.Runtime.Presenter
         /// <summary>遅延実行を提供するタイマーサービス。</summary>
         private ITimerService m_TimerService;
 
+        /// <summary>シーン内で最後に有効化されたブリッジのシングルトン参照。</summary>
+        public static VSPresenterBridge Instance { get; private set; }
+
+        /// <summary>
+        /// MonoBehaviour 初期化時にグローバル参照を登録し、重複時は警告を出す。
+        /// </summary>
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning("[FUnity] VSPresenterBridge: 複数インスタンスが有効化されています。最新のコンポーネントを Instance として上書きします。");
+            }
+
+            Instance = this;
+        }
+
+        /// <summary>
+        /// 破棄時にシングルトン参照を解除する。
+        /// </summary>
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         /// <summary>
         /// Visual Scripting から操作可能な Presenter インスタンス。
         /// </summary>
@@ -136,6 +163,23 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 俳優の見た目を Scratch と同様に相対回転させる。Custom Event "Actor/TurnDegrees" を想定。
+        /// </summary>
+        /// <param name="degrees">加算する角度（度）。正で反時計回り。</param>
+        /// <param name="actorId">将来的に複数俳優を識別するための任意 ID。null で既定俳優。</param>
+        public void TurnDegrees(float degrees, string actorId = null)
+        {
+            var presenter = ResolveActorPresenter(actorId);
+            if (presenter == null)
+            {
+                Debug.LogWarning($"[FUnity] VSPresenterBridge: ActorPresenter が未設定のため回転できません。(actorId={actorId ?? "<default>"})");
+                return;
+            }
+
+            presenter.RotateBy(degrees);
+        }
+
+        /// <summary>
         /// ステージ背景色を変更する。Custom Event "Stage/SetBackgroundColor" を想定。
         /// </summary>
         /// <param name="color">適用する色。</param>
@@ -213,6 +257,21 @@ namespace FUnity.Runtime.Presenter
         public void VS_Move(Vector2 direction, float deltaTime)
         {
             m_Target?.Tick(deltaTime, direction);
+        }
+
+        /// <summary>
+        /// ActorPresenter を ID から解決する。現状は既定ターゲットのみ対応し、拡張余地を残す。
+        /// </summary>
+        /// <param name="actorId">識別子。null の場合は既定。</param>
+        /// <returns>解決した Presenter。見つからない場合は null。</returns>
+        private ActorPresenter ResolveActorPresenter(string actorId)
+        {
+            if (!string.IsNullOrEmpty(actorId))
+            {
+                Debug.LogWarning($"[FUnity] VSPresenterBridge: actorId フィルタリングは未実装です。actorId={actorId} の要求には既定ターゲットを返します。");
+            }
+
+            return m_Target;
         }
     }
 }

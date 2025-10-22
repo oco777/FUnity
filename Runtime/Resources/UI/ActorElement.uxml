@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement name="root" class="actor-root">
-        <ui:Image name="fooni-image" class="actor-portrait fooni-image" />
+        <ui:Image name="portrait" class="actor-portrait fooni-image" />
         <ui:Label name="speech" class="actor-speech" text="" />
     </ui:VisualElement>
 </ui:UXML>

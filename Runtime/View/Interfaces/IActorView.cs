@@ -55,6 +55,12 @@ namespace FUnity.Runtime.View
         void SetScale(float scale);
 
         /// <summary>
+        /// 回転角度（度）を UI に適用する。中心ピボットで回転させることを想定する。
+        /// </summary>
+        /// <param name="degrees">0～360 度に正規化済みの回転角度。</param>
+        void SetRotationDegrees(float degrees);
+
+        /// <summary>
         /// 吹き出しテキストを表示する。指定時間経過後は自動で非表示にする。
         /// </summary>
         /// <param name="message">表示するメッセージ。</param>

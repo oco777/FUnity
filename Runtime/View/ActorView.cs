@@ -41,6 +41,9 @@ namespace FUnity.Runtime.View
         /// <summary>サイズ・吹き出し適用対象となるルート要素。</summary>
         private VisualElement m_RootElement;
 
+        /// <summary>回転および背景差し替えに利用するポートレート要素。</summary>
+        private VisualElement m_PortraitElement;
+
         /// <summary>吹き出しテキストを表示するラベル。</summary>
         private Label m_SpeechLabel;
 
@@ -104,6 +107,10 @@ namespace FUnity.Runtime.View
             {
                 m_SpeechLabel.style.display = DisplayStyle.None;
             }
+
+            m_PortraitElement = element?.Q<VisualElement>("portrait")
+                ?? element?.Q<VisualElement>(className: "portrait")
+                ?? element?.Q<VisualElement>(className: "actor-portrait");
 
             RegisterGeometryCallbacks();
             NotifyStageBounds();
@@ -198,12 +205,12 @@ namespace FUnity.Runtime.View
         /// </example>
         public void SetPortrait(Sprite sprite)
         {
-            if (sprite == null || m_BoundElement == null)
+            if (sprite == null)
             {
                 return;
             }
 
-            var portrait = m_BoundElement.Q<VisualElement>("portrait") ?? m_BoundElement.Q<VisualElement>(className: "portrait");
+            var portrait = ResolvePortraitElement();
             if (portrait != null)
             {
                 portrait.style.backgroundImage = new StyleBackground(sprite);
@@ -257,6 +264,22 @@ namespace FUnity.Runtime.View
             m_RootElement.style.scale = new StyleScale(new Scale(new Vector3(safeScale, safeScale, 1f)));
 
             NotifyStageBounds();
+        }
+
+        /// <summary>
+        /// 指定された角度でポートレート要素を回転させる。中心ピボットを固定し、UITK の rotate プロパティを使用する。
+        /// </summary>
+        /// <param name="degrees">適用する角度（度）。0～360 度の範囲を想定する。</param>
+        public void SetRotationDegrees(float degrees)
+        {
+            var portrait = ResolvePortraitElement();
+            if (portrait == null)
+            {
+                return;
+            }
+
+            portrait.style.transformOrigin = new TransformOrigin(50f, 50f, 0f);
+            portrait.style.rotate = new Rotate(Angle.Degrees(degrees));
         }
 
         /// <summary>
@@ -379,6 +402,29 @@ namespace FUnity.Runtime.View
                 m_PanelRoot.UnregisterCallback<GeometryChangedEvent>(OnPanelGeometryChanged);
                 m_PanelRoot = null;
             }
+        }
+
+        /// <summary>
+        /// ポートレート要素を遅延解決し、キャッシュを維持する。存在しない場合は null を返す。
+        /// </summary>
+        /// <returns>回転・画像差し替え対象の VisualElement。</returns>
+        private VisualElement ResolvePortraitElement()
+        {
+            if (m_PortraitElement != null)
+            {
+                return m_PortraitElement;
+            }
+
+            if (m_BoundElement == null)
+            {
+                return null;
+            }
+
+            m_PortraitElement = m_BoundElement.Q<VisualElement>("portrait")
+                ?? m_BoundElement.Q<VisualElement>(className: "portrait")
+                ?? m_BoundElement.Q<VisualElement>(className: "actor-portrait");
+
+            return m_PortraitElement;
         }
     }
 }

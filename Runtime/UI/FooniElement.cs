@@ -31,8 +31,11 @@ namespace FUnity.Runtime.UI
         /// <summary>標準ポートレート画像の Resources 内パス（拡張子不要）。</summary>
         private const string FooniTexturePath = "Characters/Fooni";
 
-        /// <summary>`Q` 検索で使用する画像要素の名前/クラス。</summary>
-        private const string FooniImageName = "fooni-image";
+        /// <summary>ポートレート要素に付与する標準名称。</summary>
+        private const string PortraitElementName = "portrait";
+
+        /// <summary>旧バージョン互換の名前。</summary>
+        private const string LegacyFooniImageName = "fooni-image";
 
         /// <summary>ポートレート描画対象の <see cref="Image"/> 要素。</summary>
         private Image m_Image;
@@ -107,11 +110,17 @@ namespace FUnity.Runtime.UI
         /// </summary>
         private void CacheImageElement()
         {
-            m_Image = this.Q<Image>(name: FooniImageName) ?? this.Q<Image>(className: FooniImageName);
+            m_Image = this.Q<Image>(name: PortraitElementName)
+                ?? this.Q<Image>(name: LegacyFooniImageName)
+                ?? this.Q<Image>(className: PortraitElementName)
+                ?? this.Q<Image>(className: LegacyFooniImageName);
             if (m_Image == null)
             {
-                Debug.LogWarning("FooniElement: Unable to find Image element with name or class 'fooni-image'.");
+                Debug.LogWarning("FooniElement: Unable to find Image element for portrait (name 'portrait' or legacy 'fooni-image').");
+                return;
             }
+
+            m_Image.name = PortraitElementName;
         }
 
         /// <summary>

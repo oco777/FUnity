@@ -2,11 +2,12 @@
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
+using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
-    /// Scratch の「〇度回す」ブロックを再現し、方向を相対的に更新するカスタム Unit です。
+    /// Scratch の「〇度回す」ブロックを再現し、方向を相対的に更新するとともに Presenter 経由で UI 回転を適用するカスタム Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
     [UnitTitle("Scratch/Turn Degrees")]
@@ -53,14 +54,25 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す exit ポート。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
+            var delta = flow.GetValue<float>(m_DeltaDegrees);
+
+            var bridge = VSPresenterBridge.Instance;
+            if (bridge != null)
+            {
+                bridge.TurnDegrees(delta);
+            }
+            else
+            {
+                Debug.LogWarning("[FUnity] Scratch/Turn Degrees: VSPresenterBridge.Instance が未設定のため UI 回転を適用できません。FUnityManager がブリッジを初期化しているか確認してください。");
+            }
+
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Turn Degrees: ActorPresenterAdapter が未解決のため回転できません。VSPresenterBridge などでアダプタを供給してください。");
+                Debug.LogWarning("[FUnity] Scratch/Turn Degrees: ActorPresenterAdapter が未解決のため向きを更新できません。VSPresenterBridge などでアダプタを供給してください。");
                 return m_Exit;
             }
 
-            var delta = flow.GetValue<float>(m_DeltaDegrees);
             var current = controller.GetDirection();
             controller.SetDirection(current + delta);
             return m_Exit;

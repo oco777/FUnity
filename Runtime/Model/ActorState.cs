@@ -29,6 +29,11 @@ namespace FUnity.Runtime.Model
         public float DirectionDeg;
 
         /// <summary>
+        /// 現在の回転角度（度）。UI 上のポートレートを中心ピボットで回転させる際に利用し、0～360 度へ正規化して保持する。
+        /// </summary>
+        public float RotationDeg;
+
+        /// <summary>
         /// 外部から与えられた座標を指定された範囲内にクランプして保持する。
         /// </summary>
         /// <param name="pos">設定したい座標（px）。</param>

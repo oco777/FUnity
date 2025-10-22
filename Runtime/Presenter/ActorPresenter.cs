@@ -84,6 +84,11 @@ namespace FUnity.Runtime.Presenter
             if (shouldInitializeDirection)
             {
                 m_State.DirectionDeg = DefaultDirectionDeg;
+                m_State.RotationDeg = 0f;
+            }
+            else
+            {
+                m_State.RotationDeg = Normalize0To360(m_State.RotationDeg);
             }
 
             m_BaseSize = data != null ? data.Size : Vector2.zero;
@@ -114,6 +119,7 @@ namespace FUnity.Runtime.Presenter
                 }
 
                 m_View.SetScale(m_CurrentScale);
+                m_View.SetRotationDegrees(m_State.RotationDeg);
 
                 AttachViewEvents();
                 UpdateRenderedSizeFromView();
@@ -265,6 +271,40 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 現在角度に相対加算で回転させ、View へ style.rotate を適用する。
+        /// </summary>
+        /// <param name="deltaDeg">加算する角度（度）。正で反時計回り。</param>
+        public void RotateBy(float deltaDeg)
+        {
+            if (m_State == null)
+            {
+                return;
+            }
+
+            var normalized = Normalize0To360(m_State.RotationDeg + deltaDeg);
+            m_State.RotationDeg = normalized;
+
+            m_View?.SetRotationDegrees(normalized);
+        }
+
+        /// <summary>
+        /// 絶対角度を指定して回転状態を更新し、View に即時反映する。
+        /// </summary>
+        /// <param name="degrees">適用する角度（度）。</param>
+        public void SetRotation(float degrees)
+        {
+            if (m_State == null)
+            {
+                return;
+            }
+
+            var normalized = Normalize0To360(degrees);
+            m_State.RotationDeg = normalized;
+
+            m_View?.SetRotationDegrees(normalized);
+        }
+
+        /// <summary>
         /// 幅と高さを直接指定して View のサイズを変更する。
         /// </summary>
         /// <param name="size">幅・高さ（px）。負値の場合は無視される。</param>
@@ -412,7 +452,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            m_State.DirectionDeg = degrees;
+            m_State.DirectionDeg = Normalize0To360(degrees);
         }
 
         /// <summary>
@@ -585,6 +625,22 @@ namespace FUnity.Runtime.Presenter
             var maxX = Mathf.Max(rect.xMin, rect.xMax);
             var maxY = Mathf.Max(rect.yMin, rect.yMax);
             return Rect.MinMaxRect(minX, minY, maxX, maxY);
+        }
+
+        /// <summary>
+        /// 渡された角度を 0～360 度の範囲へ丸め込む。
+        /// </summary>
+        /// <param name="degrees">正規化対象の角度（度）。</param>
+        /// <returns>0～360 度に収めた角度。</returns>
+        private static float Normalize0To360(float degrees)
+        {
+            var normalized = degrees % 360f;
+            if (normalized < 0f)
+            {
+                normalized += 360f;
+            }
+
+            return normalized;
         }
     }
 }
