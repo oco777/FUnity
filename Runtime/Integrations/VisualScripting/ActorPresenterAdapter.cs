@@ -201,6 +201,36 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
+        /// 拡大率（%）を絶対値で設定し、Presenter 経由で UI へ反映する。
+        /// </summary>
+        /// <param name="percent">100 で等倍となる拡大率（%）。</param>
+        public void SetSizePercent(float percent)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため SetSizePercent を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.SetSizePercent(percent);
+        }
+
+        /// <summary>
+        /// 拡大率（%）を相対値で変更し、Presenter を通じて現在の値へ加算する。
+        /// </summary>
+        /// <param name="deltaPercent">加算する拡大率（%）。正で拡大、負で縮小。</param>
+        public void ChangeSizeByPercent(float deltaPercent)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため ChangeSizeByPercent を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.ChangeSizeByPercent(deltaPercent);
+        }
+
+        /// <summary>
         /// 俳優の座標にピクセル単位の差分を加算する。
         /// </summary>
         /// <param name="deltaPx">加算する座標差分（px）。右=+X、下=+Y。</param>

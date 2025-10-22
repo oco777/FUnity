@@ -55,6 +55,12 @@ namespace FUnity.Runtime.View
         void SetScale(float scale);
 
         /// <summary>
+        /// 拡大率（%）を適用し、ポートレート画像を中心ピボットで等比スケールさせる。
+        /// </summary>
+        /// <param name="percent">100 で等倍となる拡大率（%）。</param>
+        void SetSizePercent(float percent);
+
+        /// <summary>
         /// 回転角度（度）を UI に適用する。中心ピボットで回転させることを想定する。
         /// </summary>
         /// <param name="degrees">0～360 度に正規化済みの回転角度。</param>

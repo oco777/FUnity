@@ -267,6 +267,26 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
+        /// 拡大率（%）をポートレート要素へ適用し、中心ピボットで等比スケールさせる。
+        /// </summary>
+        /// <param name="percent">100 で等倍となる拡大率（%）。</param>
+        public void SetSizePercent(float percent)
+        {
+            var portrait = ResolvePortraitElement();
+            if (portrait == null)
+            {
+                return;
+            }
+
+            portrait.style.transformOrigin = new TransformOrigin(50f, 50f, 0f);
+
+            var safeScale = Mathf.Max(0.01f, percent / 100f);
+            portrait.style.scale = new StyleScale(new Scale(new Vector3(safeScale, safeScale, 1f)));
+
+            NotifyStageBounds();
+        }
+
+        /// <summary>
         /// 指定された角度でポートレート要素を回転させる。中心ピボットを固定し、UITK の rotate プロパティを使用する。
         /// </summary>
         /// <param name="degrees">適用する角度（度）。0～360 度の範囲を想定する。</param>

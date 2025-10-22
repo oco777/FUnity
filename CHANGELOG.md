@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- feat(vs/ui): Scratch の大きさ操作（Set Size %, Change Size by %）を追加し、Presenter が 1～300% にクランプした `style.scale` を適用。
 - feat(vs): Units read ActorPresenterAdapter from ScriptGraphAsset variables; editor assigns via ConfigureScriptMachine.
 - feat(core): move clamping to state mutation; deprecate FooniUIBridge.ClampToPanel().
 - PanelSettingsInitializer.EnsurePanelSettings() による Theme 自動割当（Editor 実行時）。
@@ -32,6 +33,7 @@
 - VS: Fooni float units removed (`Fooni_EnableFloatUnit`, `Fooni_SetFloatAmplitudeUnit`, `Fooni_SetFloatPeriodUnit`). Feature is deprecated and no longer supported.
 
 ### Docs
+- docs(vs): VS Scratch 対応表に大きさユニットと Presenter 連携の解説を追加。
 - docs(vs): note Scratch Unit adapter auto-resolution and removal of Adapter ports in VS mapping.
 - docs: update Runtime XML comments to clarify MVP responsibilities and UI Toolkit constraints.
 - docs: update README and Docs to reflect current initialization flow, theme resolution, and VS macro auto-creation.
