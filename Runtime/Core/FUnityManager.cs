@@ -95,6 +95,12 @@ namespace FUnity.Core
 
             /// <summary>俳優設定に対応する Presenter。初期化前は null。</summary>
             public ActorPresenter Presenter;
+
+            /// <summary>俳優表示用に確保した View 実装。再初期化時に再利用する。</summary>
+            public IActorView View;
+
+            /// <summary>View をアタッチした GameObject。Domain Reload 後も再利用する。</summary>
+            public GameObject ViewHost;
         }
 
         /// <summary>
@@ -367,7 +373,7 @@ namespace FUnity.Core
                 }
 
                 var view = CreateOrConfigureActorView(ref visual, ref bridgeCache, ref bridgeIndex);
-                if (view == null)
+                if (view == null || ReferenceEquals(view, NullActorView.Instance))
                 {
                     FUnityLog.LogWarning($"俳優ビューの構築に失敗したため '{visual.Data.DisplayName}' をスキップします。");
                     continue;
@@ -384,6 +390,8 @@ namespace FUnity.Core
                 BindPresenterToControllers(visual.Data, presenter);
 
                 visual.Presenter = presenter;
+                visual.View = view;
+                visual.ViewHost = (view as Component)?.gameObject;
                 m_ActorVisuals[i] = visual;
             }
 
@@ -399,13 +407,13 @@ namespace FUnity.Core
         /// <param name="visual">俳優設定と生成済み要素の組。</param>
         /// <param name="bridgeCache">再利用するブリッジのリスト。null の場合は生成する。</param>
         /// <param name="bridgeIndex">キャッシュ利用位置。負値の場合は 0 に補正する。</param>
-        /// <returns>構成済みの <see cref="ActorView"/>。致命的に失敗した場合は null。</returns>
-        private ActorView CreateOrConfigureActorView(ref ActorVisual visual, ref List<FooniUIBridge> bridgeCache, ref int bridgeIndex)
+        /// <returns>構成済みの <see cref="IActorView"/>。致命的に失敗した場合は <see cref="NullActorView.Instance"/>。</returns>
+        private IActorView CreateOrConfigureActorView(ref ActorVisual visual, ref List<FooniUIBridge> bridgeCache, ref int bridgeIndex)
         {
             if (m_FUnityUI == null)
             {
                 FUnityLog.LogWarning("FUnity UI GameObject が未確定のため、ActorView を生成できません。");
-                return null;
+                return NullActorView.Instance;
             }
 
             if (bridgeCache == null)
@@ -426,9 +434,25 @@ namespace FUnity.Core
             var bridge = bridgeCache[bridgeIndex];
             if (bridge == null)
             {
-                bridge = m_FUnityUI.AddComponent<FooniUIBridge>();
+                var existingBridges = m_FUnityUI.GetComponents<FooniUIBridge>();
+                if (existingBridges != null && existingBridges.Length > bridgeIndex)
+                {
+                    bridge = existingBridges[bridgeIndex];
+                }
+
+                if (bridge == null)
+                {
+                    bridge = m_FUnityUI.AddComponent<FooniUIBridge>();
+                    FUnityLog.LogCreateFallback("FooniUIBridge コンポーネント");
+                }
+
                 bridgeCache[bridgeIndex] = bridge;
-                FUnityLog.LogCreateFallback("FooniUIBridge コンポーネント");
+            }
+
+            if (bridge == null)
+            {
+                FUnityLog.LogWarning("FooniUIBridge コンポーネントを確保できなかったため、ActorView の構成を中止します。");
+                return NullActorView.Instance;
             }
 
             bridgeIndex++;
@@ -443,12 +467,37 @@ namespace FUnity.Core
             if (visual.Element == null)
             {
                 FUnityLog.LogWarning("俳優 UI 要素を生成できなかったため、ActorView の構成を中止します。");
-                return null;
+                return NullActorView.Instance;
             }
 
-            var view = m_FUnityUI.AddComponent<ActorView>();
-            view.Configure(bridge, visual.Element);
-            return view;
+            ActorView actorView = null;
+
+            if (visual.View is ActorView cachedView && cachedView != null)
+            {
+                actorView = cachedView;
+            }
+            else if (visual.ViewHost != null)
+            {
+                actorView = visual.ViewHost.GetComponent<ActorView>();
+            }
+
+            if (actorView == null)
+            {
+                if (!m_FUnityUI.TryGetComponent(out actorView))
+                {
+                    actorView = m_FUnityUI.AddComponent<ActorView>();
+                    FUnityLog.LogInfo($"ActorView コンポーネントを '{m_FUnityUI.name}' に追加しました。");
+                }
+            }
+
+            if (actorView == null)
+            {
+                FUnityLog.LogWarning("ActorView コンポーネントを確保できなかったため、俳優ビューを構成できません。");
+                return NullActorView.Instance;
+            }
+
+            actorView.Configure(bridge, visual.Element);
+            return actorView;
         }
 
         /// <summary>

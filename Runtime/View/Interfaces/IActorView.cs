@@ -1,6 +1,7 @@
 // Updated: 2025-03-03
 using System;
 using UnityEngine;
+using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.View
 {
@@ -86,5 +87,11 @@ namespace FUnity.Runtime.View
         /// <param name="sizePx">幅・高さ（px）。</param>
         /// <returns>取得できた場合は <c>true</c>。</returns>
         bool TryGetVisualSize(out Vector2 sizePx);
+
+        /// <summary>
+        /// Presenter 参照を View 側へ伝達し、旧 API 経由のフォールバック呼び出しを可能にする。
+        /// </summary>
+        /// <param name="presenter">紐付ける <see cref="ActorPresenter"/>。</param>
+        void SetActorPresenter(ActorPresenter presenter);
     }
 }
