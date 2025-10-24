@@ -73,6 +73,18 @@ namespace FUnity.Core
         /// <summary>遅延実行を提供するタイマーサービス。</summary>
         private TimerServiceBehaviour m_TimerService;
 
+        /// <summary>既定俳優テンプレートの Resources パス。</summary>
+        private const string DefaultActorTemplatePath = "UI/ActorElement";
+
+        /// <summary>フォールバック俳優テンプレートの Resources パス。</summary>
+        private const string FallbackActorTemplatePath = "UI/FooniElement";
+
+        /// <summary>既定で探索するポートレート要素名。</summary>
+        private const string PortraitElementName = "portrait";
+
+        /// <summary>既定で探索するルート要素名。</summary>
+        private const string RootElementName = "root";
+
         private struct ActorVisual
         {
             /// <summary>俳優設定。</summary>
@@ -316,9 +328,19 @@ namespace FUnity.Core
         /// </summary>
         private void InitializeActorPresenters()
         {
-            if (m_FUnityUI == null || m_ActorVisuals.Count == 0)
+            if (m_ActorVisuals.Count == 0)
             {
                 return;
+            }
+
+            if (m_FUnityUI == null)
+            {
+                EnsureFUnityUI();
+                if (m_FUnityUI == null)
+                {
+                    FUnityLog.LogWarning("FUnity UI GameObject が存在しないため、俳優 Presenter の初期化をスキップします。");
+                    return;
+                }
             }
 
             if (m_VsBridge == null)
@@ -326,7 +348,10 @@ namespace FUnity.Core
                 EnsurePresenterBridge();
             }
 
-            var bridgeCache = new List<FooniUIBridge>(m_FUnityUI.GetComponents<FooniUIBridge>());
+            var existingBridges = m_FUnityUI.GetComponents<FooniUIBridge>();
+            var bridgeCache = existingBridges != null && existingBridges.Length > 0
+                ? new List<FooniUIBridge>(existingBridges)
+                : new List<FooniUIBridge>(Mathf.Max(4, m_ActorVisuals.Count));
             var bridgeIndex = 0;
 
             m_ActorPresenterMap.Clear();
@@ -334,14 +359,17 @@ namespace FUnity.Core
             for (var i = 0; i < m_ActorVisuals.Count; i++)
             {
                 var visual = m_ActorVisuals[i];
-                if (visual.Element == null)
+
+                if (visual.Data == null)
                 {
+                    FUnityLog.LogWarning($"俳優データが null です (index={i})。初期化をスキップします。");
                     continue;
                 }
 
-                var view = CreateOrConfigureActorView(visual, bridgeCache, ref bridgeIndex);
+                var view = CreateOrConfigureActorView(ref visual, ref bridgeCache, ref bridgeIndex);
                 if (view == null)
                 {
+                    FUnityLog.LogWarning($"俳優ビューの構築に失敗したため '{visual.Data.DisplayName}' をスキップします。");
                     continue;
                 }
 
@@ -366,28 +394,41 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// 俳優 UI 要素に <see cref="ActorView"/> と <see cref="FooniUIBridge"/> を紐付ける。
+        /// 俳優 UI 要素に <see cref="ActorView"/> と <see cref="FooniUIBridge"/> を結び付け、テンプレート欠如時はフォールバックを生成する。
         /// </summary>
-        /// <param name="visual">俳優設定と要素のペア。</param>
-        /// <param name="bridgeCache">再利用するブリッジのキャッシュ。</param>
-        /// <param name="bridgeIndex">現在のキャッシュ使用位置。</param>
-        /// <returns>構成済みの <see cref="ActorView"/>。失敗時は null。</returns>
-        private ActorView CreateOrConfigureActorView(ActorVisual visual, List<FooniUIBridge> bridgeCache, ref int bridgeIndex)
+        /// <param name="visual">俳優設定と生成済み要素の組。</param>
+        /// <param name="bridgeCache">再利用するブリッジのリスト。null の場合は生成する。</param>
+        /// <param name="bridgeIndex">キャッシュ利用位置。負値の場合は 0 に補正する。</param>
+        /// <returns>構成済みの <see cref="ActorView"/>。致命的に失敗した場合は null。</returns>
+        private ActorView CreateOrConfigureActorView(ref ActorVisual visual, ref List<FooniUIBridge> bridgeCache, ref int bridgeIndex)
         {
             if (m_FUnityUI == null)
             {
+                FUnityLog.LogWarning("FUnity UI GameObject が未確定のため、ActorView を生成できません。");
                 return null;
             }
 
-            FooniUIBridge bridge;
-            if (bridgeIndex < bridgeCache.Count)
+            if (bridgeCache == null)
             {
-                bridge = bridgeCache[bridgeIndex];
+                bridgeCache = new List<FooniUIBridge>(Mathf.Max(4, m_ActorVisuals.Count));
             }
-            else
+
+            if (bridgeIndex < 0)
+            {
+                bridgeIndex = 0;
+            }
+
+            while (bridgeCache.Count <= bridgeIndex)
+            {
+                bridgeCache.Add(null);
+            }
+
+            var bridge = bridgeCache[bridgeIndex];
+            if (bridge == null)
             {
                 bridge = m_FUnityUI.AddComponent<FooniUIBridge>();
-                bridgeCache.Add(bridge);
+                bridgeCache[bridgeIndex] = bridge;
+                FUnityLog.LogCreateFallback("FooniUIBridge コンポーネント");
             }
 
             bridgeIndex++;
@@ -397,9 +438,278 @@ namespace FUnity.Core
                 bridge.defaultSpeed = Mathf.Max(0f, visual.Data.MoveSpeed);
             }
 
+            EnsureActorElement(ref visual);
+
+            if (visual.Element == null)
+            {
+                FUnityLog.LogWarning("俳優 UI 要素を生成できなかったため、ActorView の構成を中止します。");
+                return null;
+            }
+
             var view = m_FUnityUI.AddComponent<ActorView>();
             view.Configure(bridge, visual.Element);
             return view;
+        }
+
+        /// <summary>
+        /// 俳優に対応する UI 要素の存在を保証し、スタイルとポートレートを適用する。
+        /// </summary>
+        /// <param name="visual">俳優設定と要素の組。</param>
+        private void EnsureActorElement(ref ActorVisual visual)
+        {
+            if (visual.Data == null)
+            {
+                return;
+            }
+
+            if (visual.Element == null)
+            {
+                var createdElement = CreateActorElement(visual.Data);
+                if (createdElement == null)
+                {
+                    createdElement = CreateFallbackActorElement(visual.Data);
+                    if (createdElement == null)
+                    {
+                        FUnityLog.LogWarning($"'{visual.Data.DisplayName}' の俳優要素を構築できませんでした。");
+                        return;
+                    }
+
+                    FUnityLog.LogCreateFallback($"'{visual.Data.DisplayName}' 用俳優要素 (フォールバック)");
+                }
+
+                AttachActorElementToRoot(createdElement);
+                visual.Element = createdElement;
+            }
+
+            if (visual.Element == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(visual.Element.name) && !string.IsNullOrEmpty(visual.Data.DisplayName))
+            {
+                visual.Element.name = visual.Data.DisplayName;
+            }
+
+            ApplyActorElementStyles(visual.Element, visual.Data);
+            ApplyActorPortrait(visual.Element, visual.Data);
+        }
+
+        /// <summary>
+        /// 俳優要素を UIDocument のルートへ追加する。既に親がある場合は何もしない。
+        /// </summary>
+        /// <param name="element">追加対象の要素。</param>
+        private void AttachActorElementToRoot(VisualElement element)
+        {
+            if (element == null || element.parent != null)
+            {
+                return;
+            }
+
+            var root = m_UIDocument != null ? m_UIDocument.rootVisualElement : null;
+            if (root == null)
+            {
+                FUnityLog.LogWarning("UIDocument の rootVisualElement が null のため、俳優要素を追加できません。");
+                return;
+            }
+
+            root.Add(element);
+        }
+
+        /// <summary>
+        /// スタイルシートを適用し、サイズや初期座標を設定する。
+        /// </summary>
+        /// <param name="element">対象の UI 要素。</param>
+        /// <param name="data">参照する俳優設定。</param>
+        private void ApplyActorElementStyles(VisualElement element, FUnityActorData data)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            var root = element.Q<VisualElement>(RootElementName) ?? element;
+
+            var styleSheet = LoadActorStyleSheet();
+            if (styleSheet != null)
+            {
+                if (!ContainsStyleSheet(element, styleSheet))
+                {
+                    element.styleSheets.Add(styleSheet);
+                }
+
+                if (!ContainsStyleSheet(root, styleSheet))
+                {
+                    root.styleSheets.Add(styleSheet);
+                }
+            }
+
+            root.style.flexGrow = 0f;
+            root.style.flexShrink = 0f;
+
+            if (data != null)
+            {
+                var size = data.Size;
+                root.style.width = size.x > 0f ? size.x : StyleKeyword.Auto;
+                root.style.height = size.y > 0f ? size.y : StyleKeyword.Auto;
+            }
+
+            element.style.position = Position.Absolute;
+            element.style.left = data != null ? data.InitialPosition.x : 0f;
+            element.style.top = data != null ? data.InitialPosition.y : 0f;
+            element.style.translate = new Translate(0f, 0f);
+
+            element.AddToClassList("actor");
+            if (root != element)
+            {
+                root.AddToClassList("actor");
+            }
+        }
+
+        /// <summary>
+        /// ポートレート画像を適用し、未設定時は単色背景へフォールバックする。
+        /// </summary>
+        /// <param name="element">検索対象の UI 要素。</param>
+        /// <param name="data">俳優設定。</param>
+        private void ApplyActorPortrait(VisualElement element, FUnityActorData data)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            var root = element.Q<VisualElement>(RootElementName) ?? element;
+            var portrait = root.Q<VisualElement>(PortraitElementName)
+                ?? root.Q<VisualElement>(className: PortraitElementName)
+                ?? element.Q<VisualElement>(PortraitElementName)
+                ?? element.Q<VisualElement>(className: PortraitElementName);
+
+            if (portrait == null)
+            {
+                FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' のポートレート要素が見つかりません。");
+                return;
+            }
+
+            var texture = data?.Portrait;
+            if (texture != null)
+            {
+                portrait.style.backgroundImage = new StyleBackground(texture);
+                portrait.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                return;
+            }
+
+            portrait.style.backgroundImage = new StyleBackground();
+            portrait.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+            portrait.style.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+            FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' のポートレートが設定されていないため単色背景を使用します。");
+        }
+
+        /// <summary>
+        /// Resources から俳優用 VisualTreeAsset を読み込む。既定パスが失敗した場合はフォールバックを試みる。
+        /// </summary>
+        /// <returns>読み込んだ VisualTreeAsset。両方失敗した場合は null。</returns>
+        private static VisualTreeAsset LoadActorVisualTreeAsset()
+        {
+            var primary = Resources.Load<VisualTreeAsset>(DefaultActorTemplatePath);
+            if (primary != null)
+            {
+                return primary;
+            }
+
+            FUnityLog.LogMissingResource("俳優 UI テンプレート (VisualTreeAsset)", $"{DefaultActorTemplatePath}.uxml");
+
+            var fallback = Resources.Load<VisualTreeAsset>(FallbackActorTemplatePath);
+            if (fallback == null)
+            {
+                FUnityLog.LogMissingResource("俳優 UI テンプレート (VisualTreeAsset)", $"{FallbackActorTemplatePath}.uxml");
+            }
+
+            return fallback;
+        }
+
+        /// <summary>
+        /// Resources から俳優用 StyleSheet を読み込む。既定パスが存在しない場合はフォールバックを試みる。
+        /// </summary>
+        /// <returns>読み込んだ StyleSheet。見つからない場合は null。</returns>
+        private static StyleSheet LoadActorStyleSheet()
+        {
+            var primary = Resources.Load<StyleSheet>(DefaultActorTemplatePath);
+            if (primary != null)
+            {
+                return primary;
+            }
+
+            FUnityLog.LogMissingResource("俳優 UI スタイル", $"{DefaultActorTemplatePath}.uss");
+
+            var fallback = Resources.Load<StyleSheet>(FallbackActorTemplatePath);
+            if (fallback == null)
+            {
+                FUnityLog.LogMissingResource("俳優 UI スタイル", $"{FallbackActorTemplatePath}.uss");
+            }
+
+            return fallback;
+        }
+
+        /// <summary>
+        /// 指定したスタイルシートが既に追加されているかを確認する。
+        /// </summary>
+        /// <param name="element">確認対象の要素。</param>
+        /// <param name="styleSheet">探索するスタイルシート。</param>
+        /// <returns>既に含まれている場合は <c>true</c>。</returns>
+        private static bool ContainsStyleSheet(VisualElement element, StyleSheet styleSheet)
+        {
+            if (element == null || styleSheet == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < element.styleSheets.count; i++)
+            {
+                if (element.styleSheets[i] == styleSheet)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// テンプレートが存在しない場合の最小俳優要素を生成する。
+        /// </summary>
+        /// <param name="data">名前表示に使用する俳優設定。</param>
+        /// <returns>生成した要素。Resources 読み込みも失敗した場合は単純な <see cref="VisualElement"/>。</returns>
+        private static VisualElement CreateFallbackActorElement(FUnityActorData data)
+        {
+            var visualTree = LoadActorVisualTreeAsset();
+            if (visualTree != null)
+            {
+                return visualTree.CloneTree();
+            }
+
+            var element = new VisualElement();
+            element.style.flexDirection = FlexDirection.Column;
+            element.style.alignItems = Align.Center;
+            element.style.justifyContent = Justify.Center;
+            element.style.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 0.85f);
+            element.style.minWidth = 96f;
+            element.style.minHeight = 96f;
+            element.style.paddingTop = 8f;
+            element.style.paddingBottom = 8f;
+            element.style.paddingLeft = 8f;
+            element.style.paddingRight = 8f;
+
+            var label = new Label(!string.IsNullOrEmpty(data?.DisplayName) ? data.DisplayName : "Actor");
+            label.style.unityFontStyleAndWeight = FontStyle.Bold;
+            label.style.unityTextAlign = TextAnchor.MiddleCenter;
+            label.style.marginBottom = 4f;
+            label.style.marginTop = 4f;
+            label.style.flexGrow = 0f;
+
+            element.Add(label);
+
+            FUnityLog.LogCreateFallback("簡易俳優 UI 要素");
+            return element;
         }
 
         /// <summary>
