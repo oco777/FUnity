@@ -17,7 +17,6 @@ namespace FUnity.Runtime.View
     ///     の初期化時に <see cref="Configure(FooniUIBridge, VisualElement)"/> で結線される。
     /// ビューは常に Presenter からの一方向更新のみを許容し、ユーザー入力は受け付けない。
     /// </remarks>
-    [DisallowMultipleComponent]
     [RequireComponent(typeof(UIDocument))]
     public sealed class ActorView : MonoBehaviour, IActorView
     {
