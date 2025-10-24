@@ -85,6 +85,9 @@ namespace FUnity.Core
         /// <summary>既定で探索するルート要素名。</summary>
         private const string RootElementName = "root";
 
+        /// <summary>既定で探索する俳優コンテナの USS クラス名。</summary>
+        private const string RootElementClassName = "actor-root";
+
         private struct ActorVisual
         {
             /// <summary>俳優設定。</summary>
@@ -577,7 +580,12 @@ namespace FUnity.Core
                 return;
             }
 
-            var root = element.Q<VisualElement>(RootElementName) ?? element;
+            var actorRoot = ResolveActorRootElement(element);
+            if (actorRoot == null && data != null)
+            {
+                var displayName = string.IsNullOrEmpty(data.DisplayName) ? "(Unknown)" : data.DisplayName;
+                FUnityLog.LogWarning($"'{displayName}' の俳優コンテナ (#root / .actor-root) が見つからないため、InitialPosition の適用をスキップします。");
+            }
 
             var styleSheet = LoadActorStyleSheet();
             if (styleSheet != null)
@@ -587,32 +595,62 @@ namespace FUnity.Core
                     element.styleSheets.Add(styleSheet);
                 }
 
-                if (!ContainsStyleSheet(root, styleSheet))
+                if (actorRoot != null && !ContainsStyleSheet(actorRoot, styleSheet))
                 {
-                    root.styleSheets.Add(styleSheet);
+                    actorRoot.styleSheets.Add(styleSheet);
                 }
             }
 
-            root.style.flexGrow = 0f;
-            root.style.flexShrink = 0f;
+            var layoutTarget = actorRoot ?? element;
+            layoutTarget.style.flexGrow = 0f;
+            layoutTarget.style.flexShrink = 0f;
 
             if (data != null)
             {
                 var size = data.Size;
-                root.style.width = size.x > 0f ? size.x : StyleKeyword.Auto;
-                root.style.height = size.y > 0f ? size.y : StyleKeyword.Auto;
+                layoutTarget.style.width = size.x > 0f ? size.x : StyleKeyword.Auto;
+                layoutTarget.style.height = size.y > 0f ? size.y : StyleKeyword.Auto;
             }
 
-            element.style.position = Position.Absolute;
-            element.style.left = data != null ? data.InitialPosition.x : 0f;
-            element.style.top = data != null ? data.InitialPosition.y : 0f;
+            element.style.position = Position.Relative;
+            element.style.left = StyleKeyword.Auto;
+            element.style.top = StyleKeyword.Auto;
             element.style.translate = new Translate(0f, 0f);
 
-            element.AddToClassList("actor");
-            if (root != element)
+            if (actorRoot != null)
             {
-                root.AddToClassList("actor");
+                actorRoot.style.position = Position.Absolute;
+                actorRoot.style.left = data != null ? data.InitialPosition.x : 0f;
+                actorRoot.style.top = data != null ? data.InitialPosition.y : 0f;
+                actorRoot.style.translate = new Translate(0f, 0f);
             }
+
+            element.AddToClassList("actor");
+            if (actorRoot != null && actorRoot != element)
+            {
+                actorRoot.AddToClassList("actor");
+            }
+        }
+
+        /// <summary>
+        /// UXML で定義された俳優コンテナを名前優先で探索し、見つからなければクラス名で解決する。
+        /// </summary>
+        /// <param name="element">探索の起点となる VisualElement。</param>
+        /// <returns>見つかった俳優コンテナ。存在しない場合は null。</returns>
+        private static VisualElement ResolveActorRootElement(VisualElement element)
+        {
+            if (element == null)
+            {
+                return null;
+            }
+
+            var byName = element.Q<VisualElement>(RootElementName);
+            if (byName != null)
+            {
+                return byName;
+            }
+
+            return element.Q<VisualElement>(className: RootElementClassName);
         }
 
         /// <summary>
@@ -875,45 +913,46 @@ namespace FUnity.Core
                 ve.styleSheets.Add(actor.ElementStyle);
             }
 
-            var root = ve.Q<VisualElement>("root");
-            var portrait = root != null
-                ? root.Q<VisualElement>("portrait")
-                : null;
+            var actorRoot = ResolveActorRootElement(ve);
 
-            if (portrait == null)
-            {
-                portrait = ve.Q<VisualElement>("portrait");
-            }
+            var portrait = actorRoot?.Q<VisualElement>(PortraitElementName)
+                ?? actorRoot?.Q<VisualElement>(className: PortraitElementName)
+                ?? ve.Q<VisualElement>(PortraitElementName)
+                ?? ve.Q<VisualElement>(className: PortraitElementName);
 
             if (portrait != null && actor.Portrait != null)
             {
                 portrait.style.backgroundImage = Background.FromTexture2D(actor.Portrait);
             }
 
-            if (root != null)
+            var layoutTarget = actorRoot ?? ve;
+            if (layoutTarget != null)
             {
                 var size = actor.Size;
                 if (size.x > 0f)
                 {
-                    root.style.width = size.x;
+                    layoutTarget.style.width = size.x;
                 }
                 else
                 {
-                    root.style.width = StyleKeyword.Auto;
+                    layoutTarget.style.width = StyleKeyword.Auto;
                 }
 
                 if (size.y > 0f)
                 {
-                    root.style.height = size.y;
+                    layoutTarget.style.height = size.y;
                 }
                 else
                 {
-                    root.style.height = StyleKeyword.Auto;
+                    layoutTarget.style.height = StyleKeyword.Auto;
                 }
 
-                root.style.flexGrow = 0f;
-                root.style.flexShrink = 0f;
-                root.AddToClassList("actor");
+                layoutTarget.style.flexGrow = 0f;
+                layoutTarget.style.flexShrink = 0f;
+                if (actorRoot != null)
+                {
+                    actorRoot.AddToClassList("actor");
+                }
                 ve.AddToClassList("actor");
             }
             else
@@ -921,10 +960,18 @@ namespace FUnity.Core
                 ve.AddToClassList("actor");
             }
 
-            ve.style.position = Position.Absolute;
-            ve.style.left = actor.InitialPosition.x;
-            ve.style.top = actor.InitialPosition.y;
+            ve.style.position = Position.Relative;
+            ve.style.left = StyleKeyword.Auto;
+            ve.style.top = StyleKeyword.Auto;
             ve.style.translate = new Translate(0f, 0f);
+
+            if (actorRoot != null)
+            {
+                actorRoot.style.position = Position.Absolute;
+                actorRoot.style.left = actor.InitialPosition.x;
+                actorRoot.style.top = actor.InitialPosition.y;
+                actorRoot.style.translate = new Translate(0f, 0f);
+            }
 
             if (string.IsNullOrEmpty(ve.name) && !string.IsNullOrEmpty(actor.DisplayName))
             {
