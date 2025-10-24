@@ -34,6 +34,15 @@ namespace FUnity.Runtime.View
         private FooniUIBridge m_Bridge;
 
         /// <summary>
+        /// 俳優 UI をホストする <see cref="UIDocument"/>。ドキュメント直下のレイアウト初期化に利用する。
+        /// </summary>
+        [SerializeField]
+        private UIDocument m_Document;
+
+        /// <summary>InitialPosition を適用する俳優コンテナ（#root / .actor-root）。</summary>
+        private VisualElement m_ActorRoot;
+
+        /// <summary>
         /// Presenter から指定された UI Toolkit 要素。`Configure` 呼び出し後に <see cref="SetPortrait"/> が利用する。
         /// </summary>
         private VisualElement m_BoundElement;
@@ -57,13 +66,37 @@ namespace FUnity.Runtime.View
         private bool m_GeometryCallbacksRegistered;
 
         /// <summary>
-        /// コンポーネントがリセットされた際に既存の <see cref="FooniUIBridge"/> を再取得する。
+        /// UIDocument をキャッシュし、ドキュメント直下のルートを相対配置へ戻す。
+        /// </summary>
+        private void Awake()
+        {
+            if (m_Document == null)
+            {
+                m_Document = GetComponent<UIDocument>();
+            }
+
+            var docRoot = m_Document != null ? m_Document.rootVisualElement : null;
+            if (docRoot != null)
+            {
+                docRoot.style.position = Position.Relative;
+                docRoot.style.left = StyleKeyword.Auto;
+                docRoot.style.top = StyleKeyword.Auto;
+            }
+        }
+
+        /// <summary>
+        /// コンポーネントがリセットされた際に既存の <see cref="FooniUIBridge"/> や <see cref="UIDocument"/> を再取得する。
         /// </summary>
         private void Reset()
         {
             if (m_Bridge == null)
             {
                 m_Bridge = GetComponent<FooniUIBridge>();
+            }
+
+            if (m_Document == null)
+            {
+                m_Document = GetComponent<UIDocument>();
             }
         }
 
@@ -95,22 +128,39 @@ namespace FUnity.Runtime.View
 
             UnregisterGeometryCallbacks();
 
-            m_BoundElement = element;
-            if (m_Bridge != null && element != null)
+            m_ActorRoot = FindActorRoot(element);
+            if (m_ActorRoot == null && element != null)
             {
-                m_Bridge.BindElement(element);
+                Debug.LogWarning("[FUnity.ActorView] 俳優コンテナ (#root / .actor-root) を特定できなかったため、初期座標の適用をスキップします。");
             }
 
-            m_RootElement = element?.Q<VisualElement>("root") ?? element;
-            m_SpeechLabel = m_RootElement?.Q<Label>("speech") ?? element?.Q<Label>("speech");
+            if (m_ActorRoot != null)
+            {
+                m_ActorRoot.style.position = Position.Absolute;
+            }
+
+            if (m_Bridge != null)
+            {
+                if (m_ActorRoot != null)
+                {
+                    m_Bridge.BindElement(m_ActorRoot);
+                }
+                else
+                {
+                    m_Bridge.BindElement(null);
+                }
+            }
+
+            var searchBase = m_ActorRoot ?? element;
+            m_BoundElement = searchBase;
+            m_RootElement = searchBase;
+            m_SpeechLabel = searchBase?.Q<Label>("speech") ?? element?.Q<Label>("speech");
             if (m_SpeechLabel != null)
             {
                 m_SpeechLabel.style.display = DisplayStyle.None;
             }
 
-            m_PortraitElement = element?.Q<VisualElement>("portrait")
-                ?? element?.Q<VisualElement>(className: "portrait")
-                ?? element?.Q<VisualElement>(className: "actor-portrait");
+            m_PortraitElement = null;
 
             RegisterGeometryCallbacks();
             NotifyStageBounds();
@@ -445,6 +495,27 @@ namespace FUnity.Runtime.View
                 ?? m_BoundElement.Q<VisualElement>(className: "actor-portrait");
 
             return m_PortraitElement;
+        }
+
+        /// <summary>
+        /// UXML 内の俳優コンテナを名前優先で探索し、なければクラスで解決する。
+        /// </summary>
+        /// <param name="element">探索の起点となる VisualElement。</param>
+        /// <returns>見つかった俳優コンテナ。存在しない場合は null。</returns>
+        private static VisualElement FindActorRoot(VisualElement element)
+        {
+            if (element == null)
+            {
+                return null;
+            }
+
+            var byName = element.Q<VisualElement>("root");
+            if (byName != null)
+            {
+                return byName;
+            }
+
+            return element.Q<VisualElement>(className: "actor-root");
         }
     }
 }
