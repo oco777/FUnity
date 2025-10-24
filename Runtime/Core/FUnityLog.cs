@@ -1,6 +1,7 @@
 // Updated: 2025-03-10
 using System.Diagnostics;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace FUnity.Core
 {
