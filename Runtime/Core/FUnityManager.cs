@@ -70,6 +70,9 @@ namespace FUnity.Core
         /// <summary>ステージ背景適用を担当するサービス。</summary>
         private readonly StageBackgroundService m_StageBackgroundService = new StageBackgroundService();
 
+        /// <summary>背景レイヤーを初期化済みかどうかを示すフラグ。</summary>
+        private bool m_BackgroundInitialized;
+
         /// <summary>遅延実行を提供するタイマーサービス。</summary>
         private TimerServiceBehaviour m_TimerService;
 
@@ -78,6 +81,9 @@ namespace FUnity.Core
 
         /// <summary>フォールバック俳優テンプレートの Resources パス。</summary>
         private const string FallbackActorTemplatePath = "UI/FooniElement";
+
+        /// <summary>ステージ背景のフォールバックに使用する Resources 内テクスチャ名。</summary>
+        private const string DefaultStageBackgroundName = "Background_01";
 
         /// <summary>既定で探索するポートレート要素名。</summary>
         private const string PortraitElementName = "portrait";
@@ -160,7 +166,13 @@ namespace FUnity.Core
                 return;
             }
 
-            m_StageBackgroundService.Configure(root);
+            if (!m_BackgroundInitialized)
+            {
+                // 初回のみ背景レイヤーを生成し、重複追加を防止する。
+                m_StageBackgroundService.Configure(root);
+                m_BackgroundInitialized = true;
+            }
+
             if (m_VsBridge != null)
             {
                 m_VsBridge.SetStageBackgroundService(m_StageBackgroundService);
@@ -486,11 +498,15 @@ namespace FUnity.Core
 
             if (actorView == null)
             {
-                if (!m_FUnityUI.TryGetComponent(out actorView))
+                var host = visual.ViewHost != null ? visual.ViewHost : m_FUnityUI;
+                if (host == null)
                 {
-                    actorView = m_FUnityUI.AddComponent<ActorView>();
-                    FUnityLog.LogInfo($"ActorView コンポーネントを '{m_FUnityUI.name}' に追加しました。");
+                    FUnityLog.LogWarning("ActorView を追加する対象 GameObject が確定していないため、俳優ビューを構成できません。");
+                    return NullActorView.Instance;
                 }
+
+                actorView = host.AddComponent<ActorView>();
+                FUnityLog.LogInfo($"ActorView コンポーネントを '{host.name}' に追加しました (actor='{visual.Data?.DisplayName ?? "(Unknown)"}').");
             }
 
             if (actorView == null)
@@ -601,21 +617,12 @@ namespace FUnity.Core
                 }
             }
 
-            var layoutTarget = actorRoot ?? element;
-            layoutTarget.style.flexGrow = 0f;
-            layoutTarget.style.flexShrink = 0f;
-
-            if (data != null)
-            {
-                var size = data.Size;
-                layoutTarget.style.width = size.x > 0f ? size.x : StyleKeyword.Auto;
-                layoutTarget.style.height = size.y > 0f ? size.y : StyleKeyword.Auto;
-            }
-
             element.style.position = Position.Relative;
             element.style.left = StyleKeyword.Auto;
             element.style.top = StyleKeyword.Auto;
             element.style.translate = new Translate(0f, 0f);
+            element.style.flexGrow = 0f;
+            element.style.flexShrink = 0f;
 
             if (actorRoot != null)
             {
@@ -623,10 +630,31 @@ namespace FUnity.Core
                 actorRoot.style.left = data != null ? data.InitialPosition.x : 0f;
                 actorRoot.style.top = data != null ? data.InitialPosition.y : 0f;
                 actorRoot.style.translate = new Translate(0f, 0f);
+                actorRoot.style.flexGrow = 0f;
+                actorRoot.style.flexShrink = 0f;
+
+                if (data != null)
+                {
+                    var size = data.Size;
+                    actorRoot.style.width = size.x > 0f ? size.x : StyleKeyword.Auto;
+                    actorRoot.style.height = size.y > 0f ? size.y : StyleKeyword.Auto;
+                }
+                else
+                {
+                    actorRoot.style.width = StyleKeyword.Auto;
+                    actorRoot.style.height = StyleKeyword.Auto;
+                }
+            }
+            else if (data != null)
+            {
+                var fallbackSize = data.Size;
+                element.style.width = fallbackSize.x > 0f ? fallbackSize.x : StyleKeyword.Auto;
+                element.style.height = fallbackSize.y > 0f ? fallbackSize.y : StyleKeyword.Auto;
             }
 
+            element.AddToClassList("actor-container");
             element.AddToClassList("actor");
-            if (actorRoot != null && actorRoot != element)
+            if (actorRoot != null)
             {
                 actorRoot.AddToClassList("actor");
             }
@@ -877,7 +905,14 @@ namespace FUnity.Core
             }
 
             m_StageBackgroundService.SetBackgroundColor(stage.BackgroundColor);
-            m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScale);
+
+            if (stage.BackgroundImage != null)
+            {
+                m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScale);
+                return;
+            }
+
+            m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, stage.BackgroundScale);
         }
 
         /// <summary>
@@ -892,93 +927,75 @@ namespace FUnity.Core
                 return null;
             }
 
-            VisualElement ve = null;
+            VisualElement templateInstance = null;
 
             if (actor.ElementUxml != null)
             {
-                ve = actor.ElementUxml.Instantiate();
+                templateInstance = actor.ElementUxml.Instantiate();
             }
             else
             {
-                ve = new FooniElement();
+                templateInstance = new FooniElement();
             }
 
-            if (ve == null)
+            if (templateInstance == null)
             {
                 return null;
             }
 
             if (actor.ElementStyle != null)
             {
-                ve.styleSheets.Add(actor.ElementStyle);
+                templateInstance.styleSheets.Add(actor.ElementStyle);
             }
 
-            var actorRoot = ResolveActorRootElement(ve);
+            var container = new VisualElement
+            {
+                focusable = false
+            };
+            container.AddToClassList("actor-container");
+            container.style.position = Position.Relative;
+            container.style.left = StyleKeyword.Auto;
+            container.style.top = StyleKeyword.Auto;
+            container.style.translate = new Translate(0f, 0f);
+            container.style.flexGrow = 0f;
+            container.style.flexShrink = 0f;
+
+            container.Add(templateInstance);
+
+            var actorRoot = ResolveActorRootElement(container);
 
             var portrait = actorRoot?.Q<VisualElement>(PortraitElementName)
                 ?? actorRoot?.Q<VisualElement>(className: PortraitElementName)
-                ?? ve.Q<VisualElement>(PortraitElementName)
-                ?? ve.Q<VisualElement>(className: PortraitElementName);
+                ?? container.Q<VisualElement>(PortraitElementName)
+                ?? container.Q<VisualElement>(className: PortraitElementName);
 
             if (portrait != null && actor.Portrait != null)
             {
                 portrait.style.backgroundImage = Background.FromTexture2D(actor.Portrait);
             }
 
-            var layoutTarget = actorRoot ?? ve;
-            if (layoutTarget != null)
-            {
-                var size = actor.Size;
-                if (size.x > 0f)
-                {
-                    layoutTarget.style.width = size.x;
-                }
-                else
-                {
-                    layoutTarget.style.width = StyleKeyword.Auto;
-                }
-
-                if (size.y > 0f)
-                {
-                    layoutTarget.style.height = size.y;
-                }
-                else
-                {
-                    layoutTarget.style.height = StyleKeyword.Auto;
-                }
-
-                layoutTarget.style.flexGrow = 0f;
-                layoutTarget.style.flexShrink = 0f;
-                if (actorRoot != null)
-                {
-                    actorRoot.AddToClassList("actor");
-                }
-                ve.AddToClassList("actor");
-            }
-            else
-            {
-                ve.AddToClassList("actor");
-            }
-
-            ve.style.position = Position.Relative;
-            ve.style.left = StyleKeyword.Auto;
-            ve.style.top = StyleKeyword.Auto;
-            ve.style.translate = new Translate(0f, 0f);
-
             if (actorRoot != null)
             {
+                var size = actor.Size;
+                actorRoot.style.width = size.x > 0f ? size.x : StyleKeyword.Auto;
+                actorRoot.style.height = size.y > 0f ? size.y : StyleKeyword.Auto;
+                actorRoot.style.flexGrow = 0f;
+                actorRoot.style.flexShrink = 0f;
                 actorRoot.style.position = Position.Absolute;
                 actorRoot.style.left = actor.InitialPosition.x;
                 actorRoot.style.top = actor.InitialPosition.y;
                 actorRoot.style.translate = new Translate(0f, 0f);
+                actorRoot.AddToClassList("actor");
             }
 
-            if (string.IsNullOrEmpty(ve.name) && !string.IsNullOrEmpty(actor.DisplayName))
+            container.AddToClassList("actor");
+
+            if (string.IsNullOrEmpty(container.name) && !string.IsNullOrEmpty(actor.DisplayName))
             {
-                ve.name = actor.DisplayName;
+                container.name = actor.DisplayName;
             }
 
-            return ve;
+            return container;
         }
 
         /// <summary>

@@ -1,3 +1,11 @@
+.actor-container {
+    position: relative;
+}
+
+#root {
+    position: absolute;
+}
+
 .actor-root {
     width: 160px;
     height: 160px;
