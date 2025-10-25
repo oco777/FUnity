@@ -32,8 +32,51 @@ namespace FUnity.Runtime.Presenter
         /// <summary>背景用コンテナの名前。UI ビルダー上で識別しやすいよう定数化する。</summary>
         private const string BackgroundLayerName = "FUnityBackgroundLayer";
 
-        /// <summary>Art/Backgrounds 配下の既定ファイル名を示す定数。</summary>
+        /// <summary>Resources/Backgrounds 配下の既定ファイル名を示す定数。</summary>
         private const string DefaultBackgroundResource = "Background_01";
+
+        /// <summary>Resources.Load で探索する背景フォルダー名。</summary>
+        private const string ResourceFolderName = "Backgrounds";
+
+        /// <summary>
+        /// 背景レイヤーを初期化し、必要に応じて既定の背景画像を読み込む。
+        /// </summary>
+        /// <param name="panelRoot">背景を貼り付ける UI Toolkit ルート要素。</param>
+        /// <param name="backgroundName">初期適用する背景名。null を渡すと直前の状態を再適用する。</param>
+        /// <param name="scale">背景画像を読み込む際に使用するスケールモード。</param>
+        public void Initialize(VisualElement panelRoot, string backgroundName = DefaultBackgroundResource, ScaleMode scale = ScaleMode.ScaleAndCrop)
+        {
+            if (panelRoot == null)
+            {
+                Debug.LogError("[FUnity.BG] panelRoot が null のため初期化できません。");
+                return;
+            }
+
+            if (m_TargetRoot != panelRoot)
+            {
+                if (m_BackgroundLayer != null)
+                {
+                    m_BackgroundLayer.RemoveFromHierarchy();
+                }
+                m_TargetRoot = panelRoot;
+                m_BackgroundLayer = null;
+            }
+
+            if (!EnsureBackgroundLayer())
+            {
+                return;
+            }
+
+            ApplyColor(m_LastColor);
+
+            if (!string.IsNullOrEmpty(backgroundName))
+            {
+                SetBackgroundFromResources(backgroundName, scale);
+                return;
+            }
+
+            ApplyTexture(m_LastTexture, m_LastScaleMode);
+        }
 
         /// <summary>
         /// 背景を適用する対象ルートを登録し、既知の背景設定があれば即時反映する。
@@ -41,16 +84,7 @@ namespace FUnity.Runtime.Presenter
         /// <param name="root">UI Document の <see cref="VisualElement.rootVisualElement"/>。</param>
         public void Configure(VisualElement root)
         {
-            if (root == null)
-            {
-                Debug.LogWarning("[FUnity] StageBackgroundService: null ルートが渡されたため背景レイヤーを初期化できません。");
-                return;
-            }
-
-            m_TargetRoot = root;
-            EnsureBackgroundLayer();
-            ApplyColor(m_LastColor);
-            ApplyTexture(m_LastTexture, m_LastScaleMode);
+            Initialize(root, null, m_LastScaleMode);
         }
 
         /// <summary>
@@ -90,15 +124,20 @@ namespace FUnity.Runtime.Presenter
         /// </summary>
         /// <param name="texture">背景に使用するテクスチャ。</param>
         /// <param name="scale">UI Toolkit の background scale mode。</param>
-        public void SetBackground(Texture2D texture, ScaleMode scale)
+        /// <param name="preserveResourceKey">Resources 由来のキーを保持したい場合は true。</param>
+        public void SetBackground(Texture2D texture, ScaleMode scale, bool preserveResourceKey = false)
         {
             m_LastTexture = texture;
             m_LastScaleMode = scale;
+            if (!preserveResourceKey)
+            {
+                m_LastResourceKey = null;
+            }
             ApplyTexture(texture, scale);
         }
 
         /// <summary>
-        /// Art/Backgrounds 配下のテクスチャを読み込み、背景へ適用する。
+        /// Resources/Backgrounds 配下のテクスチャを読み込み、背景へ適用する。
         /// </summary>
         /// <param name="backgroundName">拡張子なしのファイル名。null/空文字は無視する。</param>
         /// <param name="scale">テクスチャ適用時のスケールモード。</param>
@@ -106,26 +145,30 @@ namespace FUnity.Runtime.Presenter
         {
             if (string.IsNullOrEmpty(backgroundName))
             {
-                Debug.LogWarning("[FUnity] StageBackgroundService: 背景名が空のため Resources から読み込めません。");
+                Debug.LogWarning("[FUnity.BG] 背景名が空のため Resources から読み込めません。");
                 return;
             }
 
-            var resourcePath = $"Art/Backgrounds/{backgroundName}";
+            var resourcePath = $"{ResourceFolderName}/{backgroundName}";
             if (string.Equals(m_LastResourceKey, resourcePath) && m_LastTexture != null)
             {
-                SetBackground(m_LastTexture, scale);
+                SetBackground(m_LastTexture, scale, true);
                 return;
             }
 
             var texture = Resources.Load<Texture2D>(resourcePath);
             if (texture == null)
             {
-                Debug.LogWarning($"[FUnity] StageBackgroundService: Resources/{resourcePath} が見つからず背景を変更できません。");
+                Debug.LogWarning($"[FUnity.BG] Resources/{resourcePath} が見つからず背景を変更できません。");
+                m_LastScaleMode = scale;
+                m_LastTexture = null;
+                m_LastResourceKey = null;
+                ApplyTexture(null, scale);
                 return;
             }
 
             m_LastResourceKey = resourcePath;
-            SetBackground(texture, scale);
+            SetBackground(texture, scale, true);
         }
 
         /// <summary>
@@ -136,7 +179,7 @@ namespace FUnity.Runtime.Presenter
         {
             if (string.IsNullOrEmpty(resourcesPath))
             {
-                Debug.LogWarning("[FUnity] StageBackgroundService: resourcesPath が空のため背景を変更できません。");
+                Debug.LogWarning("[FUnity.BG] resourcesPath が空のため背景を変更できません。");
                 return;
             }
 
@@ -149,12 +192,15 @@ namespace FUnity.Runtime.Presenter
             var texture = Resources.Load<Texture2D>(resourcesPath);
             if (texture == null)
             {
-                Debug.LogWarning($"[FUnity] StageBackgroundService: Resources/{resourcesPath} が見つからず背景を変更できません。");
+                Debug.LogWarning($"[FUnity.BG] Resources/{resourcesPath} が見つからず背景を変更できません。");
+                m_LastTexture = null;
+                m_LastResourceKey = null;
+                ApplyTexture(null, m_LastScaleMode);
                 return;
             }
 
             m_LastResourceKey = resourcesPath;
-            SetBackground(texture, m_LastScaleMode);
+            SetBackground(texture, m_LastScaleMode, true);
         }
 
         /// <summary>
@@ -191,7 +237,9 @@ namespace FUnity.Runtime.Presenter
             }
             else
             {
-                m_BackgroundLayer.style.backgroundImage = new StyleBackground();
+                m_BackgroundLayer.style.backgroundImage = StyleKeyword.None;
+                m_BackgroundLayer.style.backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat);
+                m_BackgroundLayer.style.unityBackgroundScaleMode = scale;
             }
         }
 

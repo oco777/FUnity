@@ -37,6 +37,8 @@ namespace FUnity.EditorTools
         // 背景テクスチャはプロジェクト直下の正規パスを優先し、無ければパッケージ同梱版から順に探す。
         private static readonly string[] StageBackgroundCandidates =
         {
+            "Assets/FUnity/Runtime/Resources/Backgrounds/Background_01.png",
+            "Packages/com.papacoder.funity/Runtime/Resources/Backgrounds/Background_01.png",
             "Assets/FUnity/Art/Backgrounds/Background_01.png",
             "Packages/com.papacoder.funity/Runtime/Art/Backgrounds/Background_01.png",
             "Packages/com.papacoder.funity/Art/Backgrounds/Background_01.png"
@@ -89,7 +91,7 @@ namespace FUnity.EditorTools
         /// <summary>
         /// - Resources/Assets/FUnity 配下を作成し、Project/Stage/Actor の ScriptableObject を用意する。
         /// - UI Theme は正規/旧配置から探索し、PanelSettings を確保して SerializedObject 経由で割り当てる。
-        /// - Stage 背景に Art/Backgrounds/Background_01.* を設定し、ActorData_Fooni に Portrait/UXML/USS を適用する。
+        /// - Stage 背景に Runtime/Resources/Backgrounds/Background_01.* を設定し、ActorData_Fooni に Portrait/UXML/USS を適用する。
         /// - 不足アセットは警告にとどめて続行し、最後に SaveAssets/Refresh で AssetDatabase の状態を確定させる。
         /// </summary>
         public static void CreateDefault()

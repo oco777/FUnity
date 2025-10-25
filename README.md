@@ -7,7 +7,7 @@
 ## 現状機能サマリ
 - UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.1.0`）によるバージョン固定にも対応。
 - Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/Default Project Data**）で初期データを生成。
-- `Art/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
+- `Runtime/Resources/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
 - `FUnityManager` がシーン起動時に “FUnity UI” GameObject と `UIDocument` を構築し、UI ブリッジや Runner 参照をセットアップ。
 - Unity Visual Scripting を **必須依存**とし、Macro が無い場合でも `Fooni_FloatSetup.asset` を自動生成して割り当てる。
 - Scratch 互換の見た目操作として「大きさを ◯ % にする」「大きさを ◯ % ずつ変える」ユニットを提供し、Presenter 経由で UI Toolkit `style.scale` を中心ピボットで適用。
@@ -60,7 +60,7 @@
 
 ## Default Project Data が行うこと
 `Assets/FUnity/Editor/CreateProjectData.cs` の **Create Default Project Data** は、既存リソースを尊重しつつ以下を保証します。
-- `Resources/FUnityProjectData.asset` と `Resources/FUnityStageData.asset` を生成し、ステージ背景に `Art/Backgrounds/Background_01.png` を設定。
+- `Resources/FUnityProjectData.asset` と `Resources/FUnityStageData.asset` を生成し、ステージ背景に `Runtime/Resources/Backgrounds/Background_01.png` を設定。
 - `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss` が存在する場合はそれを `FUnityPanelSettings.asset`（`Assets/FUnity/UI/`）の ThemeStyleSheet に割り当て。存在しなければ `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` を生成し、同アセットに設定。
 - `Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset` を作成し、既存の重複リソース（`Assets/Resources/FUnityActorData_Fooni.asset` など）を検出して削除。Portrait/UXML/USS を既定テンプレートに割り当てます。
 - `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` を探索し、無ければ新規作成。生成した Macro を `FUnityActorData_Fooni` の ScriptGraph に登録します。

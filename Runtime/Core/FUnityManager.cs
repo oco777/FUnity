@@ -82,7 +82,7 @@ namespace FUnity.Core
         /// <summary>フォールバック俳優テンプレートの Resources パス。</summary>
         private const string FallbackActorTemplatePath = "UI/FooniElement";
 
-        /// <summary>ステージ背景のフォールバックに使用する Resources 内テクスチャ名。</summary>
+        /// <summary>ステージ背景のフォールバックに使用する Resources/Backgrounds 内テクスチャ名。</summary>
         private const string DefaultStageBackgroundName = "Background_01";
 
         /// <summary>既定で探索するポートレート要素名。</summary>
@@ -168,8 +168,8 @@ namespace FUnity.Core
 
             if (!m_BackgroundInitialized)
             {
-                // 初回のみ背景レイヤーを生成し、重複追加を防止する。
-                m_StageBackgroundService.Configure(root);
+                // 初回のみ背景レイヤーを生成し、既定背景を Resources から読み込む。
+                m_StageBackgroundService.Initialize(root, DefaultStageBackgroundName, ScaleMode.ScaleAndCrop);
                 m_BackgroundInitialized = true;
             }
 
