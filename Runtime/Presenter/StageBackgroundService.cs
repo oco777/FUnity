@@ -187,8 +187,7 @@ namespace FUnity.Runtime.Presenter
             {
                 m_BackgroundLayer.style.backgroundImage = new StyleBackground(texture);
                 m_BackgroundLayer.style.backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat);
-                m_BackgroundLayer.style.backgroundPosition = new BackgroundPosition(BackgroundPositionKeyword.Center);
-                m_BackgroundLayer.style.backgroundSize = ResolveBackgroundSize(scale);
+                m_BackgroundLayer.style.unityBackgroundScaleMode = scale;
             }
             else
             {
@@ -221,7 +220,6 @@ namespace FUnity.Runtime.Presenter
                 m_BackgroundLayer.style.top = 0f;
                 m_BackgroundLayer.style.right = 0f;
                 m_BackgroundLayer.style.bottom = 0f;
-                m_BackgroundLayer.style.zIndex = -32768;
                 m_BackgroundLayer.style.flexGrow = 0f;
                 m_BackgroundLayer.style.flexShrink = 0f;
             }
@@ -233,25 +231,6 @@ namespace FUnity.Runtime.Presenter
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// <see cref="ScaleMode"/> を UI Toolkit の <see cref="BackgroundSize"/> に変換する。
-        /// </summary>
-        /// <param name="scale">変換元のスケールモード。</param>
-        /// <returns>UI Toolkit 用の背景サイズ指定。</returns>
-        private static BackgroundSize ResolveBackgroundSize(ScaleMode scale)
-        {
-            switch (scale)
-            {
-                case ScaleMode.StretchToFill:
-                    return new BackgroundSize(BackgroundSizeType.Stretch);
-                case ScaleMode.ScaleToFit:
-                    return new BackgroundSize(BackgroundSizeType.Contain);
-                case ScaleMode.ScaleAndCrop:
-                default:
-                    return new BackgroundSize(BackgroundSizeType.Cover);
-            }
         }
     }
 }
