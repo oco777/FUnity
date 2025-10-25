@@ -11,7 +11,7 @@
 | アセット | パス | 説明 |
 |----------|------|------|
 | `FUnityProjectData.asset` | `Assets/Resources/FUnityProjectData.asset` | プロジェクト全体のステージ・俳優参照をまとめる ScriptableObject。既定で `FUnityStageData` と `FUnityActorData_Fooni` を登録。 |
-| `FUnityStageData.asset` | `Assets/Resources/FUnityStageData.asset` | 背景画像として `Art/Backgrounds/Background_01.png` を設定し、ステージのカラースキームを既定化。 |
+| `FUnityStageData.asset` | `Assets/Resources/FUnityStageData.asset` | 背景画像として `Runtime/Resources/Backgrounds/Background_01.png` を設定し、ステージのカラースキームを既定化。 |
 | `FUnityPanelSettings.asset` | `Assets/FUnity/UI/FUnityPanelSettings.asset` | `PanelSettings` を生成し、ThemeStyleSheet に Unity 既定 Theme または FUnity 生成 Theme を割り当てる。 |
 | `FUnityActorData_Fooni.asset` | `Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset` | Portrait/UXML/USS を既定テンプレートで割り当て、ScriptGraph に `Fooni_FloatSetup.asset` を設定。 |
 | `Fooni_FloatSetup.asset` | `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` | Visual Scripting の Macro。既存ファイルが無い場合に自動生成され、`FUnityActorData_Fooni` へ割り当てられる。 |

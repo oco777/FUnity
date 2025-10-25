@@ -24,7 +24,7 @@ namespace FUnity.Runtime.Core
 
         [Header("Background")]
         /// <summary>
-        /// 背景に使用するテクスチャ。`Assets/FUnity/Art/Backgrounds` など Resources 参照可能なパスへ配置する想定。
+        /// 背景に使用するテクスチャ。`Runtime/Resources/Backgrounds` など Resources 参照可能なパスへ配置する想定。
         /// </summary>
         [SerializeField] private Texture2D m_backgroundImage;
 
