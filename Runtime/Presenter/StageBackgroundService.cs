@@ -262,15 +262,16 @@ namespace FUnity.Runtime.Presenter
                     pickingMode = PickingMode.Ignore,
                     focusable = false
                 };
-
-                m_BackgroundLayer.style.position = Position.Absolute;
-                m_BackgroundLayer.style.left = 0f;
-                m_BackgroundLayer.style.top = 0f;
-                m_BackgroundLayer.style.right = 0f;
-                m_BackgroundLayer.style.bottom = 0f;
-                m_BackgroundLayer.style.flexGrow = 0f;
-                m_BackgroundLayer.style.flexShrink = 0f;
             }
+
+            // ルート側のスタイルリセットや UI Toolkit バージョン差分に備え、都度絶対配置を再適用する。
+            m_BackgroundLayer.style.position = Position.Absolute;
+            m_BackgroundLayer.style.left = 0f;
+            m_BackgroundLayer.style.top = 0f;
+            m_BackgroundLayer.style.right = 0f;
+            m_BackgroundLayer.style.bottom = 0f;
+            m_BackgroundLayer.style.flexGrow = 0f;
+            m_BackgroundLayer.style.flexShrink = 0f;
 
             if (m_BackgroundLayer.parent != m_TargetRoot)
             {
