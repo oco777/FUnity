@@ -4,6 +4,11 @@
 
 ![FUnity overview](docs/images/readme-hero.png)
 
+## ⚙ Modes
+- メニュー `FUnity / Authoring / Switch Mode…` から Scratch モードと unityroom モードを切り替えできます。
+- アクティブな設定は `Assets/FUnity/Resources/FUnityActiveMode.asset` に保存され、ランタイム初期化で参照されます。
+- 各モードの仕様やブロック互換ポリシーは [`Assets/FUnity/Docs/Modes/README.md`](Assets/FUnity/Docs/Modes/README.md) を参照してください。
+
 ## 現状機能サマリ
 - UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.1.0`）によるバージョン固定にも対応。
 - Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/Default Project Data**）で初期データを生成。
@@ -18,6 +23,7 @@
 - [クイックスタート](#クイックスタート)
 - [Default Project Data が行うこと](#default-project-data-が行うこと)
 - [ランタイム構築フロー](#ランタイム構築フロー)
+- [⚙ Modes](#-modes)
 - [Visual Scripting での移動例](#visual-scripting-での移動例)
 - [トラブルシューティング早見表](#トラブルシューティング早見表)
 - [ドキュメント](#ドキュメント)
