@@ -245,6 +245,7 @@ namespace FUnity.Core
 
             m_UIDocument = m_FUnityUI.GetComponent<UIDocument>() ?? m_FUnityUI.AddComponent<UIDocument>();
 
+            EnsureRootLayoutBootstrapperComponent();
             EnsureFooniUIBridge(m_FUnityUI);
             EnsureTimerService();
 
@@ -261,6 +262,25 @@ namespace FUnity.Core
                     Debug.LogWarning("[FUnity] FUnityPanelSettings not found. Place a PanelSettings asset named 'FUnityPanelSettings' under Resources or import the sample so it can be found in the Editor.");
                 }
             }
+        }
+
+        /// <summary>
+        /// FUnity UI ルートに RootLayoutBootstrapper を付与し、UI Toolkit ルート要素の初期レイアウト確定を保証する。
+        /// </summary>
+        private void EnsureRootLayoutBootstrapperComponent()
+        {
+            if (m_FUnityUI == null)
+            {
+                return;
+            }
+
+            var bootstrapper = m_FUnityUI.GetComponent<RootLayoutBootstrapper>();
+            if (bootstrapper != null)
+            {
+                return;
+            }
+
+            m_FUnityUI.AddComponent<RootLayoutBootstrapper>();
         }
 
         /// <summary>
