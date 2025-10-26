@@ -1,10 +1,11 @@
 // Updated: 2025-02-14
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.UIElements;
+#endif
 using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace FUnity.UI
 {
@@ -24,12 +25,6 @@ namespace FUnity.UI
         /// <summary>Resources 配下に常駐させるため、Assets/Resources を基準に正規パスを構築する。</summary>
         private static readonly string ResourceDirectory = Path.Combine("Assets", "Resources");
         private static readonly string AssetPath = Path.Combine(ResourceDirectory, ResourceName + ".asset");
-
-        /// <summary>UI Toolkit 標準テーマ（ダーク）を Resources から検索する際のパス。</summary>
-        private const string DarkThemeResourcePath = "UIThemes/DefaultCommonDark";
-
-        /// <summary>UI Toolkit 標準テーマ（ライト）を Resources から検索する際のパス。</summary>
-        private const string LightThemeResourcePath = "UIThemes/DefaultCommonLight";
 
         /// <summary>
         /// 実行前に PanelSettings をロードし、存在しない場合は生成・保存まで行う。
@@ -65,71 +60,6 @@ namespace FUnity.UI
             // テーマ未設定による警告を防ぐため、確実に Theme Style Sheet を割り当てる。
             EnsureThemeStyleSheet(panelSettings);
 
-#if UNITY_EDITOR
-            if (panelSettings != null && panelSettings.themeStyleSheets != null && panelSettings.themeStyleSheets.Count == 0)
-            {
-                // UI Builder 旧テーマ（.tss）が残っている場合のみ Resources 側へコピーする。
-                const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss";
-                var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
-                if (theme != null)
-                {
-                    var so = new SerializedObject(panelSettings);
-                    /* Unity バージョン差異対策。themeStyleSheet → m_ThemeStyleSheet → themeUss の順で探索し、
-                       最終手段として再度 themeStyleSheet を参照する（重複回避） */
-                    var themeProp =
-                          so.FindProperty("themeStyleSheet")
-                       ?? so.FindProperty("m_ThemeStyleSheet")
-                       ?? so.FindProperty("themeUss")
-                       ?? so.FindProperty("themeStyleSheet");
-
-                    bool assigned = false;
-                    if (themeProp != null)
-                    {
-                        if (themeProp.propertyType == SerializedPropertyType.ObjectReference)
-                        {
-                            if (themeProp.objectReferenceValue != theme)
-                            {
-                                themeProp.objectReferenceValue = theme;
-                                assigned = true;
-                            }
-                        }
-                        else if (themeProp.isArray)
-                        {
-                            bool exists = false;
-                            for (int i = 0; i < themeProp.arraySize; i++)
-                            {
-                                var e = themeProp.GetArrayElementAtIndex(i);
-                                if (e != null && e.objectReferenceValue == theme)
-                                {
-                                    exists = true;
-                                    break;
-                                }
-                            }
-
-                            if (!exists)
-                            {
-                                int idx = themeProp.arraySize;
-                                themeProp.InsertArrayElementAtIndex(idx);
-                                var newElement = themeProp.GetArrayElementAtIndex(idx);
-                                if (newElement != null)
-                                {
-                                    newElement.objectReferenceValue = theme;
-                                }
-                                assigned = true;
-                            }
-                        }
-                    }
-
-                    if (assigned)
-                    {
-                        so.ApplyModifiedPropertiesWithoutUndo();
-                        EditorUtility.SetDirty(panelSettings);
-                        AssetDatabase.SaveAssets();
-                    }
-                }
-            }
-#endif
-
             var uiDocuments = Object.FindObjectsOfType<UIDocument>();
             if (uiDocuments == null || uiDocuments.Length == 0)
             {
@@ -158,55 +88,102 @@ namespace FUnity.UI
                 return;
             }
 
-            bool hasValidTheme = false;
-            bool removedNullEntries = false;
-            if (panelSettings.themeStyleSheets != null)
-            {
-                for (int i = panelSettings.themeStyleSheets.Count - 1; i >= 0; i--)
-                {
-                    var registeredTheme = panelSettings.themeStyleSheets[i];
-                    if (registeredTheme == null)
-                    {
-                        panelSettings.themeStyleSheets.RemoveAt(i);
-                        removedNullEntries = true;
-                        continue;
-                    }
-
-                    hasValidTheme = true;
-                }
-            }
-
-            if (hasValidTheme)
-            {
+            // ランタイムでは PanelSettings が既にテーマを保持している前提で一切操作しない。
 #if UNITY_EDITOR
-                if (removedNullEntries)
-                {
-                    EditorUtility.SetDirty(panelSettings);
-                }
-#endif
+            const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss";
+            var legacyTheme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
+
+            if (legacyTheme != null)
+            {
+                EditorAssignTheme(panelSettings, legacyTheme);
                 return;
             }
 
-            // Resources からダーク → ライトの順でテーマを探索し、最初に見つかったものを採用する。
-            ThemeStyleSheet selectedTheme = Resources.Load<ThemeStyleSheet>(DarkThemeResourcePath);
-            if (selectedTheme == null)
-            {
-                selectedTheme = Resources.Load<ThemeStyleSheet>(LightThemeResourcePath);
-            }
+            var dark = Resources.Load<ThemeStyleSheet>("UIThemes/DefaultCommonDark");
+            var light = Resources.Load<ThemeStyleSheet>("UIThemes/DefaultCommonLight");
 
-            if (selectedTheme == null)
+            var picked = (StyleSheet)(dark != null ? dark : light);
+            if (picked != null)
             {
-                // テーマが見つからない場合は最小限の空テーマを生成し、警告を出しつつ UI 崩れを避ける。
-                Debug.LogWarning("[FUnity.UI] Theme Style Sheet が見つかりません。UI が正しく表示されない可能性があります。空テーマを割り当てます。");
-                selectedTheme = ScriptableObject.CreateInstance<ThemeStyleSheet>();
-                selectedTheme.name = "FUnityGeneratedFallbackTheme";
-                selectedTheme.hideFlags = HideFlags.HideAndDontSave;
+                EditorAssignTheme(panelSettings, picked);
             }
-
-            panelSettings.themeStyleSheets.Add(selectedTheme);
-#if UNITY_EDITOR
-            EditorUtility.SetDirty(panelSettings);
+            else
+            {
+                Debug.LogWarning("[FUnity.UI] Theme Style Sheet が見つかりません。UI 表示が崩れる可能性があります。");
+            }
 #endif
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// PanelSettings のシリアライズプロパティへテーマを登録し、Unity バージョン差異を吸収する。
+        /// </summary>
+        /// <param name="panelSettings">割り当て対象となる PanelSettings。null は無視する。</param>
+        /// <param name="themeOrThemeListElement">登録したい StyleSheet もしくは ThemeStyleSheet。</param>
+        /// <returns>割り当てが実際に行われた場合は true。</returns>
+        private static bool EditorAssignTheme(PanelSettings panelSettings, StyleSheet themeOrThemeListElement)
+        {
+            if (panelSettings == null || themeOrThemeListElement == null)
+            {
+                return false;
+            }
+
+            var serializedPanelSettings = new SerializedObject(panelSettings);
+            var themeProperty =
+                  serializedPanelSettings.FindProperty("themeStyleSheet")
+               ?? serializedPanelSettings.FindProperty("m_ThemeStyleSheet")
+               ?? serializedPanelSettings.FindProperty("themeUss")
+               ?? serializedPanelSettings.FindProperty("themeStyleSheets");
+
+            if (themeProperty == null)
+            {
+                return false;
+            }
+
+            var assigned = false;
+            if (themeProperty.propertyType == SerializedPropertyType.ObjectReference)
+            {
+                if (themeProperty.objectReferenceValue != themeOrThemeListElement)
+                {
+                    themeProperty.objectReferenceValue = themeOrThemeListElement;
+                    assigned = true;
+                }
+            }
+            else if (themeProperty.isArray)
+            {
+                var exists = false;
+                for (var i = 0; i < themeProperty.arraySize; i++)
+                {
+                    var element = themeProperty.GetArrayElementAtIndex(i);
+                    if (element != null && element.objectReferenceValue == themeOrThemeListElement)
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    var insertIndex = themeProperty.arraySize;
+                    themeProperty.InsertArrayElementAtIndex(insertIndex);
+                    var newElement = themeProperty.GetArrayElementAtIndex(insertIndex);
+                    if (newElement != null)
+                    {
+                        newElement.objectReferenceValue = themeOrThemeListElement;
+                    }
+                    assigned = true;
+                }
+            }
+
+            if (assigned)
+            {
+                serializedPanelSettings.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(panelSettings);
+                AssetDatabase.SaveAssets();
+            }
+
+            return assigned;
+        }
+#endif
     }
 }
