@@ -1,22 +1,45 @@
-name: Docs validation
+name: Docs Validate
 
 on:
   pull_request:
-    paths:
-      - 'README.md'
-      - 'Docs/**'
-      - '.github/workflows/docs-validate.yml'
-      - 'Assets/FUnity/Editor/Docs/**'
-      - 'Packages/**'
-  workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
-  hero-image:
-    name: Validate hero image placeholder
+  docs-validate:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Ensure hero image has data
-        run: test -s Packages/com.papacoder.funity/Docs/images/readme-hero.png
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Ensure Git LFS files are present (fallback)
+        run: |
+          git lfs install
+          git lfs fetch --all || true
+          git lfs checkout || git lfs pull || true
+
+      - name: Debug tree (optional)
+        if: ${{ runner.debug == '1' }}
+        run: |
+          git lfs ls-files || true
+          ls -la Docs || true
+          ls -la Docs/images || true
+
+      - name: Check README hero image exists and non-empty
+        run: |
+          set -e
+          if [ ! -s "Docs/images/readme-hero.png" ]; then
+            echo "::error ::Docs/images/readme-hero.png not found or empty"
+            exit 1
+          fi
+          echo "OK: Docs/images/readme-hero.png size > 0"
+
+      - name: Verify path casing (Docs with capital D only)
+        run: |
+          set -e
+          if git ls-files | grep -i "^docs/images/readme-hero.png$" | grep -v "^Docs/images/readme-hero.png$" ; then
+            echo "::error ::Found lowercase docs/images path; use 'Docs/images' with capital D"
+            exit 1
+          fi
+          echo "OK: Path casing is consistent (Docs/...)"
