@@ -64,6 +64,9 @@ namespace FUnity.Core
         /// <summary>生成済み俳優 UI 要素と設定のペア。</summary>
         private readonly List<ActorVisual> m_ActorVisuals = new List<ActorVisual>();
 
+        /// <summary>ステージ全体を表現する UI ルート要素。</summary>
+        private StageElement m_StageElement;
+
         /// <summary>Visual Scripting との仲介役。</summary>
         private VSPresenterBridge m_VsBridge;
 
@@ -147,17 +150,26 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// UI ドキュメントからルート要素を取得し、ステージ設定と俳優要素を構築する。
+        /// UI ドキュメントから設定を読み取り、ステージと俳優 UI を動的に再構築するエントリーポイント。
         /// </summary>
         private void Start()
         {
-            // Resolve UIDocument
+            RebuildUI();
+        }
+
+        /// <summary>
+        /// <see cref="FUnityProjectData"/> の内容からステージと俳優 UI を再生成する。既存要素は安全に破棄し、背景サービスを再構成する。
+        /// </summary>
+        public void RebuildUI()
+        {
             var doc = m_UIDocument != null ? m_UIDocument : GetComponent<UIDocument>();
             if (doc == null)
             {
                 Debug.LogError("[FUnity] UIDocument not found on FUnityManager GameObject.");
                 return;
             }
+
+            m_UIDocument = doc;
 
             var root = doc.rootVisualElement;
             if (root == null)
@@ -166,12 +178,10 @@ namespace FUnity.Core
                 return;
             }
 
-            if (!m_BackgroundInitialized)
-            {
-                // 初回のみ背景レイヤーを生成し、既定背景を Resources から読み込む。
-                m_StageBackgroundService.Initialize(root, DefaultStageBackgroundName, ScaleMode.ScaleAndCrop);
-                m_BackgroundInitialized = true;
-            }
+            var stageElement = EnsureStageElement(root);
+            var backgroundRoot = (VisualElement)stageElement ?? root;
+
+            EnsureStageBackgroundRoot(backgroundRoot);
 
             if (m_VsBridge != null)
             {
@@ -180,7 +190,6 @@ namespace FUnity.Core
 
             ResolveDefaultActorPresenterAdapter();
 
-            // Resolve ProjectData
             if (m_Project == null)
             {
                 m_Project = Resources.Load<FUnityProjectData>("FUnityProjectData");
@@ -192,13 +201,12 @@ namespace FUnity.Core
                 return;
             }
 
-            // Apply Stage
-            ApplyStage(root, m_Project.Stage);
+            ResetActorVisualState(stageElement);
 
-            m_ActorVisuals.Clear();
-            m_ActorPresenters.Clear();
+            SpawnActorRunnersFromProjectData();
 
-            // Create & add actors
+            ApplyStage(stageElement, m_Project.Stage);
+
             if (m_Project.Actors != null)
             {
                 foreach (var actor in m_Project.Actors)
@@ -210,26 +218,129 @@ namespace FUnity.Core
                     }
 
                     var actorVE = CreateActorElement(actor);
-                    if (actorVE != null)
+                    if (actorVE == null)
                     {
-                        root.Add(actorVE);
-                        AttachControllerIfNeeded(actorVE, actor);
-                        m_ActorVisuals.Add(new ActorVisual
-                        {
-                            Data = actor,
-                            Element = actorVE
-                        });
+                        Debug.LogWarning($"[FUnity] Failed to create actor element for '{actor.DisplayName}'.");
+                        continue;
+                    }
+
+                    if (stageElement != null)
+                    {
+                        stageElement.AddActorElement(actorVE);
                     }
                     else
                     {
-                        Debug.LogWarning($"[FUnity] Failed to create actor element for '{actor.DisplayName}'.");
+                        backgroundRoot.Add(actorVE);
                     }
+
+                    AttachControllerIfNeeded(actorVE, actor);
+                    m_ActorVisuals.Add(new ActorVisual
+                    {
+                        Data = actor,
+                        Element = actorVE
+                    });
                 }
             }
 
             Debug.Log($"[FUnity] Project-driven load completed. Actors={(m_Project.Actors?.Count ?? 0)}");
 
             InitializeActorPresenters();
+        }
+
+        /// <summary>
+        /// UIDocument のルート直下に <see cref="StageElement"/> を確保し、以降の再構築で再利用できるようにする。
+        /// </summary>
+        /// <param name="root">親として使用するルート要素。</param>
+        /// <returns>確保した <see cref="StageElement"/>。失敗時は null。</returns>
+        private StageElement EnsureStageElement(VisualElement root)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            if (m_StageElement != null && m_StageElement.parent != root)
+            {
+                m_StageElement.RemoveFromHierarchy();
+                m_StageElement = null;
+            }
+
+            if (m_StageElement == null)
+            {
+                m_StageElement = root.Q<StageElement>();
+            }
+
+            if (m_StageElement == null)
+            {
+                var existingByName = root.Q<VisualElement>(StageElement.StageRootName);
+                if (existingByName is StageElement typedElement)
+                {
+                    m_StageElement = typedElement;
+                }
+            }
+
+            if (m_StageElement == null)
+            {
+                m_StageElement = new StageElement();
+            }
+
+            if (m_StageElement.parent != root)
+            {
+                root.Add(m_StageElement);
+            }
+
+            return m_StageElement;
+        }
+
+        /// <summary>
+        /// 背景サービスの対象ルートを保証し、初回は既定背景を読み込む。2 回目以降は現在の状態を再適用する。
+        /// </summary>
+        /// <param name="stageRoot">背景レイヤーを挿入する対象要素。</param>
+        private void EnsureStageBackgroundRoot(VisualElement stageRoot)
+        {
+            if (stageRoot == null)
+            {
+                return;
+            }
+
+            if (!m_BackgroundInitialized)
+            {
+                m_StageBackgroundService.Initialize(stageRoot, DefaultStageBackgroundName, ScaleMode.ScaleAndCrop);
+                m_BackgroundInitialized = true;
+                return;
+            }
+
+            m_StageBackgroundService.Configure(stageRoot);
+        }
+
+        /// <summary>
+        /// 既存の俳優 UI と Presenter 状態をクリアし、再構築の準備を整える。
+        /// </summary>
+        /// <param name="stageElement">俳優コンテナを提供するステージ要素。</param>
+        private void ResetActorVisualState(StageElement stageElement)
+        {
+            if (stageElement != null)
+            {
+                stageElement.ClearActors();
+            }
+
+            for (var i = 0; i < m_ActorVisuals.Count; i++)
+            {
+                var visual = m_ActorVisuals[i];
+                if (visual.Element != null && visual.Element.parent != null)
+                {
+                    visual.Element.RemoveFromHierarchy();
+                }
+            }
+
+            m_ActorVisuals.Clear();
+            m_ActorPresenters.Clear();
+            m_ActorPresenterMap.Clear();
+
+            if (m_VsBridge != null)
+            {
+                m_VsBridge.Target = null;
+            }
         }
 
         /// <summary>
@@ -565,7 +676,7 @@ namespace FUnity.Core
                     FUnityLog.LogCreateFallback($"'{visual.Data.DisplayName}' 用俳優要素 (フォールバック)");
                 }
 
-                AttachActorElementToRoot(createdElement);
+                AttachActorElementToStage(createdElement);
                 visual.Element = createdElement;
             }
 
@@ -584,13 +695,20 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// 俳優要素を UIDocument のルートへ追加する。既に親がある場合は何もしない。
+        /// 俳優要素を <see cref="StageElement"/> の俳優コンテナへ追加する。StageElement が存在しない場合は UIDocument 直下へ追加す
+        /// る。
         /// </summary>
         /// <param name="element">追加対象の要素。</param>
-        private void AttachActorElementToRoot(VisualElement element)
+        private void AttachActorElementToStage(VisualElement element)
         {
             if (element == null || element.parent != null)
             {
+                return;
+            }
+
+            if (m_StageElement != null)
+            {
+                m_StageElement.AddActorElement(element);
                 return;
             }
 
@@ -913,13 +1031,15 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// ステージ設定を UI ルートへ反映し、背景色・背景画像を適用する。
+        /// ステージ設定を <see cref="StageElement"/> と背景サービスへ反映する。
         /// </summary>
-        /// <param name="root">UI Toolkit ルート要素。</param>
+        /// <param name="stageElement">UI 上のステージ要素。</param>
         /// <param name="stage">ステージ設定。</param>
-        private void ApplyStage(VisualElement root, FUnityStageData stage)
+        private void ApplyStage(StageElement stageElement, FUnityStageData stage)
         {
-            if (root == null || stage == null)
+            stageElement?.Configure(stage);
+
+            if (stage == null)
             {
                 return;
             }
