@@ -56,7 +56,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             var delta = flow.GetValue<float>(m_DeltaDegrees);
 
-            var presenterObj = ResolvePresenter(flow);
+            var presenterObj = ScratchUnitUtil.GetPresenter(flow);
             if (presenterObj != null)
             {
                 VSPresenterBridge.TurnSelf(presenterObj, delta);
@@ -86,85 +86,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             return m_Exit;
         }
 
-        /// <summary>
-        /// 現在のフローから Graph/Object Variables を参照し、ActorPresenter を解決する。
-        /// </summary>
-        /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>解決した Presenter。見つからない場合は null。</returns>
-        private static object ResolvePresenter(Flow flow)
-        {
-            var objectVariables = TryGetObjectVariables(flow);
-            if (objectVariables == null)
-            {
-                return null;
-            }
-
-            if (objectVariables.IsDefined("presenter"))
-            {
-                var presenter = objectVariables.Get("presenter");
-                if (presenter != null)
-                {
-                    return presenter;
-                }
-            }
-
-            if (objectVariables.IsDefined("selfPresenter"))
-            {
-                var presenter = objectVariables.Get("selfPresenter");
-                if (presenter != null)
-                {
-                    return presenter;
-                }
-            }
-
-            if (objectVariables.IsDefined(nameof(ActorPresenter)))
-            {
-                var presenter = objectVariables.Get(nameof(ActorPresenter));
-                if (presenter != null)
-                {
-                    return presenter;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// 現在のフローに紐づく Object 変数を取得する。Runner 単位の自己参照を保持するため <see cref="Variables.Object(FlowStack)"/> を優先し、
-        /// フォールバックとして GameObject 経由でも取得を試みる。
-        /// </summary>
-        /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>取得した Object 変数。存在しない場合は null。</returns>
-        private static Variables TryGetObjectVariables(Flow flow)
-        {
-            if (flow?.stack == null)
-            {
-                return null;
-            }
-
-            Variables objectVariables = null;
-
-            try
-            {
-                objectVariables = Variables.Object(flow.stack);
-            }
-            catch (System.InvalidOperationException)
-            {
-                objectVariables = null;
-            }
-            catch (System.ArgumentException)
-            {
-                objectVariables = null;
-            }
-
-            if (objectVariables != null)
-            {
-                return objectVariables;
-            }
-
-            var owner = flow.stack.gameObject;
-            return owner != null ? Variables.Object(owner) : null;
-        }
     }
 
     /// <summary>

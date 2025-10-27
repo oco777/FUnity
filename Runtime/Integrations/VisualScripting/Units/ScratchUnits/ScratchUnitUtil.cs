@@ -18,6 +18,75 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private static bool m_HasLoggedResolutionFailure;
 
         /// <summary>
+        /// 現在のフローがホストしている Runner（Self）に紐づく Object 変数を取得します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。null の場合は null を返します。</param>
+        /// <returns>Runner 単位の Object 変数。取得できない場合は null。</returns>
+        public static VariableDeclarations GetObjectVars(Flow flow)
+        {
+            if (flow == null || flow.stack == null)
+            {
+                return null;
+            }
+
+            var host = flow.stack.gameObject;
+            if (host == null)
+            {
+                return null;
+            }
+
+            return Variables.Object(host);
+        }
+
+        /// <summary>
+        /// Runner に格納された presenter 参照を取得します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>presenter 参照。未登録の場合は null。</returns>
+        public static object GetPresenter(Flow flow)
+        {
+            VariableDeclarations objectVariables = GetObjectVars(flow);
+            if (objectVariables == null)
+            {
+                return null;
+            }
+
+            return objectVariables.IsDefined("presenter") ? objectVariables.Get("presenter") : null;
+        }
+
+        /// <summary>
+        /// Runner に格納された view 参照を取得します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>view 参照。未登録の場合は null。</returns>
+        public static object GetView(Flow flow)
+        {
+            VariableDeclarations objectVariables = GetObjectVars(flow);
+            if (objectVariables == null)
+            {
+                return null;
+            }
+
+            return objectVariables.IsDefined("view") ? objectVariables.Get("view") : null;
+        }
+
+        /// <summary>
+        /// Runner に格納された ui 参照を取得します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>ui 参照。未登録の場合は null。</returns>
+        public static object GetUI(Flow flow)
+        {
+            VariableDeclarations objectVariables = GetObjectVars(flow);
+            if (objectVariables == null)
+            {
+                return null;
+            }
+
+            return objectVariables.IsDefined("ui") ? objectVariables.Get("ui") : null;
+        }
+
+        /// <summary>
         /// Flow 情報から <see cref="ActorPresenterAdapter"/> を自動的に解決します。
         /// 優先度: ScriptGraphAsset Variables → Graph Variables → Object Variables → 自身の GameObject → 静的キャッシュ → シーン検索。
         /// </summary>
@@ -139,13 +208,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>見つかったアダプタ。存在しない場合は null。</returns>
         private static ActorPresenterAdapter TryGetFromGraphVariables(Flow flow)
         {
-            var owner = flow?.stack?.gameObject;
-            if (owner == null)
-            {
-                return null;
-            }
-
-            var objectVariables = Variables.Object(owner);
+            var objectVariables = GetObjectVars(flow);
             if (objectVariables == null)
             {
                 return null;
@@ -177,13 +240,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>見つかったアダプタ。存在しない場合は null。</returns>
         private static ActorPresenterAdapter TryGetFromObjectVariables(Flow flow)
         {
-            var owner = flow?.stack?.gameObject;
-            if (owner == null)
-            {
-                return null;
-            }
-
-            var objectVariables = Variables.Object(owner);
+            var objectVariables = GetObjectVars(flow);
             if (objectVariables == null)
             {
                 return null;
