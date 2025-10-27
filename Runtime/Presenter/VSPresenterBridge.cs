@@ -226,7 +226,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            Debug.LogWarning("[FUnity] VSPresenterBridge: TurnSelf は ActorPresenter 参照を解決できず相対回転を適用できません。Runner の Object 変数に presenter/view/ui を設定し、Visual Scripting からは Variables.Object(flow.stack) で参照してください。");
+            Debug.LogWarning("[FUnity] VSPresenterBridge: TurnSelf は ActorPresenter 参照を解決できず相対回転を適用できません。Runner の Object 変数に presenter/view/ui を設定し、Visual Scripting からは Variables.Object(flow.stack.gameObject) で参照してください。");
         }
 
         /// <summary>
