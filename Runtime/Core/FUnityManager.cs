@@ -9,6 +9,7 @@ using FUnity.Runtime.View;
 using FUnity.Runtime.Presenter;
 using FUnity.Runtime.Input;
 using FUnity.Runtime.UI;
+using FUnity.UI;
 using Unity.VisualScripting;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -28,11 +29,49 @@ namespace FUnity.Core
     /// </remarks>
     public sealed class FUnityManager : MonoBehaviour
     {
+        /// <summary>シーンに 1 体だけ存在するべきシングルトンインスタンス。</summary>
+        private static FUnityManager s_Instance;
+
         /// <summary>
         /// 制御対象の <see cref="UIDocument"/>。Inspector で未設定の場合は Awake/Start で探索する。
         /// </summary>
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("uiDocument")]
         private UIDocument m_UIDocument;
+
+        /// <summary>ランタイムに生成する UI ルート GameObject。`FUnity UI (Runtime)` として階層化する。</summary>
+        private GameObject m_UIGo;
+
+        /// <summary>生成またはロードした PanelSettings。存在しない場合は動的に生成してキャッシュする。</summary>
+        [SerializeField]
+        private PanelSettings m_PanelSettings;
+
+        /// <summary>ルートへ追加する既定のテーマ StyleSheet。null の場合は Resources から探索する。</summary>
+        [SerializeField]
+        private StyleSheet m_ThemeUss;
+
+        /// <summary>UI Toolkit で構築したアプリケーション全体のルート要素。</summary>
+        private VisualElement m_AppRoot;
+
+        /// <summary>ステージ表示を司るコンテナ要素。俳優や背景をこの中へ配置する。</summary>
+        private VisualElement m_StageRoot;
+
+        /// <summary>背景表示専用の要素。画像と単色の双方をここへ適用する。</summary>
+        private VisualElement m_StageBackground;
+
+        /// <summary>背景サイズ計測のために登録した遅延実行ハンドル。</summary>
+        private IVisualElementScheduledItem m_BackgroundVisibilityTask;
+
+        /// <summary>背景サイズ計測の GeometryChangedEvent を既に登録済みかどうか。</summary>
+        private bool m_BackgroundVisibilityHooked;
+
+        /// <summary>診断ログを既に出力済みかどうか。</summary>
+        private bool m_DiagnosticsLogged;
+
+        /// <summary>背景の可視化待ちログを出力済みかどうか。</summary>
+        private bool m_BackgroundPendingLogged;
+
+        /// <summary>背景サイズ監視用に保持する GeometryChangedEvent コールバック。</summary>
+        private EventCallback<GeometryChangedEvent> m_BackgroundGeometryCallback;
 
         /// <summary>
         /// プロジェクト設定アセット。null の場合は Resources からロードする。
@@ -45,9 +84,6 @@ namespace FUnity.Core
         /// </summary>
         [SerializeField]
         private ActorPresenterAdapter m_DefaultActorPresenterAdapter;
-
-        /// <summary>生成・確保した UI ルート GameObject。</summary>
-        private GameObject m_FUnityUI;
 
         /// <summary>俳優ごとの Presenter インスタンス。</summary>
         private readonly List<ActorPresenter> m_ActorPresenters = new List<ActorPresenter>();
@@ -70,9 +106,6 @@ namespace FUnity.Core
         /// <summary>ステージ背景適用を担当するサービス。</summary>
         private readonly StageBackgroundService m_StageBackgroundService = new StageBackgroundService();
 
-        /// <summary>背景レイヤーを初期化済みかどうかを示すフラグ。</summary>
-        private bool m_BackgroundInitialized;
-
         /// <summary>遅延実行を提供するタイマーサービス。</summary>
         private TimerServiceBehaviour m_TimerService;
 
@@ -82,8 +115,14 @@ namespace FUnity.Core
         /// <summary>フォールバック俳優テンプレートの Resources パス。</summary>
         private const string FallbackActorTemplatePath = "UI/FooniElement";
 
-        /// <summary>ステージ背景のフォールバックに使用する Resources/Backgrounds 内テクスチャ名。</summary>
-        private const string DefaultStageBackgroundName = "Background_01";
+        /// <summary>ランタイム生成する UI ルート GameObject の名称。</summary>
+        private const string RuntimeUiRootName = "FUnity UI (Runtime)";
+
+        /// <summary>ステージ背景要素の名称。UI Toolkit の Q() から解決しやすいよう定数化する。</summary>
+        private const string StageBackgroundElementName = "stageBackground";
+
+        /// <summary>ステージ背景が未指定の際に利用するプレースホルダー色。</summary>
+        private static readonly Color PlaceholderStageColor = new Color(0.078f, 0.082f, 0.090f, 1f);
 
         /// <summary>既定で探索するポートレート要素名。</summary>
         private const string PortraitElementName = "portrait";
@@ -113,22 +152,26 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// Resources から設定アセットを探索し、UI ルートと Presenter ブリッジを生成する。
-        /// Visual Scripting Runner もこの段階でスポーンする。
+        /// シングルトン確立とプロジェクトデータのロード、ランタイム UI ブートを行う。
         /// </summary>
         private void Awake()
         {
+            if (s_Instance != null && s_Instance != this)
+            {
+                Debug.Log("[FUnity.UI] 重複した FUnityManager を検出したため破棄します。");
+                DestroyImmediate(gameObject);
+                return;
+            }
+
+            s_Instance = this;
+            DontDestroyOnLoad(gameObject);
+
             if (m_Project == null)
             {
                 m_Project = Resources.Load<FUnityProjectData>("FUnityProjectData");
             }
 
-            if (m_Project == null || m_Project.ensureFUnityUI)
-            {
-                EnsureFUnityUI();
-                EnsurePresenterBridge();
-                ResolveDefaultActorPresenterAdapter();
-            }
+            TryBootstrapRuntimeUI();
 
             if (m_Project != null && m_Project.runners != null)
             {
@@ -147,40 +190,334 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// UI ドキュメントからルート要素を取得し、ステージ設定と俳優要素を構築する。
+        /// 有効化時にもランタイム UI の再構築を試み、Domain Reload に備える。
+        /// </summary>
+        private void OnEnable()
+        {
+            if (s_Instance == this)
+            {
+                TryBootstrapRuntimeUI();
+            }
+        }
+
+        /// <summary>
+        /// 無効化時に登録済みスケジューラを停止し、参照リークを防ぐ。
+        /// </summary>
+        private void OnDisable()
+        {
+            if (m_BackgroundVisibilityTask != null)
+            {
+                m_BackgroundVisibilityTask.Pause();
+                m_BackgroundVisibilityTask = null;
+            }
+
+            if (m_BackgroundGeometryCallback != null && m_StageRoot != null)
+            {
+                m_StageRoot.UnregisterCallback(m_BackgroundGeometryCallback);
+            }
+
+            m_BackgroundVisibilityHooked = false;
+            m_BackgroundPendingLogged = false;
+        }
+
+        /// <summary>
+        /// 破棄時にシングルトン参照を解放する。
+        /// </summary>
+        private void OnDestroy()
+        {
+            if (s_Instance == this)
+            {
+                s_Instance = null;
+            }
+
+            if (m_BackgroundGeometryCallback != null && m_StageRoot != null)
+            {
+                m_StageRoot.UnregisterCallback(m_BackgroundGeometryCallback);
+            }
+
+            m_BackgroundGeometryCallback = null;
+        }
+
+        /// <summary>
+        /// プロジェクト設定に従ってステージと俳優の初期構築を行う。
         /// </summary>
         private void Start()
         {
-            // Resolve UIDocument
-            var doc = m_UIDocument != null ? m_UIDocument : GetComponent<UIDocument>();
-            if (doc == null)
+            TryBootstrapRuntimeUI();
+            InitializeStageAndActors();
+        }
+
+        /// <summary>
+        /// ランタイム UI を冪等に初期化し、PanelSettings やルートレイアウトを構築する。
+        /// </summary>
+        private void TryBootstrapRuntimeUI()
+        {
+            if (!isActiveAndEnabled)
             {
-                Debug.LogError("[FUnity] UIDocument not found on FUnityManager GameObject.");
                 return;
             }
 
-            var root = doc.rootVisualElement;
+            EnsurePanelSettings();
+            EnsureUIDocument();
+            BuildRootLayout();
+            ApplyThemeStyles();
+            ConfigureStageBackgroundService();
+            EnsurePresenterBridge();
+            EnsureTimerService();
+            ResolveDefaultActorPresenterAdapter();
+        }
+
+        /// <summary>
+        /// PanelSettings を Resources から探索し、存在しなければランタイム用に動的生成する。
+        /// </summary>
+        private void EnsurePanelSettings()
+        {
+            if (m_PanelSettings != null)
+            {
+                return;
+            }
+
+            m_PanelSettings = Resources.Load<PanelSettings>("FUnityPanelSettings");
+            if (m_PanelSettings != null)
+            {
+                return;
+            }
+
+#if UNITY_EDITOR
+            var guids = AssetDatabase.FindAssets("t:PanelSettings FUnityPanelSettings");
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<PanelSettings>(path);
+                if (asset != null)
+                {
+                    m_PanelSettings = asset;
+                    return;
+                }
+            }
+#endif
+
+            m_PanelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            m_PanelSettings.name = "FUnityPanelSettings(Runtime)";
+            m_PanelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
+            m_PanelSettings.referenceDpi = 96f;
+            m_PanelSettings.targetDisplay = 0;
+            m_PanelSettings.clearDepthStencil = true;
+            m_PanelSettings.clearColor = true;
+            m_PanelSettings.colorClearValue = Color.clear;
+            m_PanelSettings.hideFlags = HideFlags.HideAndDontSave;
+            Debug.Log("[FUnity.UI] PanelSettings が見つからなかったためランタイム生成しました。");
+        }
+
+        /// <summary>
+        /// ランタイム UI 用の GameObject と UIDocument を生成・接続する。
+        /// </summary>
+        private void EnsureUIDocument()
+        {
+            if (m_UIGo == null)
+            {
+                var existing = transform.Find(RuntimeUiRootName);
+                if (existing != null)
+                {
+                    m_UIGo = existing.gameObject;
+                }
+            }
+
+            if (m_UIGo == null)
+            {
+                m_UIGo = new GameObject(RuntimeUiRootName)
+                {
+                    hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor
+                };
+                m_UIGo.transform.SetParent(transform, false);
+            }
+
+            if (m_UIDocument == null)
+            {
+                m_UIDocument = m_UIGo.GetComponent<UIDocument>();
+            }
+
+            if (m_UIDocument == null)
+            {
+                m_UIDocument = m_UIGo.AddComponent<UIDocument>();
+            }
+
+            m_UIDocument.panelSettings = m_PanelSettings;
+            m_UIDocument.sortingOrder = 0;
+            m_UIDocument.visualTreeAsset = null;
+
+            EnsureFooniUIBridge(m_UIGo);
+        }
+
+        /// <summary>
+        /// UIDocument のルートへ必要なレイアウト要素を生成する。
+        /// </summary>
+        private void BuildRootLayout()
+        {
+            if (m_UIDocument == null)
+            {
+                return;
+            }
+
+            var root = m_UIDocument.rootVisualElement;
             if (root == null)
             {
-                Debug.LogError("[FUnity] UIDocument.rootVisualElement returned null.");
                 return;
             }
 
-            if (!m_BackgroundInitialized)
+            root.style.flexGrow = 1f;
+            root.style.flexShrink = 0f;
+            root.style.width = new Length(100f, LengthUnit.Percent);
+            root.style.height = new Length(100f, LengthUnit.Percent);
+            root.style.display = DisplayStyle.Flex;
+
+            m_AppRoot = root.Q<VisualElement>("appRoot");
+            if (m_AppRoot == null)
             {
-                // 初回のみ背景レイヤーを生成し、既定背景を Resources から読み込む。
-                m_StageBackgroundService.Initialize(root, DefaultStageBackgroundName, ScaleMode.ScaleAndCrop);
-                m_BackgroundInitialized = true;
+                m_AppRoot = new VisualElement
+                {
+                    name = "appRoot",
+                    pickingMode = PickingMode.Ignore
+                };
+                m_AppRoot.style.flexGrow = 1f;
+                m_AppRoot.style.flexShrink = 0f;
+                m_AppRoot.style.width = new Length(100f, LengthUnit.Percent);
+                m_AppRoot.style.height = new Length(100f, LengthUnit.Percent);
+                m_AppRoot.style.flexDirection = FlexDirection.Column;
+                root.Add(m_AppRoot);
             }
+
+            var previousStageRoot = m_StageRoot;
+            m_StageRoot = m_AppRoot.Q<VisualElement>("stageRoot");
+            if (m_StageRoot == null)
+            {
+                m_StageRoot = new VisualElement
+                {
+                    name = "stageRoot",
+                    pickingMode = PickingMode.Ignore
+                };
+                m_StageRoot.style.flexGrow = 1f;
+                m_StageRoot.style.flexShrink = 0f;
+                m_StageRoot.style.width = new Length(100f, LengthUnit.Percent);
+                m_StageRoot.style.height = new Length(100f, LengthUnit.Percent);
+                m_StageRoot.style.position = Position.Relative;
+                m_StageRoot.style.overflow = Overflow.Hidden;
+                m_AppRoot.Add(m_StageRoot);
+            }
+
+            if (!ReferenceEquals(previousStageRoot, m_StageRoot))
+            {
+                if (previousStageRoot != null && m_BackgroundGeometryCallback != null)
+                {
+                    previousStageRoot.UnregisterCallback(m_BackgroundGeometryCallback);
+                }
+
+                m_BackgroundVisibilityHooked = false;
+                m_BackgroundVisibilityTask?.Pause();
+                m_BackgroundVisibilityTask = null;
+            }
+
+            m_StageBackground = m_StageRoot.Q<VisualElement>(StageBackgroundElementName);
+            if (m_StageBackground == null)
+            {
+                m_StageBackground = new VisualElement
+                {
+                    name = StageBackgroundElementName,
+                    pickingMode = PickingMode.Ignore
+                };
+                m_StageBackground.AddToClassList("funity__background-layer");
+                m_StageRoot.Insert(0, m_StageBackground);
+            }
+
+            m_StageBackground.style.position = Position.Absolute;
+            m_StageBackground.style.left = 0f;
+            m_StageBackground.style.right = 0f;
+            m_StageBackground.style.top = 0f;
+            m_StageBackground.style.bottom = 0f;
+            m_StageBackground.style.flexGrow = 0f;
+            m_StageBackground.style.flexShrink = 0f;
+            m_StageBackground.style.display = DisplayStyle.Flex;
+            m_StageBackground.style.opacity = 1f;
+            m_StageBackground.style.backgroundColor = PlaceholderStageColor;
+        }
+
+        /// <summary>
+        /// 背景サービスを現在のステージルートに接続し、診断スケジューラを準備する。
+        /// </summary>
+        private void ConfigureStageBackgroundService()
+        {
+            if (m_StageRoot == null)
+            {
+                return;
+            }
+
+            m_StageBackgroundService.Initialize(m_StageRoot, null, ScaleMode.ScaleAndCrop);
+            m_StageBackgroundService.SetBackgroundColor(PlaceholderStageColor);
+            ScheduleStageBackgroundVisibilityCheck();
 
             if (m_VsBridge != null)
             {
                 m_VsBridge.SetStageBackgroundService(m_StageBackgroundService);
             }
+        }
 
-            ResolveDefaultActorPresenterAdapter();
+        /// <summary>
+        /// ルートおよびステージへ必要な StyleSheet を適用する。
+        /// </summary>
+        private void ApplyThemeStyles()
+        {
+            if (m_UIDocument == null)
+            {
+                return;
+            }
 
-            // Resolve ProjectData
+            if (m_ThemeUss == null)
+            {
+                var themeSettings = Resources.Load<FUnityPanelThemeSettings>("FUnityPanelThemeSettings");
+                if (themeSettings != null)
+                {
+                    m_ThemeUss = themeSettings.Theme;
+                }
+            }
+
+            var root = m_UIDocument.rootVisualElement;
+            if (root != null && m_ThemeUss != null && !ContainsStyleSheet(root, m_ThemeUss))
+            {
+                root.styleSheets.Add(m_ThemeUss);
+            }
+
+            var stageStyle = LoadActorStyleSheet();
+            if (m_StageRoot != null && stageStyle != null && !ContainsStyleSheet(m_StageRoot, stageStyle))
+            {
+                m_StageRoot.styleSheets.Add(stageStyle);
+            }
+        }
+
+        /// <summary>
+        /// プロジェクトデータに基づきステージ背景と俳優 UI を構築する。
+        /// </summary>
+        private void InitializeStageAndActors()
+        {
+            if (m_UIDocument == null)
+            {
+                m_UIDocument = GetComponent<UIDocument>();
+            }
+
+            if (m_UIDocument == null)
+            {
+                Debug.LogError("[FUnity.UI] UIDocument を取得できないため初期化を中断します。");
+                return;
+            }
+
+            if (m_UIDocument.rootVisualElement == null)
+            {
+                Debug.LogError("[FUnity.UI] UIDocument.rootVisualElement が null のため初期化を中断します。");
+                return;
+            }
+
+            BuildRootLayout();
+            ConfigureStageBackgroundService();
+
             if (m_Project == null)
             {
                 m_Project = Resources.Load<FUnityProjectData>("FUnityProjectData");
@@ -188,99 +525,183 @@ namespace FUnity.Core
 
             if (m_Project == null)
             {
-                Debug.LogWarning("[FUnity] FUnityProjectData not found. Skipping Project-driven UI setup.");
+                Debug.Log("[FUnity.UI] FUnityProjectData が見つからないため、ステージ構築をスキップします。");
                 return;
             }
 
-            // Apply Stage
-            ApplyStage(root, m_Project.Stage);
+            ApplyStageBackground(m_Project.Stage);
 
             m_ActorVisuals.Clear();
             m_ActorPresenters.Clear();
+            ClearStageActors();
 
-            // Create & add actors
             if (m_Project.Actors != null)
             {
                 foreach (var actor in m_Project.Actors)
                 {
                     if (actor == null)
                     {
-                        Debug.LogWarning("[FUnity] Encountered null actor entry in ProjectData.");
+                        Debug.Log("[FUnity.UI] null の俳優データを検出したためスキップします。");
                         continue;
                     }
 
                     var actorVE = CreateActorElement(actor);
-                    if (actorVE != null)
+                    if (actorVE == null)
                     {
-                        root.Add(actorVE);
-                        AttachControllerIfNeeded(actorVE, actor);
-                        m_ActorVisuals.Add(new ActorVisual
-                        {
-                            Data = actor,
-                            Element = actorVE
-                        });
+                        Debug.Log($"[FUnity.UI] '{actor.DisplayName}' の UI 生成に失敗したためスキップします。");
+                        continue;
                     }
-                    else
+
+                    if (m_StageRoot != null)
                     {
-                        Debug.LogWarning($"[FUnity] Failed to create actor element for '{actor.DisplayName}'.");
+                        m_StageRoot.Add(actorVE);
                     }
+
+                    AttachControllerIfNeeded(actorVE, actor);
+                    m_ActorVisuals.Add(new ActorVisual
+                    {
+                        Data = actor,
+                        Element = actorVE
+                    });
                 }
             }
 
-            Debug.Log($"[FUnity] Project-driven load completed. Actors={(m_Project.Actors?.Count ?? 0)}");
+            Debug.Log($"[FUnity.UI] ステージ初期化完了。Actors={(m_Project.Actors?.Count ?? 0)}");
 
             InitializeActorPresenters();
         }
 
         /// <summary>
-        /// FUnity UI ルート GameObject を生成し、必須コンポーネント（UIDocument 等）を確保する。
+        /// ステージコンテナから俳優要素を一括除去し、背景要素のみ残す。
         /// </summary>
-        private void EnsureFUnityUI()
+        private void ClearStageActors()
         {
-            m_FUnityUI = GameObject.Find("FUnity UI");
-            if (m_FUnityUI == null)
+            if (m_StageRoot == null)
             {
-                m_FUnityUI = new GameObject("FUnity UI");
+                return;
             }
 
-            m_UIDocument = m_FUnityUI.GetComponent<UIDocument>() ?? m_FUnityUI.AddComponent<UIDocument>();
-
-            EnsureRootLayoutBootstrapperComponent();
-            EnsureFooniUIBridge(m_FUnityUI);
-            EnsureTimerService();
-
-            if (m_UIDocument.panelSettings == null)
+            var removable = new List<VisualElement>();
+            foreach (var child in m_StageRoot.Children())
             {
-                var panelSettings = FindDefaultPanelSettings();
-                if (panelSettings != null)
+                if (child == null || ReferenceEquals(child, m_StageBackground))
                 {
-                    m_UIDocument.panelSettings = panelSettings;
-                    Debug.Log($"[FUnity] Assigned PanelSettings: {panelSettings.name} to UIDocument on '{m_FUnityUI.name}'.");
+                    continue;
                 }
-                else
-                {
-                    Debug.LogWarning("[FUnity] FUnityPanelSettings not found. Place a PanelSettings asset named 'FUnityPanelSettings' under Resources or import the sample so it can be found in the Editor.");
-                }
+
+                removable.Add(child);
+            }
+
+            for (var i = 0; i < removable.Count; i++)
+            {
+                removable[i].RemoveFromHierarchy();
             }
         }
 
         /// <summary>
-        /// FUnity UI ルートに RootLayoutBootstrapper を付与し、UI Toolkit ルート要素の初期レイアウト確定を保証する。
+        /// ステージ背景データを StageBackgroundService へ適用する。
         /// </summary>
-        private void EnsureRootLayoutBootstrapperComponent()
+        /// <param name="stage">適用するステージ設定。null の場合はプレースホルダー色。</param>
+        private void ApplyStageBackground(FUnityStageData stage)
         {
-            if (m_FUnityUI == null)
+            if (stage == null)
+            {
+                Debug.Log("[FUnity.UI] ステージデータが未設定のためプレースホルダー背景を使用します。");
+                m_StageBackgroundService.SetBackgroundColor(PlaceholderStageColor);
+                m_StageBackgroundService.SetBackground(null, ScaleMode.ScaleAndCrop);
+                return;
+            }
+
+            m_StageBackgroundService.SetBackgroundColor(stage.BackgroundColor);
+
+            if (stage.BackgroundImage != null)
+            {
+                m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScale);
+            }
+            else
+            {
+                Debug.Log("[FUnity.UI] 背景画像が未指定のため背景色のみ適用します。");
+                m_StageBackgroundService.SetBackground(null, stage.BackgroundScale);
+            }
+        }
+
+        /// <summary>
+        /// 背景要素のレイアウト完了を監視し、可視化状態を診断ログへ記録する。
+        /// </summary>
+        private void ScheduleStageBackgroundVisibilityCheck()
+        {
+            if (m_StageRoot == null || m_StageBackground == null)
+            {
+                Debug.Log("[FUnity.UI] ステージ背景要素が未生成のため後で再評価します。");
+                return;
+            }
+
+            if (m_BackgroundGeometryCallback == null)
+            {
+                m_BackgroundGeometryCallback = _ => EvaluateStageBackgroundVisibility();
+            }
+
+            if (!m_BackgroundVisibilityHooked)
+            {
+                m_StageRoot.RegisterCallback(m_BackgroundGeometryCallback);
+                m_BackgroundVisibilityHooked = true;
+            }
+
+            m_BackgroundPendingLogged = false;
+            EvaluateStageBackgroundVisibility();
+        }
+
+        /// <summary>
+        /// 背景要素のワールドサイズと表示状態を確認し、未達成なら再評価をスケジュールする。
+        /// </summary>
+        private void EvaluateStageBackgroundVisibility()
+        {
+            if (m_StageBackground == null)
             {
                 return;
             }
 
-            var bootstrapper = m_FUnityUI.GetComponent<RootLayoutBootstrapper>();
-            if (bootstrapper != null)
+            var bounds = m_StageBackground.worldBound;
+            var display = m_StageBackground.resolvedStyle.display;
+            var opacity = m_StageBackground.resolvedStyle.opacity;
+
+            if (bounds.width > 0f && bounds.height > 0f && display != DisplayStyle.None && opacity > 0f)
+            {
+                LogDiagnosticsOnce(bounds);
+                m_BackgroundPendingLogged = false;
+                m_BackgroundVisibilityTask = null;
+                return;
+            }
+
+            if (!m_BackgroundPendingLogged)
+            {
+                Debug.Log("[FUnity.UI] 背景レイアウトが確定していないため次フレームで再評価します。");
+                m_BackgroundPendingLogged = true;
+            }
+
+            if (m_BackgroundVisibilityTask != null)
+            {
+                m_BackgroundVisibilityTask.Pause();
+            }
+
+            m_BackgroundVisibilityTask = m_StageRoot.schedule.Execute(EvaluateStageBackgroundVisibility).StartingIn(0);
+        }
+
+        /// <summary>
+        /// PanelSettings、USS 枚数、背景サイズをまとめて 1 度だけ情報ログとして出力する。
+        /// </summary>
+        /// <param name="bounds">背景のワールド座標系サイズ。</param>
+        private void LogDiagnosticsOnce(Rect bounds)
+        {
+            if (m_DiagnosticsLogged)
             {
                 return;
             }
 
-            m_FUnityUI.AddComponent<RootLayoutBootstrapper>();
+            var panelName = m_PanelSettings != null ? m_PanelSettings.name : "(dynamic)";
+            var ussCount = m_UIDocument?.rootVisualElement?.styleSheets?.count ?? 0;
+            Debug.Log($"[FUnity.UI] PanelSettings={panelName}, USS={ussCount}, StageBackground={bounds.width:0.##}x{bounds.height:0.##}");
+            m_DiagnosticsLogged = true;
         }
 
         /// <summary>
@@ -304,9 +725,9 @@ namespace FUnity.Core
                 }
             }
 
-            if (m_FUnityUI != null)
+            if (m_UIGo != null)
             {
-                var candidate = m_FUnityUI.GetComponent<ActorPresenterAdapter>();
+                var candidate = m_UIGo.GetComponent<ActorPresenterAdapter>();
                 if (candidate != null)
                 {
                     m_DefaultActorPresenterAdapter = candidate;
@@ -343,17 +764,14 @@ namespace FUnity.Core
         /// </summary>
         private void EnsurePresenterBridge()
         {
-            if (m_FUnityUI == null)
-            {
-                m_FUnityUI = GameObject.Find("FUnity UI");
-            }
+            EnsureUIDocument();
 
-            if (m_FUnityUI == null)
+            if (m_UIGo == null)
             {
                 return;
             }
 
-            m_VsBridge = m_FUnityUI.GetComponent<VSPresenterBridge>() ?? m_FUnityUI.AddComponent<VSPresenterBridge>();
+            m_VsBridge = m_UIGo.GetComponent<VSPresenterBridge>() ?? m_UIGo.AddComponent<VSPresenterBridge>();
             if (m_VsBridge != null)
             {
                 m_VsBridge.SetStageBackgroundService(m_StageBackgroundService);
@@ -374,14 +792,11 @@ namespace FUnity.Core
                 return;
             }
 
-            if (m_FUnityUI == null)
+            EnsureUIDocument();
+            if (m_UIGo == null)
             {
-                EnsureFUnityUI();
-                if (m_FUnityUI == null)
-                {
-                    FUnityLog.LogWarning("FUnity UI GameObject が存在しないため、俳優 Presenter の初期化をスキップします。");
-                    return;
-                }
+                FUnityLog.LogWarning("FUnity UI (Runtime) が存在しないため、俳優 Presenter の初期化をスキップします。");
+                return;
             }
 
             if (m_VsBridge == null)
@@ -389,7 +804,7 @@ namespace FUnity.Core
                 EnsurePresenterBridge();
             }
 
-            var existingBridges = m_FUnityUI.GetComponents<FooniUIBridge>();
+            var existingBridges = m_UIGo.GetComponents<FooniUIBridge>();
             var bridgeCache = existingBridges != null && existingBridges.Length > 0
                 ? new List<FooniUIBridge>(existingBridges)
                 : new List<FooniUIBridge>(Mathf.Max(4, m_ActorVisuals.Count));
@@ -445,9 +860,9 @@ namespace FUnity.Core
         /// <returns>構成済みの <see cref="IActorView"/>。致命的に失敗した場合は <see cref="NullActorView.Instance"/>。</returns>
         private IActorView CreateOrConfigureActorView(ref ActorVisual visual, ref List<FooniUIBridge> bridgeCache, ref int bridgeIndex)
         {
-            if (m_FUnityUI == null)
+            if (m_UIGo == null)
             {
-                FUnityLog.LogWarning("FUnity UI GameObject が未確定のため、ActorView を生成できません。");
+                FUnityLog.LogWarning("FUnity UI (Runtime) GameObject が未確定のため、ActorView を生成できません。");
                 return NullActorView.Instance;
             }
 
@@ -469,7 +884,7 @@ namespace FUnity.Core
             var bridge = bridgeCache[bridgeIndex];
             if (bridge == null)
             {
-                var existingBridges = m_FUnityUI.GetComponents<FooniUIBridge>();
+                var existingBridges = m_UIGo.GetComponents<FooniUIBridge>();
                 if (existingBridges != null && existingBridges.Length > bridgeIndex)
                 {
                     bridge = existingBridges[bridgeIndex];
@@ -477,7 +892,7 @@ namespace FUnity.Core
 
                 if (bridge == null)
                 {
-                    bridge = m_FUnityUI.AddComponent<FooniUIBridge>();
+                    bridge = m_UIGo.AddComponent<FooniUIBridge>();
                     FUnityLog.LogCreateFallback("FooniUIBridge コンポーネント");
                 }
 
@@ -518,7 +933,7 @@ namespace FUnity.Core
 
             if (actorView == null)
             {
-                var host = visual.ViewHost != null ? visual.ViewHost : m_FUnityUI;
+                var host = visual.ViewHost != null ? visual.ViewHost : m_UIGo;
                 if (host == null)
                 {
                     FUnityLog.LogWarning("ActorView を追加する対象 GameObject が確定していないため、俳優ビューを構成できません。");
@@ -861,7 +1276,7 @@ namespace FUnity.Core
             if (!uiGO.TryGetComponent(out FUnity.Runtime.Input.FooniUIBridge _))
             {
                 uiGO.AddComponent<FUnity.Runtime.Input.FooniUIBridge>();
-                Debug.Log("[FUnity] Added FooniUIBridge to 'FUnity UI'.");
+                Debug.Log("[FUnity.UI] Added FooniUIBridge to runtime UI root.");
             }
         }
 
@@ -871,68 +1286,17 @@ namespace FUnity.Core
         /// </summary>
         private void EnsureTimerService()
         {
-            if (m_FUnityUI == null)
+            if (m_UIGo == null)
             {
                 return;
             }
 
-            m_TimerService = m_FUnityUI.GetComponent<TimerServiceBehaviour>() ?? m_FUnityUI.AddComponent<TimerServiceBehaviour>();
+            m_TimerService = m_UIGo.GetComponent<TimerServiceBehaviour>() ?? m_UIGo.AddComponent<TimerServiceBehaviour>();
 
             if (m_VsBridge != null)
             {
                 m_VsBridge.SetTimerService(m_TimerService);
             }
-        }
-
-        /// <summary>
-        /// Resources またはアセットデータベースから既定の PanelSettings を探索する。
-        /// </summary>
-        /// <returns>見つかった PanelSettings。無い場合は null。</returns>
-        private PanelSettings FindDefaultPanelSettings()
-        {
-            var panelSettings = Resources.Load<PanelSettings>("FUnityPanelSettings");
-            if (panelSettings != null)
-            {
-                return panelSettings;
-            }
-
-#if UNITY_EDITOR
-            var guids = AssetDatabase.FindAssets("t:PanelSettings FUnityPanelSettings");
-            foreach (var guid in guids)
-            {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                var asset = AssetDatabase.LoadAssetAtPath<PanelSettings>(path);
-                if (asset != null)
-                {
-                    return asset;
-                }
-            }
-#endif
-
-            return null;
-        }
-
-        /// <summary>
-        /// ステージ設定を UI ルートへ反映し、背景色・背景画像を適用する。
-        /// </summary>
-        /// <param name="root">UI Toolkit ルート要素。</param>
-        /// <param name="stage">ステージ設定。</param>
-        private void ApplyStage(VisualElement root, FUnityStageData stage)
-        {
-            if (root == null || stage == null)
-            {
-                return;
-            }
-
-            m_StageBackgroundService.SetBackgroundColor(stage.BackgroundColor);
-
-            if (stage.BackgroundImage != null)
-            {
-                m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScale);
-                return;
-            }
-
-            m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, stage.BackgroundScale);
         }
 
         /// <summary>
@@ -1079,9 +1443,9 @@ namespace FUnity.Core
                 }
             }
 
-            if (!Variables.Object(go).IsDefined("FUnityUI") && m_FUnityUI != null)
+            if (!Variables.Object(go).IsDefined("FUnityUI") && m_UIGo != null)
             {
-                Variables.Object(go).Set("FUnityUI", m_FUnityUI);
+                Variables.Object(go).Set("FUnityUI", m_UIGo);
             }
 
             if (m_VsBridge == null)
@@ -1139,9 +1503,9 @@ namespace FUnity.Core
                 ConfigureActorPresenterAdapter(runner, actor);
 
                 var objectVariables = Variables.Object(runner);
-                if (m_FUnityUI != null && !objectVariables.IsDefined("FUnityUI"))
+                if (m_UIGo != null && !objectVariables.IsDefined("FUnityUI"))
                 {
-                    objectVariables.Set("FUnityUI", m_FUnityUI);
+                    objectVariables.Set("FUnityUI", m_UIGo);
                 }
 
                 if (m_VsBridge != null && !objectVariables.IsDefined("VSPresenterBridge"))

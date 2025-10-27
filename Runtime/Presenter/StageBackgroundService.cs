@@ -32,6 +32,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>背景用コンテナの名前。UI ビルダー上で識別しやすいよう定数化する。</summary>
         private const string BackgroundLayerName = "FUnityBackgroundLayer";
 
+        /// <summary>FUnityManager が生成するステージ背景要素の名前。</summary>
+        private const string StageBackgroundElementName = "stageBackground";
+
         /// <summary>Resources/Backgrounds 配下の既定ファイル名を示す定数。</summary>
         private const string DefaultBackgroundResource = "Background_01";
 
@@ -256,13 +259,27 @@ namespace FUnity.Runtime.Presenter
 
             if (m_BackgroundLayer == null)
             {
+                m_BackgroundLayer = ResolveExistingBackgroundLayer();
+            }
+
+            if (m_BackgroundLayer == null)
+            {
                 m_BackgroundLayer = new VisualElement
                 {
                     name = BackgroundLayerName,
                     pickingMode = PickingMode.Ignore,
                     focusable = false
                 };
+                m_TargetRoot.Insert(0, m_BackgroundLayer);
             }
+            else if (!ReferenceEquals(m_BackgroundLayer, m_TargetRoot) && m_BackgroundLayer.parent != m_TargetRoot)
+            {
+                m_BackgroundLayer.RemoveFromHierarchy();
+                m_TargetRoot.Insert(0, m_BackgroundLayer);
+            }
+
+            m_BackgroundLayer.pickingMode = PickingMode.Ignore;
+            m_BackgroundLayer.focusable = false;
 
             // ルート側のスタイルリセットや UI Toolkit バージョン差分に備え、都度絶対配置を再適用する。
             m_BackgroundLayer.style.position = Position.Absolute;
@@ -272,14 +289,47 @@ namespace FUnity.Runtime.Presenter
             m_BackgroundLayer.style.bottom = 0f;
             m_BackgroundLayer.style.flexGrow = 0f;
             m_BackgroundLayer.style.flexShrink = 0f;
-
-            if (m_BackgroundLayer.parent != m_TargetRoot)
-            {
-                m_BackgroundLayer.RemoveFromHierarchy();
-                m_TargetRoot.Insert(0, m_BackgroundLayer);
-            }
+            m_BackgroundLayer.style.display = DisplayStyle.Flex;
+            m_BackgroundLayer.style.opacity = 1f;
 
             return true;
+        }
+
+        /// <summary>
+        /// 既存の背景レイヤー候補を探索し、再利用可能であれば返す。
+        /// </summary>
+        /// <returns>再利用する背景レイヤー。見つからなければ null。</returns>
+        private VisualElement ResolveExistingBackgroundLayer()
+        {
+            if (m_TargetRoot == null)
+            {
+                return null;
+            }
+
+            if (string.Equals(m_TargetRoot.name, StageBackgroundElementName, System.StringComparison.Ordinal))
+            {
+                return m_TargetRoot;
+            }
+
+            if (string.Equals(m_TargetRoot.name, BackgroundLayerName, System.StringComparison.Ordinal))
+            {
+                return m_TargetRoot;
+            }
+
+            var byName = m_TargetRoot.Q<VisualElement>(StageBackgroundElementName)
+                ?? m_TargetRoot.Q<VisualElement>(BackgroundLayerName);
+            if (byName != null)
+            {
+                return byName;
+            }
+
+            var byClass = m_TargetRoot.Q<VisualElement>(className: "funity__background-layer");
+            if (byClass != null)
+            {
+                return byClass;
+            }
+
+            return null;
         }
     }
 }

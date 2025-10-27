@@ -13,7 +13,7 @@
 - UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.1.0`）によるバージョン固定にも対応。
 - Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/Default Project Data**）で初期データを生成。
 - `Runtime/Resources/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
-- `FUnityManager` がシーン起動時に “FUnity UI” GameObject と `UIDocument` を構築し、UI ブリッジや Runner 参照をセットアップ。
+- `FUnityManager` がシーン起動時に `FUnity UI (Runtime)` GameObject／`PanelSettings`／`UIDocument` を動的生成し、ルートレイアウトと必要な USS を自動構築。
 - Unity Visual Scripting を **必須依存**とし、Macro が無い場合でも `Fooni_FloatSetup.asset` を自動生成して割り当てる。
 - Scratch 互換の見た目操作として「大きさを ◯ % にする」「大きさを ◯ % ずつ変える」ユニットを提供し、Presenter 経由で UI Toolkit `style.scale` を中心ピボットで適用。
 
@@ -72,7 +72,7 @@
 - `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` を探索し、無ければ新規作成。生成した Macro を `FUnityActorData_Fooni` の ScriptGraph に登録します。
 
 ## ランタイム構築フロー
-- シーンに `FUnityManager` を 1 体置くだけで、再生開始時に “FUnity UI” GameObject と `UIDocument` を生成。
+- シーンに `FUnityManager` を 1 体置くだけで、再生開始時に `FUnity UI (Runtime)` GameObject・`PanelSettings`・`UIDocument` を動的生成。
 - `FUnityManager` は `FUnityProjectData` を参照して各 Actor Runner を生成し、Runner 側の `ScriptMachine` と `ActorPresenterAdapter` を構成しつつ、`FooniUIBridge` や `VSPresenterBridge` など必要なコンポーネントを結線します。
 - Actor ごとに `FUnityActorData` に設定された Macro が `ScriptMachine` に割り当てられ、`ActorPresenter` が `ActorState` と `ActorView` を橋渡しします。
 - Visual Scripting を用いず C# だけで動作させたい場合も、Presenter 層でロジックを完結させることで UI 更新と分離できます。
