@@ -19,12 +19,6 @@ jobs:
           git lfs fetch --all || true
           git lfs checkout || git lfs pull || true
 
-      - name: Setup Unity
-        uses: game-ci/unity-setup@v4
-        with:
-          unityVersion: 6000.0.58f2
-          components: linux-il2cpp
-
       - name: Run EditMode tests
         uses: game-ci/unity-test-runner@v4
         with:
