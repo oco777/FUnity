@@ -5,9 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
-#if UNITY_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-#endif
 using FUnity.Runtime.Core;
 using FUnity.UI;
 
@@ -37,8 +35,11 @@ namespace FUnity.EditorTools
         private const string ScratchActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Starter.asset";
         private const string FooniScriptGraphSearchFilter = "t:ScriptGraphAsset Fooni_FloatSetup";
         private const string ScratchRunnerMacroSearchFilter = "t:ScriptGraphAsset MoveWithArrow";
-        /// <summary>不足している Visual Scripting グラフを自動生成するかどうか。</summary>
-        private const bool AutoCreateMissingScriptGraphs = true;
+        private const string GeneratedRootFolderPath = FUnityFolderPath + "/Generated";
+        private const string GeneratedTextureFolderPath = GeneratedRootFolderPath + "/Textures";
+        private const string GeneratedGraphsFolderPath = GeneratedRootFolderPath + "/Graphs";
+        private const string GeneratedFooniTextureAssetPath = GeneratedTextureFolderPath + "/Fooni.png";
+        private const string GeneratedFooniGraphAssetPath = GeneratedGraphsFolderPath + "/Fooni_FloatSetup.asset";
 
         /// <summary>Unity バージョンごとに異なる PanelSettings のテーマプロパティ候補名。</summary>
         private static readonly string[] PanelThemePropertyCandidates =
@@ -66,7 +67,9 @@ namespace FUnity.EditorTools
         private static readonly string[] FooniPortraitCandidates =
         {
             "Assets/FUnity/Art/Characters/Fooni.png",
-            "Packages/com.papacoder.funity/Runtime/Art/Characters/Fooni.png"
+            "Assets/Art/Characters/Fooni.png",
+            "Packages/com.papacoder.funity/Art/Characters/Fooni.png",
+            GeneratedFooniTextureAssetPath
         };
 
         private static readonly string[] FooniElementUxmlCandidates =
@@ -89,7 +92,10 @@ namespace FUnity.EditorTools
 
         private static readonly string[] FooniScriptGraphCandidates =
         {
-            "Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset"
+            "Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset",
+            GeneratedFooniGraphAssetPath,
+            "Packages/com.papacoder.funity/VisualScripting/Macros/Fooni_FloatSetup.asset",
+            "Packages/com.papacoder.funity/Runtime/VisualScripting/Macros/Fooni_FloatSetup.asset"
         };
         private static readonly string[] ScratchRunnerMacroCandidates =
         {
@@ -193,27 +199,12 @@ namespace FUnity.EditorTools
             var changed = false;
 
             changed |= SetString(serializedActor, "m_displayName", "Fooni");
-            changed |= SetObject(serializedActor, "m_portrait", LoadFirst<Texture2D>(FooniPortraitCandidates, FooniPortraitSearchFilter));
+            var portraitTexture = EnsureFooniPortraitTexture();
+            changed |= SetObject(serializedActor, "m_portrait", portraitTexture);
             changed |= SetObject(serializedActor, "m_ElementUxml", LoadFirst<VisualTreeAsset>(FooniElementUxmlCandidates, FooniElementUxmlSearchFilter));
             changed |= SetObject(serializedActor, "m_ElementStyle", LoadFirst<StyleSheet>(FooniElementStyleCandidates, FooniElementStyleSearchFilter));
-
-            var scriptGraphProperty = serializedActor.FindProperty("m_scriptGraph");
-#if UNITY_VISUAL_SCRIPTING
-            if (scriptGraphProperty != null && scriptGraphProperty.objectReferenceValue == null)
-            {
-                var defaultScriptGraph = LoadFirst<ScriptGraphAsset>(FooniScriptGraphCandidates, FooniScriptGraphSearchFilter, "Fooni_FloatSetup");
-                if (defaultScriptGraph != null)
-                {
-                    scriptGraphProperty.objectReferenceValue = defaultScriptGraph;
-                    changed = true;
-                }
-            }
-#else
-            if (scriptGraphProperty != null && scriptGraphProperty.objectReferenceValue == null)
-            {
-                Debug.Log("[FUnity.Setup] Unity Visual Scripting が未導入のため、Fooni 俳優用グラフの割り当てをスキップしました。");
-            }
-#endif
+            var scriptGraph = EnsureFooniScriptGraph();
+            changed |= SetObject(serializedActor, "m_scriptGraph", scriptGraph);
 
             if (changed)
             {
@@ -246,7 +237,8 @@ namespace FUnity.EditorTools
             var changed = false;
 
             changed |= SetString(serializedActor, "m_displayName", "Scratch Starter");
-            changed |= SetObject(serializedActor, "m_portrait", LoadFirst<Texture2D>(FooniPortraitCandidates, FooniPortraitSearchFilter));
+            var portraitTexture = EnsureFooniPortraitTexture();
+            changed |= SetObject(serializedActor, "m_portrait", portraitTexture);
             changed |= SetObject(serializedActor, "m_ElementUxml", LoadFirst<VisualTreeAsset>(FooniElementUxmlCandidates, FooniElementUxmlSearchFilter));
             changed |= SetObject(serializedActor, "m_ElementStyle", LoadFirst<StyleSheet>(FooniElementStyleCandidates, FooniElementStyleSearchFilter));
             changed |= SetVector2(serializedActor, "m_initialPosition", new Vector2(240f, 200f));
@@ -287,13 +279,8 @@ namespace FUnity.EditorTools
 
             var entry = project.runners[0];
             entry.name = "Scratch VS Runner";
-#if UNITY_VISUAL_SCRIPTING
             var macro = LoadFirst<ScriptGraphAsset>(ScratchRunnerMacroCandidates, ScratchRunnerMacroSearchFilter, "MoveWithArrow");
             entry.macro = macro;
-#else
-            entry.macro = null;
-            Debug.Log("[FUnity.Setup] Unity Visual Scripting が未導入のため、Scratch Runner マクロの割り当てをスキップしました。");
-#endif
 
             if (entry.objectVariables == null)
             {
@@ -303,7 +290,6 @@ namespace FUnity.EditorTools
             EditorUtility.SetDirty(project);
         }
 
-#if UNITY_VISUAL_SCRIPTING
         /// <summary>
         /// 指定パスに ScriptGraphAsset を作成し、既に存在する場合はそれを返す。
         /// </summary>
@@ -339,11 +325,133 @@ namespace FUnity.EditorTools
             EditorUtility.SetDirty(macro);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-
-            Debug.Log($"[FUnity.Setup] ScriptGraphAsset を生成しました: {assetPath}");
             return macro;
         }
-#endif
+
+        /// <summary>
+        /// Fooni 用ポートレートを候補パスと GUID 検索で探し、見つからなければプレースホルダーを生成する。
+        /// 生成済みのテクスチャがあれば再利用し、AssetDatabase への不要な書き込みを避ける。
+        /// </summary>
+        private static Texture2D EnsureFooniPortraitTexture()
+        {
+            var texture = LoadFirst<Texture2D>(FooniPortraitCandidates, FooniPortraitSearchFilter, "Fooni", false);
+            if (texture != null)
+            {
+                return texture;
+            }
+
+            texture = CreateFooniPlaceholderTexture();
+            if (texture != null)
+            {
+                return texture;
+            }
+
+            Debug.LogWarning("[FUnity.Setup] Fooni 用ポートレートを生成できませんでした。");
+            return null;
+        }
+
+        /// <summary>
+        /// Fooni 向けの ScriptGraphAsset を候補から取得し、無ければプレースホルダーを生成する。
+        /// Visual Scripting は必須依存のため、生成失敗時のみ警告を出す。
+        /// </summary>
+        private static ScriptGraphAsset EnsureFooniScriptGraph()
+        {
+            var scriptGraph = LoadFirst<ScriptGraphAsset>(FooniScriptGraphCandidates, FooniScriptGraphSearchFilter, "Fooni_FloatSetup", false);
+            if (scriptGraph != null)
+            {
+                return scriptGraph;
+            }
+
+            scriptGraph = CreateScriptGraphAsset(GeneratedFooniGraphAssetPath);
+            if (scriptGraph != null)
+            {
+                Debug.Log($"[FUnity.Setup] プレースホルダーの ScriptGraphAsset を生成しました: {GeneratedFooniGraphAssetPath}");
+                return scriptGraph;
+            }
+
+            Debug.LogWarning("[FUnity.Setup] Fooni 用 ScriptGraphAsset を生成できませんでした。");
+            return null;
+        }
+
+        /// <summary>
+        /// Fooni 用の仮ポートレート画像を PNG で生成し、Generated 配下に保存する。
+        /// 既に存在する場合はロードだけ行い、複数回の再生成を避ける。
+        /// </summary>
+        private static Texture2D CreateFooniPlaceholderTexture()
+        {
+            EnsureFolder(GeneratedRootFolderPath);
+            EnsureFolder(GeneratedTextureFolderPath);
+
+            var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(GeneratedFooniTextureAssetPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var absolutePath = Path.GetFullPath(GeneratedFooniTextureAssetPath);
+            var directory = Path.GetDirectoryName(absolutePath);
+            if (string.IsNullOrEmpty(directory))
+            {
+                return null;
+            }
+
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            const int width = 256;
+            const int height = 256;
+
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
+            {
+                name = "FooniPlaceholder"
+            };
+
+            var colors = new Color32[width * height];
+            var lightColor = new Color32(123, 167, 255, 255);
+            var darkColor = new Color32(92, 134, 221, 255);
+            var accentColor = new Color32(255, 215, 120, 255);
+
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var index = y * width + x;
+                    if (x > width / 3 && x < width * 2 / 3 && y > height / 3 && y < height * 2 / 3)
+                    {
+                        colors[index] = accentColor;
+                        continue;
+                    }
+
+                    var checker = ((x / 32) + (y / 32)) % 2 == 0;
+                    colors[index] = checker ? lightColor : darkColor;
+                }
+            }
+
+            texture.SetPixels32(colors);
+            texture.Apply();
+
+            var pngBytes = texture.EncodeToPNG();
+            if (pngBytes == null || pngBytes.Length == 0)
+            {
+                Object.DestroyImmediate(texture);
+                Debug.LogWarning("[FUnity.Setup] Fooni 用プレースホルダーテクスチャのエンコードに失敗しました。");
+                return null;
+            }
+
+            File.WriteAllBytes(absolutePath, pngBytes);
+            Object.DestroyImmediate(texture);
+
+            AssetDatabase.ImportAsset(GeneratedFooniTextureAssetPath);
+            var created = AssetDatabase.LoadAssetAtPath<Texture2D>(GeneratedFooniTextureAssetPath);
+            if (created != null)
+            {
+                Debug.Log($"[FUnity.Setup] プレースホルダーの Fooni ポートレートを生成しました: {GeneratedFooniTextureAssetPath}");
+            }
+
+            return created;
+        }
 
         /// <summary>
         /// 指定パス配下のフォルダを親から順番に生成し、AssetDatabase が参照可能な構造に整える。
@@ -369,6 +477,41 @@ namespace FUnity.EditorTools
 
                 current = next;
             }
+        }
+
+        /// <summary>
+        /// AssetDatabase.FindAssets に渡すフォルダ候補から、存在しないパスを除外して返す。
+        /// 除外したフォルダは情報ログとして記録し、全検索に切り替える判断材料とする。
+        /// </summary>
+        private static string[] FilterValidFolders(IEnumerable<string> folders)
+        {
+            if (folders == null)
+            {
+                return System.Array.Empty<string>();
+            }
+
+            var result = new List<string>();
+            foreach (var folder in folders)
+            {
+                if (string.IsNullOrEmpty(folder))
+                {
+                    continue;
+                }
+
+                var normalized = folder.Replace("\\", "/");
+                if (!AssetDatabase.IsValidFolder(normalized))
+                {
+                    Debug.Log($"[FUnity.Setup] 検索対象から無効フォルダを除外しました: {normalized}");
+                    continue;
+                }
+
+                if (!result.Contains(normalized))
+                {
+                    result.Add(normalized);
+                }
+            }
+
+            return result.ToArray();
         }
 
         /// <summary>
@@ -459,7 +602,7 @@ namespace FUnity.EditorTools
         /// 候補パス群を優先順位順に試し、見つからなければ GUID 検索で該当アセットを拾う。
         /// 編集環境ごとの差異を吸収するため、最終手段として AssetDatabase.FindAssets を用いる。
         /// </summary>
-        private static T LoadFirst<T>(string[] candidatePaths, string searchFilter, string assetName = null) where T : Object
+        private static T LoadFirst<T>(string[] candidatePaths, string searchFilter, string assetName = null, bool logWhenMissing = true) where T : Object
         {
             if (candidatePaths != null)
             {
@@ -479,8 +622,9 @@ namespace FUnity.EditorTools
                     .Select(Path.GetDirectoryName)
                     .Where(path => !string.IsNullOrEmpty(path))
                     .Select(path => path.Replace("\\", "/"))
-                    .Distinct()
                     .ToArray();
+
+            searchFolders = FilterValidFolders(searchFolders);
 
             if (!string.IsNullOrEmpty(searchFilter))
             {
@@ -521,10 +665,10 @@ namespace FUnity.EditorTools
                     }
                 }
 
-                if (guids.Length == 0)
+                if (guids.Length == 0 && searchFolders.Length > 0)
                 {
-                    guids = AssetDatabase.FindAssets($"t:{typeof(T).Name}");
-                    foreach (var guid in guids)
+                    var fallbackGuids = AssetDatabase.FindAssets($"t:{typeof(T).Name}");
+                    foreach (var guid in fallbackGuids)
                     {
                         var path = AssetDatabase.GUIDToAssetPath(guid);
                         if (Path.GetFileNameWithoutExtension(path) != assetName)
@@ -541,27 +685,7 @@ namespace FUnity.EditorTools
                 }
             }
 
-#if UNITY_VISUAL_SCRIPTING
-            if (typeof(T) == typeof(ScriptGraphAsset) && AutoCreateMissingScriptGraphs && candidatePaths != null && candidatePaths.Length > 0)
-            {
-                var targetPath = candidatePaths.FirstOrDefault(path => !string.IsNullOrEmpty(path));
-                if (!string.IsNullOrEmpty(targetPath))
-                {
-                    var created = CreateScriptGraphAsset(targetPath);
-                    if (created != null)
-                    {
-                        Debug.Log($"[FUnity.Setup] プレースホルダーの ScriptGraphAsset を生成しました: {targetPath}");
-                        return created as T;
-                    }
-                }
-            }
-#endif
-
-            if (typeof(T).Name == "ScriptGraphAsset")
-            {
-                Debug.Log("[FUnity.Setup] Visual Scripting グラフを検出できませんでした。Visual Scripting パッケージを有効化し、必要であればメニュー 'FUnity/Setup/Install Visual Scripting' を実行してから 'FUnity/Create/Default Project Data' を再度実行してください。");
-            }
-            else
+            if (logWhenMissing)
             {
                 Debug.Log($"[FUnity.Setup] Asset not found: {typeof(T).Name} ({assetName ?? searchFilter})");
             }

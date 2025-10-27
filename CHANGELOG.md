@@ -21,6 +21,7 @@
 
 ### Fixed
 - fix(setup): PanelSettings テーマ割当と Fooni_FloatSetup の不足検知を堅牢化し、セットアップ時の警告を解消。
+- fix(setup): filter invalid asset search folders and auto-generate Fooni placeholders to silence setup warnings.
 - fix(vs): replace Flow.TryGetValue/HasValue with Flow.GetValue and initialize local adapter references.
 - fix(input): add System namespace or qualify [System.Obsolete].
 - 壊れた USS や重複アセットを再生成・整理する手順を整備。
