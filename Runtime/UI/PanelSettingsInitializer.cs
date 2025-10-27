@@ -265,7 +265,7 @@ namespace FUnity.UI
                 return false;
             }
 
-            for (var i = 0, count = set.count; i < count; i++)
+            for (int i = 0, count = set.count; i < count; i++)
             {
                 if (set[i] == target)
                 {
