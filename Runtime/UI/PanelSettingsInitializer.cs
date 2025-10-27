@@ -25,6 +25,11 @@ namespace FUnity.UI
         /// <summary>Resources 配下に常駐させるため、Assets/Resources を基準に正規パスを構築する。</summary>
         private static readonly string ResourceDirectory = Path.Combine("Assets", "Resources");
         private static readonly string AssetPath = Path.Combine(ResourceDirectory, ResourceName + ".asset");
+        /// <summary>フォールバックテーマ設定のリソース名。</summary>
+        private const string ThemeSettingsResourceName = "FUnityPanelThemeSettings";
+
+        /// <summary>キャッシュ済みのフォールバックテーマ。</summary>
+        private static StyleSheet s_cachedFallbackTheme;
 
         /// <summary>
         /// 実行前に PanelSettings をロードし、存在しない場合は生成・保存まで行う。
@@ -59,6 +64,7 @@ namespace FUnity.UI
 
             // テーマ未設定による警告を防ぐため、確実に Theme Style Sheet を割り当てる。
             EnsureThemeStyleSheet(panelSettings);
+            var fallbackTheme = LoadFallbackTheme();
 
             var uiDocuments = Object.FindObjectsOfType<UIDocument>();
             if (uiDocuments == null || uiDocuments.Length == 0)
@@ -74,6 +80,8 @@ namespace FUnity.UI
                     // PanelSettings を持たない UI Document のみに付与し、ユーザー設定を上書きしない。
                     uiDocument.panelSettings = panelSettings;
                 }
+
+                ApplyFallbackTheme(uiDocument, fallbackTheme);
             }
         }
 
@@ -185,5 +193,70 @@ namespace FUnity.UI
             return assigned;
         }
 #endif
+
+        /// <summary>
+        /// Resources からフォールバック用テーマ設定を読み込み、StyleSheet をキャッシュして返す。
+        /// </summary>
+        private static StyleSheet LoadFallbackTheme()
+        {
+            if (s_cachedFallbackTheme != null)
+            {
+                return s_cachedFallbackTheme;
+            }
+
+            var themeSettings = Resources.Load<FUnityPanelThemeSettings>(ThemeSettingsResourceName);
+            if (themeSettings == null)
+            {
+                return null;
+            }
+
+            s_cachedFallbackTheme = themeSettings.Theme;
+            return s_cachedFallbackTheme;
+        }
+
+        /// <summary>
+        /// PanelSettings にテーマが設定できない場合のフォールバックとして、UIDocument の rootVisualElement に StyleSheet を追加する。
+        /// </summary>
+        private static void ApplyFallbackTheme(UIDocument uiDocument, StyleSheet fallbackTheme)
+        {
+            if (uiDocument == null || fallbackTheme == null)
+            {
+                return;
+            }
+
+            var root = uiDocument.rootVisualElement;
+            if (root == null)
+            {
+                return;
+            }
+
+            if (HasStyleSheet(root, fallbackTheme))
+            {
+                return;
+            }
+
+            root.styleSheets.Add(fallbackTheme);
+        }
+
+        /// <summary>
+        /// 指定の StyleSheet が既に VisualElement に適用されているか確認する。
+        /// </summary>
+        private static bool HasStyleSheet(VisualElement visualElement, StyleSheet styleSheet)
+        {
+            if (visualElement == null || styleSheet == null)
+            {
+                return false;
+            }
+
+            foreach (var attached in visualElement.styleSheets)
+            {
+                if (attached == styleSheet)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

@@ -5,8 +5,11 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
+#if UNITY_VISUAL_SCRIPTING
 using Unity.VisualScripting;
+#endif
 using FUnity.Runtime.Core;
+using FUnity.UI;
 
 namespace FUnity.EditorTools
 {
@@ -20,6 +23,7 @@ namespace FUnity.EditorTools
         private const string FUnityUiUssFolderPath = FUnityUiFolderPath + "/USS";
         private const string ProjectAssetPath = ResourcesFolderPath + "/FUnityProjectData.asset";
         private const string StageAssetPath = ResourcesFolderPath + "/FUnityStageData.asset";
+        private const string PanelThemeSettingsAssetPath = ResourcesFolderPath + "/FUnityPanelThemeSettings.asset";
 
         // Theme は UI Builder 標準配置（Legacy）を最優先し、無ければ FUnity 配下の正規 USS を生成して使用する。
         private const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss";
@@ -33,6 +37,20 @@ namespace FUnity.EditorTools
         private const string ScratchActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Starter.asset";
         private const string FooniScriptGraphSearchFilter = "t:ScriptGraphAsset Fooni_FloatSetup";
         private const string ScratchRunnerMacroSearchFilter = "t:ScriptGraphAsset MoveWithArrow";
+        /// <summary>不足している Visual Scripting グラフを自動生成するかどうか。</summary>
+        private const bool AutoCreateMissingScriptGraphs = true;
+
+        /// <summary>Unity バージョンごとに異なる PanelSettings のテーマプロパティ候補名。</summary>
+        private static readonly string[] PanelThemePropertyCandidates =
+        {
+            "themeStyleSheets",
+            "m_ThemeStyleSheets",
+            "themeStyleSheet",
+            "m_ThemeStyleSheet",
+            "themeUss",
+            "m_ThemeUss",
+            "theme"
+        };
 
         // 背景テクスチャはプロジェクト直下の正規パスを優先し、無ければパッケージ同梱版から順に探す。
         private static readonly string[] StageBackgroundCandidates =
@@ -73,7 +91,6 @@ namespace FUnity.EditorTools
         {
             "Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset"
         };
-        private const string FooniScriptGraphFolder = "Assets/FUnity/VisualScripting/Macros";
         private static readonly string[] ScratchRunnerMacroCandidates =
         {
             "Assets/FUnity/VisualScripting/Macros/MoveWithArrow.asset",
@@ -181,30 +198,22 @@ namespace FUnity.EditorTools
             changed |= SetObject(serializedActor, "m_ElementStyle", LoadFirst<StyleSheet>(FooniElementStyleCandidates, FooniElementStyleSearchFilter));
 
             var scriptGraphProperty = serializedActor.FindProperty("m_scriptGraph");
+#if UNITY_VISUAL_SCRIPTING
             if (scriptGraphProperty != null && scriptGraphProperty.objectReferenceValue == null)
             {
-                var defaultScriptGraph = LoadFirst<ScriptGraphAsset>(FooniScriptGraphCandidates, FooniScriptGraphSearchFilter);
-
-                if (defaultScriptGraph == null)
-                {
-                    EnsureFolder(FooniScriptGraphFolder);
-                    var targetPath = FooniScriptGraphCandidates.FirstOrDefault();
-                    if (!string.IsNullOrEmpty(targetPath))
-                    {
-                        defaultScriptGraph = CreateScriptGraphAsset(targetPath);
-                    }
-                }
-
+                var defaultScriptGraph = LoadFirst<ScriptGraphAsset>(FooniScriptGraphCandidates, FooniScriptGraphSearchFilter, "Fooni_FloatSetup");
                 if (defaultScriptGraph != null)
                 {
                     scriptGraphProperty.objectReferenceValue = defaultScriptGraph;
                     changed = true;
                 }
-                else
-                {
-                    Debug.LogWarning("[FUnity] Failed to assign or create a ScriptGraph for Fooni actor.");
-                }
             }
+#else
+            if (scriptGraphProperty != null && scriptGraphProperty.objectReferenceValue == null)
+            {
+                Debug.Log("[FUnity.Setup] Unity Visual Scripting が未導入のため、Fooni 俳優用グラフの割り当てをスキップしました。");
+            }
+#endif
 
             if (changed)
             {
@@ -271,8 +280,6 @@ namespace FUnity.EditorTools
                 project.runners = new List<FUnityProjectData.RunnerEntry>();
             }
 
-            var macro = LoadFirst<ScriptGraphAsset>(ScratchRunnerMacroCandidates, ScratchRunnerMacroSearchFilter);
-
             if (project.runners.Count == 0)
             {
                 project.runners.Add(new FUnityProjectData.RunnerEntry());
@@ -280,7 +287,13 @@ namespace FUnity.EditorTools
 
             var entry = project.runners[0];
             entry.name = "Scratch VS Runner";
+#if UNITY_VISUAL_SCRIPTING
+            var macro = LoadFirst<ScriptGraphAsset>(ScratchRunnerMacroCandidates, ScratchRunnerMacroSearchFilter, "MoveWithArrow");
             entry.macro = macro;
+#else
+            entry.macro = null;
+            Debug.Log("[FUnity.Setup] Unity Visual Scripting が未導入のため、Scratch Runner マクロの割り当てをスキップしました。");
+#endif
 
             if (entry.objectVariables == null)
             {
@@ -290,6 +303,7 @@ namespace FUnity.EditorTools
             EditorUtility.SetDirty(project);
         }
 
+#if UNITY_VISUAL_SCRIPTING
         /// <summary>
         /// 指定パスに ScriptGraphAsset を作成し、既に存在する場合はそれを返す。
         /// </summary>
@@ -326,9 +340,10 @@ namespace FUnity.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log($"[FUnity] Created ScriptGraphAsset: {assetPath}");
+            Debug.Log($"[FUnity.Setup] ScriptGraphAsset を生成しました: {assetPath}");
             return macro;
         }
+#endif
 
         /// <summary>
         /// 指定パス配下のフォルダを親から順番に生成し、AssetDatabase が参照可能な構造に整える。
@@ -444,20 +459,35 @@ namespace FUnity.EditorTools
         /// 候補パス群を優先順位順に試し、見つからなければ GUID 検索で該当アセットを拾う。
         /// 編集環境ごとの差異を吸収するため、最終手段として AssetDatabase.FindAssets を用いる。
         /// </summary>
-        private static T LoadFirst<T>(string[] candidatePaths, string searchFilter) where T : Object
+        private static T LoadFirst<T>(string[] candidatePaths, string searchFilter, string assetName = null) where T : Object
         {
-            foreach (var candidate in candidatePaths)
+            if (candidatePaths != null)
             {
-                var asset = AssetDatabase.LoadAssetAtPath<T>(candidate);
-                if (asset != null)
+                foreach (var candidate in candidatePaths)
                 {
-                    return asset;
+                    var asset = AssetDatabase.LoadAssetAtPath<T>(candidate);
+                    if (asset != null)
+                    {
+                        return asset;
+                    }
                 }
             }
 
+            var searchFolders = candidatePaths == null
+                ? System.Array.Empty<string>()
+                : candidatePaths
+                    .Select(Path.GetDirectoryName)
+                    .Where(path => !string.IsNullOrEmpty(path))
+                    .Select(path => path.Replace("\\", "/"))
+                    .Distinct()
+                    .ToArray();
+
             if (!string.IsNullOrEmpty(searchFilter))
             {
-                var guids = AssetDatabase.FindAssets(searchFilter);
+                var guids = searchFolders.Length > 0
+                    ? AssetDatabase.FindAssets(searchFilter, searchFolders)
+                    : AssetDatabase.FindAssets(searchFilter);
+
                 foreach (var guid in guids)
                 {
                     var path = AssetDatabase.GUIDToAssetPath(guid);
@@ -469,7 +499,73 @@ namespace FUnity.EditorTools
                 }
             }
 
-            Debug.LogWarning($"[FUnity] Asset not found: {typeof(T).Name} ({searchFilter})");
+            if (!string.IsNullOrEmpty(assetName))
+            {
+                var nameFilter = $"t:{typeof(T).Name} {assetName}";
+                var guids = searchFolders.Length > 0
+                    ? AssetDatabase.FindAssets(nameFilter, searchFolders)
+                    : AssetDatabase.FindAssets(nameFilter);
+
+                foreach (var guid in guids)
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (Path.GetFileNameWithoutExtension(path) != assetName)
+                    {
+                        continue;
+                    }
+
+                    var asset = AssetDatabase.LoadAssetAtPath<T>(path);
+                    if (asset != null)
+                    {
+                        return asset;
+                    }
+                }
+
+                if (guids.Length == 0)
+                {
+                    guids = AssetDatabase.FindAssets($"t:{typeof(T).Name}");
+                    foreach (var guid in guids)
+                    {
+                        var path = AssetDatabase.GUIDToAssetPath(guid);
+                        if (Path.GetFileNameWithoutExtension(path) != assetName)
+                        {
+                            continue;
+                        }
+
+                        var asset = AssetDatabase.LoadAssetAtPath<T>(path);
+                        if (asset != null)
+                        {
+                            return asset;
+                        }
+                    }
+                }
+            }
+
+#if UNITY_VISUAL_SCRIPTING
+            if (typeof(T) == typeof(ScriptGraphAsset) && AutoCreateMissingScriptGraphs && candidatePaths != null && candidatePaths.Length > 0)
+            {
+                var targetPath = candidatePaths.FirstOrDefault(path => !string.IsNullOrEmpty(path));
+                if (!string.IsNullOrEmpty(targetPath))
+                {
+                    var created = CreateScriptGraphAsset(targetPath);
+                    if (created != null)
+                    {
+                        Debug.Log($"[FUnity.Setup] プレースホルダーの ScriptGraphAsset を生成しました: {targetPath}");
+                        return created as T;
+                    }
+                }
+            }
+#endif
+
+            if (typeof(T).Name == "ScriptGraphAsset")
+            {
+                Debug.Log("[FUnity.Setup] Visual Scripting グラフを検出できませんでした。Visual Scripting パッケージを有効化し、必要であればメニュー 'FUnity/Setup/Install Visual Scripting' を実行してから 'FUnity/Create/Default Project Data' を再度実行してください。");
+            }
+            else
+            {
+                Debug.Log($"[FUnity.Setup] Asset not found: {typeof(T).Name} ({assetName ?? searchFilter})");
+            }
+
             return null;
         }
 
@@ -579,7 +675,8 @@ namespace FUnity.EditorTools
             var themeProperty = FindThemeProperty(serializedPanel);
             if (themeProperty == null)
             {
-                Debug.LogWarning("[FUnity] PanelSettings does not expose a theme field; skipping assignment.");
+                Debug.Log("[FUnity.Setup] PanelSettings に theme プロパティが見つからなかったため、ランタイム適用にフォールバックします。");
+                EnsurePanelThemeSettingsAsset(theme);
                 return;
             }
 
@@ -617,36 +714,79 @@ namespace FUnity.EditorTools
                     }
                 }
             }
+            else
+            {
+                Debug.Log("[FUnity.Setup] PanelSettings の theme プロパティ型が未対応のため、ランタイム適用にフォールバックします。");
+                EnsurePanelThemeSettingsAsset(theme);
+                return;
+            }
 
             if (!changed)
             {
                 // 値が変わっていなければ Apply/Save を避けて AssetDatabase の再インポートを抑制する。
+                EnsurePanelThemeSettingsAsset(theme);
                 return;
             }
 
             serializedPanel.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(panelSettings);
             AssetDatabase.SaveAssets();
+
+            EnsurePanelThemeSettingsAsset(theme);
         }
 
         /// <summary>
-        /// themeStyleSheets → m_ThemeStyleSheets → themeStyleSheet の順で探索し、新旧 API 名と内部フィールドを網羅する。
-        /// Unity のバージョン差異を吸収するため、SerializedObject を介した動的アクセスを採用する。
+        /// PanelSettings がテーマを保持できない場合に備え、フォールバック用の設定アセットを生成しテーマ参照を永続化する。
+        /// </summary>
+        private static void EnsurePanelThemeSettingsAsset(StyleSheet theme)
+        {
+            if (theme == null)
+            {
+                return;
+            }
+
+            EnsureFolder(ResourcesFolderPath);
+
+            var settings = AssetDatabase.LoadAssetAtPath<FUnityPanelThemeSettings>(PanelThemeSettingsAssetPath);
+            if (settings == null)
+            {
+                settings = ScriptableObject.CreateInstance<FUnityPanelThemeSettings>();
+                AssetDatabase.CreateAsset(settings, PanelThemeSettingsAssetPath);
+            }
+
+            var serializedSettings = new SerializedObject(settings);
+            var themeProperty = serializedSettings.FindProperty("m_theme");
+            if (themeProperty == null)
+            {
+                return;
+            }
+
+            if (themeProperty.objectReferenceValue == theme)
+            {
+                return;
+            }
+
+            themeProperty.objectReferenceValue = theme;
+            serializedSettings.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// PanelSettings のテーマ関連プロパティを候補名順に探索し、最初に見つかった SerializedProperty を返す。
         /// </summary>
         private static SerializedProperty FindThemeProperty(SerializedObject serializedPanel)
         {
-            var property = serializedPanel.FindProperty("themeStyleSheets");
-            if (property == null)
+            foreach (var candidate in PanelThemePropertyCandidates)
             {
-                property = serializedPanel.FindProperty("m_ThemeStyleSheets");
+                var property = serializedPanel.FindProperty(candidate);
+                if (property != null)
+                {
+                    return property;
+                }
             }
 
-            if (property == null)
-            {
-                property = serializedPanel.FindProperty("themeStyleSheet");
-            }
-
-            return property;
+            return null;
         }
 
         /// <summary>
