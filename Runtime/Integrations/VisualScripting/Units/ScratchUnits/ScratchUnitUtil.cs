@@ -133,34 +133,35 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// Flow 情報から Graph Variables を参照し、一般的なキーでアダプタを探します。
+        /// Flow 情報から Object Variables（Graph をホストする GameObject 単位）を参照し、一般的なキーでアダプタを探します。
         /// </summary>
         /// <param name="flow">現在のフロー。</param>
         /// <returns>見つかったアダプタ。存在しない場合は null。</returns>
         private static ActorPresenterAdapter TryGetFromGraphVariables(Flow flow)
         {
-            if (flow?.stack == null)
+            var owner = flow?.stack?.gameObject;
+            if (owner == null)
             {
                 return null;
             }
 
-            var graphVariables = Variables.Graph(flow.stack);
-            if (graphVariables == null)
+            var objectVariables = Variables.Object(owner);
+            if (objectVariables == null)
             {
                 return null;
             }
 
-            if (graphVariables.IsDefined("adapter"))
+            if (objectVariables.IsDefined("adapter"))
             {
-                if (graphVariables.Get("adapter") is ActorPresenterAdapter adapter && adapter != null)
+                if (objectVariables.Get("adapter") is ActorPresenterAdapter adapter && adapter != null)
                 {
                     return adapter;
                 }
             }
 
-            if (graphVariables.IsDefined(nameof(ActorPresenterAdapter)))
+            if (objectVariables.IsDefined(nameof(ActorPresenterAdapter)))
             {
-                if (graphVariables.Get(nameof(ActorPresenterAdapter)) is ActorPresenterAdapter adapter && adapter != null)
+                if (objectVariables.Get(nameof(ActorPresenterAdapter)) is ActorPresenterAdapter adapter && adapter != null)
                 {
                     return adapter;
                 }

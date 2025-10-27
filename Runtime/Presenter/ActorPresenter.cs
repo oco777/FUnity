@@ -171,49 +171,33 @@ namespace FUnity.Runtime.Presenter
 
             m_ScriptMachine = machine;
 
-            var graphVariables = Variables.Graph(machine);
-            if (graphVariables == null)
-            {
-                Debug.LogWarning("[FUnity] ActorPresenter: Graph Variables にアクセスできないため Self を登録できません。");
-                return;
-            }
-
-            graphVariables.Set("presenter", this);
-            graphVariables.Set("selfPresenter", this);
-            graphVariables.Set(nameof(ActorPresenter), this);
-
-            if (m_View is Object viewObject && viewObject != null)
-            {
-                graphVariables.Set("view", viewObject);
-                graphVariables.Set("selfView", viewObject);
-            }
-            else if (m_View != null)
-            {
-                graphVariables.Set("view", m_View);
-                graphVariables.Set("selfView", m_View);
-            }
-
-            if (uiElement != null)
-            {
-                graphVariables.Set("ui", uiElement);
-                graphVariables.Set("selfUI", uiElement);
-            }
-
             var objectVariables = Variables.Object(machine.gameObject);
             if (objectVariables != null)
             {
                 objectVariables.Set("presenter", this);
+                objectVariables.Set("selfPresenter", this);
                 objectVariables.Set(nameof(ActorPresenter), this);
 
                 if (uiElement != null)
                 {
                     objectVariables.Set("ui", uiElement);
+                    objectVariables.Set("selfUI", uiElement);
                 }
 
                 if (m_View is Object viewComponent && viewComponent != null)
                 {
                     objectVariables.Set("view", viewComponent);
+                    objectVariables.Set("selfView", viewComponent);
                 }
+                else if (m_View != null)
+                {
+                    objectVariables.Set("view", m_View);
+                    objectVariables.Set("selfView", m_View);
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[FUnity] ActorPresenter: Object Variables にアクセスできないため Self を登録できません。");
             }
         }
 

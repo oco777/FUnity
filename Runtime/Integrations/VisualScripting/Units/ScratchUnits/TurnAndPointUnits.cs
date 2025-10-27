@@ -93,72 +93,47 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>解決した Presenter。見つからない場合は null。</returns>
         private static object ResolvePresenter(Flow flow)
         {
-            if (flow?.stack != null)
+            if (flow?.stack == null)
             {
-                var graphVariables = Variables.Graph(flow.stack);
-                if (graphVariables != null)
+                return null;
+            }
+
+            var owner = flow.stack.gameObject;
+            if (owner == null)
+            {
+                return null;
+            }
+
+            var objectVariables = Variables.Object(owner);
+            if (objectVariables == null)
+            {
+                return null;
+            }
+
+            if (objectVariables.IsDefined("presenter"))
+            {
+                var presenter = objectVariables.Get("presenter");
+                if (presenter != null)
                 {
-                    if (graphVariables.IsDefined("presenter"))
-                    {
-                        var presenter = graphVariables.Get("presenter");
-                        if (presenter != null)
-                        {
-                            return presenter;
-                        }
-                    }
-
-                    if (graphVariables.IsDefined("selfPresenter"))
-                    {
-                        var presenter = graphVariables.Get("selfPresenter");
-                        if (presenter != null)
-                        {
-                            return presenter;
-                        }
-                    }
-
-                    if (graphVariables.IsDefined(nameof(ActorPresenter)))
-                    {
-                        var presenter = graphVariables.Get(nameof(ActorPresenter));
-                        if (presenter != null)
-                        {
-                            return presenter;
-                        }
-                    }
+                    return presenter;
                 }
+            }
 
-                var owner = flow.stack.gameObject;
-                if (owner != null)
+            if (objectVariables.IsDefined("selfPresenter"))
+            {
+                var presenter = objectVariables.Get("selfPresenter");
+                if (presenter != null)
                 {
-                    var objectVariables = Variables.Object(owner);
-                    if (objectVariables != null)
-                    {
-                        if (objectVariables.IsDefined("presenter"))
-                        {
-                            var presenter = objectVariables.Get("presenter");
-                            if (presenter != null)
-                            {
-                                return presenter;
-                            }
-                        }
+                    return presenter;
+                }
+            }
 
-                        if (objectVariables.IsDefined("selfPresenter"))
-                        {
-                            var presenter = objectVariables.Get("selfPresenter");
-                            if (presenter != null)
-                            {
-                                return presenter;
-                            }
-                        }
-
-                        if (objectVariables.IsDefined(nameof(ActorPresenter)))
-                        {
-                            var presenter = objectVariables.Get(nameof(ActorPresenter));
-                            if (presenter != null)
-                            {
-                                return presenter;
-                            }
-                        }
-                    }
+            if (objectVariables.IsDefined(nameof(ActorPresenter)))
+            {
+                var presenter = objectVariables.Get(nameof(ActorPresenter));
+                if (presenter != null)
+                {
+                    return presenter;
                 }
             }
 
