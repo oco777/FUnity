@@ -230,12 +230,13 @@ namespace FUnity.UI
                 return;
             }
 
-            if (HasStyleSheet(root, fallbackTheme))
+            var styleSheetSet = root.styleSheets;
+            if (ContainsStyleSheet(styleSheetSet, fallbackTheme))
             {
                 return;
             }
 
-            root.styleSheets.Add(fallbackTheme);
+            styleSheetSet.Add(fallbackTheme);
         }
 
         /// <summary>
@@ -248,15 +249,55 @@ namespace FUnity.UI
                 return false;
             }
 
-            foreach (var attached in visualElement.styleSheets)
+            return ContainsStyleSheet(visualElement.styleSheets, styleSheet);
+        }
+
+        /// <summary>
+        /// <see cref="VisualElementStyleSheetSet"/> 内に対象の StyleSheet が含まれるかを確認する。
+        /// </summary>
+        /// <param name="set">検索対象の StyleSheet セット。</param>
+        /// <param name="target">存在確認したい StyleSheet。</param>
+        /// <returns>対象が含まれていれば true。</returns>
+        private static bool ContainsStyleSheet(VisualElementStyleSheetSet set, StyleSheet target)
+        {
+            if (target == null)
             {
-                if (attached == styleSheet)
+                return false;
+            }
+
+            for (var i = 0, count = set.count; i < count; i++)
+            {
+                if (set[i] == target)
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// <see cref="VisualElementStyleSheetSet"/> から対象の StyleSheet を削除する。
+        /// </summary>
+        /// <param name="set">削除対象を含む StyleSheet セット。</param>
+        /// <param name="target">削除したい StyleSheet。</param>
+        private static void RemoveStyleSheet(VisualElementStyleSheetSet set, StyleSheet target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            set.Remove(target);
+        }
+
+        /// <summary>
+        /// <see cref="VisualElementStyleSheetSet"/> に登録されている StyleSheet を全てクリアする。
+        /// </summary>
+        /// <param name="set">クリア対象の StyleSheet セット。</param>
+        private static void ClearStyleSheets(VisualElementStyleSheetSet set)
+        {
+            set.Clear();
         }
     }
 }
