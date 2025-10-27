@@ -64,6 +64,9 @@ namespace FUnity.Core
         /// <summary>生成済み俳優 UI 要素と設定のペア。</summary>
         private readonly List<ActorVisual> m_ActorVisuals = new List<ActorVisual>();
 
+        /// <summary>俳優設定と ScriptMachine を対応付け、Graph Variables に Self を注入するための辞書。</summary>
+        private readonly Dictionary<FUnityActorData, ScriptMachine> m_ActorScriptMachines = new Dictionary<FUnityActorData, ScriptMachine>();
+
         /// <summary>ステージ全体を表現する UI ルート要素。</summary>
         private StageElement m_StageElement;
 
@@ -336,6 +339,7 @@ namespace FUnity.Core
             m_ActorVisuals.Clear();
             m_ActorPresenters.Clear();
             m_ActorPresenterMap.Clear();
+            m_ActorScriptMachines.Clear();
 
             if (m_VsBridge != null)
             {
@@ -533,6 +537,7 @@ namespace FUnity.Core
                 m_ActorPresenters.Add(presenter);
 
                 m_ActorPresenterMap[visual.Data] = presenter;
+                BindActorGraphContext(visual.Data, presenter, view, visual.Element);
                 BindPresenterToControllers(visual.Data, presenter);
 
                 visual.Presenter = presenter;
@@ -1255,7 +1260,7 @@ namespace FUnity.Core
                     continue;
                 }
 
-                ConfigureScriptMachine(runner, actor.ScriptGraph);
+                ConfigureScriptMachine(actor, runner, actor.ScriptGraph);
                 ConfigureActorPresenterAdapter(runner, actor);
 
                 var objectVariables = Variables.Object(runner);
@@ -1301,11 +1306,11 @@ namespace FUnity.Core
         /// </summary>
         /// <param name="runner">構成対象の Runner。</param>
         /// <param name="macro">適用する Visual Scripting マクロ。</param>
-        private void ConfigureScriptMachine(GameObject runner, ScriptGraphAsset macro)
+        private ScriptMachine ConfigureScriptMachine(FUnityActorData actor, GameObject runner, ScriptGraphAsset macro)
         {
             if (runner == null)
             {
-                return;
+                return null;
             }
 
             var machine = runner.GetComponent<ScriptMachine>();
@@ -1317,13 +1322,24 @@ namespace FUnity.Core
             if (macro == null)
             {
                 Debug.LogWarning($"[FUnity] ScriptGraph is null. Runner='{runner.name}'");
-                return;
+                if (actor != null)
+                {
+                    m_ActorScriptMachines.Remove(actor);
+                }
+
+                return machine;
             }
 
             machine.nest.source = GraphSource.Macro;
             machine.nest.macro = macro;
 
+            if (actor != null)
+            {
+                m_ActorScriptMachines[actor] = machine;
+            }
+
             Debug.Log($"[FUnity] Spawned actor runner: {runner.name}");
+            return machine;
         }
 
         /// <summary>
@@ -1350,6 +1366,36 @@ namespace FUnity.Core
             }
 
             RegisterControllerForActor(actor, controller);
+        }
+
+        /// <summary>
+        /// 指定した俳優の ScriptMachine に Presenter・UI コンテキストをバインドし、グラフ内の Self を分離する。
+        /// </summary>
+        /// <param name="actor">対象の俳優設定。</param>
+        /// <param name="presenter">Self として注入する Presenter。</param>
+        /// <param name="view">UI 反映を担当する View。</param>
+        /// <param name="uiElement">俳優に対応する UI 要素。</param>
+        private void BindActorGraphContext(FUnityActorData actor, ActorPresenter presenter, IActorView view, VisualElement uiElement)
+        {
+            if (actor == null || presenter == null)
+            {
+                return;
+            }
+
+            if (!m_ActorScriptMachines.TryGetValue(actor, out var machine) || machine == null)
+            {
+                var displayName = string.IsNullOrEmpty(actor.DisplayName) ? "(Unknown)" : actor.DisplayName;
+                FUnityLog.LogWarning($"'{displayName}' 用の ScriptMachine が未割り当てのため Graph Variables への Self バインドをスキップします。");
+                return;
+            }
+
+            VisualElement resolvedUi = uiElement;
+            if (view is ActorView actorView)
+            {
+                resolvedUi = actorView.ActorRoot ?? actorView.BoundElement ?? resolvedUi;
+            }
+
+            presenter.BindScriptMachine(machine, resolvedUi);
         }
 
         /// <summary>

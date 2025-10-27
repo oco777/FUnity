@@ -16,7 +16,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | Scratch/Point Direction | ◯度に向ける | 向きを絶対角度に設定 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TurnAndPointUnits.cs |
 | Scratch/Set X | x座標を ◯ にする | X 座標を代入 | 未実装: 対応する Unit が見つかりません |
 | Scratch/Set Y | y座標を ◯ にする | Y 座標を代入 | 未実装: 対応する Unit が見つかりません |
-| Scratch/Turn Degrees | ◯度回す | アクター画像を中心ピボットで相対回転 | Presenter 経由で UITK `style.rotate` を適用。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TurnAndPointUnits.cs |
+| Scratch/Turn Degrees | ◯度回す | アクター画像を中心ピボットで相対回転 | ActorPresenter を Graph Variables("presenter") に自動登録し、自分の UI のみ回転。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TurnAndPointUnits.cs |
 
 ## 制御（ループ／待機）
 

@@ -52,6 +52,9 @@ namespace FUnity.Runtime.View
         /// <summary>回転および背景差し替えに利用するポートレート要素。</summary>
         private VisualElement m_PortraitElement;
 
+        /// <summary>現在の回転角度（度）。中心ピボットを基準に UI へ適用する。</summary>
+        private float m_CurrentRotationDeg;
+
         /// <summary>吹き出しテキストを表示するラベル。</summary>
         private Label m_SpeechLabel;
 
@@ -63,6 +66,16 @@ namespace FUnity.Runtime.View
 
         /// <summary>GeometryChangedEvent の登録済みかどうかを示すフラグ。</summary>
         private bool m_GeometryCallbacksRegistered;
+
+        /// <summary>
+        /// Presenter からバインドされた VisualElement。Visual Scripting の Graph Variables へ登録する際に利用する。
+        /// </summary>
+        public VisualElement BoundElement => m_BoundElement;
+
+        /// <summary>
+        /// 俳優コンテナのルート要素。未解決の場合は <see cref="BoundElement"/> を返す。
+        /// </summary>
+        public VisualElement ActorRoot => m_ActorRoot ?? m_BoundElement;
 
         /// <summary>
         /// UIDocument をキャッシュし、ドキュメント直下のルートを相対配置へ戻す。
@@ -341,6 +354,8 @@ namespace FUnity.Runtime.View
         /// <param name="degrees">適用する角度（度）。0～360 度の範囲を想定する。</param>
         public void SetRotationDegrees(float degrees)
         {
+            m_CurrentRotationDeg = NormalizeDegrees(degrees);
+
             var portrait = ResolvePortraitElement();
             if (portrait == null)
             {
@@ -348,7 +363,17 @@ namespace FUnity.Runtime.View
             }
 
             portrait.style.transformOrigin = new TransformOrigin(50f, 50f, 0f);
-            portrait.style.rotate = new Rotate(Angle.Degrees(degrees));
+            portrait.style.rotate = new Rotate(Angle.Degrees(m_CurrentRotationDeg));
+        }
+
+        /// <summary>
+        /// 現在角度に相対加算で回転させる。Presenter からの「自分を回す」命令を UI に伝える際に利用する。
+        /// </summary>
+        /// <param name="deltaDegrees">加算する角度（度）。正で反時計回り。</param>
+        public void AddRotationDegrees(float deltaDegrees)
+        {
+            var next = NormalizeDegrees(m_CurrentRotationDeg + deltaDegrees);
+            SetRotationDegrees(next);
         }
 
         /// <summary>
@@ -515,6 +540,22 @@ namespace FUnity.Runtime.View
             }
 
             return element.Q<VisualElement>(className: "actor-root");
+        }
+
+        /// <summary>
+        /// 指定角度を 0～360 度の範囲へ正規化し、UI の回転指定に利用しやすい形へ整える。
+        /// </summary>
+        /// <param name="degrees">正規化する角度（度）。</param>
+        /// <returns>0～360 度の範囲に収まる角度。</returns>
+        private static float NormalizeDegrees(float degrees)
+        {
+            var normalized = degrees % 360f;
+            if (normalized < 0f)
+            {
+                normalized += 360f;
+            }
+
+            return normalized;
         }
     }
 }
