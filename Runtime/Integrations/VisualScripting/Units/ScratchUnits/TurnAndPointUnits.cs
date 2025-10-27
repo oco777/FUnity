@@ -56,14 +56,22 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             var delta = flow.GetValue<float>(m_DeltaDegrees);
 
-            var bridge = VSPresenterBridge.Instance;
-            if (bridge != null)
+            var presenterObj = ResolvePresenter(flow);
+            if (presenterObj != null)
             {
-                bridge.TurnDegrees(delta);
+                VSPresenterBridge.TurnSelf(presenterObj, delta);
             }
             else
             {
-                Debug.LogWarning("[FUnity] Scratch/Turn Degrees: VSPresenterBridge.Instance が未設定のため UI 回転を適用できません。FUnityManager がブリッジを初期化しているか確認してください。");
+                var bridge = VSPresenterBridge.Instance;
+                if (bridge != null)
+                {
+                    bridge.TurnDegrees(delta);
+                }
+                else
+                {
+                    Debug.LogWarning("[FUnity] Scratch/Turn Degrees: VSPresenterBridge.Instance が未設定のため UI 回転を適用できません。FUnityManager がブリッジを初期化しているか確認してください。");
+                }
             }
 
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
@@ -76,6 +84,85 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var current = controller.GetDirection();
             controller.SetDirection(current + delta);
             return m_Exit;
+        }
+
+        /// <summary>
+        /// 現在のフローから Graph/Object Variables を参照し、ActorPresenter を解決する。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>解決した Presenter。見つからない場合は null。</returns>
+        private static object ResolvePresenter(Flow flow)
+        {
+            if (flow?.stack != null)
+            {
+                var graphVariables = Variables.Graph(flow.stack);
+                if (graphVariables != null)
+                {
+                    if (graphVariables.IsDefined("presenter"))
+                    {
+                        var presenter = graphVariables.Get("presenter");
+                        if (presenter != null)
+                        {
+                            return presenter;
+                        }
+                    }
+
+                    if (graphVariables.IsDefined("selfPresenter"))
+                    {
+                        var presenter = graphVariables.Get("selfPresenter");
+                        if (presenter != null)
+                        {
+                            return presenter;
+                        }
+                    }
+
+                    if (graphVariables.IsDefined(nameof(ActorPresenter)))
+                    {
+                        var presenter = graphVariables.Get(nameof(ActorPresenter));
+                        if (presenter != null)
+                        {
+                            return presenter;
+                        }
+                    }
+                }
+
+                var owner = flow.stack.gameObject;
+                if (owner != null)
+                {
+                    var objectVariables = Variables.Object(owner);
+                    if (objectVariables != null)
+                    {
+                        if (objectVariables.IsDefined("presenter"))
+                        {
+                            var presenter = objectVariables.Get("presenter");
+                            if (presenter != null)
+                            {
+                                return presenter;
+                            }
+                        }
+
+                        if (objectVariables.IsDefined("selfPresenter"))
+                        {
+                            var presenter = objectVariables.Get("selfPresenter");
+                            if (presenter != null)
+                            {
+                                return presenter;
+                            }
+                        }
+
+                        if (objectVariables.IsDefined(nameof(ActorPresenter)))
+                        {
+                            var presenter = objectVariables.Get(nameof(ActorPresenter));
+                            if (presenter != null)
+                            {
+                                return presenter;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
     }
 

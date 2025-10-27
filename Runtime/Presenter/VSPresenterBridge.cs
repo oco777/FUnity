@@ -214,6 +214,22 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// Graph Variables 等から渡された Presenter 参照に対し、自分自身のみの回転を適用する静的ヘルパー。
+        /// </summary>
+        /// <param name="presenterObj">Visual Scripting グラフから取得した Presenter 相当のオブジェクト。</param>
+        /// <param name="degrees">加算する角度（度）。</param>
+        public static void TurnSelf(object presenterObj, float degrees)
+        {
+            if (presenterObj is ActorPresenter presenter && presenter != null)
+            {
+                presenter.TurnSelf(degrees);
+                return;
+            }
+
+            Debug.LogWarning("[FUnity] VSPresenterBridge: TurnSelf は ActorPresenter 参照を解決できず相対回転を適用できません。Graph Variables(\"presenter\") へ ActorPresenter を登録してください。");
+        }
+
+        /// <summary>
         /// ステージ背景色を変更する。Custom Event "Stage/SetBackgroundColor" を想定。
         /// </summary>
         /// <param name="color">適用する色。</param>

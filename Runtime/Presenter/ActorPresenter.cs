@@ -1,6 +1,7 @@
 // Updated: 2025-03-03
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Model;
 using FUnity.Runtime.View;
@@ -38,6 +39,9 @@ namespace FUnity.Runtime.Presenter
 
         /// <summary>ポートレート表示用に生成したランタイムスプライト。</summary>
         private Sprite m_RuntimePortrait;
+
+        /// <summary>この俳優専用にバインドされた Visual Scripting の ScriptMachine。</summary>
+        private ScriptMachine m_ScriptMachine;
 
         /// <summary>初期サイズ（幅・高さ）。0 の場合は View 側の既定値を利用する。</summary>
         private Vector2 m_BaseSize = Vector2.zero;
@@ -149,6 +153,67 @@ namespace FUnity.Runtime.Presenter
             if (m_View != null)
             {
                 m_View.SetPosition(m_State.Position);
+            }
+        }
+
+        /// <summary>
+        /// Visual Scripting の ScriptMachine に Presenter・View・UI 要素をバインドし、グラフが自分自身のみを操作するよう制限する。
+        /// </summary>
+        /// <param name="machine">紐付ける ScriptMachine。</param>
+        /// <param name="uiElement">この俳優の UI ルート要素。</param>
+        public void BindScriptMachine(ScriptMachine machine, VisualElement uiElement)
+        {
+            if (machine == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenter: ScriptMachine が null のため Graph Variables へ Self を登録できません。");
+                return;
+            }
+
+            m_ScriptMachine = machine;
+
+            var graphVariables = Variables.Graph(machine);
+            if (graphVariables == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenter: Graph Variables にアクセスできないため Self を登録できません。");
+                return;
+            }
+
+            graphVariables.Set("presenter", this);
+            graphVariables.Set("selfPresenter", this);
+            graphVariables.Set(nameof(ActorPresenter), this);
+
+            if (m_View is Object viewObject && viewObject != null)
+            {
+                graphVariables.Set("view", viewObject);
+                graphVariables.Set("selfView", viewObject);
+            }
+            else if (m_View != null)
+            {
+                graphVariables.Set("view", m_View);
+                graphVariables.Set("selfView", m_View);
+            }
+
+            if (uiElement != null)
+            {
+                graphVariables.Set("ui", uiElement);
+                graphVariables.Set("selfUI", uiElement);
+            }
+
+            var objectVariables = Variables.Object(machine.gameObject);
+            if (objectVariables != null)
+            {
+                objectVariables.Set("presenter", this);
+                objectVariables.Set(nameof(ActorPresenter), this);
+
+                if (uiElement != null)
+                {
+                    objectVariables.Set("ui", uiElement);
+                }
+
+                if (m_View is Object viewComponent && viewComponent != null)
+                {
+                    objectVariables.Set("view", viewComponent);
+                }
             }
         }
 
@@ -334,6 +399,15 @@ namespace FUnity.Runtime.Presenter
             m_State.RotationDeg = normalized;
 
             m_View?.SetRotationDegrees(normalized);
+        }
+
+        /// <summary>
+        /// Visual Scripting の「自分自身を回す」命令を受け取り、内部の <see cref="RotateBy(float)"/> を経由して反映する。
+        /// </summary>
+        /// <param name="deltaDegrees">加算する角度（度）。</param>
+        public void TurnSelf(float deltaDegrees)
+        {
+            RotateBy(deltaDegrees);
         }
 
         /// <summary>
