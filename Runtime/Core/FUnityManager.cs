@@ -67,6 +67,12 @@ namespace FUnity.Core
         /// <summary>俳優設定と ScriptMachine を対応付け、Graph Variables に Self を注入するための辞書。</summary>
         private readonly Dictionary<FUnityActorData, ScriptMachine> m_ActorScriptMachines = new Dictionary<FUnityActorData, ScriptMachine>();
 
+        /// <summary>生成済みの俳優 Runner GameObject 群。Play/Stop を跨いでクリーンアップする。</summary>
+        private readonly List<GameObject> m_ActorRunnerInstances = new List<GameObject>();
+
+        /// <summary>俳優 Runner を階層で整理するための親 GameObject。</summary>
+        private GameObject m_ActorRunnerRoot;
+
         /// <summary>ステージ全体を表現する UI ルート要素。</summary>
         private StageElement m_StageElement;
 
@@ -322,6 +328,8 @@ namespace FUnity.Core
         /// <param name="stageElement">俳優コンテナを提供するステージ要素。</param>
         private void ResetActorVisualState(StageElement stageElement)
         {
+            CleanupActorRunners();
+
             if (stageElement != null)
             {
                 stageElement.ClearActors();
@@ -340,6 +348,7 @@ namespace FUnity.Core
             m_ActorPresenters.Clear();
             m_ActorPresenterMap.Clear();
             m_ActorScriptMachines.Clear();
+            m_PendingActorControllers.Clear();
 
             if (m_VsBridge != null)
             {
@@ -1221,10 +1230,106 @@ namespace FUnity.Core
         }
 
         /// <summary>
+        /// 俳優 Runner をすべて破棄し、次回初期化時の重複生成を防ぐ。
+        /// </summary>
+        private void CleanupActorRunners()
+        {
+            for (var i = m_ActorRunnerInstances.Count - 1; i >= 0; i--)
+            {
+                var runner = m_ActorRunnerInstances[i];
+                if (runner != null)
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(runner);
+                    }
+#if UNITY_EDITOR
+                    else
+                    {
+                        DestroyImmediate(runner);
+                    }
+#else
+                    else
+                    {
+                        Destroy(runner);
+                    }
+#endif
+                }
+
+                m_ActorRunnerInstances.RemoveAt(i);
+            }
+
+            if (m_ActorRunnerRoot != null && m_ActorRunnerRoot.transform.childCount == 0)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(m_ActorRunnerRoot);
+                }
+#if UNITY_EDITOR
+                else
+                {
+                    DestroyImmediate(m_ActorRunnerRoot);
+                }
+#else
+                else
+                {
+                    Destroy(m_ActorRunnerRoot);
+                }
+#endif
+
+                m_ActorRunnerRoot = null;
+            }
+
+            m_ActorRunnerInstances.Clear();
+            m_ActorScriptMachines.Clear();
+        }
+
+        /// <summary>
+        /// 俳優 Runner を格納するルート GameObject を生成または再利用する。
+        /// </summary>
+        /// <returns>Runner をぶら下げる親 GameObject。</returns>
+        private GameObject EnsureActorRunnerRoot()
+        {
+            if (m_ActorRunnerRoot != null)
+            {
+                return m_ActorRunnerRoot;
+            }
+
+            const string rootName = "FUnity VS Runners";
+            var found = GameObject.Find(rootName);
+            if (found != null && found.transform.parent != transform)
+            {
+                found.transform.SetParent(transform, false);
+            }
+
+            m_ActorRunnerRoot = found != null ? found : new GameObject(rootName);
+            m_ActorRunnerRoot.transform.SetParent(transform, false);
+            return m_ActorRunnerRoot;
+        }
+
+        /// <summary>
+        /// Runner 名に利用する俳優表示名を決定する。空文字の場合は Actor_{index} を返す。
+        /// </summary>
+        /// <param name="actor">対象の俳優データ。</param>
+        /// <param name="index">俳優の列挙インデックス。</param>
+        /// <returns>Runner 名に利用する表示名。</returns>
+        private static string ResolveActorDisplayName(FUnityActorData actor, int index)
+        {
+            if (actor == null)
+            {
+                return $"Actor_{index}";
+            }
+
+            return string.IsNullOrEmpty(actor.DisplayName) ? $"Actor_{index}" : actor.DisplayName;
+        }
+
+        /// <summary>
         /// 俳優設定ごとに Visual Scripting Runner を生成し、必要なコンポーネントと参照を付与する。
         /// </summary>
         private void SpawnActorRunnersFromProjectData()
         {
+            CleanupActorRunners();
+
             if (m_Project == null)
             {
                 m_Project = Resources.Load<FUnityProjectData>("FUnityProjectData");
@@ -1247,14 +1352,15 @@ namespace FUnity.Core
                 EnsurePresenterBridge();
             }
 
-            foreach (var actor in m_Project.Actors)
+            for (var i = 0; i < m_Project.Actors.Count; i++)
             {
+                var actor = m_Project.Actors[i];
                 if (actor == null)
                 {
                     continue;
                 }
 
-                var runner = CreateActorRunner(actor);
+                var runner = CreateActorRunner(actor, i);
                 if (runner == null)
                 {
                     continue;
@@ -1281,22 +1387,21 @@ namespace FUnity.Core
         /// </summary>
         /// <param name="actor">対象の俳優設定。</param>
         /// <returns>生成または再利用した Runner。失敗時は null。</returns>
-        private GameObject CreateActorRunner(FUnityActorData actor)
+        private GameObject CreateActorRunner(FUnityActorData actor, int index)
         {
             if (actor == null)
             {
                 return null;
             }
 
-            var name = $"{actor.DisplayName} VS Runner";
-            var runner = GameObject.Find(name) ?? new GameObject(name);
+            var displayName = ResolveActorDisplayName(actor, index);
+            var runnerRoot = EnsureActorRunnerRoot();
+            var runner = new GameObject($"{displayName} VS Runner");
+            runner.transform.SetParent(runnerRoot != null ? runnerRoot.transform : transform, false);
             runner.tag = "Untagged";
             runner.layer = 0;
 
-            if (runner.transform.parent != transform)
-            {
-                runner.transform.SetParent(transform, false);
-            }
+            m_ActorRunnerInstances.Add(runner);
 
             return runner;
         }

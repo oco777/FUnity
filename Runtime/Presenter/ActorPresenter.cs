@@ -171,7 +171,11 @@ namespace FUnity.Runtime.Presenter
 
             m_ScriptMachine = machine;
 
-            var objectVariables = Variables.Object(machine.gameObject);
+            var objectVariables = Variables.Object(machine);
+            if (objectVariables == null)
+            {
+                objectVariables = Variables.Object(machine.gameObject);
+            }
             if (objectVariables != null)
             {
                 objectVariables.Set("presenter", this);
@@ -197,7 +201,7 @@ namespace FUnity.Runtime.Presenter
             }
             else
             {
-                Debug.LogWarning("[FUnity] ActorPresenter: Object Variables にアクセスできないため Self を登録できません。");
+                Debug.LogWarning("[FUnity] ActorPresenter: ScriptMachine の Object Variables にアクセスできないため Self を登録できません。Variables.Object(flow.stack) から参照できるよう Runner の構成を確認してください。");
             }
         }
 

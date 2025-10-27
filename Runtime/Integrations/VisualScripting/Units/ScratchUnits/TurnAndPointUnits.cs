@@ -93,18 +93,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>解決した Presenter。見つからない場合は null。</returns>
         private static object ResolvePresenter(Flow flow)
         {
-            if (flow?.stack == null)
-            {
-                return null;
-            }
-
-            var owner = flow.stack.gameObject;
-            if (owner == null)
-            {
-                return null;
-            }
-
-            var objectVariables = Variables.Object(owner);
+            var objectVariables = TryGetObjectVariables(flow);
             if (objectVariables == null)
             {
                 return null;
@@ -138,6 +127,43 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 現在のフローに紐づく Object 変数を取得する。Runner 単位の自己参照を保持するため <see cref="Variables.Object(FlowStack)"/> を優先し、
+        /// フォールバックとして GameObject 経由でも取得を試みる。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>取得した Object 変数。存在しない場合は null。</returns>
+        private static Variables TryGetObjectVariables(Flow flow)
+        {
+            if (flow?.stack == null)
+            {
+                return null;
+            }
+
+            Variables objectVariables = null;
+
+            try
+            {
+                objectVariables = Variables.Object(flow.stack);
+            }
+            catch (System.InvalidOperationException)
+            {
+                objectVariables = null;
+            }
+            catch (System.ArgumentException)
+            {
+                objectVariables = null;
+            }
+
+            if (objectVariables != null)
+            {
+                return objectVariables;
+            }
+
+            var owner = flow.stack.gameObject;
+            return owner != null ? Variables.Object(owner) : null;
         }
     }
 
