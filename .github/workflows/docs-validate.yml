@@ -1,0 +1,22 @@
+name: Docs validation
+
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'Docs/**'
+      - '.github/workflows/docs-validate.yml'
+      - 'Assets/FUnity/Editor/Docs/**'
+      - 'Packages/**'
+  workflow_dispatch:
+
+jobs:
+  hero-image:
+    name: Validate hero image placeholder
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Ensure hero image has data
+        run: test -s Packages/com.papacoder.funity/Docs/images/readme-hero.png
