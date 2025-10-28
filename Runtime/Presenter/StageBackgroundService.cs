@@ -1,8 +1,9 @@
 // Updated: 2025-03-18
 using System;
 using UnityEngine;
-using UnityEngine.UIElements;
 using FUnity.Runtime.Core;
+using FUnity.Runtime.UI;
+using UnityEngine.UIElements;
 
 namespace FUnity.Runtime.Presenter
 {
@@ -31,7 +32,7 @@ namespace FUnity.Runtime.Presenter
         private string m_LastResourceKey;
 
         /// <summary>背景用コンテナの名前。UI ビルダー上で識別しやすいよう定数化する。</summary>
-        private const string BackgroundLayerName = "FUnityBackgroundLayer";
+        private const string BackgroundLayerName = StageElement.BackgroundLayerName;
 
         /// <summary>Resources/Backgrounds 配下の既定ファイル名を示す定数。</summary>
         private const string DefaultBackgroundResource = "Background_01";
@@ -272,7 +273,7 @@ namespace FUnity.Runtime.Presenter
                 m_BackgroundLayer.style.backgroundImage = StyleKeyword.None;
             }
 
-            Debug.Log($"[FUnity.BGDiag] background-size keyword='{m_LastScaleKeyword}', texture={(texture != null ? texture.name : "null")}");
+            Debug.Log($"[FUnity.BGDiag] background scale='{m_LastScaleKeyword}', texture={(texture != null ? texture.name : "null")}");
         }
 
         /// <summary>
@@ -286,14 +287,41 @@ namespace FUnity.Runtime.Presenter
                 return false;
             }
 
+            if (m_BackgroundLayer != null && m_BackgroundLayer.parent != m_TargetRoot)
+            {
+                m_BackgroundLayer.RemoveFromHierarchy();
+                m_BackgroundLayer = null;
+            }
+
             if (m_BackgroundLayer == null)
             {
-                m_BackgroundLayer = new VisualElement
+                if (m_TargetRoot is StageElement stageElement)
                 {
-                    name = BackgroundLayerName,
-                    pickingMode = PickingMode.Ignore,
-                    focusable = false
-                };
+                    var stageBackground = stageElement.BackgroundLayer;
+                    if (stageBackground != null)
+                    {
+                        m_BackgroundLayer = stageBackground;
+                    }
+                }
+
+                if (m_BackgroundLayer == null)
+                {
+                    var existing = m_TargetRoot.Q<VisualElement>(BackgroundLayerName);
+                    if (existing != null)
+                    {
+                        m_BackgroundLayer = existing;
+                    }
+                }
+
+                if (m_BackgroundLayer == null)
+                {
+                    m_BackgroundLayer = new VisualElement
+                    {
+                        name = BackgroundLayerName,
+                        pickingMode = PickingMode.Ignore,
+                        focusable = false
+                    };
+                }
             }
 
             m_BackgroundLayer.style.position = Position.Absolute;
@@ -310,6 +338,15 @@ namespace FUnity.Runtime.Presenter
             {
                 m_BackgroundLayer.RemoveFromHierarchy();
                 m_TargetRoot.Insert(0, m_BackgroundLayer);
+            }
+            else
+            {
+                var currentIndex = m_TargetRoot.IndexOf(m_BackgroundLayer);
+                if (currentIndex > 0)
+                {
+                    m_TargetRoot.Remove(m_BackgroundLayer);
+                    m_TargetRoot.Insert(0, m_BackgroundLayer);
+                }
             }
 
             return true;

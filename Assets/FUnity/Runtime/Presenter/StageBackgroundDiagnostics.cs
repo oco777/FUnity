@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Presenter
     {
         /// <summary>
         /// 背景レイヤに適用されたスケールを判定し、contain/cover の USS クラスを優先して説明文を返します。
-        /// 指定クラスが無い場合は <see cref="BackgroundSize"/> の値を安全に文字列化します。
+        /// 指定クラスが無い場合は設定値のみを補足し、不明扱いとします。
         /// </summary>
         /// <param name="background">診断対象となる背景レイヤ要素。</param>
         /// <param name="configuredValue">ステージ設定から取得した期待スケール。null の場合は未設定扱い。</param>
@@ -33,15 +33,7 @@ namespace FUnity.Runtime.Presenter
                 return "contain (by class)";
             }
 
-            try
-            {
-                var bs = background.style.backgroundSize;
-                return $"size={bs.ToString()} (from style)";
-            }
-            catch
-            {
-                return "unknown";
-            }
+            return string.IsNullOrEmpty(configuredValue) ? "unknown (no class)" : $"unknown (configured={configuredValue})";
         }
     }
 
@@ -125,7 +117,8 @@ namespace FUnity.Runtime.Presenter
                 Warn("背景レイヤのレイアウトが 0x0。四辺 0、position:absolute が適用されているか確認してください。");
             }
 
-            bool hasImage = layer.style.backgroundImage.keyword != StyleKeyword.None && layer.resolvedStyle.backgroundImage.texture != null;
+            var resolvedBackground = layer.resolvedStyle.backgroundImage;
+            bool hasImage = resolvedBackground.texture != null || resolvedBackground.sprite != null;
             Log($"Layer backgroundImage: {(hasImage ? "SET" : "NONE")}");
             if (!hasImage)
             {
