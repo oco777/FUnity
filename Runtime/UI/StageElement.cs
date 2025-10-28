@@ -1,4 +1,5 @@
 // Updated: 2025-03-14
+using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Core;
 
@@ -12,6 +13,21 @@ namespace FUnity.Runtime.UI
     {
         /// <summary>ステージ要素の既定名称。UI Builder や検索で再利用する。</summary>
         internal const string StageRootName = "FUnityStage";
+
+        /// <summary>背景レイヤーへ付与する USS クラス名。</summary>
+        private const string BackgroundLayerClassName = "funity-stage__background";
+
+        /// <summary>背景レイヤー要素の名称。StageBackgroundService と共有する。</summary>
+        internal const string BackgroundLayerName = "FUnityBackgroundLayer";
+
+        /// <summary>背景用 USS を読み込む際の Resources パス。</summary>
+        private const string BackgroundStyleSheetResourcePath = "UI/StageBackground";
+
+        /// <summary>背景 USS のキャッシュ。null のまま読み込み失敗を示す。</summary>
+        private static StyleSheet s_cachedBackgroundStyleSheet;
+
+        /// <summary>背景 USS 読み込みを試行したかどうか。</summary>
+        private static bool s_backgroundStyleSheetLoaded;
 
         /// <summary>俳優要素を格納するコンテナの既定名称。</summary>
         internal const string ActorContainerName = "FUnityActorContainer";
@@ -36,6 +52,9 @@ namespace FUnity.Runtime.UI
 
         /// <summary>ステージ名ラベルの要素名称。</summary>
         private const string StageNameElementName = "FUnityStageName";
+
+        /// <summary>背景を描画するためのレイヤー。</summary>
+        private readonly VisualElement m_BackgroundLayer;
 
         /// <summary>俳優を配置するためのコンテナ。</summary>
         private readonly VisualElement m_ActorContainer;
@@ -63,6 +82,23 @@ namespace FUnity.Runtime.UI
 
             AddToClassList(StageRootClassName);
 
+            m_BackgroundLayer = new VisualElement
+            {
+                name = BackgroundLayerName,
+                pickingMode = PickingMode.Ignore,
+                focusable = false
+            };
+            m_BackgroundLayer.AddToClassList(BackgroundLayerClassName);
+            m_BackgroundLayer.style.position = Position.Absolute;
+            m_BackgroundLayer.style.left = 0f;
+            m_BackgroundLayer.style.top = 0f;
+            m_BackgroundLayer.style.right = 0f;
+            m_BackgroundLayer.style.bottom = 0f;
+            m_BackgroundLayer.style.flexGrow = 1f;
+            m_BackgroundLayer.style.flexShrink = 0f;
+            EnsureBackgroundStyleSheet(m_BackgroundLayer);
+            Add(m_BackgroundLayer);
+
             m_ActorContainer = new VisualElement
             {
                 name = ActorContainerName,
@@ -87,6 +123,9 @@ namespace FUnity.Runtime.UI
             m_OverlayContainer.style.flexShrink = 0f;
             Add(m_OverlayContainer);
         }
+
+        /// <summary>背景レイヤーを内部から公開し、Presenter 側での再利用を可能にする。</summary>
+        internal VisualElement BackgroundLayer => m_BackgroundLayer;
 
         /// <summary>俳優コンテナを公開する。Presenter から直接 UI ツリーを操作しないように注意する。</summary>
         public VisualElement ActorContainer => m_ActorContainer;
@@ -172,6 +211,45 @@ namespace FUnity.Runtime.UI
 
             m_StageNameLabel.text = stageName;
             m_StageNameLabel.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// 背景レイヤーへ StageBackground.uss を適用する。読み込みに失敗した場合は警告を出力する。
+        /// </summary>
+        /// <param name="target">スタイルシートを適用したい要素。</param>
+        private static void EnsureBackgroundStyleSheet(VisualElement target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            if (s_cachedBackgroundStyleSheet == null && !s_backgroundStyleSheetLoaded)
+            {
+                s_cachedBackgroundStyleSheet = Resources.Load<StyleSheet>(BackgroundStyleSheetResourcePath);
+                s_backgroundStyleSheetLoaded = true;
+
+                if (s_cachedBackgroundStyleSheet == null)
+                {
+                    Debug.LogWarning($"[FUnity.Stage] Resources/{BackgroundStyleSheetResourcePath}.uss が見つからず、背景スケール USS を適用できません。");
+                }
+            }
+
+            if (s_cachedBackgroundStyleSheet == null)
+            {
+                return;
+            }
+
+            var styleSheets = target.styleSheets;
+            for (var i = 0; i < styleSheets.count; i++)
+            {
+                if (styleSheets[i] == s_cachedBackgroundStyleSheet)
+                {
+                    return;
+                }
+            }
+
+            styleSheets.Add(s_cachedBackgroundStyleSheet);
         }
     }
 }
