@@ -70,8 +70,11 @@ namespace FUnity.Runtime.Presenter
             var opac = layer.resolvedStyle.opacity;
             Log($"Layer size: {lw} x {lh}, display={disp}, opacity={opac}, pickingMode={layer.pickingMode}");
 
+            var classList = string.Join(" ", layer.GetClasses());
+            Log($"Layer classes: {classList}");
+
             var size = layer.resolvedStyle.backgroundSize;
-            Log($"Layer backgroundSize: ({size.x.value}{size.x.unit}, {size.y.value}{size.y.unit})");
+            Log($"Layer backgroundSize: keyword={size.keyword}, ({size.x.value}{size.x.unit}, {size.y.value}{size.y.unit})");
 
             if (lw <= 0 || lh <= 0)
             {
@@ -95,11 +98,21 @@ namespace FUnity.Runtime.Presenter
                 }
             }
 
-            Log($"unityBackgroundScaleMode={layer.resolvedStyle.unityBackgroundScaleMode}");
-            if (tryTemporaryFix && layer.resolvedStyle.unityBackgroundScaleMode != ScaleMode.ScaleToFit)
+            var hasContain = layer.ClassListContains("bg--contain");
+            var hasCover = layer.ClassListContains("bg--cover");
+            Log($"Layer scale classes: contain={hasContain}, cover={hasCover}");
+
+            if (tryTemporaryFix && !hasContain && !hasCover)
             {
-                layer.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
-                Log("臨時: unityBackgroundScaleMode を ScaleToFit に変更しました（見切れ対策）。");
+                layer.AddToClassList("bg--contain");
+                Log("臨時: 背景スケールクラス bg--contain を追加しました。");
+            }
+
+            if (tryTemporaryFix)
+            {
+                layer.style.backgroundSize = StyleKeyword.Null;
+                layer.style.unityBackgroundScaleMode = StyleKeyword.Null;
+                Log("臨時: backgroundSize / unityBackgroundScaleMode を USS 依存にリセットしました。");
             }
 
             if (tryTemporaryFix)

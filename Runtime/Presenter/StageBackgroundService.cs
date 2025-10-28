@@ -1,4 +1,5 @@
-// Updated: 2025-03-10
+// Updated: 2025-03-18
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Core;
@@ -17,17 +18,14 @@ namespace FUnity.Runtime.Presenter
         /// <summary>背景画像と背景色を描画する専用レイヤー。常に UI ルートの最背面に配置する。</summary>
         private VisualElement m_BackgroundLayer;
 
-        /// <summary>最後に適用した背景色。`Configure` 呼び出し時の即時再適用に利用する。</summary>
+        /// <summary>最後に適用した背景色。Configure 呼び出し時の即時再適用に利用する。</summary>
         private Color m_LastColor = Color.black;
 
         /// <summary>最後に適用した背景画像。null の場合は単色背景のみを表示する。</summary>
         private Texture2D m_LastTexture;
 
-        /// <summary>最後に適用した背景画像のスケールモード。テクスチャ未指定時は ScaleAndCrop を既定とする。</summary>
-        private ScaleMode m_LastScaleMode = ScaleMode.ScaleAndCrop;
-
-        /// <summary>最後に適用した背景画像の拡大率。1.0f で 100% 表示を意味する。</summary>
-        private Vector2 m_LastBackgroundScale = Vector2.one;
+        /// <summary>最後に適用した背景スケール（"contain" / "cover"）。</summary>
+        private string m_LastScaleKeyword = BackgroundScaleContain;
 
         /// <summary>直近で Resources から読み込んだ背景名。再読み込み時のログ抑制に利用する。</summary>
         private string m_LastResourceKey;
@@ -41,14 +39,37 @@ namespace FUnity.Runtime.Presenter
         /// <summary>Resources.Load で探索する背景フォルダー名。</summary>
         private const string ResourceFolderName = "Backgrounds";
 
+        /// <summary>背景スケールの contain キーワード。</summary>
+        private const string BackgroundScaleContain = "contain";
+
+        /// <summary>背景スケールの cover キーワード。</summary>
+        private const string BackgroundScaleCover = "cover";
+
+        /// <summary>背景スケール contain 用 USS クラス名。</summary>
+        private const string BackgroundContainClass = "bg--contain";
+
+        /// <summary>背景スケール cover 用 USS クラス名。</summary>
+        private const string BackgroundCoverClass = "bg--cover";
+
+        /// <summary>背景スケールを定義した USS の Resources パス。</summary>
+        private const string BackgroundStyleSheetResourcePath = "UI/StageBackground";
+
+        /// <summary>背景スケール USS のキャッシュ。</summary>
+        private static StyleSheet s_BackgroundStyleSheet;
+
+        /// <summary>USS の読み込みを一度でも試みたかどうか。</summary>
+        private static bool s_BackgroundStyleSheetLoaded;
+
+        /// <summary>USS 未適用を警告したかどうか。</summary>
+        private static bool s_BackgroundStyleSheetWarningEmitted;
+
         /// <summary>
         /// 背景レイヤーを初期化し、必要に応じて既定の背景画像を読み込む。
         /// </summary>
         /// <param name="panelRoot">背景を貼り付ける UI Toolkit ルート要素。</param>
         /// <param name="backgroundName">初期適用する背景名。null を渡すと直前の状態を再適用する。</param>
-        /// <param name="scale">背景画像を読み込む際に使用するスケールモード。</param>
-        /// <param name="backgroundScale">背景画像の拡大率。null を渡すと直前の値、未適用なら 100% を使用する。</param>
-        public void Initialize(VisualElement panelRoot, string backgroundName = DefaultBackgroundResource, ScaleMode scale = ScaleMode.ScaleAndCrop, Vector2? backgroundScale = null)
+        /// <param name="backgroundScale">背景スケールのキーワード。null なら直前の値を引き継ぐ。</param>
+        public void Initialize(VisualElement panelRoot, string backgroundName = DefaultBackgroundResource, string backgroundScale = null)
         {
             if (panelRoot == null)
             {
@@ -56,8 +77,8 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            var effectiveScale = NormalizeScale(backgroundScale ?? m_LastBackgroundScale);
-            m_LastBackgroundScale = effectiveScale;
+            var normalizedScale = NormalizeScaleKeyword(backgroundScale ?? m_LastScaleKeyword);
+            m_LastScaleKeyword = normalizedScale;
 
             if (m_TargetRoot != panelRoot)
             {
@@ -65,6 +86,7 @@ namespace FUnity.Runtime.Presenter
                 {
                     m_BackgroundLayer.RemoveFromHierarchy();
                 }
+
                 m_TargetRoot = panelRoot;
                 m_BackgroundLayer = null;
             }
@@ -75,14 +97,15 @@ namespace FUnity.Runtime.Presenter
             }
 
             ApplyColor(m_LastColor);
+            ApplyBackgroundScaleClass(normalizedScale);
 
             if (!string.IsNullOrEmpty(backgroundName))
             {
-                SetBackgroundFromResources(backgroundName, scale, m_LastBackgroundScale);
+                SetBackgroundFromResources(backgroundName, normalizedScale);
                 return;
             }
 
-            ApplyTexture(m_LastTexture, m_LastScaleMode, m_LastBackgroundScale);
+            ApplyTexture(m_LastTexture);
         }
 
         /// <summary>
@@ -91,7 +114,7 @@ namespace FUnity.Runtime.Presenter
         /// <param name="root">UI Document の <see cref="VisualElement.rootVisualElement"/>。</param>
         public void Configure(VisualElement root)
         {
-            Initialize(root, null, m_LastScaleMode, m_LastBackgroundScale);
+            Initialize(root, null, m_LastScaleKeyword);
         }
 
         /// <summary>
@@ -109,11 +132,11 @@ namespace FUnity.Runtime.Presenter
 
             if (stage.BackgroundImage != null)
             {
-                SetBackground(stage.BackgroundImage, stage.BackgroundScaleMode, stage.BackgroundScale);
+                SetBackground(stage.BackgroundImage, stage.BackgroundScale);
                 return;
             }
 
-            SetBackgroundFromResources(DefaultBackgroundResource, stage.BackgroundScaleMode, stage.BackgroundScale);
+            SetBackgroundFromResources(DefaultBackgroundResource, stage.BackgroundScale);
         }
 
         /// <summary>
@@ -130,52 +153,44 @@ namespace FUnity.Runtime.Presenter
         /// 指定したテクスチャを背景に設定する。null を渡すと背景画像をクリアする。
         /// </summary>
         /// <param name="texture">背景に使用するテクスチャ。</param>
-        /// <param name="scale">UI Toolkit の background scale mode。</param>
-        /// <param name="backgroundScale">背景画像の拡大率。1.0f で 100% を意味する。</param>
+        /// <param name="backgroundScale">背景スケールのキーワード。null なら直前の値を再利用する。</param>
         /// <param name="preserveResourceKey">Resources 由来のキーを保持したい場合は true。</param>
-        public void SetBackground(Texture2D texture, ScaleMode scale, Vector2 backgroundScale, bool preserveResourceKey = false)
+        public void SetBackground(Texture2D texture, string backgroundScale = null, bool preserveResourceKey = false)
         {
+            var normalizedScale = NormalizeScaleKeyword(backgroundScale ?? m_LastScaleKeyword);
+            m_LastScaleKeyword = normalizedScale;
             m_LastTexture = texture;
-            m_LastScaleMode = scale;
-            m_LastBackgroundScale = NormalizeScale(backgroundScale);
+
             if (!preserveResourceKey)
             {
                 m_LastResourceKey = null;
             }
-            ApplyTexture(texture, scale, m_LastBackgroundScale);
-        }
 
-        /// <summary>
-        /// 旧 API 互換の背景設定。拡大率は 100% として扱う。
-        /// </summary>
-        /// <param name="texture">背景画像。</param>
-        /// <param name="scale">スケールモード。</param>
-        /// <param name="preserveResourceKey">Resources キーを保持するかどうか。</param>
-        public void SetBackground(Texture2D texture, ScaleMode scale, bool preserveResourceKey = false)
-        {
-            SetBackground(texture, scale, Vector2.one, preserveResourceKey);
+            ApplyBackgroundScaleClass(normalizedScale);
+            ApplyTexture(texture);
         }
 
         /// <summary>
         /// Resources/Backgrounds 配下のテクスチャを読み込み、背景へ適用する。
         /// </summary>
         /// <param name="backgroundName">拡張子なしのファイル名。null/空文字は無視する。</param>
-        /// <param name="scale">テクスチャ適用時のスケールモード。</param>
-        /// <param name="backgroundScale">背景画像の拡大率。</param>
-        public void SetBackgroundFromResources(string backgroundName, ScaleMode scale, Vector2 backgroundScale)
+        /// <param name="backgroundScale">背景スケールのキーワード。null なら直前の値を再利用する。</param>
+        public void SetBackgroundFromResources(string backgroundName, string backgroundScale = null)
         {
+            var normalizedScale = NormalizeScaleKeyword(backgroundScale ?? m_LastScaleKeyword);
+            m_LastScaleKeyword = normalizedScale;
+            ApplyBackgroundScaleClass(normalizedScale);
+
             if (string.IsNullOrEmpty(backgroundName))
             {
                 Debug.LogWarning("[FUnity.BG] 背景名が空のため Resources から読み込めません。");
                 return;
             }
 
-            m_LastBackgroundScale = NormalizeScale(backgroundScale);
-
             var resourcePath = $"{ResourceFolderName}/{backgroundName}";
-            if (string.Equals(m_LastResourceKey, resourcePath) && m_LastTexture != null)
+            if (string.Equals(m_LastResourceKey, resourcePath, StringComparison.Ordinal) && m_LastTexture != null)
             {
-                SetBackground(m_LastTexture, scale, m_LastBackgroundScale, true);
+                ApplyTexture(m_LastTexture);
                 return;
             }
 
@@ -183,25 +198,14 @@ namespace FUnity.Runtime.Presenter
             if (texture == null)
             {
                 Debug.LogWarning($"[FUnity.BG] Resources/{resourcePath} が見つからず背景を変更できません。");
-                m_LastScaleMode = scale;
                 m_LastTexture = null;
                 m_LastResourceKey = null;
-                ApplyTexture(null, scale, m_LastBackgroundScale);
+                ApplyTexture(null);
                 return;
             }
 
             m_LastResourceKey = resourcePath;
-            SetBackground(texture, scale, m_LastBackgroundScale, true);
-        }
-
-        /// <summary>
-        /// 旧 API 互換の Resources 背景読み込み。拡大率は最後に適用した値を再利用する。
-        /// </summary>
-        /// <param name="backgroundName">背景名。</param>
-        /// <param name="scale">スケールモード。</param>
-        public void SetBackgroundFromResources(string backgroundName, ScaleMode scale)
-        {
-            SetBackgroundFromResources(backgroundName, scale, m_LastBackgroundScale);
+            SetBackground(texture, normalizedScale, true);
         }
 
         /// <summary>
@@ -216,9 +220,9 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            if (!resourcesPath.Contains("/"))
+            if (resourcesPath.IndexOf('/') < 0)
             {
-                SetBackgroundFromResources(resourcesPath, m_LastScaleMode, m_LastBackgroundScale);
+                SetBackgroundFromResources(resourcesPath);
                 return;
             }
 
@@ -228,12 +232,12 @@ namespace FUnity.Runtime.Presenter
                 Debug.LogWarning($"[FUnity.BG] Resources/{resourcesPath} が見つからず背景を変更できません。");
                 m_LastTexture = null;
                 m_LastResourceKey = null;
-                ApplyTexture(null, m_LastScaleMode, m_LastBackgroundScale);
+                ApplyTexture(null);
                 return;
             }
 
             m_LastResourceKey = resourcesPath;
-            SetBackground(texture, m_LastScaleMode, m_LastBackgroundScale, true);
+            SetBackground(texture, null, true);
         }
 
         /// <summary>
@@ -254,34 +258,27 @@ namespace FUnity.Runtime.Presenter
         /// テクスチャを背景に適用し、null 時は背景画像を解除する。
         /// </summary>
         /// <param name="texture">背景画像。</param>
-        /// <param name="scale">スケールモード。</param>
-        /// <param name="backgroundScale">背景画像の拡大率。</param>
-        private void ApplyTexture(Texture2D texture, ScaleMode scale, Vector2 backgroundScale)
+        private void ApplyTexture(Texture2D texture)
         {
             if (!EnsureBackgroundLayer())
             {
                 return;
             }
 
-            var normalizedScale = NormalizeScale(backgroundScale);
-            var widthLength = new Length(normalizedScale.x * 100f, LengthUnit.Percent);
-            var heightLength = new Length(normalizedScale.y * 100f, LengthUnit.Percent);
-            m_BackgroundLayer.style.backgroundSize = new BackgroundSize(widthLength, heightLength);
+            m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
+            m_BackgroundLayer.style.unityBackgroundScaleMode = StyleKeyword.Null;
+            m_BackgroundLayer.style.backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat);
 
             if (texture != null)
             {
                 m_BackgroundLayer.style.backgroundImage = new StyleBackground(texture);
-                m_BackgroundLayer.style.backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat);
-                m_BackgroundLayer.style.unityBackgroundScaleMode = scale;
             }
             else
             {
                 m_BackgroundLayer.style.backgroundImage = StyleKeyword.None;
-                m_BackgroundLayer.style.backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat);
-                m_BackgroundLayer.style.unityBackgroundScaleMode = scale;
             }
 
-            Debug.Log($"[FUnity.BGDiag] backgroundSize=({widthLength.value}%, {heightLength.value}%), scaleMode={scale}, texture={(texture != null ? texture.name : "null")}");
+            Debug.Log($"[FUnity.BGDiag] background-size keyword='{m_LastScaleKeyword}', texture={(texture != null ? texture.name : "null")}");
         }
 
         /// <summary>
@@ -305,7 +302,6 @@ namespace FUnity.Runtime.Presenter
                 };
             }
 
-            // ルート側のスタイルリセットや UI Toolkit バージョン差分に備え、都度絶対配置を再適用する。
             m_BackgroundLayer.style.position = Position.Absolute;
             m_BackgroundLayer.style.left = 0f;
             m_BackgroundLayer.style.top = 0f;
@@ -313,6 +309,8 @@ namespace FUnity.Runtime.Presenter
             m_BackgroundLayer.style.bottom = 0f;
             m_BackgroundLayer.style.flexGrow = 1f;
             m_BackgroundLayer.style.flexShrink = 0f;
+
+            EnsureBackgroundStyleSheet(m_BackgroundLayer);
 
             if (m_BackgroundLayer.parent != m_TargetRoot)
             {
@@ -324,20 +322,106 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 拡大率として扱える安全な値へ正規化します。
+        /// 背景スケール用の USS クラスを適用する。
         /// </summary>
-        /// <param name="scale">正規化対象のスケール。</param>
-        /// <returns>負値を 0 に丸め、0 ベクトルの場合は (1,1) を返却した結果。</returns>
-        private static Vector2 NormalizeScale(Vector2 scale)
+        /// <param name="scaleKeyword">適用するスケール種別。</param>
+        private void ApplyBackgroundScaleClass(string scaleKeyword)
         {
-            var x = Mathf.Max(0f, scale.x);
-            var y = Mathf.Max(0f, scale.y);
-            if (Mathf.Approximately(x, 0f) && Mathf.Approximately(y, 0f))
+            if (!EnsureBackgroundLayer())
             {
-                return Vector2.one;
+                return;
             }
 
-            return new Vector2(x, y);
+            var styleSheetAvailable = EnsureBackgroundStyleSheet(m_BackgroundLayer);
+
+            m_BackgroundLayer.RemoveFromClassList(BackgroundContainClass);
+            m_BackgroundLayer.RemoveFromClassList(BackgroundCoverClass);
+
+            var className = scaleKeyword == BackgroundScaleCover ? BackgroundCoverClass : BackgroundContainClass;
+            m_BackgroundLayer.AddToClassList(className);
+
+            if (!styleSheetAvailable && !s_BackgroundStyleSheetWarningEmitted)
+            {
+                Debug.LogWarning($"[FUnity.BG] 背景スケール USS が適用されていないため、'{className}' の効果が反映されない可能性があります。");
+                s_BackgroundStyleSheetWarningEmitted = true;
+            }
+        }
+
+        /// <summary>
+        /// 拡大率として扱える安全な背景スケール文字列へ正規化する。
+        /// </summary>
+        /// <param name="scale">正規化対象のスケール文字列。</param>
+        /// <returns>"cover" 以外を "contain" へ丸めた結果。</returns>
+        private static string NormalizeScaleKeyword(string scale)
+        {
+            if (string.IsNullOrEmpty(scale))
+            {
+                return BackgroundScaleContain;
+            }
+
+            var normalized = scale.Trim().ToLowerInvariant();
+            return normalized == BackgroundScaleCover ? BackgroundScaleCover : BackgroundScaleContain;
+        }
+
+        /// <summary>
+        /// 背景レイヤーに USS を追加し、未ロード時は Resources から読み込む。
+        /// </summary>
+        /// <param name="backgroundLayer">対象の背景レイヤー。</param>
+        /// <returns>USS が適用できた場合は true。</returns>
+        private static bool EnsureBackgroundStyleSheet(VisualElement backgroundLayer)
+        {
+            if (backgroundLayer == null)
+            {
+                return false;
+            }
+
+            if (s_BackgroundStyleSheet == null && !s_BackgroundStyleSheetLoaded)
+            {
+                s_BackgroundStyleSheet = Resources.Load<StyleSheet>(BackgroundStyleSheetResourcePath);
+                s_BackgroundStyleSheetLoaded = true;
+
+                if (s_BackgroundStyleSheet == null)
+                {
+                    Debug.LogWarning($"[FUnity.BG] Resources/{BackgroundStyleSheetResourcePath}.uss が見つからず、背景スケール USS を適用できません。");
+                }
+            }
+
+            if (s_BackgroundStyleSheet == null)
+            {
+                return false;
+            }
+
+            var styleSheets = backgroundLayer.styleSheets;
+            if (!ContainsStyleSheet(styleSheets, s_BackgroundStyleSheet))
+            {
+                styleSheets.Add(s_BackgroundStyleSheet);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 指定した StyleSheet が要素に既に登録されているか判定する。
+        /// </summary>
+        /// <param name="styleSheets">確認対象のスタイルシート集合。</param>
+        /// <param name="styleSheet">調べるスタイルシート。</param>
+        /// <returns>含まれていれば true。</returns>
+        private static bool ContainsStyleSheet(VisualElementStyleSheetSet styleSheets, StyleSheet styleSheet)
+        {
+            if (styleSheets == null || styleSheet == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < styleSheets.count; i++)
+            {
+                if (styleSheets[i] == styleSheet)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

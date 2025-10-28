@@ -1,0 +1,8 @@
+/* FUnity Stage background scaling helpers */
+.bg--contain {
+    background-size: contain;
+}
+
+.bg--cover {
+    background-size: cover;
+}

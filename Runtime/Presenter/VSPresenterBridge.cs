@@ -256,7 +256,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            m_StageBackgroundService.SetBackground(texture, ScaleMode.ScaleAndCrop);
+            m_StageBackgroundService.SetBackground(texture);
         }
 
         /// <summary>
