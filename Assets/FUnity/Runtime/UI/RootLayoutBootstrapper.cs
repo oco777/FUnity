@@ -210,12 +210,13 @@ namespace FUnity.Runtime.UI
             background.style.flexShrink = 0f;
             background.pickingMode = PickingMode.Ignore;
 
-#if UNITY_2022_2_OR_NEWER
-            if (background.style.unityBackgroundScaleMode.keyword == StyleKeyword.Undefined)
+            if (!background.ClassListContains("bg--contain") && !background.ClassListContains("bg--cover"))
             {
-                background.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                background.AddToClassList("bg--contain");
             }
-#endif
+
+            background.style.backgroundSize = StyleKeyword.Null;
+            background.style.unityBackgroundScaleMode = StyleKeyword.Null;
             var resolvedTexture = background.resolvedStyle.backgroundImage.texture;
             if (resolvedTexture != null)
             {

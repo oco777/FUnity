@@ -325,7 +325,7 @@ namespace FUnity.Core
 
             if (!m_BackgroundInitialized)
             {
-                m_StageBackgroundService.Initialize(stageRoot, DefaultStageBackgroundName, ScaleMode.ScaleAndCrop);
+                m_StageBackgroundService.Initialize(stageRoot, DefaultStageBackgroundName);
                 m_BackgroundInitialized = true;
                 return;
             }
@@ -1111,11 +1111,11 @@ namespace FUnity.Core
 
             if (stage.BackgroundImage != null)
             {
-                m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScaleMode, stage.BackgroundScale);
+                m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScale);
                 return;
             }
 
-            m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, stage.BackgroundScaleMode, stage.BackgroundScale);
+            m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, stage.BackgroundScale);
         }
 
         /// <summary>
