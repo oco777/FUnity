@@ -1056,7 +1056,7 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// Scratch モード時にステージサイズを固定し、他モードでは柔軟レイアウトへ戻す。
+        /// Scratch モード時にステージサイズを固定し、領域外の描画をマスクしながら、他モードでは柔軟レイアウトへ戻す。
         /// </summary>
         /// <param name="stageElement">対象のステージ要素。</param>
         private void ApplyScratchStageSizing(StageElement stageElement)
@@ -1078,6 +1078,7 @@ namespace FUnity.Core
                 stageElement.style.flexShrink = 0f;
                 stageElement.style.marginLeft = StyleKeyword.Auto;
                 stageElement.style.marginRight = StyleKeyword.Auto;
+                stageElement.style.overflow = Overflow.Hidden; // Scratch 固定ステージ時は領域外を隠す
                 stageElement.AddToClassList(StageElement.ScratchStageClassName);
                 return;
             }
@@ -1088,6 +1089,7 @@ namespace FUnity.Core
             stageElement.style.flexShrink = 0f;
             stageElement.style.marginLeft = StyleKeyword.Null;
             stageElement.style.marginRight = StyleKeyword.Null;
+            stageElement.style.overflow = StyleKeyword.Null; // 他モード復帰時はマスク解除
             stageElement.RemoveFromClassList(StageElement.ScratchStageClassName);
         }
 
