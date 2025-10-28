@@ -2,6 +2,9 @@
 using System;
 using UnityEngine;
 using UnityEngine.Serialization;
+#if UNITY_EDITOR
+using FUnity.Editor.Attributes;
+#endif
 
 namespace FUnity.Runtime.Core
 {
@@ -44,7 +47,11 @@ namespace FUnity.Runtime.Core
         [Tooltip("背景のスケール。\"contain\" または \"cover\" のみ")] 
         [FormerlySerializedAs("m_backgroundScaleMode")]
         [FormerlySerializedAs("m_backgroundScale")]
-        [SerializeField] private string m_backgroundScale = BackgroundScaleContain;
+        [SerializeField]
+#if UNITY_EDITOR
+        [BackgroundScaleDropdown]
+#endif
+        private string m_backgroundScale = BackgroundScaleContain;
 
         /// <summary>UI などに表示するステージ名。</summary>
         public string StageName => m_stageName;
