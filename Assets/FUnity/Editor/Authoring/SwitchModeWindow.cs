@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEditor;
@@ -57,12 +58,7 @@ namespace FUnity.Editor.Authoring
         {
             m_AvailableConfigs = LoadAvailableConfigs();
             m_AvailableNames = m_AvailableConfigs.Select(config => config != null ? config.name : "(Missing)").ToArray();
-            m_ActiveConfig = AssetDatabase.LoadAssetAtPath<FUnityModeConfig>(ActiveAssetPath);
-
-            if (m_ActiveConfig == null)
-            {
-                CreateActiveConfigAsset();
-            }
+            m_ActiveConfig = CreateOrLoadActiveConfigAsset();
 
             m_SelectedIndex = DetermineInitialSelection();
         }
@@ -136,13 +132,30 @@ namespace FUnity.Editor.Authoring
         }
 
         /// <summary>
-        /// アクティブ設定アセットが存在しない場合に生成します。
+        /// アクティブ設定アセットを読み込み、存在しない場合は親ディレクトリを生成して新規作成します。
         /// </summary>
-        private void CreateActiveConfigAsset()
+        /// <returns>読み込んだ、または生成したアクティブ設定アセット。</returns>
+        private static FUnityModeConfig CreateOrLoadActiveConfigAsset()
         {
-            m_ActiveConfig = CreateInstance<FUnityModeConfig>();
-            AssetDatabase.CreateAsset(m_ActiveConfig, ActiveAssetPath);
+            var directoryPath = Path.GetDirectoryName(ActiveAssetPath);
+            if (!string.IsNullOrEmpty(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            var config = AssetDatabase.LoadAssetAtPath<FUnityModeConfig>(ActiveAssetPath);
+            if (config != null)
+            {
+                return config;
+            }
+
+            config = ScriptableObject.CreateInstance<FUnityModeConfig>();
+            AssetDatabase.CreateAsset(config, ActiveAssetPath);
+            EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            return config;
         }
 
         /// <summary>
@@ -235,13 +248,14 @@ namespace FUnity.Editor.Authoring
 
             if (m_ActiveConfig == null)
             {
-                CreateActiveConfigAsset();
+                m_ActiveConfig = CreateOrLoadActiveConfigAsset();
             }
 
             Undo.RecordObject(m_ActiveConfig, "Switch FUnity Mode");
             m_ActiveConfig.ApplyFrom(template);
             EditorUtility.SetDirty(m_ActiveConfig);
             AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
 
             var guidance = BuildGuidanceText(template);
             var message = new StringBuilder();
