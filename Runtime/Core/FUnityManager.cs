@@ -1111,11 +1111,11 @@ namespace FUnity.Core
 
             if (stage.BackgroundImage != null)
             {
-                m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScale);
+                m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScaleMode, stage.BackgroundScale);
                 return;
             }
 
-            m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, stage.BackgroundScale);
+            m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, stage.BackgroundScaleMode, stage.BackgroundScale);
         }
 
         /// <summary>

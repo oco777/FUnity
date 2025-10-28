@@ -1,5 +1,6 @@
 // Updated: 2025-02-14
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace FUnity.Runtime.Core
 {
@@ -28,8 +29,12 @@ namespace FUnity.Runtime.Core
         /// </summary>
         [SerializeField] private Texture2D m_backgroundImage;
 
+        /// <summary>背景画像の拡大率。x/y それぞれ 1.0f で原寸（100%）を意味する。</summary>
+        [SerializeField] private Vector2 m_backgroundScale = Vector2.one;
+
         /// <summary>UI Toolkit の `unityBackgroundScaleMode` に適用するスケーリング方式。</summary>
-        [SerializeField] private ScaleMode m_backgroundScale = ScaleMode.ScaleAndCrop;
+        [FormerlySerializedAs("m_backgroundScale")]
+        [SerializeField] private ScaleMode m_backgroundScaleMode = ScaleMode.ScaleAndCrop;
 
         /// <summary>UI などに表示するステージ名。</summary>
         public string StageName => m_stageName;
@@ -40,7 +45,10 @@ namespace FUnity.Runtime.Core
         /// <summary>背景画像。null の場合は背景色のみ適用する。</summary>
         public Texture2D BackgroundImage => m_backgroundImage;
 
+        /// <summary>背景画像の拡大率。</summary>
+        public Vector2 BackgroundScale => m_backgroundScale;
+
         /// <summary>背景画像のスケーリング方式。</summary>
-        public ScaleMode BackgroundScale => m_backgroundScale;
+        public ScaleMode BackgroundScaleMode => m_backgroundScaleMode;
     }
 }
