@@ -28,6 +28,9 @@ namespace FUnity.Runtime.UI
         /// <summary>オーバーレイコンテナへ付与する USS クラス名。</summary>
         private const string OverlayContainerClassName = "funity-stage__overlay";
 
+        /// <summary>Scratch 固定ステージ適用時に付与する USS クラス名。</summary>
+        internal const string ScratchStageClassName = "scratch-stage";
+
         /// <summary>ステージ名ラベルの USS クラス名。</summary>
         private const string StageNameClassName = "funity-stage__name";
 

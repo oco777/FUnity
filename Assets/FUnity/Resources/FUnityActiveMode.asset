@@ -23,3 +23,6 @@ MonoBehaviour:
   m_EnabledExtensions:
   - scratch:music
   - scratch:pen
+  m_UseScratchFixedStage: 1
+  m_ScratchStageWidth: 480
+  m_ScratchStageHeight: 360

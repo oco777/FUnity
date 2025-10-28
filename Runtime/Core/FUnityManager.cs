@@ -13,6 +13,7 @@ using Unity.VisualScripting;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+using FUnity.Runtime.Authoring;
 
 namespace FUnity.Core
 {
@@ -39,6 +40,10 @@ namespace FUnity.Core
         /// </summary>
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("project")]
         private FUnityProjectData m_Project;
+
+        /// <summary>アクティブな制作モード設定。Inspector で未指定の場合は Resources から補完する。</summary>
+        [SerializeField]
+        private FUnityModeConfig m_ActiveModeConfig;
 
         /// <summary>
         /// Visual Scripting から参照する既定の <see cref="ActorPresenterAdapter"/>。Inspector で明示設定し、未設定時はシーン内を探索する。
@@ -87,6 +92,9 @@ namespace FUnity.Core
 
         /// <summary>遅延実行を提供するタイマーサービス。</summary>
         private TimerServiceBehaviour m_TimerService;
+
+        /// <summary>アクティブモード設定探索の警告重複を防ぐフラグ。</summary>
+        private bool m_LoggedMissingModeConfig;
 
         /// <summary>既定俳優テンプレートの Resources パス。</summary>
         private const string DefaultActorTemplatePath = "UI/ActorElement";
@@ -142,6 +150,8 @@ namespace FUnity.Core
                 ResolveDefaultActorPresenterAdapter();
             }
 
+            ResolveActiveModeConfig();
+
             if (m_Project != null && m_Project.runners != null)
             {
                 foreach (var runner in m_Project.runners)
@@ -188,6 +198,7 @@ namespace FUnity.Core
             }
 
             var stageElement = EnsureStageElement(root);
+            ApplyScratchStageSizing(stageElement);
             var backgroundRoot = (VisualElement)stageElement ?? root;
 
             EnsureStageBackgroundRoot(backgroundRoot);
@@ -1045,6 +1056,42 @@ namespace FUnity.Core
         }
 
         /// <summary>
+        /// Scratch モード時にステージサイズを固定し、他モードでは柔軟レイアウトへ戻す。
+        /// </summary>
+        /// <param name="stageElement">対象のステージ要素。</param>
+        private void ApplyScratchStageSizing(StageElement stageElement)
+        {
+            if (stageElement == null)
+            {
+                return;
+            }
+
+            var modeConfig = ResolveActiveModeConfig();
+            if (modeConfig != null && modeConfig.Mode == FUnityAuthoringMode.Scratch && modeConfig.UseScratchFixedStage)
+            {
+                var width = Mathf.Max(1, modeConfig.ScratchStageWidth);
+                var height = Mathf.Max(1, modeConfig.ScratchStageHeight);
+
+                stageElement.style.width = width;
+                stageElement.style.height = height;
+                stageElement.style.flexGrow = 0f;
+                stageElement.style.flexShrink = 0f;
+                stageElement.style.marginLeft = StyleKeyword.Auto;
+                stageElement.style.marginRight = StyleKeyword.Auto;
+                stageElement.AddToClassList(StageElement.ScratchStageClassName);
+                return;
+            }
+
+            stageElement.style.width = StyleKeyword.Null;
+            stageElement.style.height = StyleKeyword.Null;
+            stageElement.style.flexGrow = 1f;
+            stageElement.style.flexShrink = 0f;
+            stageElement.style.marginLeft = StyleKeyword.Null;
+            stageElement.style.marginRight = StyleKeyword.Null;
+            stageElement.RemoveFromClassList(StageElement.ScratchStageClassName);
+        }
+
+        /// <summary>
         /// ステージ設定を <see cref="StageElement"/> と背景サービスへ反映する。
         /// </summary>
         /// <param name="stageElement">UI 上のステージ要素。</param>
@@ -1067,6 +1114,36 @@ namespace FUnity.Core
             }
 
             m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, stage.BackgroundScale);
+        }
+
+        /// <summary>
+        /// アクティブモード設定を取得し、未指定の場合は Resources からロードして Scratch 既定値を補完する。
+        /// </summary>
+        /// <returns>取得した <see cref="FUnityModeConfig"/>。見つからない場合は null。</returns>
+        private FUnityModeConfig ResolveActiveModeConfig()
+        {
+            if (m_ActiveModeConfig != null)
+            {
+                m_ActiveModeConfig.EnsureScratchStageDefaults();
+                return m_ActiveModeConfig;
+            }
+
+            var loaded = Resources.Load<FUnityModeConfig>("FUnityActiveMode");
+            if (loaded == null)
+            {
+                if (!m_LoggedMissingModeConfig)
+                {
+                    Debug.LogWarning("[FUnity] FUnityActiveMode.asset が見つからないため、Scratch 固定ステージ設定を適用できません。");
+                    m_LoggedMissingModeConfig = true;
+                }
+
+                return null;
+            }
+
+            m_ActiveModeConfig = loaded;
+            m_ActiveModeConfig.EnsureScratchStageDefaults();
+            m_LoggedMissingModeConfig = false;
+            return m_ActiveModeConfig;
         }
 
         /// <summary>

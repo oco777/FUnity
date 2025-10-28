@@ -11,6 +11,12 @@ namespace FUnity.Runtime.Authoring
     [CreateAssetMenu(fileName = "FUnityModeConfig", menuName = "FUnity/Authoring/Mode Config")]
     public sealed class FUnityModeConfig : ScriptableObject
     {
+        /// <summary>Scratch 固定ステージ幅の既定値。</summary>
+        private const int DefaultScratchStageWidth = 480;
+
+        /// <summary>Scratch 固定ステージ高さの既定値。</summary>
+        private const int DefaultScratchStageHeight = 360;
+
         [SerializeField]
         [Tooltip("制作モードの種類。Scratch 互換か unityroom 公開かを選びます。")]
         private FUnityAuthoringMode m_Mode = FUnityAuthoringMode.Scratch;
@@ -39,6 +45,18 @@ namespace FUnity.Runtime.Authoring
         [Tooltip("利用を許可する拡張機能の識別子一覧。Scratch 拡張や Unity 拡張を列挙します。")]
         private List<string> m_EnabledExtensions = new List<string>();
 
+        [SerializeField]
+        [Tooltip("Scratch モード時にステージサイズを 480x360 に固定するかどうか。")]
+        private bool m_UseScratchFixedStage = true;
+
+        [SerializeField]
+        [Tooltip("Scratch 固定ステージ適用時の幅（px）。")] 
+        private int m_ScratchStageWidth = DefaultScratchStageWidth;
+
+        [SerializeField]
+        [Tooltip("Scratch 固定ステージ適用時の高さ（px）。")]
+        private int m_ScratchStageHeight = DefaultScratchStageHeight;
+
         /// <summary>制作モードの種類。UI やビルド設定の切り替え条件として参照します。</summary>
         public FUnityAuthoringMode Mode => m_Mode;
 
@@ -60,6 +78,15 @@ namespace FUnity.Runtime.Authoring
         /// <summary>有効化する拡張機能の識別子一覧。読み取り専用コレクションとして公開します。</summary>
         public IReadOnlyList<string> EnabledExtensions => m_EnabledExtensions;
 
+        /// <summary>Scratch モード時に固定ステージサイズを適用するかどうか。</summary>
+        public bool UseScratchFixedStage => m_UseScratchFixedStage;
+
+        /// <summary>Scratch 固定ステージの幅（px）。0 以下の場合は既定値を返します。</summary>
+        public int ScratchStageWidth => m_ScratchStageWidth > 0 ? m_ScratchStageWidth : DefaultScratchStageWidth;
+
+        /// <summary>Scratch 固定ステージの高さ（px）。0 以下の場合は既定値を返します。</summary>
+        public int ScratchStageHeight => m_ScratchStageHeight > 0 ? m_ScratchStageHeight : DefaultScratchStageHeight;
+
         /// <summary>
         /// 他のモード設定から値を複製し、アクティブ設定を更新します。
         /// </summary>
@@ -78,6 +105,9 @@ namespace FUnity.Runtime.Authoring
             m_AllowUnityPhysics2D = source.m_AllowUnityPhysics2D;
             m_AllowCustomShaders = source.m_AllowCustomShaders;
             m_EnableScratchImport = source.m_EnableScratchImport;
+            m_UseScratchFixedStage = source.m_UseScratchFixedStage;
+            m_ScratchStageWidth = source.m_ScratchStageWidth;
+            m_ScratchStageHeight = source.m_ScratchStageHeight;
 
             if (m_EnabledExtensions == null)
             {
@@ -89,6 +119,40 @@ namespace FUnity.Runtime.Authoring
             {
                 m_EnabledExtensions.AddRange(source.m_EnabledExtensions);
             }
+        }
+
+        /// <summary>
+        /// Scratch モード用の固定ステージ設定に欠損があれば補完する。Editor/Runtime 双方から呼び出し可能。
+        /// </summary>
+        /// <returns>値を変更した場合は true。</returns>
+        public bool EnsureScratchStageDefaults()
+        {
+            if (m_Mode != FUnityAuthoringMode.Scratch)
+            {
+                return false;
+            }
+
+            var changed = false;
+
+            if (!m_UseScratchFixedStage)
+            {
+                m_UseScratchFixedStage = true;
+                changed = true;
+            }
+
+            if (m_ScratchStageWidth <= 0)
+            {
+                m_ScratchStageWidth = DefaultScratchStageWidth;
+                changed = true;
+            }
+
+            if (m_ScratchStageHeight <= 0)
+            {
+                m_ScratchStageHeight = DefaultScratchStageHeight;
+                changed = true;
+            }
+
+            return changed;
         }
     }
 }

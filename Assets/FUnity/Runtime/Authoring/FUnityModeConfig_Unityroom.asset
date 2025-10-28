@@ -24,3 +24,6 @@ MonoBehaviour:
   - unity:physics2d
   - unity:particles
   - unity:postfx
+  m_UseScratchFixedStage: 0
+  m_ScratchStageWidth: 480
+  m_ScratchStageHeight: 360
