@@ -30,11 +30,15 @@ namespace FUnity.Runtime.Core
         /// </summary>
         [SerializeField] private Texture2D m_backgroundImage;
 
-        /// <summary>背景スケール既定値を示す定数。</summary>
-        private const string BackgroundScaleContain = "contain";
+        /// <summary>
+        /// 背景スケール既定値を示す定数。Presenter からも共有するため public とする。
+        /// </summary>
+        public const string BackgroundScaleContain = "contain";
 
-        /// <summary>背景スケール "cover" を示す定数。</summary>
-        private const string BackgroundScaleCover = "cover";
+        /// <summary>
+        /// 背景スケール "cover" を示す定数。USS 側のクラス判定にも利用する。
+        /// </summary>
+        public const string BackgroundScaleCover = "cover";
 
         /// <summary>背景のスケール。"contain" または "cover" のみ受け付ける。</summary>
         [Tooltip("背景のスケール。\"contain\" または \"cover\" のみ")] 
@@ -67,7 +71,7 @@ namespace FUnity.Runtime.Core
         /// </summary>
         /// <param name="raw">検証対象の文字列。</param>
         /// <returns>"cover" を除き常に "contain" を返す安全な文字列。</returns>
-        private static string NormalizeBackgroundScale(string raw)
+        internal static string NormalizeBackgroundScale(string raw)
         {
             if (string.IsNullOrEmpty(raw))
             {

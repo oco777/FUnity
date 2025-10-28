@@ -25,7 +25,7 @@ namespace FUnity.Runtime.Presenter
         private Texture2D m_LastTexture;
 
         /// <summary>最後に適用した背景スケール（"contain" / "cover"）。</summary>
-        private string m_LastScaleKeyword = BackgroundScaleContain;
+        private string m_LastScaleKeyword = FUnityStageData.BackgroundScaleContain;
 
         /// <summary>直近で Resources から読み込んだ背景名。再読み込み時のログ抑制に利用する。</summary>
         private string m_LastResourceKey;
@@ -38,12 +38,6 @@ namespace FUnity.Runtime.Presenter
 
         /// <summary>Resources.Load で探索する背景フォルダー名。</summary>
         private const string ResourceFolderName = "Backgrounds";
-
-        /// <summary>背景スケールの contain キーワード。</summary>
-        private const string BackgroundScaleContain = "contain";
-
-        /// <summary>背景スケールの cover キーワード。</summary>
-        private const string BackgroundScaleCover = "cover";
 
         /// <summary>背景スケール contain 用 USS クラス名。</summary>
         private const string BackgroundContainClass = "bg--contain";
@@ -337,7 +331,9 @@ namespace FUnity.Runtime.Presenter
             m_BackgroundLayer.RemoveFromClassList(BackgroundContainClass);
             m_BackgroundLayer.RemoveFromClassList(BackgroundCoverClass);
 
-            var className = scaleKeyword == BackgroundScaleCover ? BackgroundCoverClass : BackgroundContainClass;
+            var className = scaleKeyword == FUnityStageData.BackgroundScaleCover
+                ? BackgroundCoverClass
+                : BackgroundContainClass;
             m_BackgroundLayer.AddToClassList(className);
 
             if (!styleSheetAvailable && !s_BackgroundStyleSheetWarningEmitted)
@@ -354,13 +350,7 @@ namespace FUnity.Runtime.Presenter
         /// <returns>"cover" 以外を "contain" へ丸めた結果。</returns>
         private static string NormalizeScaleKeyword(string scale)
         {
-            if (string.IsNullOrEmpty(scale))
-            {
-                return BackgroundScaleContain;
-            }
-
-            var normalized = scale.Trim().ToLowerInvariant();
-            return normalized == BackgroundScaleCover ? BackgroundScaleCover : BackgroundScaleContain;
+            return FUnityStageData.NormalizeBackgroundScale(scale);
         }
 
         /// <summary>
