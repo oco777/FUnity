@@ -1,8 +1,50 @@
+using FUnity.Runtime.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace FUnity.Runtime.Presenter
 {
+    /// <summary>
+    /// 背景レイヤの実際のスケール適用状態を文字列で表現する診断用ユーティリティです。
+    /// </summary>
+    internal static class StageBackgroundDiagnosticsUtil
+    {
+        /// <summary>
+        /// 背景レイヤに適用されたスケールを判定し、contain/cover の USS クラスを優先して説明文を返します。
+        /// 指定クラスが無い場合は <see cref="BackgroundSize"/> の値を安全に文字列化します。
+        /// </summary>
+        /// <param name="background">診断対象となる背景レイヤ要素。</param>
+        /// <param name="configuredValue">ステージ設定から取得した期待スケール。null の場合は未設定扱い。</param>
+        /// <returns>USS クラスまたは style から推測したスケール説明。要素が無い場合は設定値を補足した "n/a" を返却。</returns>
+        public static string GetBackgroundScaleLabel(VisualElement background, string configuredValue)
+        {
+            if (background == null)
+            {
+                return string.IsNullOrEmpty(configuredValue) ? "n/a" : $"n/a (configured={configuredValue})";
+            }
+
+            if (background.ClassListContains("bg--cover"))
+            {
+                return "cover (by class)";
+            }
+
+            if (background.ClassListContains("bg--contain"))
+            {
+                return "contain (by class)";
+            }
+
+            try
+            {
+                var bs = background.style.backgroundSize;
+                return $"size={bs.ToString()} (from style)";
+            }
+            catch
+            {
+                return "unknown";
+            }
+        }
+    }
+
     /// <summary>
     /// 背景レイヤの表示異常を切り分ける診断機能を提供します。
     /// </summary>
@@ -20,7 +62,8 @@ namespace FUnity.Runtime.Presenter
         /// <param name="panelRoot">診断対象となる UI ドキュメントのルート要素。</param>
         /// <param name="backgroundName">Resources/Backgrounds 内で検索するテクスチャ名。</param>
         /// <param name="tryTemporaryFix">診断中に暫定修正（可視化）を適用するかどうか。</param>
-        public static void RunBackgroundDiagnostics(VisualElement panelRoot, string backgroundName = "Background_01", bool tryTemporaryFix = true)
+        /// <param name="stageData">診断対象ステージの設定値。null の場合は未設定として扱う。</param>
+        public static void RunBackgroundDiagnostics(VisualElement panelRoot, string backgroundName = "Background_01", bool tryTemporaryFix = true, FUnityStageData stageData = null)
         {
             void Log(string msg) => Debug.Log($"[FUnity.BGDiag] {msg}");
             void Warn(string msg) => Debug.LogWarning($"[FUnity.BGDiag] {msg}");
@@ -73,8 +116,9 @@ namespace FUnity.Runtime.Presenter
             var classList = string.Join(" ", layer.GetClasses());
             Log($"Layer classes: {classList}");
 
-            var size = layer.resolvedStyle.backgroundSize;
-            Log($"Layer backgroundSize: keyword={size.keyword}, ({size.x.value}{size.x.unit}, {size.y.value}{size.y.unit})");
+            var configuredScale = stageData != null ? stageData.BackgroundScale : "(null)";
+            var appliedScale = StageBackgroundDiagnosticsUtil.GetBackgroundScaleLabel(layer, configuredScale);
+            Log($"Layer background scale: configured='{configuredScale}', applied='{appliedScale}'");
 
             if (lw <= 0 || lh <= 0)
             {
