@@ -1,10 +1,5 @@
-// Updated: 2025-03-18
-using System;
 using UnityEngine;
 using UnityEngine.Serialization;
-#if UNITY_EDITOR
-using FUnity.Editor.Attributes;
-#endif
 
 namespace FUnity.Runtime.Core
 {
@@ -48,9 +43,6 @@ namespace FUnity.Runtime.Core
         [FormerlySerializedAs("m_backgroundScaleMode")]
         [FormerlySerializedAs("m_backgroundScale")]
         [SerializeField]
-#if UNITY_EDITOR
-        [BackgroundScaleDropdown]
-#endif
         private string m_backgroundScale = BackgroundScaleContain;
 
         /// <summary>UI などに表示するステージ名。</summary>
