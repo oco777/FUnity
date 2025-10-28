@@ -60,6 +60,12 @@ namespace FUnity.Editor.Authoring
             m_AvailableNames = m_AvailableConfigs.Select(config => config != null ? config.name : "(Missing)").ToArray();
             m_ActiveConfig = CreateOrLoadActiveConfigAsset();
 
+            if (EnsureScratchDefaults(m_ActiveConfig))
+            {
+                EditorUtility.SetDirty(m_ActiveConfig);
+                AssetDatabase.SaveAssets();
+            }
+
             m_SelectedIndex = DetermineInitialSelection();
         }
 
@@ -151,6 +157,7 @@ namespace FUnity.Editor.Authoring
 
             config = ScriptableObject.CreateInstance<FUnityModeConfig>();
             AssetDatabase.CreateAsset(config, ActiveAssetPath);
+            EnsureScratchDefaults(config);
             EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -253,6 +260,7 @@ namespace FUnity.Editor.Authoring
 
             Undo.RecordObject(m_ActiveConfig, "Switch FUnity Mode");
             m_ActiveConfig.ApplyFrom(template);
+            EnsureScratchDefaults(m_ActiveConfig);
             EditorUtility.SetDirty(m_ActiveConfig);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -296,6 +304,21 @@ namespace FUnity.Editor.Authoring
             }
 
             return builder.ToString();
+        }
+
+        /// <summary>
+        /// Scratch モード設定に必要な固定ステージ既定値を補完する。
+        /// </summary>
+        /// <param name="config">対象のモード設定。</param>
+        /// <returns>値を書き換えた場合は true。</returns>
+        private static bool EnsureScratchDefaults(FUnityModeConfig config)
+        {
+            if (config == null)
+            {
+                return false;
+            }
+
+            return config.EnsureScratchStageDefaults();
         }
     }
 }
