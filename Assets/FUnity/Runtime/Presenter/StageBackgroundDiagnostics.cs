@@ -70,6 +70,9 @@ namespace FUnity.Runtime.Presenter
             var opac = layer.resolvedStyle.opacity;
             Log($"Layer size: {lw} x {lh}, display={disp}, opacity={opac}, pickingMode={layer.pickingMode}");
 
+            var size = layer.resolvedStyle.backgroundSize;
+            Log($"Layer backgroundSize: ({size.x.value}{size.x.unit}, {size.y.value}{size.y.unit})");
+
             if (lw <= 0 || lh <= 0)
             {
                 Warn("背景レイヤのレイアウトが 0x0。四辺 0、position:absolute が適用されているか確認してください。");
