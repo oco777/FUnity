@@ -349,6 +349,10 @@ namespace FUnity.Runtime.Presenter
                 }
             }
 
+            // USS 側の background-size 指定を活かすため、ここでも inline 値を念のため解除する。
+            m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
+            m_BackgroundLayer.style.unityBackgroundScaleMode = StyleKeyword.Null;
+
             return true;
         }
 
@@ -364,6 +368,10 @@ namespace FUnity.Runtime.Presenter
             }
 
             var styleSheetAvailable = EnsureBackgroundStyleSheet(m_BackgroundLayer);
+
+            // USS に記述された background-size を有効にするため、毎回 inline 値を未設定へ戻す。
+            m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
+            m_BackgroundLayer.style.unityBackgroundScaleMode = StyleKeyword.Null;
 
             m_BackgroundLayer.RemoveFromClassList(BackgroundContainClass);
             m_BackgroundLayer.RemoveFromClassList(BackgroundCoverClass);
