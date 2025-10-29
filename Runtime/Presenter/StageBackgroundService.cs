@@ -91,23 +91,22 @@ namespace FUnity.Runtime.Presenter
 
             ClearInlineBackgroundSizeNow(background);
 
-            background.schedule.Execute(() =>
-            {
-                ClearInlineBackgroundSizeNow(background);
-            }).StartingIn(0);
-
             if (background.ClassListContains(InlineGuardClassName))
             {
                 return;
             }
 
             background.AddToClassList(InlineGuardClassName);
+            background.schedule.Execute(() =>
+            {
+                ClearInlineBackgroundSizeNow(background);
+            }).StartingIn(0);
             background.RegisterCallback<AttachToPanelEvent>(_ => ClearInlineBackgroundSizeNow(background));
             background.RegisterCallback<GeometryChangedEvent>(_ => ClearInlineBackgroundSizeNow(background));
         }
 
         /// <summary>
-        /// 即時に inline の background-size / unityBackgroundScaleMode を未設定へ戻します。
+        /// 即時に inline の background-size を未設定へ戻します。
         /// </summary>
         /// <param name="background">対象となる背景レイヤー。</param>
         private static void ClearInlineBackgroundSizeNow(VisualElement background)
@@ -118,7 +117,6 @@ namespace FUnity.Runtime.Presenter
             }
 
             background.style.backgroundSize = StyleKeyword.Null;
-            background.style.unityBackgroundScaleMode = StyleKeyword.Null;
         }
 
         /// <summary>
@@ -133,6 +131,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
+            ClearInlineBackgroundSizeNow(background);
             EnsureInlineGuardRegistered(background);
             EnsureBackgroundStyleSheet(background);
 
@@ -155,6 +154,7 @@ namespace FUnity.Runtime.Presenter
                 : BackgroundContainClass;
             background.AddToClassList(className);
 
+            ClearInlineBackgroundSizeNow(background);
             EnsureInlineGuardRegistered(background);
         }
 

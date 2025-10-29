@@ -872,12 +872,12 @@ namespace FUnity.Core
             if (texture != null)
             {
                 portrait.style.backgroundImage = new StyleBackground(texture);
-                portrait.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                portrait.style.backgroundSize = StyleKeyword.Null;
                 return;
             }
 
             portrait.style.backgroundImage = new StyleBackground();
-            portrait.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+            portrait.style.backgroundSize = StyleKeyword.Null;
             portrait.style.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 0.9f);
             FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' のポートレートが設定されていないため単色背景を使用します。");
         }

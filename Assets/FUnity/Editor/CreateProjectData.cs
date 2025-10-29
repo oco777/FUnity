@@ -758,7 +758,9 @@ namespace FUnity.EditorTools
                 + "    width: 100%;\n"
                 + "    height: 100%;\n"
                 + "    /* Keep aspect and fit inside parent */\n"
-                + "    -unity-background-scale-mode: scale-to-fit;\n"
+                + "    background-size: contain;\n"
+                + "    background-position: center;\n"
+                + "    background-repeat: no-repeat;\n"
                 + "}\n";
 
             File.WriteAllText(CanonicalThemePath, ussText, System.Text.Encoding.UTF8);

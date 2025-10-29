@@ -20,6 +20,9 @@ namespace FUnity.Runtime.UI
         /// <summary>背景レイヤー要素の名称。StageBackgroundService と共有する。</summary>
         internal const string BackgroundLayerName = "FUnityBackgroundLayer";
 
+        /// <summary>背景レイヤーの inline background-size を監視済みと示す USS クラス名。</summary>
+        private const string BackgroundInlineGuardClassName = "bg--inline-guarded";
+
         /// <summary>背景用 USS を読み込む際の Resources パス。</summary>
         private const string BackgroundStyleSheetResourcePath = "UI/StageBackground";
 
@@ -97,6 +100,23 @@ namespace FUnity.Runtime.UI
             m_BackgroundLayer.style.flexGrow = 1f;
             m_BackgroundLayer.style.flexShrink = 0f;
             EnsureBackgroundStyleSheet(m_BackgroundLayer);
+            m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
+            if (!m_BackgroundLayer.ClassListContains(BackgroundInlineGuardClassName))
+            {
+                m_BackgroundLayer.AddToClassList(BackgroundInlineGuardClassName);
+                m_BackgroundLayer.schedule.Execute(() =>
+                {
+                    m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
+                }).StartingIn(0);
+                m_BackgroundLayer.RegisterCallback<AttachToPanelEvent>(_ =>
+                {
+                    m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
+                });
+                m_BackgroundLayer.RegisterCallback<GeometryChangedEvent>(_ =>
+                {
+                    m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
+                });
+            }
             Add(m_BackgroundLayer);
 
             m_ActorContainer = new VisualElement
