@@ -33,5 +33,5 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 ## 画像アセットの取り扱い
 
 - 画像ファイルは **必ず `Docs/images/`（先頭大文字）** に配置してください。`docs/images/` やその他のディレクトリに置くとビルドや CI で警告が表示されます。
-- README のヒーロー画像は `Packages/com.papacoder.funity/Docs/images/readme-hero.png` への参照に統一し、実ファイルのサイズが 0 バイトでないことを確認してください。
+- README のヒーロー画像は `Docs/images/readme-hero.png` への参照に統一し、実ファイルのサイズが 0 バイトでないことを確認してください。
 - PNG を更新した場合は、関連するドキュメント（`README.md` や `Docs/*.md`）のリンクが `Docs/images/` を参照しているかを再確認してください。

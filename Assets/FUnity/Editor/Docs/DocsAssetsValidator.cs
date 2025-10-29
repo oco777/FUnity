@@ -22,8 +22,8 @@ namespace FUnity.Editor.Docs
         /// <summary>許可された画像パスに含まれるべきディレクトリ名です。</summary>
         private const string DocsImagesFragment = "Docs/images/";
 
-        /// <summary>ヒーロー画像の相対パスです。Packages 直下に配置されることを想定します。</summary>
-        private const string HeroImageRelativePath = "Packages/com.papacoder.funity/Docs/images/readme-hero.png";
+        /// <summary>ヒーロー画像の相対パスです。リポジトリ直下の Docs/images に配置します。</summary>
+        private const string HeroImageRelativePath = "Docs/images/readme-hero.png";
 
         /// <summary>Markdown の画像記法を抽出するための正規表現です。</summary>
         private static readonly Regex m_imagePattern = new Regex(@"!\[[^\]]*\]\(([^\)]+)\)", RegexOptions.Compiled);

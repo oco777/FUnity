@@ -2,7 +2,7 @@
 
 > UI Toolkit ベースの Scratch 風学習環境で、子どもたちの創造力を引き出す。
 
-![FUnity overview](Packages/com.papacoder.funity/Docs/images/readme-hero.png)
+![FUnity overview](Docs/images/readme-hero.png)
 
 ## ⚙ Modes
 - メニュー `FUnity / Authoring / Switch Mode…` から Scratch モードと unityroom モードを切り替えできます。
