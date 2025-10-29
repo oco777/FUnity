@@ -183,7 +183,6 @@ namespace FUnity.EditorTools
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    -unity-background-scale-mode: scale-to-fit;
 }}";
 
             var uxml = $@"<?xml version=""1.0"" encoding=""utf-8""?>

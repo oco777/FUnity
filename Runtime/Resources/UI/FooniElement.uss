@@ -13,5 +13,4 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    -unity-background-scale-mode: scale-to-fit;
 }
