@@ -147,8 +147,7 @@ namespace FUnity.Runtime.Presenter
 
             if (tryTemporaryFix)
             {
-                layer.style.backgroundSize = StyleKeyword.Null;
-                layer.style.unityBackgroundScaleMode = StyleKeyword.Null;
+                StageBackgroundService.ForceClearInlineBackgroundSize(layer);
                 Log("臨時: backgroundSize / unityBackgroundScaleMode を USS 依存にリセットしました。");
             }
 

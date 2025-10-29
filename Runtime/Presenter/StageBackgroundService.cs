@@ -58,6 +58,141 @@ namespace FUnity.Runtime.Presenter
         /// <summary>USS 未適用を警告したかどうか。</summary>
         private static bool s_BackgroundStyleSheetWarningEmitted;
 
+        /// <summary>inline background-size の自動解除状態を保持するための PropertyName。</summary>
+        private static readonly PropertyName InlineGuardPropertyName = new PropertyName("FUnity.StageBackgroundService.InlineGuard");
+
+        /// <summary>
+        /// background-size をクリアするためのライフサイクル登録情報を保持するヘルパークラスです。
+        /// </summary>
+        private sealed class BackgroundInlineGuard
+        {
+            /// <summary>AttachToPanelEvent の重複登録を避けるためのフラグ。</summary>
+            public bool AttachRegistered;
+
+            /// <summary>GeometryChangedEvent の重複登録を避けるためのフラグ。</summary>
+            public bool GeometryRegistered;
+
+            /// <summary>AttachToPanelEvent 登録時に再利用するコールバック。</summary>
+            public EventCallback<AttachToPanelEvent> AttachCallback;
+
+            /// <summary>GeometryChangedEvent 登録時に再利用するコールバック。</summary>
+            public EventCallback<GeometryChangedEvent> GeometryCallback;
+        }
+
+        /// <summary>
+        /// 指定した背景要素の inline background-size を確実に未設定へ戻し、ライフサイクルでも再適用されないよう監視します。
+        /// </summary>
+        /// <param name="background">監視対象となる背景レイヤーの VisualElement。</param>
+        public static void ForceClearInlineBackgroundSize(VisualElement background)
+        {
+            if (background == null)
+            {
+                return;
+            }
+
+            ClearInlineBackgroundSizeNow(background);
+
+            background.schedule.Execute(() =>
+            {
+                ClearInlineBackgroundSizeNow(background);
+            }).StartingIn(0);
+
+            var guard = GetOrCreateInlineGuard(background);
+            if (guard == null)
+            {
+                return;
+            }
+
+            if (!guard.AttachRegistered)
+            {
+                guard.AttachCallback = _ => ClearInlineBackgroundSizeNow(background);
+                background.RegisterCallback(guard.AttachCallback, TrickleDown.NoTrickleDown);
+                guard.AttachRegistered = true;
+            }
+
+            if (!guard.GeometryRegistered)
+            {
+                guard.GeometryCallback = _ => ClearInlineBackgroundSizeNow(background);
+                background.RegisterCallback(guard.GeometryCallback, TrickleDown.NoTrickleDown);
+                guard.GeometryRegistered = true;
+            }
+        }
+
+        /// <summary>
+        /// VisualElement に保存した inline クリア用のガード情報を取得または生成します。
+        /// </summary>
+        /// <param name="background">背景レイヤー要素。</param>
+        /// <returns>既存または新規生成したガード情報。取得に失敗した場合は null。</returns>
+        private static BackgroundInlineGuard GetOrCreateInlineGuard(VisualElement background)
+        {
+            if (background == null)
+            {
+                return null;
+            }
+
+            var stored = background.GetProperty(InlineGuardPropertyName);
+            if (stored is BackgroundInlineGuard guard)
+            {
+                return guard;
+            }
+
+            guard = new BackgroundInlineGuard();
+            background.SetProperty(InlineGuardPropertyName, guard);
+            return guard;
+        }
+
+        /// <summary>
+        /// 即時に inline の background-size / unityBackgroundScaleMode を未設定へ戻します。
+        /// </summary>
+        /// <param name="background">対象となる背景レイヤー。</param>
+        private static void ClearInlineBackgroundSizeNow(VisualElement background)
+        {
+            if (background == null)
+            {
+                return;
+            }
+
+            background.style.backgroundSize = StyleKeyword.Null;
+            background.style.unityBackgroundScaleMode = StyleKeyword.Null;
+        }
+
+        /// <summary>
+        /// 任意の背景要素へステージデータを直接適用するユーティリティ。Presenter を経由しない呼び出し向けの簡易窓口です。
+        /// </summary>
+        /// <param name="background">適用対象となる背景レイヤー。</param>
+        /// <param name="data">背景画像・色を含むステージ設定。</param>
+        public static void Apply(VisualElement background, FUnityStageData data)
+        {
+            if (background == null || data == null)
+            {
+                return;
+            }
+
+            ForceClearInlineBackgroundSize(background);
+            EnsureBackgroundStyleSheet(background);
+
+            background.style.backgroundColor = data.BackgroundColor;
+
+            if (data.BackgroundImage != null)
+            {
+                background.style.backgroundImage = new StyleBackground(data.BackgroundImage);
+            }
+            else
+            {
+                background.style.backgroundImage = StyleKeyword.None;
+            }
+
+            background.RemoveFromClassList(BackgroundContainClass);
+            background.RemoveFromClassList(BackgroundCoverClass);
+
+            var className = data.BackgroundScale == FUnityStageData.BackgroundScaleCover
+                ? BackgroundCoverClass
+                : BackgroundContainClass;
+            background.AddToClassList(className);
+
+            ForceClearInlineBackgroundSize(background);
+        }
+
         /// <summary>
         /// 背景レイヤーを初期化し、必要に応じて既定の背景画像を読み込む。
         /// </summary>
@@ -260,8 +395,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
-            m_BackgroundLayer.style.unityBackgroundScaleMode = StyleKeyword.Null;
+            ForceClearInlineBackgroundSize(m_BackgroundLayer);
             m_BackgroundLayer.style.backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat);
 
             if (texture != null)
@@ -273,6 +407,7 @@ namespace FUnity.Runtime.Presenter
                 m_BackgroundLayer.style.backgroundImage = StyleKeyword.None;
             }
 
+            ForceClearInlineBackgroundSize(m_BackgroundLayer);
             Debug.Log($"[FUnity.BGDiag] background scale='{m_LastScaleKeyword}', texture={(texture != null ? texture.name : "null")}");
         }
 
@@ -350,8 +485,7 @@ namespace FUnity.Runtime.Presenter
             }
 
             // USS 側の background-size 指定を活かすため、ここでも inline 値を念のため解除する。
-            m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
-            m_BackgroundLayer.style.unityBackgroundScaleMode = StyleKeyword.Null;
+            ForceClearInlineBackgroundSize(m_BackgroundLayer);
 
             return true;
         }
@@ -370,8 +504,7 @@ namespace FUnity.Runtime.Presenter
             var styleSheetAvailable = EnsureBackgroundStyleSheet(m_BackgroundLayer);
 
             // USS に記述された background-size を有効にするため、毎回 inline 値を未設定へ戻す。
-            m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
-            m_BackgroundLayer.style.unityBackgroundScaleMode = StyleKeyword.Null;
+            ForceClearInlineBackgroundSize(m_BackgroundLayer);
 
             m_BackgroundLayer.RemoveFromClassList(BackgroundContainClass);
             m_BackgroundLayer.RemoveFromClassList(BackgroundCoverClass);
@@ -381,6 +514,7 @@ namespace FUnity.Runtime.Presenter
                 : BackgroundContainClass;
             m_BackgroundLayer.AddToClassList(className);
 
+            ForceClearInlineBackgroundSize(m_BackgroundLayer);
             if (!styleSheetAvailable && !s_BackgroundStyleSheetWarningEmitted)
             {
                 Debug.LogWarning($"[FUnity.BG] 背景スケール USS が適用されていないため、'{className}' の効果が反映されない可能性があります。");
