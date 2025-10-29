@@ -1,3 +1,4 @@
+using FUnity.Runtime.Presenter;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -215,12 +216,12 @@ namespace FUnity.Runtime.UI
                 background.AddToClassList("bg--contain");
             }
 
-            background.style.backgroundSize = StyleKeyword.Null;
-            background.style.unityBackgroundScaleMode = StyleKeyword.Null;
+            StageBackgroundService.ForceClearInlineBackgroundSize(background);
             var resolvedTexture = background.resolvedStyle.backgroundImage.texture;
             if (resolvedTexture != null)
             {
                 background.style.backgroundImage = new StyleBackground(resolvedTexture);
+                StageBackgroundService.ForceClearInlineBackgroundSize(background);
             }
         }
     }
