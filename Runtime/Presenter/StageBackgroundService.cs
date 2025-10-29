@@ -1,8 +1,7 @@
 // Updated: 2025-03-18
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
-using FUnity.Runtime.Core;
-using FUnity.Runtime.UI;
 using UnityEngine.UIElements;
 
 namespace FUnity.Runtime.Presenter
@@ -58,13 +57,16 @@ namespace FUnity.Runtime.Presenter
         /// <summary>USS 未適用を警告したかどうか。</summary>
         private static bool s_BackgroundStyleSheetWarningEmitted;
 
-        /// <summary>inline background-size の自動解除状態を保持するための PropertyName。</summary>
-        private static readonly PropertyName InlineGuardPropertyName = new PropertyName("FUnity.StageBackgroundService.InlineGuard");
+        /// <summary>inline background-size を監視済みであることを示す USS クラス名。</summary>
+        private const string InlineGuardClassName = "bg--inline-guarded";
+
+        /// <summary>inline background-size の監視状態を VisualElement ごとに保持するテーブル。</summary>
+        private static readonly ConditionalWeakTable<VisualElement, InlineGuardRegistration> s_InlineGuards = new ConditionalWeakTable<VisualElement, InlineGuardRegistration>();
 
         /// <summary>
-        /// background-size をクリアするためのライフサイクル登録情報を保持するヘルパークラスです。
+        /// inline background-size のクリア処理をライフサイクルへ組み込むための登録情報です。
         /// </summary>
-        private sealed class BackgroundInlineGuard
+        private sealed class InlineGuardRegistration
         {
             /// <summary>AttachToPanelEvent の重複登録を避けるためのフラグ。</summary>
             public bool AttachRegistered;
@@ -77,6 +79,9 @@ namespace FUnity.Runtime.Presenter
 
             /// <summary>GeometryChangedEvent 登録時に再利用するコールバック。</summary>
             public EventCallback<GeometryChangedEvent> GeometryCallback;
+
+            /// <summary>次フレームでの再クリアをスケジューリング済みかどうか。</summary>
+            public bool NextFrameScheduled;
         }
 
         /// <summary>
@@ -91,17 +96,28 @@ namespace FUnity.Runtime.Presenter
             }
 
             ClearInlineBackgroundSizeNow(background);
+            EnsureInlineGuardRegistered(background);
+        }
 
-            background.schedule.Execute(() =>
-            {
-                ClearInlineBackgroundSizeNow(background);
-            }).StartingIn(0);
-
-            var guard = GetOrCreateInlineGuard(background);
-            if (guard == null)
+        /// <summary>
+        /// inline background-size をクリアするためのガード登録を行う。
+        /// </summary>
+        /// <param name="background">背景レイヤー要素。</param>
+        public static void EnsureInlineGuardRegistered(VisualElement background)
+        {
+            if (background == null)
             {
                 return;
             }
+
+            ClearInlineBackgroundSizeNow(background);
+
+            if (!background.ClassListContains(InlineGuardClassName))
+            {
+                background.AddToClassList(InlineGuardClassName);
+            }
+
+            var guard = s_InlineGuards.GetValue(background, _ => new InlineGuardRegistration());
 
             if (!guard.AttachRegistered)
             {
@@ -116,29 +132,16 @@ namespace FUnity.Runtime.Presenter
                 background.RegisterCallback(guard.GeometryCallback, TrickleDown.NoTrickleDown);
                 guard.GeometryRegistered = true;
             }
-        }
 
-        /// <summary>
-        /// VisualElement に保存した inline クリア用のガード情報を取得または生成します。
-        /// </summary>
-        /// <param name="background">背景レイヤー要素。</param>
-        /// <returns>既存または新規生成したガード情報。取得に失敗した場合は null。</returns>
-        private static BackgroundInlineGuard GetOrCreateInlineGuard(VisualElement background)
-        {
-            if (background == null)
+            if (!guard.NextFrameScheduled)
             {
-                return null;
+                guard.NextFrameScheduled = true;
+                background.schedule.Execute(() =>
+                {
+                    ClearInlineBackgroundSizeNow(background);
+                    guard.NextFrameScheduled = false;
+                }).StartingIn(0);
             }
-
-            var stored = background.GetProperty(InlineGuardPropertyName);
-            if (stored is BackgroundInlineGuard guard)
-            {
-                return guard;
-            }
-
-            guard = new BackgroundInlineGuard();
-            background.SetProperty(InlineGuardPropertyName, guard);
-            return guard;
         }
 
         /// <summary>
