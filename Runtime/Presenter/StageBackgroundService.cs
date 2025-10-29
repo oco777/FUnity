@@ -1,8 +1,8 @@
 // Updated: 2025-03-18
 using System;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.UIElements;
+using FUnity.Runtime.Core;
 
 namespace FUnity.Runtime.Presenter
 {
@@ -31,7 +31,10 @@ namespace FUnity.Runtime.Presenter
         private string m_LastResourceKey;
 
         /// <summary>背景用コンテナの名前。UI ビルダー上で識別しやすいよう定数化する。</summary>
-        private const string BackgroundLayerName = StageElement.BackgroundLayerName;
+        private const string BackgroundLayerName = "FUnityBackgroundLayer";
+
+        /// <summary>背景用コンテナへ付与する USS クラス名。</summary>
+        private const string BackgroundLayerClassName = "funity-stage__background";
 
         /// <summary>Resources/Backgrounds 配下の既定ファイル名を示す定数。</summary>
         private const string DefaultBackgroundResource = "Background_01";
@@ -59,30 +62,6 @@ namespace FUnity.Runtime.Presenter
 
         /// <summary>inline background-size を監視済みであることを示す USS クラス名。</summary>
         private const string InlineGuardClassName = "bg--inline-guarded";
-
-        /// <summary>inline background-size の監視状態を VisualElement ごとに保持するテーブル。</summary>
-        private static readonly ConditionalWeakTable<VisualElement, InlineGuardRegistration> s_InlineGuards = new ConditionalWeakTable<VisualElement, InlineGuardRegistration>();
-
-        /// <summary>
-        /// inline background-size のクリア処理をライフサイクルへ組み込むための登録情報です。
-        /// </summary>
-        private sealed class InlineGuardRegistration
-        {
-            /// <summary>AttachToPanelEvent の重複登録を避けるためのフラグ。</summary>
-            public bool AttachRegistered;
-
-            /// <summary>GeometryChangedEvent の重複登録を避けるためのフラグ。</summary>
-            public bool GeometryRegistered;
-
-            /// <summary>AttachToPanelEvent 登録時に再利用するコールバック。</summary>
-            public EventCallback<AttachToPanelEvent> AttachCallback;
-
-            /// <summary>GeometryChangedEvent 登録時に再利用するコールバック。</summary>
-            public EventCallback<GeometryChangedEvent> GeometryCallback;
-
-            /// <summary>次フレームでの再クリアをスケジューリング済みかどうか。</summary>
-            public bool NextFrameScheduled;
-        }
 
         /// <summary>
         /// 指定した背景要素の inline background-size を確実に未設定へ戻し、ライフサイクルでも再適用されないよう監視します。
@@ -112,36 +91,19 @@ namespace FUnity.Runtime.Presenter
 
             ClearInlineBackgroundSizeNow(background);
 
-            if (!background.ClassListContains(InlineGuardClassName))
+            background.schedule.Execute(() =>
             {
-                background.AddToClassList(InlineGuardClassName);
+                ClearInlineBackgroundSizeNow(background);
+            }).StartingIn(0);
+
+            if (background.ClassListContains(InlineGuardClassName))
+            {
+                return;
             }
 
-            var guard = s_InlineGuards.GetValue(background, _ => new InlineGuardRegistration());
-
-            if (!guard.AttachRegistered)
-            {
-                guard.AttachCallback = _ => ClearInlineBackgroundSizeNow(background);
-                background.RegisterCallback(guard.AttachCallback, TrickleDown.NoTrickleDown);
-                guard.AttachRegistered = true;
-            }
-
-            if (!guard.GeometryRegistered)
-            {
-                guard.GeometryCallback = _ => ClearInlineBackgroundSizeNow(background);
-                background.RegisterCallback(guard.GeometryCallback, TrickleDown.NoTrickleDown);
-                guard.GeometryRegistered = true;
-            }
-
-            if (!guard.NextFrameScheduled)
-            {
-                guard.NextFrameScheduled = true;
-                background.schedule.Execute(() =>
-                {
-                    ClearInlineBackgroundSizeNow(background);
-                    guard.NextFrameScheduled = false;
-                }).StartingIn(0);
-            }
+            background.AddToClassList(InlineGuardClassName);
+            background.RegisterCallback<AttachToPanelEvent>(_ => ClearInlineBackgroundSizeNow(background));
+            background.RegisterCallback<GeometryChangedEvent>(_ => ClearInlineBackgroundSizeNow(background));
         }
 
         /// <summary>
@@ -171,7 +133,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            ForceClearInlineBackgroundSize(background);
+            EnsureInlineGuardRegistered(background);
             EnsureBackgroundStyleSheet(background);
 
             background.style.backgroundColor = data.BackgroundColor;
@@ -193,7 +155,7 @@ namespace FUnity.Runtime.Presenter
                 : BackgroundContainClass;
             background.AddToClassList(className);
 
-            ForceClearInlineBackgroundSize(background);
+            EnsureInlineGuardRegistered(background);
         }
 
         /// <summary>
@@ -398,7 +360,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            ForceClearInlineBackgroundSize(m_BackgroundLayer);
+            EnsureInlineGuardRegistered(m_BackgroundLayer);
             m_BackgroundLayer.style.backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat);
 
             if (texture != null)
@@ -410,7 +372,7 @@ namespace FUnity.Runtime.Presenter
                 m_BackgroundLayer.style.backgroundImage = StyleKeyword.None;
             }
 
-            ForceClearInlineBackgroundSize(m_BackgroundLayer);
+            EnsureInlineGuardRegistered(m_BackgroundLayer);
             Debug.Log($"[FUnity.BGDiag] background scale='{m_LastScaleKeyword}', texture={(texture != null ? texture.name : "null")}");
         }
 
@@ -433,33 +395,35 @@ namespace FUnity.Runtime.Presenter
 
             if (m_BackgroundLayer == null)
             {
-                if (m_TargetRoot is StageElement stageElement)
+                var existing = m_TargetRoot.Q<VisualElement>(BackgroundLayerName);
+                if (existing != null)
                 {
-                    var stageBackground = stageElement.BackgroundLayer;
-                    if (stageBackground != null)
-                    {
-                        m_BackgroundLayer = stageBackground;
-                    }
+                    m_BackgroundLayer = existing;
                 }
+            }
 
-                if (m_BackgroundLayer == null)
+            if (m_BackgroundLayer == null)
+            {
+                var existingByClass = m_TargetRoot.Q<VisualElement>(className: BackgroundLayerClassName);
+                if (existingByClass != null)
                 {
-                    var existing = m_TargetRoot.Q<VisualElement>(BackgroundLayerName);
-                    if (existing != null)
-                    {
-                        m_BackgroundLayer = existing;
-                    }
+                    m_BackgroundLayer = existingByClass;
                 }
+            }
 
-                if (m_BackgroundLayer == null)
+            if (m_BackgroundLayer == null)
+            {
+                m_BackgroundLayer = new VisualElement
                 {
-                    m_BackgroundLayer = new VisualElement
-                    {
-                        name = BackgroundLayerName,
-                        pickingMode = PickingMode.Ignore,
-                        focusable = false
-                    };
-                }
+                    name = BackgroundLayerName,
+                    pickingMode = PickingMode.Ignore,
+                    focusable = false
+                };
+            }
+
+            if (!m_BackgroundLayer.ClassListContains(BackgroundLayerClassName))
+            {
+                m_BackgroundLayer.AddToClassList(BackgroundLayerClassName);
             }
 
             m_BackgroundLayer.style.position = Position.Absolute;
@@ -488,7 +452,7 @@ namespace FUnity.Runtime.Presenter
             }
 
             // USS 側の background-size 指定を活かすため、ここでも inline 値を念のため解除する。
-            ForceClearInlineBackgroundSize(m_BackgroundLayer);
+            EnsureInlineGuardRegistered(m_BackgroundLayer);
 
             return true;
         }
@@ -507,7 +471,7 @@ namespace FUnity.Runtime.Presenter
             var styleSheetAvailable = EnsureBackgroundStyleSheet(m_BackgroundLayer);
 
             // USS に記述された background-size を有効にするため、毎回 inline 値を未設定へ戻す。
-            ForceClearInlineBackgroundSize(m_BackgroundLayer);
+            EnsureInlineGuardRegistered(m_BackgroundLayer);
 
             m_BackgroundLayer.RemoveFromClassList(BackgroundContainClass);
             m_BackgroundLayer.RemoveFromClassList(BackgroundCoverClass);
@@ -517,7 +481,7 @@ namespace FUnity.Runtime.Presenter
                 : BackgroundContainClass;
             m_BackgroundLayer.AddToClassList(className);
 
-            ForceClearInlineBackgroundSize(m_BackgroundLayer);
+            EnsureInlineGuardRegistered(m_BackgroundLayer);
             if (!styleSheetAvailable && !s_BackgroundStyleSheetWarningEmitted)
             {
                 Debug.LogWarning($"[FUnity.BG] 背景スケール USS が適用されていないため、'{className}' の効果が反映されない可能性があります。");
