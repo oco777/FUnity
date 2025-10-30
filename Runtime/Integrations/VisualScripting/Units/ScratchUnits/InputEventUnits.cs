@@ -1,41 +1,48 @@
 using System;
 using Unity.VisualScripting;
 using UnityEngine;
+using UInput = UnityEngine.Input;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
     /// Scratch の「〇〇キーが押されたとき」ブロックを再現し、押下瞬間にフローを発火する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Events/On Key Pressed")]
-    [UnitShortTitle("On Key Pressed")]
-    [UnitCategory("Scratch/Events/OnKeyPressed")]
-    public sealed class OnKeyPressedUnit : Unit, IGraphElementWithData
+    [UnitTitle("On Key Pressed")]
+    [UnitShortTitle("Key Pressed")]
+    [UnitCategory("Scratch/Events")]
+    public sealed class OnKeyPressedUnit : EventUnit<EmptyEventArgs>, IGraphElementWithData
     {
-        /// <summary>押下時のフローを送出する ControlOutput です。</summary>
-        [DoNotSerialize]
-        private ControlOutput m_Trigger;
-
         /// <summary>監視対象のキーを指定する ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Key;
 
-        /// <summary>押下時フローの出力ポートを公開します。</summary>
-        public ControlOutput Trigger => m_Trigger;
-
-        /// <summary>監視対象キーの入力ポートを公開します。</summary>
-        public ValueInput Key => m_Key;
+        /// <summary>自動登録を行わず、自前で EventBus を利用する設定値です。</summary>
+        protected override bool register => false;
 
         /// <summary>
         /// Update フックで利用するランタイムデータを保持します。
         /// </summary>
         private sealed class Data : IGraphElementData
         {
-            /// <summary>対象グラフへの参照です。</summary>
+            /// <summary>フロー生成に使用するグラフ参照です。</summary>
             public GraphReference m_Reference;
 
-            /// <summary>Update フックに登録するデリゲートです。</summary>
-            public Action<EmptyEventArgs> m_UpdateHandler;
+            /// <summary>前フレームでキーが押下されていたかどうかの状態です。</summary>
+            public bool m_WasDown;
+
+            /// <summary>Update フックから呼び出されるデリゲートです。</summary>
+            public Action<EmptyEventArgs> m_Callback;
+        }
+
+        /// <summary>
+        /// Update フックを利用してキー状態をポーリングします。
+        /// </summary>
+        /// <param name="reference">現在のグラフ参照。</param>
+        /// <returns>利用する EventHook。</returns>
+        protected override EventHook GetHook(GraphReference reference)
+        {
+            return EventHooks.Update;
         }
 
         /// <summary>
@@ -43,10 +50,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Trigger = ControlOutput("trigger");
-            m_Key = ValueInput("key", ScratchKey.Space);
-
-            Requirement(m_Key, m_Trigger);
+            base.Definition();
+            m_Key = ValueInput<ScratchKey>("key", ScratchKey.Space);
+            Requirement(m_Key, trigger);
         }
 
         /// <summary>
@@ -66,15 +72,18 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             base.StartListening(stack);
 
-            var data = stack.GetElementData<Data>(this);
-            data.m_Reference = stack.ToReference();
+            var data = (Data)stack.GetElementData(this);
+            var reference = stack.ToReference();
+            data.m_Reference = reference;
+            data.m_WasDown = false;
 
-            if (data.m_UpdateHandler == null)
+            if (data.m_Callback != null)
             {
-                data.m_UpdateHandler = args => Poll(data);
+                return;
             }
 
-            EventBus.Register<EmptyEventArgs>(this, EventHooks.Update, data.m_UpdateHandler);
+            data.m_Callback = args => Poll(data);
+            EventBus.Register(this, GetHook(reference), data.m_Callback);
         }
 
         /// <summary>
@@ -85,11 +94,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             base.StopListening(stack);
 
-            var data = stack.GetElementData<Data>(this);
-            if (data.m_UpdateHandler != null)
+            var data = (Data)stack.GetElementData(this);
+            if (data.m_Callback != null && data.m_Reference != null)
             {
-                EventBus.Unregister<EmptyEventArgs>(this, EventHooks.Update, data.m_UpdateHandler);
+                EventBus.Unregister(this, GetHook(data.m_Reference), data.m_Callback);
             }
+
+            data.m_Callback = null;
+            data.m_WasDown = false;
             data.m_Reference = null;
         }
 
@@ -114,12 +126,17 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var keyCode = ScratchKeyUtil.ToKeyCode(scratchKey);
             if (keyCode == KeyCode.None)
             {
+                data.m_WasDown = false;
                 return;
             }
 
-            if (UnityEngine.Input.GetKeyDown(keyCode))
+            var isDown = UInput.GetKey(keyCode);
+            var isPressed = isDown && !data.m_WasDown;
+            data.m_WasDown = isDown;
+
+            if (isPressed)
             {
-                flow.Invoke(m_Trigger);
+                flow.Invoke(trigger);
             }
         }
     }
