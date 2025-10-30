@@ -15,6 +15,7 @@ Scratch モードは「Scratch 3.0 と同等の制作体験」を目標とした
   - `UI(x, y)` → `Logical(X, Y)` = `(x - W/2, H/2 - y)`
   - `Logical(X, Y)` → `UI(x, y)` = `(X + W/2, H/2 - Y)`
 - クランプ処理は実際のステージサイズ `W x H` を基準とし、固定値 480x360 に依存しません。
+- `FUnityActorData.Anchor` で **Center (既定)** / **TopLeft** を切り替えられます。Center を選ぶと座標が画像中心に一致し、TopLeft は UI Toolkit と同じ左上基準になります。
 
 ## ブロック互換ポリシー
 - Scratch 標準カテゴリ（動き/見た目/音/イベント/制御/調べる/演算/変数/リスト）を Visual Scripting で完全再現することを目標にしています。

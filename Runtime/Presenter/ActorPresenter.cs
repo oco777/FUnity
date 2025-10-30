@@ -53,6 +53,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>使用中の座標原点。Scratch では Center、unityroom では TopLeft。</summary>
         private CoordinateOrigin m_CoordinateOrigin = CoordinateOrigin.TopLeft;
 
+        /// <summary>俳優座標が指し示すアンカー種別。既定は画像中心。</summary>
+        private ActorAnchor m_Anchor = ActorAnchor.Center;
+
         /// <summary>Presenter が保持するステージ領域（UI 座標系）。TopLeft 原点時のみクランプ計算に使用する。</summary>
         private Rect m_StageBoundsUi = new Rect(0f, 0f, 0f, 0f);
 
@@ -128,8 +131,13 @@ namespace FUnity.Runtime.Presenter
                 m_CurrentScale = 1f;
             }
 
-            var initialPosition = data != null ? data.InitialPosition : Vector2.zero;
-            var logicalInitial = ConvertUiToLogical(initialPosition);
+            m_Anchor = data != null ? data.Anchor : ActorAnchor.Center;
+            m_BaseSize = data != null ? data.Size : Vector2.zero;
+            m_LastMeasuredSizePx = Vector2.zero;
+
+            var initialPositionUi = data != null ? data.InitialPosition : Vector2.zero;
+            var anchorAdjustedInitialUi = RemoveAnchorOffset(initialPositionUi);
+            var logicalInitial = ConvertUiToLogical(anchorAdjustedInitialUi);
             m_State.SetPositionUnchecked(logicalInitial);
             m_State.Speed = Mathf.Max(0f, data != null ? GetConfiguredSpeed(data) : 300f);
             if (shouldInitializeDirection)
@@ -142,8 +150,6 @@ namespace FUnity.Runtime.Presenter
                 m_State.RotationDeg = Normalize0To360(m_State.RotationDeg);
             }
 
-            m_BaseSize = data != null ? data.Size : Vector2.zero;
-            m_LastMeasuredSizePx = Vector2.zero;
             m_StageBoundsUi = new Rect(0f, 0f, 0f, 0f);
             m_PositionBoundsLogical = new Rect(0f, 0f, 0f, 0f);
             m_HasPositionBounds = false;
@@ -293,23 +299,26 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 論理座標を UI 座標へ変換するヘルパー。Visual Scripting アダプタ等から利用する。
+        /// 論理座標を UI 座標へ変換し、アンカー補正済みの left/top を返すヘルパー。
+        /// Visual Scripting アダプタ等から利用する。
         /// </summary>
         /// <param name="logical">論理座標。</param>
-        /// <returns>左上原点の UI 座標。</returns>
+        /// <returns>アンカー適用後の左上原点 UI 座標。</returns>
         public Vector2 ToUiPosition(Vector2 logical)
         {
-            return ConvertLogicalToUi(logical);
+            var anchorUi = ConvertLogicalToUi(logical);
+            return ApplyAnchorOffset(anchorUi);
         }
 
         /// <summary>
-        /// UI 座標を論理座標へ変換するヘルパー。入力デバイス座標の解釈に利用する。
+        /// UI 座標（left/top）をアンカー逆補正して論理座標へ変換するヘルパー。入力デバイス座標の解釈に利用する。
         /// </summary>
         /// <param name="ui">左上原点の UI 座標。</param>
-        /// <returns>論理座標。</returns>
+        /// <returns>アンカー逆補正後の論理座標。</returns>
         public Vector2 ToLogicalPosition(Vector2 ui)
         {
-            return ConvertUiToLogical(ui);
+            var anchorUi = RemoveAnchorOffset(ui);
+            return ConvertUiToLogical(anchorUi);
         }
 
         /// <summary>
@@ -366,7 +375,8 @@ namespace FUnity.Runtime.Presenter
                 return false;
             }
 
-            var logical = ConvertUiToLogical(positionPx);
+            var anchorUi = RemoveAnchorOffset(positionPx);
+            var logical = ConvertUiToLogical(anchorUi);
 
             var minX = m_PositionBoundsLogical.xMin;
             var minY = m_PositionBoundsLogical.yMin;
@@ -377,7 +387,8 @@ namespace FUnity.Runtime.Presenter
                 Mathf.Clamp(logical.x, minX, maxX),
                 Mathf.Clamp(logical.y, minY, maxY));
 
-            clampedPx = ConvertLogicalToUi(clampedLogical);
+            var clampedAnchor = ConvertLogicalToUi(clampedLogical);
+            clampedPx = ApplyAnchorOffset(clampedAnchor);
             return true;
         }
 
@@ -594,7 +605,7 @@ namespace FUnity.Runtime.Presenter
         /// <summary>
         /// 絶対座標をピクセル単位で設定し、View に反映する。
         /// </summary>
-        /// <param name="positionPx">UI 座標（px）。Scratch など中央原点の場合は <see cref="ToUiPosition(Vector2)"/> を利用してから渡してください。</param>
+        /// <param name="positionPx">UI 座標（px）。アンカー補正済みの left/top。Scratch など中央原点の場合は <see cref="ToUiPosition(Vector2)"/> で変換してから渡してください。</param>
         public void SetPositionPixels(Vector2 positionPx)
         {
             ApplyPosition(positionPx);
@@ -794,11 +805,16 @@ namespace FUnity.Runtime.Presenter
             var size = m_LastMeasuredSizePx;
             var width = Mathf.Max(0f, size.x);
             var height = Mathf.Max(0f, size.y);
+            var anchorOffset = CalculateAnchorOffset(size);
 
-            var minX = m_StageBoundsUi.xMin;
-            var minY = m_StageBoundsUi.yMin;
-            var maxX = Mathf.Max(minX, m_StageBoundsUi.xMax - width);
-            var maxY = Mathf.Max(minY, m_StageBoundsUi.yMax - height);
+            var minX = m_StageBoundsUi.xMin + anchorOffset.x;
+            var minY = m_StageBoundsUi.yMin + anchorOffset.y;
+
+            var tailWidth = Mathf.Max(0f, width - anchorOffset.x);
+            var tailHeight = Mathf.Max(0f, height - anchorOffset.y);
+
+            var maxX = Mathf.Max(minX, m_StageBoundsUi.xMax - tailWidth);
+            var maxY = Mathf.Max(minY, m_StageBoundsUi.yMax - tailHeight);
 
             m_PositionBoundsLogical = Rect.MinMaxRect(minX, minY, maxX, maxY);
             m_HasPositionBounds = true;
@@ -828,8 +844,115 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            var uiPos = ConvertLogicalToUi(m_State.Position);
-            m_View.SetPosition(uiPos);
+            var anchorUi = ConvertLogicalToUi(m_State.Position);
+            var topLeftUi = ApplyAnchorOffset(anchorUi);
+            m_View.SetPosition(topLeftUi);
+        }
+
+        /// <summary>
+        /// アンカー位置の UI 座標を View が要求する左上座標へ変換する。
+        /// </summary>
+        /// <param name="anchorUi">アンカー基準の UI 座標。</param>
+        /// <returns>style.left/top に適用する左上座標。</returns>
+        private Vector2 ApplyAnchorOffset(Vector2 anchorUi)
+        {
+            if (m_Anchor == ActorAnchor.TopLeft)
+            {
+                return anchorUi;
+            }
+
+            var offset = CalculateAnchorOffset();
+            if (offset.sqrMagnitude <= 0f)
+            {
+                return anchorUi;
+            }
+
+            return anchorUi - offset;
+        }
+
+        /// <summary>
+        /// View から取得した左上座標をアンカー基準の座標へ戻す。
+        /// </summary>
+        /// <param name="topLeftUi">style.left/top で表現された座標。</param>
+        /// <returns>アンカー基準の UI 座標。</returns>
+        private Vector2 RemoveAnchorOffset(Vector2 topLeftUi)
+        {
+            if (m_Anchor == ActorAnchor.TopLeft)
+            {
+                return topLeftUi;
+            }
+
+            var offset = CalculateAnchorOffset();
+            if (offset.sqrMagnitude <= 0f)
+            {
+                return topLeftUi;
+            }
+
+            return topLeftUi + offset;
+        }
+
+        /// <summary>
+        /// 現在の俳優サイズに基づくアンカーオフセットを算出する。
+        /// </summary>
+        /// <returns>左上原点からアンカー位置までのオフセット。</returns>
+        private Vector2 CalculateAnchorOffset()
+        {
+            var size = ResolveCurrentVisualSizeForAnchor();
+            return CalculateAnchorOffset(size);
+        }
+
+        /// <summary>
+        /// 指定されたサイズを元にアンカーオフセットを計算する。
+        /// </summary>
+        /// <param name="size">俳優要素の幅・高さ（px）。</param>
+        /// <returns>左上原点からアンカー位置までのオフセット。</returns>
+        private Vector2 CalculateAnchorOffset(Vector2 size)
+        {
+            if (m_Anchor != ActorAnchor.Center)
+            {
+                return Vector2.zero;
+            }
+
+            var width = Mathf.Max(0f, size.x);
+            var height = Mathf.Max(0f, size.y);
+
+            if (width <= 0f && height <= 0f)
+            {
+                return Vector2.zero;
+            }
+
+            var offsetX = width > 0f ? width * 0.5f : 0f;
+            var offsetY = height > 0f ? height * 0.5f : 0f;
+            return new Vector2(offsetX, offsetY);
+        }
+
+        /// <summary>
+        /// アンカー計算に利用できる最新の俳優サイズを取得する。
+        /// </summary>
+        /// <returns>幅・高さ（px）。未取得時は 0。</returns>
+        private Vector2 ResolveCurrentVisualSizeForAnchor()
+        {
+            if (m_View != null && m_View.TryGetVisualSize(out var measured) && measured.sqrMagnitude > 0f)
+            {
+                m_LastMeasuredSizePx = measured;
+                return measured;
+            }
+
+            if (m_LastMeasuredSizePx.sqrMagnitude > 0f)
+            {
+                return m_LastMeasuredSizePx;
+            }
+
+            if (m_BaseSize.x > 0f || m_BaseSize.y > 0f)
+            {
+                var scaled = m_BaseSize * m_CurrentScale;
+                if (scaled.sqrMagnitude > 0f)
+                {
+                    return scaled;
+                }
+            }
+
+            return Vector2.zero;
         }
 
         /// <summary>
@@ -843,7 +966,8 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            var logical = ConvertUiToLogical(positionPx);
+            var anchorUi = RemoveAnchorOffset(positionPx);
+            var logical = ConvertUiToLogical(anchorUi);
 
             if (m_HasPositionBounds)
             {
