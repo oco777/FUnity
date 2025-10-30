@@ -1,6 +1,8 @@
 // Updated: 2025-02-14
 using UnityEngine;
 using Unity.VisualScripting;
+using FUnity.Runtime.Authoring;
+using FUnity.Runtime.Core;
 using FUnity.Runtime.Presenter;
 using UnityEngine.UIElements;
 
@@ -40,6 +42,15 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// 現在バインドされている UI Toolkit 要素。
         /// </summary>
         public VisualElement BoundElement => m_BoundElement;
+
+        /// <summary>現在の座標原点。Presenter 未設定時は TopLeft。</summary>
+        public CoordinateOrigin CoordinateOrigin
+        {
+            get
+            {
+                return m_ActorPresenter != null ? m_ActorPresenter.CoordinateOrigin : CoordinateOrigin.TopLeft;
+            }
+        }
 
         /// <summary>
         /// 浮遊アニメーションが有効な場合にスケジューラを起動する。
@@ -182,7 +193,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return Vector2.zero;
             }
 
-            return m_ActorPresenter.GetPosition();
+            var logical = m_ActorPresenter.GetPosition();
+            return m_ActorPresenter.ToUiPosition(logical);
         }
 
         /// <summary>
@@ -198,6 +210,85 @@ namespace FUnity.Runtime.Integrations.VisualScripting
             }
 
             m_ActorPresenter.SetPositionPixels(positionPx);
+        }
+
+        /// <summary>
+        /// 論理座標を UI 座標へ変換する。
+        /// </summary>
+        /// <param name="logical">論理座標。</param>
+        /// <returns>左上原点の UI 座標。</returns>
+        public Vector2 ToUiPosition(Vector2 logical)
+        {
+            if (m_ActorPresenter != null)
+            {
+                return m_ActorPresenter.ToUiPosition(logical);
+            }
+
+            return CoordinateConverter.LogicalToUI(logical, ResolveStageRootForConversion(), CoordinateOrigin);
+        }
+
+        /// <summary>
+        /// UI 座標を論理座標へ変換する。
+        /// </summary>
+        /// <param name="ui">左上原点の UI 座標。</param>
+        /// <returns>論理座標。</returns>
+        public Vector2 ToLogicalPosition(Vector2 ui)
+        {
+            if (m_ActorPresenter != null)
+            {
+                return m_ActorPresenter.ToLogicalPosition(ui);
+            }
+
+            return CoordinateConverter.UIToLogical(ui, ResolveStageRootForConversion(), CoordinateOrigin);
+        }
+
+        /// <summary>
+        /// UI 座標系の差分を論理座標系の差分へ変換する。
+        /// </summary>
+        /// <param name="uiDelta">UI 座標系での差分。</param>
+        /// <returns>論理座標系の差分。</returns>
+        public Vector2 ToLogicalDelta(Vector2 uiDelta)
+        {
+            if (CoordinateOrigin == CoordinateOrigin.Center)
+            {
+                return new Vector2(uiDelta.x, -uiDelta.y);
+            }
+
+            return uiDelta;
+        }
+
+        /// <summary>
+        /// 論理座標系の差分を UI 座標系へ変換する。
+        /// </summary>
+        /// <param name="logicalDelta">論理座標系での差分。</param>
+        /// <returns>UI 座標系での差分。</returns>
+        public Vector2 ToUiDelta(Vector2 logicalDelta)
+        {
+            if (m_ActorPresenter != null)
+            {
+                return m_ActorPresenter.ToUiDelta(logicalDelta);
+            }
+
+            if (CoordinateOrigin == CoordinateOrigin.Center)
+            {
+                return new Vector2(logicalDelta.x, -logicalDelta.y);
+            }
+
+            return logicalDelta;
+        }
+
+        /// <summary>
+        /// 座標変換で使用するステージ要素を解決する。Presenter 未設定時はバインド要素の親を返す。
+        /// </summary>
+        /// <returns>変換の基準に用いる <see cref="VisualElement"/>。</returns>
+        private VisualElement ResolveStageRootForConversion()
+        {
+            if (m_ActorPresenter != null && m_ActorPresenter.StageRootElement != null)
+            {
+                return m_ActorPresenter.StageRootElement;
+            }
+
+            return m_BoundElement != null ? m_BoundElement.parent : null;
         }
 
         /// <summary>

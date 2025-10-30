@@ -14,7 +14,7 @@ namespace FUnity.Runtime.Model
     public sealed class ActorState
     {
         /// <summary>
-        /// UI Toolkit の左上原点座標系での現在位置（px）。Presenter が一方向に更新し View は読み取りのみを行う。
+        /// 論理座標での現在位置（px）。原点や軸方向は <see cref="FUnityModeConfig"/> の設定に従い、Presenter が一方向に更新します。
         /// </summary>
         public Vector2 Position { get; private set; }
 
@@ -42,7 +42,7 @@ namespace FUnity.Runtime.Model
         /// 外部から与えられた座標を指定された範囲内にクランプして保持する。
         /// </summary>
         /// <param name="pos">設定したい座標（px）。</param>
-        /// <param name="boundsPx">許容される左上座標の範囲（px）。</param>
+        /// <param name="boundsPx">許容される座標範囲（px）。</param>
         public void SetPositionClamped(Vector2 pos, Rect boundsPx)
         {
             Position = Clamp(pos, boundsPx);
@@ -52,7 +52,7 @@ namespace FUnity.Runtime.Model
         /// 現在位置に差分を加算し、指定範囲内にクランプして保持する。
         /// </summary>
         /// <param name="delta">加算する座標差分（px）。</param>
-        /// <param name="boundsPx">許容される左上座標の範囲（px）。</param>
+        /// <param name="boundsPx">許容される座標範囲（px）。</param>
         public void AddPositionClamped(Vector2 delta, Rect boundsPx)
         {
             var target = Position + delta;

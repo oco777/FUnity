@@ -96,7 +96,9 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            m_Target.SetPosition(new Vector2(x, y));
+            var logical = new Vector2(x, y);
+            var uiPosition = m_Target.ToUiPosition(logical);
+            m_Target.SetPositionPixels(uiPosition);
         }
 
         /// <summary>
@@ -112,7 +114,9 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            m_Target.MoveBy(new Vector2(dx, dy));
+            var logicalDelta = new Vector2(dx, dy);
+            var uiDelta = m_Target.ToUiDelta(logicalDelta);
+            m_Target.MoveByPixels(uiDelta);
         }
 
         /// <summary>
