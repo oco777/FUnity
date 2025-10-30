@@ -13,8 +13,10 @@ Scratch 標準ブロックと FUnity Visual Scripting ユニットの対応表�
 | Sound | change volume by _ | `Scratch/Sound/ChangeVolume` | ✅ | `AudioMixer` のボリュームに反映 |
 | Events | when green flag clicked | `Scratch/Events/OnGreenFlag` | ✅ | `FUnity.Core.FUnityManager` の再生イベントを受信 |
 | Events | when I receive _ | `Scratch/Events/OnBroadcast` | ✅ | Visual Scripting イベントバスで同期 |
+| Events | when _ key pressed | `Scratch/Events/OnKeyPressed` | ✅ | ScratchKey 列挙からキーを選択し、押下瞬間で発火 |
 | Control | forever | `Scratch/Control/Forever` | ✅ | 1 フレーム待機で CPU 占有を防止 |
 | Control | repeat _ | `Scratch/Control/Repeat` | ✅ | ループ回数は整数へ丸め込み |
+| Control | if <condition> then | `Scratch/Control/IfThen` | ✅ | 条件が true のとき Body を 1 回同期実行 |
 | Control | create clone of _ | `Scratch/Control/CreateClone` | ⏳ | ランタイム複製を最適化中 |
 | Sensing | touching _ ? | `Scratch/Sensing/IsTouching` | ✅ | Collider2D または Rect オーバーラップで判定 |
 | Sensing | mouse x | `Scratch/Sensing/MouseX` | ✅ | UI Toolkit 座標を Scratch 座標に変換 |

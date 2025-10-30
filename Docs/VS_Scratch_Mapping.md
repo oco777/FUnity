@@ -25,6 +25,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | Scratch/Forever | ずっと | 無限ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
 | Scratch/Repeat N | ◯ 回繰り返す | 指定回数ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
 | Scratch/Wait Seconds | ◯ 秒待つ | 指定秒だけ待機 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/WaitSecondsUnit.cs |
+| Scratch/Control/If Then | もし <条件> なら | 条件が true のとき Body を 1 回実行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ConditionUnits.cs |
 
 ## 表示・演出（Fooni 関連）
 
@@ -33,6 +34,12 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | Scratch/Say | ◯ と言う | 吹き出し表示 | 未実装: 対応する Unit が見つかりません |
 | Scratch/Set Size % | 大きさを ◯ % にする | 拡大率を絶対指定で適用 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
 | Scratch/Change Size by % | 大きさを ◯ % ずつ変える | 拡大率を相対変更 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
+
+## イベント
+
+| VS ノード名 | Scratch 日本語 | 概要 | 備考 |
+|---|---|---|---|
+| Scratch/Events/On Key Pressed | 〇キーが押されたとき | 指定キーの押下瞬間にトリガーを発火 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputEventUnits.cs / ScratchKey で監視キーを選択 |
 
 ---
 ### 補足
