@@ -39,7 +39,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         public ValueInput Condition => m_Condition;
 
         /// <summary>
-        /// ポート定義を行い、条件評価後に Body と Out を順次呼び出すセットアップを行います。
+        /// ポート定義を行い、条件評価後に Body と Exit を順次呼び出すセットアップを行います。
         /// </summary>
         protected override void Definition()
         {
@@ -49,7 +49,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             m_Condition = ValueInput("condition", false);
 
             Succession(m_Enter, m_Body);
-            Succession(m_Body, m_Exit);
             Succession(m_Enter, m_Exit);
             Requirement(m_Condition, m_Enter);
         }
@@ -58,7 +57,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// フローが入ってきた際に条件を評価し、真であれば Body を 1 回実行します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>常に Out ポートを返します。</returns>
+        /// <returns>常に Exit ポートを返します。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
             var condition = flow.GetValue<bool>(m_Condition);

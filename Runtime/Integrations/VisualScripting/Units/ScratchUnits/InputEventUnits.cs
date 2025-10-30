@@ -1,4 +1,3 @@
-using System;
 using Unity.VisualScripting;
 using UnityEngine;
 using UInput = UnityEngine.Input;
@@ -17,22 +16,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ValueInput m_Key;
 
-        /// <summary>自動登録を行わず、自前で EventBus を利用する設定値です。</summary>
-        protected override bool register => false;
+        /// <summary>EventUnit の自動登録機構を利用するための設定値です。</summary>
+        protected override bool register => true;
 
-        /// <summary>
-        /// Update フックで利用するランタイムデータを保持します。
-        /// </summary>
+        /// <summary>押下エッジを検出するためのランタイムデータを保持します。</summary>
         private sealed class Data : IGraphElementData
         {
-            /// <summary>フロー生成に使用するグラフ参照です。</summary>
-            public GraphReference m_Reference;
-
-            /// <summary>前フレームでキーが押下されていたかどうかの状態です。</summary>
+            /// <summary>前フレームでキーが押されていたかどうかを表します。</summary>
             public bool m_WasDown;
-
-            /// <summary>Update フックから呼び出されるデリゲートです。</summary>
-            public Action<EmptyEventArgs> m_Callback;
         }
 
         /// <summary>
@@ -52,7 +43,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             base.Definition();
             m_Key = ValueInput<ScratchKey>("key", ScratchKey.Space);
-            Requirement(m_Key, trigger);
+            // EventUnit では ControlInput を要求しないため Requirement は不要。
         }
 
         /// <summary>
@@ -65,79 +56,28 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// グラフ開始時に Update フックへ登録し、キー入力を監視します。
+        /// Update ごとに押下エッジを検出し、押された瞬間のみ発火させるかどうかを返します。
         /// </summary>
-        /// <param name="stack">現在のグラフスタック。</param>
-        public override void StartListening(GraphStack stack)
+        /// <param name="flow">現在処理しているフロー。</param>
+        /// <param name="args">イベント引数（未使用）。</param>
+        /// <returns>押下エッジが検出された場合は true。</returns>
+        protected override bool ShouldTrigger(Flow flow, EmptyEventArgs args)
         {
-            base.StartListening(stack);
+            var data = flow.stack.GetElementData<Data>(this);
 
-            var data = (Data)stack.GetElementData(this);
-            var reference = stack.ToReference();
-            data.m_Reference = reference;
-            data.m_WasDown = false;
-
-            if (data.m_Callback != null)
-            {
-                return;
-            }
-
-            data.m_Callback = args => Poll(data);
-            EventBus.Register(this, GetHook(reference), data.m_Callback);
-        }
-
-        /// <summary>
-        /// グラフ停止時に Update フックから登録を解除します。
-        /// </summary>
-        /// <param name="stack">現在のグラフスタック。</param>
-        public override void StopListening(GraphStack stack)
-        {
-            base.StopListening(stack);
-
-            var data = (Data)stack.GetElementData(this);
-            if (data.m_Callback != null && data.m_Reference != null)
-            {
-                EventBus.Unregister(this, GetHook(data.m_Reference), data.m_Callback);
-            }
-
-            data.m_Callback = null;
-            data.m_WasDown = false;
-            data.m_Reference = null;
-        }
-
-        /// <summary>
-        /// 毎フレーム呼び出され、指定キーの押下瞬間を検出してフローを発火します。
-        /// </summary>
-        /// <param name="data">監視に用いるランタイムデータ。</param>
-        private void Poll(Data data)
-        {
-            if (data == null)
-            {
-                return;
-            }
-
-            if (data.m_Reference == null)
-            {
-                return;
-            }
-
-            using var flow = Flow.New(data.m_Reference);
             var scratchKey = flow.GetValue<ScratchKey>(m_Key);
             var keyCode = ScratchKeyUtil.ToKeyCode(scratchKey);
             if (keyCode == KeyCode.None)
             {
                 data.m_WasDown = false;
-                return;
+                return false;
             }
 
             var isDown = UInput.GetKey(keyCode);
             var isPressed = isDown && !data.m_WasDown;
             data.m_WasDown = isDown;
 
-            if (isPressed)
-            {
-                flow.Invoke(trigger);
-            }
+            return isPressed;
         }
     }
 }
