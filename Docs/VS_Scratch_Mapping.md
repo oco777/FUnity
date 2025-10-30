@@ -25,7 +25,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | Scratch/Forever | ずっと | 無限ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
 | Scratch/Repeat N | ◯ 回繰り返す | 指定回数ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
 | Scratch/Wait Seconds | ◯ 秒待つ | 指定秒だけ待機 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/WaitSecondsUnit.cs |
-| Scratch/Control/If Then | もし <条件> なら | 条件が true のとき Body を 1 回実行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ConditionUnits.cs |
+| Scratch/Control/If Then | もし <条件> なら | 条件が true のとき Body を 1 回実行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ConditionUnits.cs / Body 実行後は同フレームで exit ポートに戻る |
 
 ## 表示・演出（Fooni 関連）
 
@@ -39,7 +39,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
-| Scratch/Events/On Key Pressed | 〇キーが押されたとき | 指定キーの押下瞬間にトリガーを発火 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputEventUnits.cs / ScratchKey で監視キーを選択 |
+| Scratch/Events/On Key Pressed | 〇キーが押されたとき | 指定キーの押下瞬間にトリガーを発火 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputEventUnits.cs / ScratchKey で監視キーを選択 / 押しっぱなしでは再発火しない |
 
 ---
 ### 補足
