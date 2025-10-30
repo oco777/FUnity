@@ -19,6 +19,7 @@ Scratch 標準ブロックと FUnity Visual Scripting ユニットの対応表�
 | Control | if <condition> then | `Scratch/Control/IfThen` | ✅ | 条件が true のとき Body を 1 回同期実行 |
 | Control | create clone of _ | `Scratch/Control/CreateClone` | ⏳ | ランタイム複製を最適化中 |
 | Sensing | touching _ ? | `Scratch/Sensing/IsTouching` | ✅ | Collider2D または Rect オーバーラップで判定 |
+| Sensing | _ key pressed? | `Scratch/Sensing/Key Pressed?` | ✅ | 押下中は true（イベントの OnKeyPressed は押下瞬間のみ） |
 | Sensing | mouse x | `Scratch/Sensing/MouseX` | ✅ | UI Toolkit 座標を Scratch 座標に変換 |
 | Operators | pick random _ to _ | `Scratch/Operators/PickRandom` | ✅ | `Random.Range` を用い端点含めて計算 |
 | Operators | join _ _ | `Scratch/Operators/JoinText` | ✅ | `StringBuilder` 経由で連結 |

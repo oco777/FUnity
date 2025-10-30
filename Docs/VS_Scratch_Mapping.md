@@ -27,6 +27,12 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | Scratch/Wait Seconds | ◯ 秒待つ | 指定秒だけ待機 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/WaitSecondsUnit.cs |
 | Scratch/Control/If Then | もし <条件> なら | 条件が true のとき Body を 1 回実行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ConditionUnits.cs / Body 実行後は同フレームで exit ポートに戻る |
 
+## 調べる（入力判定）
+
+| VS ノード名 | Scratch 日本語 | 概要 | 備考 |
+|---|---|---|---|
+| Scratch/Sensing/Key Pressed? | 〇キーが押された？ | 指定キーが押されている間は true | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputPredicateUnits.cs / 押下中は true（イベントの OnKeyPressed は押下瞬間のみ） |
+
 ## 表示・演出（Fooni 関連）
 
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
