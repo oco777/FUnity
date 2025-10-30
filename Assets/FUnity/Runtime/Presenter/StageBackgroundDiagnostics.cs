@@ -1,6 +1,9 @@
+using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Core;
+using FUnity.Runtime.UI;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UInput = UnityEngine.Input;
 
 namespace FUnity.Runtime.Presenter
 {
@@ -68,6 +71,38 @@ namespace FUnity.Runtime.Presenter
             }
 
             Log($"RunBackgroundDiagnostics start (background='{backgroundName}')");
+
+            var activeConfig = Resources.Load<FUnityModeConfig>("FUnityActiveMode");
+            var origin = CoordinateConverter.GetActiveOrigin(activeConfig);
+
+            if (origin == CoordinateOrigin.Center)
+            {
+                var stageForCoords = panelRoot.Q<VisualElement>(StageElement.ActorContainerName)
+                    ?? panelRoot.Q<VisualElement>(StageElement.StageRootName)
+                    ?? panelRoot;
+
+                if (stageForCoords != null)
+                {
+                    var uiZero = CoordinateConverter.LogicalToUI(Vector2.zero, stageForCoords, origin);
+                    Log($"[Coord] logical(0,0) -> ui({uiZero.x:F1},{uiZero.y:F1})");
+
+                    var uiHundred = CoordinateConverter.LogicalToUI(new Vector2(100f, 100f), stageForCoords, origin);
+                    Log($"[Coord] logical(100,100) -> ui({uiHundred.x:F1},{uiHundred.y:F1})");
+
+                    var panel = stageForCoords.panel ?? panelRoot.panel;
+                    if (panel != null)
+                    {
+                        var mouseScreen = UInput.mousePosition;
+                        var uiMouse = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(mouseScreen.x, mouseScreen.y));
+                        var logicalMouse = CoordinateConverter.UIToLogical(uiMouse, stageForCoords, origin);
+                        Log($"[Coord] mouse ui({uiMouse.x:F1},{uiMouse.y:F1}) -> logical({logicalMouse.x:F1},{logicalMouse.y:F1})");
+                    }
+                }
+                else
+                {
+                    Log("[Coord] Coordinate diagnostics skipped (stage root not found).");
+                }
+            }
 
             var rw = panelRoot.resolvedStyle.width;
             var rh = panelRoot.resolvedStyle.height;

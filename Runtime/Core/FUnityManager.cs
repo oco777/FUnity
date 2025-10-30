@@ -551,7 +551,8 @@ namespace FUnity.Core
 
                 var state = new ActorState();
                 var presenter = new ActorPresenter();
-                presenter.Initialize(visual.Data, state, view);
+                var stageRoot = m_StageElement != null ? m_StageElement.ActorContainer : null;
+                presenter.Initialize(visual.Data, state, view, m_ActiveModeConfig, stageRoot);
                 view.SetActorPresenter(presenter);
 
                 m_ActorPresenters.Add(presenter);

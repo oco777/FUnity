@@ -9,6 +9,13 @@ Scratch モードは「Scratch 3.0 と同等の制作体験」を目標とした
 - **カメラ推奨**: Orthographic / Size = 180 (縦半径) で中央原点に合わせる
 - **UI Toolkit**: PanelSettings を `Fit (Contain)`、参照 DPI を 96 とし、背景のレターボックスを抑えます
 
+## 座標系（重要）
+- 原点は **ステージ中央(0,0)**。右が +X、上が +Y です。
+- UI Toolkit の左上原点座標とはランタイムで自動変換されます。
+  - `UI(x, y)` → `Logical(X, Y)` = `(x - W/2, H/2 - y)`
+  - `Logical(X, Y)` → `UI(x, y)` = `(X + W/2, H/2 - Y)`
+- クランプ処理は実際のステージサイズ `W x H` を基準とし、固定値 480x360 に依存しません。
+
 ## ブロック互換ポリシー
 - Scratch 標準カテゴリ（動き/見た目/音/イベント/制御/調べる/演算/変数/リスト）を Visual Scripting で完全再現することを目標にしています。
 - ブロックごとのマッピングは [`BlocksMapping.md`](BlocksMapping.md) を参照してください。

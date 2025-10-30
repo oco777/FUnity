@@ -5,11 +5,23 @@ using FUnity.Runtime.Core;
 namespace FUnity.Runtime.Authoring
 {
     /// <summary>
+    /// 座標原点の種類を表す列挙体です。UI Toolkit との変換方式を切り替える際に利用します。
+    /// </summary>
+    public enum CoordinateOrigin
+    {
+        /// <summary>左上を原点とする座標系です。UI Toolkit 標準であり、unityroom モードの既定となります。</summary>
+        TopLeft,
+
+        /// <summary>中央を原点とし、右を +X / 上を +Y とする座標系です。Scratch 互換モードで使用します。</summary>
+        Center
+    }
+
+    /// <summary>
     /// FUnity の制作モードに応じた推奨設定を保持する ScriptableObject です。
     /// ステージ解像度やピクセル密度、利用可能な機能フラグを集約し、Editor から読み出して環境構築を補助します。
     /// </summary>
     [CreateAssetMenu(fileName = "FUnityModeConfig", menuName = "FUnity/Authoring/Mode Config")]
-    public sealed class FUnityModeConfig : ScriptableObject
+    public sealed partial class FUnityModeConfig : ScriptableObject
     {
         /// <summary>Scratch 固定ステージ幅の既定値。</summary>
         private const int DefaultScratchStageWidth = 480;
@@ -57,6 +69,10 @@ namespace FUnity.Runtime.Authoring
         [Tooltip("Scratch 固定ステージ適用時の高さ（px）。")]
         private int m_ScratchStageHeight = DefaultScratchStageHeight;
 
+        [SerializeField]
+        [Tooltip("論理座標の原点を指定します。unityroom では TopLeft、Scratch では Center を推奨します。")]
+        private CoordinateOrigin m_Origin = CoordinateOrigin.TopLeft;
+
         /// <summary>制作モードの種類。UI やビルド設定の切り替え条件として参照します。</summary>
         public FUnityAuthoringMode Mode => m_Mode;
 
@@ -87,6 +103,9 @@ namespace FUnity.Runtime.Authoring
         /// <summary>Scratch 固定ステージの高さ（px）。0 以下の場合は既定値を返します。</summary>
         public int ScratchStageHeight => m_ScratchStageHeight > 0 ? m_ScratchStageHeight : DefaultScratchStageHeight;
 
+        /// <summary>論理座標の原点設定。UI Toolkit との座標変換で参照されます。</summary>
+        public CoordinateOrigin Origin => m_Origin;
+
         /// <summary>
         /// 他のモード設定から値を複製し、アクティブ設定を更新します。
         /// </summary>
@@ -108,6 +127,7 @@ namespace FUnity.Runtime.Authoring
             m_UseScratchFixedStage = source.m_UseScratchFixedStage;
             m_ScratchStageWidth = source.m_ScratchStageWidth;
             m_ScratchStageHeight = source.m_ScratchStageHeight;
+            m_Origin = source.m_Origin;
 
             if (m_EnabledExtensions == null)
             {

@@ -68,8 +68,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return m_Exit;
             }
 
-            var position = new Vector2(flow.GetValue<float>(m_X), flow.GetValue<float>(m_Y));
-            controller.SetPositionPixels(position);
+            var logical = new Vector2(flow.GetValue<float>(m_X), flow.GetValue<float>(m_Y));
+            var uiPosition = controller.ToUiPosition(logical);
+            controller.SetPositionPixels(uiPosition);
             return m_Exit;
         }
     }
@@ -130,7 +131,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             var delta = flow.GetValue<float>(m_DeltaX);
-            controller.AddPositionPixels(new Vector2(delta, 0f));
+            var uiDelta = controller.ToUiDelta(new Vector2(delta, 0f));
+            controller.AddPositionPixels(uiDelta);
             return m_Exit;
         }
     }
@@ -191,7 +193,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             var delta = flow.GetValue<float>(m_DeltaY);
-            controller.AddPositionPixels(new Vector2(0f, delta));
+            var uiDelta = controller.ToUiDelta(new Vector2(0f, delta));
+            controller.AddPositionPixels(uiDelta);
             return m_Exit;
         }
     }

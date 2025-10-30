@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Model;
 using FUnity.Runtime.View;
@@ -49,11 +50,14 @@ namespace FUnity.Runtime.Presenter
         /// <summary>現在のスケール。等倍は 1。</summary>
         private float m_CurrentScale = 1f;
 
-        /// <summary>Presenter が保持するステージ領域（左上原点座標系）。</summary>
-        private Rect m_StageBoundsPx = new Rect(0f, 0f, 0f, 0f);
+        /// <summary>使用中の座標原点。Scratch では Center、unityroom では TopLeft。</summary>
+        private CoordinateOrigin m_CoordinateOrigin = CoordinateOrigin.TopLeft;
 
-        /// <summary>俳優の左上座標をクランプするための矩形。</summary>
-        private Rect m_PositionBoundsPx = new Rect(0f, 0f, 0f, 0f);
+        /// <summary>Presenter が保持するステージ領域（UI 座標系）。TopLeft 原点時のみクランプ計算に使用する。</summary>
+        private Rect m_StageBoundsUi = new Rect(0f, 0f, 0f, 0f);
+
+        /// <summary>論理座標でのクランプ矩形。中央原点時は [-W/2, +W/2] を保持する。</summary>
+        private Rect m_PositionBoundsLogical = new Rect(0f, 0f, 0f, 0f);
 
         /// <summary>直近で取得した俳優要素の描画サイズ（px）。</summary>
         private Vector2 m_LastMeasuredSizePx = Vector2.zero;
@@ -64,8 +68,23 @@ namespace FUnity.Runtime.Presenter
         /// <summary>View の境界イベントに購読済みかどうか。</summary>
         private bool m_IsSubscribedToBounds;
 
+        /// <summary>ステージ座標変換に使用するルート要素。Scratch の中央原点変換で必要になる。</summary>
+        private VisualElement m_StageCoordinateRoot;
+
+        /// <summary>ステージジオメトリの購読状態。多重登録を避けるために利用する。</summary>
+        private bool m_IsStageGeometrySubscribed;
+
+        /// <summary>モード設定から取得したステージサイズのフォールバック値。</summary>
+        private Vector2 m_ModeStagePixelsFallback = Vector2.zero;
+
         /// <summary>ステージのピクセル境界（左上原点）。</summary>
-        public Rect StageBoundsPx => m_StageBoundsPx;
+        public Rect StageBoundsPx => m_StageBoundsUi;
+
+        /// <summary>使用中の座標原点。外部から参照する際はこのプロパティを利用します。</summary>
+        public CoordinateOrigin CoordinateOrigin => m_CoordinateOrigin;
+
+        /// <summary>座標変換に利用するステージ要素。null の場合は中央原点変換を利用できません。</summary>
+        public VisualElement StageRootElement => m_StageCoordinateRoot;
 
         /// <summary>
         /// モデルとビューを初期化し、初期位置・速度・ポートレートを反映する。
@@ -73,20 +92,26 @@ namespace FUnity.Runtime.Presenter
         /// <param name="data">静的設定。null の場合は既定値を使用。</param>
         /// <param name="state">既存の状態。null の場合は内部で新規生成する。</param>
         /// <param name="view">表示先の View。</param>
+        /// <param name="modeConfig">アクティブなモード設定。原点やステージサイズを決定します。</param>
+        /// <param name="stageRoot">ステージ座標の基準となる要素。Scratch での中央原点変換に利用します。</param>
         /// <example>
         /// <code>
-        /// presenter.Initialize(actorData, new ActorState(), actorView);
+        /// presenter.Initialize(actorData, new ActorState(), actorView, modeConfig, stageElement.ActorContainer);
         /// </code>
         /// </example>
-        public void Initialize(FUnityActorData data, ActorState state, IActorView view)
+        public void Initialize(FUnityActorData data, ActorState state, IActorView view, FUnityModeConfig modeConfig, VisualElement stageRoot)
         {
             var resolvedState = state ?? new ActorState();
             var shouldInitializeDirection = state == null;
 
             DetachViewEvents();
+            DetachStageGeometryCallbacks();
 
             m_State = resolvedState;
             m_View = view;
+            m_CoordinateOrigin = CoordinateConverter.GetActiveOrigin(modeConfig);
+            m_ModeStagePixelsFallback = ResolveModeStagePixels(modeConfig);
+            AttachStageGeometryCallback(stageRoot);
 
             if (m_State != null)
             {
@@ -104,7 +129,8 @@ namespace FUnity.Runtime.Presenter
             }
 
             var initialPosition = data != null ? data.InitialPosition : Vector2.zero;
-            m_State.SetPositionUnchecked(initialPosition);
+            var logicalInitial = ConvertUiToLogical(initialPosition);
+            m_State.SetPositionUnchecked(logicalInitial);
             m_State.Speed = Mathf.Max(0f, data != null ? GetConfiguredSpeed(data) : 300f);
             if (shouldInitializeDirection)
             {
@@ -118,8 +144,8 @@ namespace FUnity.Runtime.Presenter
 
             m_BaseSize = data != null ? data.Size : Vector2.zero;
             m_LastMeasuredSizePx = Vector2.zero;
-            m_StageBoundsPx = new Rect(0f, 0f, 0f, 0f);
-            m_PositionBoundsPx = new Rect(0f, 0f, 0f, 0f);
+            m_StageBoundsUi = new Rect(0f, 0f, 0f, 0f);
+            m_PositionBoundsLogical = new Rect(0f, 0f, 0f, 0f);
             m_HasPositionBounds = false;
 
             if (m_View != null)
@@ -149,11 +175,9 @@ namespace FUnity.Runtime.Presenter
             }
 
             SetSizePercent(m_State.SizePercent);
-
-            if (m_View != null)
-            {
-                m_View.SetPosition(m_State.Position);
-            }
+            UpdatePositionBoundsInternal();
+            ClampStateToBounds();
+            UpdateViewPosition();
         }
 
         /// <summary>
@@ -224,7 +248,7 @@ namespace FUnity.Runtime.Presenter
 
             if (deltaTime <= 0f)
             {
-                m_View?.SetPosition(m_State.Position);
+                UpdateViewPosition();
                 return;
             }
 
@@ -241,23 +265,23 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            m_View?.SetPosition(m_State.Position);
+            UpdateViewPosition();
         }
 
         /// <summary>
         /// 絶対座標を直接指定して俳優を移動させる。
         /// Visual Scripting の Custom Event "Actor/SetPosition" から利用することを想定。
         /// </summary>
-        /// <param name="position">適用する座標。</param>
+        /// <param name="position">UI 座標（px）。中央原点モードでは <see cref="ToUiPosition(Vector2)"/> で変換してから渡します。</param>
         public void SetPosition(Vector2 position)
         {
             ApplyPosition(position);
         }
 
         /// <summary>
-        /// 現在の座標を取得する。Presenter 未初期化時は原点を返す。
+        /// 現在の論理座標を取得する。Presenter 未初期化時は原点を返す。
         /// </summary>
-        /// <returns>現在の座標（px）。</returns>
+        /// <returns>論理座標（px）。中央原点の場合は右+X/上+Y。</returns>
         public Vector2 GetPosition()
         {
             if (m_State == null)
@@ -269,10 +293,50 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 論理座標を UI 座標へ変換するヘルパー。Visual Scripting アダプタ等から利用する。
+        /// </summary>
+        /// <param name="logical">論理座標。</param>
+        /// <returns>左上原点の UI 座標。</returns>
+        public Vector2 ToUiPosition(Vector2 logical)
+        {
+            return ConvertLogicalToUi(logical);
+        }
+
+        /// <summary>
+        /// UI 座標を論理座標へ変換するヘルパー。入力デバイス座標の解釈に利用する。
+        /// </summary>
+        /// <param name="ui">左上原点の UI 座標。</param>
+        /// <returns>論理座標。</returns>
+        public Vector2 ToLogicalPosition(Vector2 ui)
+        {
+            return ConvertUiToLogical(ui);
+        }
+
+        /// <summary>
+        /// UI 座標系での差分を論理座標系の差分へ変換する。
+        /// </summary>
+        /// <param name="uiDelta">UI 座標系での差分。</param>
+        /// <returns>論理座標系の差分。</returns>
+        public Vector2 ToLogicalDelta(Vector2 uiDelta)
+        {
+            return ConvertDeltaToLogical(uiDelta);
+        }
+
+        /// <summary>
+        /// 論理座標系の差分を UI 座標系の差分へ変換する。
+        /// </summary>
+        /// <param name="logicalDelta">論理座標系での差分。</param>
+        /// <returns>UI 座標系での差分。</returns>
+        public Vector2 ToUiDelta(Vector2 logicalDelta)
+        {
+            return ConvertLogicalDeltaToUi(logicalDelta);
+        }
+
+        /// <summary>
         /// 現在位置からピクセル単位の差分を加算し、即座に View へ反映する。
         /// Visual Scripting の「〇歩動かす」ブロックからの呼び出しを想定し、Presenter 経由で Model を更新する。
         /// </summary>
-        /// <param name="deltaPx">加算する移動量（px）。右+ / 下+ の座標系を想定。</param>
+        /// <param name="deltaPx">加算する移動量（px）。中央原点モードでは内部で Y 方向の符号を調整します。</param>
         public void MoveByPixels(Vector2 deltaPx)
         {
             ApplyDelta(deltaPx);
@@ -289,10 +353,10 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 指定した座標を現在のクランプ矩形に合わせて補正する。境界未設定時は入力値を返す。
+        /// 指定した UI 座標を現在のクランプ矩形に合わせて補正する。境界未設定時は入力値を返す。
         /// </summary>
-        /// <param name="positionPx">補正対象の座標（px）。</param>
-        /// <param name="clampedPx">クランプ後の座標。</param>
+        /// <param name="positionPx">補正対象の UI 座標（px）。</param>
+        /// <param name="clampedPx">クランプ後の UI 座標。</param>
         /// <returns>クランプを実行した場合は <c>true</c>。</returns>
         public bool TryClampPosition(Vector2 positionPx, out Vector2 clampedPx)
         {
@@ -302,15 +366,18 @@ namespace FUnity.Runtime.Presenter
                 return false;
             }
 
-            var minX = m_PositionBoundsPx.xMin;
-            var minY = m_PositionBoundsPx.yMin;
-            var maxX = m_PositionBoundsPx.xMax;
-            var maxY = m_PositionBoundsPx.yMax;
+            var logical = ConvertUiToLogical(positionPx);
 
-            var clampedX = Mathf.Clamp(positionPx.x, minX, maxX);
-            var clampedY = Mathf.Clamp(positionPx.y, minY, maxY);
+            var minX = m_PositionBoundsLogical.xMin;
+            var minY = m_PositionBoundsLogical.yMin;
+            var maxX = m_PositionBoundsLogical.xMax;
+            var maxY = m_PositionBoundsLogical.yMax;
 
-            clampedPx = new Vector2(clampedX, clampedY);
+            var clampedLogical = new Vector2(
+                Mathf.Clamp(logical.x, minX, maxX),
+                Mathf.Clamp(logical.y, minY, maxY));
+
+            clampedPx = ConvertLogicalToUi(clampedLogical);
             return true;
         }
 
@@ -509,7 +576,11 @@ namespace FUnity.Runtime.Presenter
             }
 
             var radians = m_State.DirectionDeg * Mathf.Deg2Rad;
-            var direction = new Vector2(Mathf.Cos(radians), -Mathf.Sin(radians));
+            var direction = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
+            if (m_CoordinateOrigin != CoordinateOrigin.Center)
+            {
+                direction.y = -direction.y;
+            }
             var delta = direction * (steps * StepToPixels);
 
             if (delta.sqrMagnitude <= Mathf.Epsilon)
@@ -523,7 +594,7 @@ namespace FUnity.Runtime.Presenter
         /// <summary>
         /// 絶対座標をピクセル単位で設定し、View に反映する。
         /// </summary>
-        /// <param name="positionPx">適用する座標（px）。右=+X、下=+Y。</param>
+        /// <param name="positionPx">UI 座標（px）。Scratch など中央原点の場合は <see cref="ToUiPosition(Vector2)"/> を利用してから渡してください。</param>
         public void SetPositionPixels(Vector2 positionPx)
         {
             ApplyPosition(positionPx);
@@ -594,12 +665,61 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// ステージ要素の GeometryChangedEvent を購読し、サイズ変化時にクランプを更新する。
+        /// </summary>
+        /// <param name="stageRoot">購読対象の要素。</param>
+        private void AttachStageGeometryCallback(VisualElement stageRoot)
+        {
+            if (stageRoot == null)
+            {
+                DetachStageGeometryCallbacks();
+                return;
+            }
+
+            if (m_StageCoordinateRoot == stageRoot && m_IsStageGeometrySubscribed)
+            {
+                return;
+            }
+
+            DetachStageGeometryCallbacks();
+
+            m_StageCoordinateRoot = stageRoot;
+            m_StageCoordinateRoot.RegisterCallback<GeometryChangedEvent>(OnStageGeometryChanged);
+            m_IsStageGeometrySubscribed = true;
+        }
+
+        /// <summary>
+        /// ステージ要素の GeometryChangedEvent 購読を解除する。
+        /// </summary>
+        private void DetachStageGeometryCallbacks()
+        {
+            if (m_StageCoordinateRoot != null && m_IsStageGeometrySubscribed)
+            {
+                m_StageCoordinateRoot.UnregisterCallback<GeometryChangedEvent>(OnStageGeometryChanged);
+            }
+
+            m_IsStageGeometrySubscribed = false;
+            m_StageCoordinateRoot = null;
+        }
+
+        /// <summary>
+        /// ステージ要素のサイズが更新された際に呼び出され、クランプと描画座標を再評価する。
+        /// </summary>
+        /// <param name="evt">UI Toolkit が通知するジオメトリイベント。</param>
+        private void OnStageGeometryChanged(GeometryChangedEvent evt)
+        {
+            UpdatePositionBoundsInternal();
+            ClampStateToBounds();
+            UpdateViewPosition();
+        }
+
+        /// <summary>
         /// View から報告されたステージ境界を受け取り、クランプ矩形を再計算する。
         /// </summary>
         /// <param name="boundsPx">左上原点で表現されたステージ境界。</param>
         private void OnStageBoundsChanged(Rect boundsPx)
         {
-            m_StageBoundsPx = NormalizeRect(boundsPx);
+            m_StageBoundsUi = NormalizeRect(boundsPx);
             UpdatePositionBoundsInternal();
             ClampStateToBounds();
         }
@@ -613,9 +733,13 @@ namespace FUnity.Runtime.Presenter
             {
                 OnStageBoundsChanged(bounds);
             }
-            else
+            else if (m_CoordinateOrigin != CoordinateOrigin.Center)
             {
                 m_HasPositionBounds = false;
+            }
+            else
+            {
+                UpdatePositionBoundsInternal();
             }
         }
 
@@ -645,7 +769,23 @@ namespace FUnity.Runtime.Presenter
         /// </summary>
         private void UpdatePositionBoundsInternal()
         {
-            if (m_StageBoundsPx.width <= 0f && m_StageBoundsPx.height <= 0f)
+            if (m_CoordinateOrigin == CoordinateOrigin.Center)
+            {
+                var stageSize = ResolveStageSize();
+                if (stageSize.x <= 0f || stageSize.y <= 0f)
+                {
+                    m_HasPositionBounds = false;
+                    return;
+                }
+
+                var halfWidth = stageSize.x * 0.5f;
+                var halfHeight = stageSize.y * 0.5f;
+                m_PositionBoundsLogical = Rect.MinMaxRect(-halfWidth, -halfHeight, halfWidth, halfHeight);
+                m_HasPositionBounds = true;
+                return;
+            }
+
+            if (m_StageBoundsUi.width <= 0f && m_StageBoundsUi.height <= 0f)
             {
                 m_HasPositionBounds = false;
                 return;
@@ -655,12 +795,12 @@ namespace FUnity.Runtime.Presenter
             var width = Mathf.Max(0f, size.x);
             var height = Mathf.Max(0f, size.y);
 
-            var minX = m_StageBoundsPx.xMin;
-            var minY = m_StageBoundsPx.yMin;
-            var maxX = Mathf.Max(minX, m_StageBoundsPx.xMax - width);
-            var maxY = Mathf.Max(minY, m_StageBoundsPx.yMax - height);
+            var minX = m_StageBoundsUi.xMin;
+            var minY = m_StageBoundsUi.yMin;
+            var maxX = Mathf.Max(minX, m_StageBoundsUi.xMax - width);
+            var maxY = Mathf.Max(minY, m_StageBoundsUi.yMax - height);
 
-            m_PositionBoundsPx = Rect.MinMaxRect(minX, minY, maxX, maxY);
+            m_PositionBoundsLogical = Rect.MinMaxRect(minX, minY, maxX, maxY);
             m_HasPositionBounds = true;
         }
 
@@ -674,8 +814,22 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            m_State.SetPositionClamped(m_State.Position, m_PositionBoundsPx);
-            m_View?.SetPosition(m_State.Position);
+            m_State.SetPositionClamped(m_State.Position, m_PositionBoundsLogical);
+            UpdateViewPosition();
+        }
+
+        /// <summary>
+        /// Model に保持された論理座標を UI 座標へ変換し、View に反映する。
+        /// </summary>
+        private void UpdateViewPosition()
+        {
+            if (m_View == null || m_State == null)
+            {
+                return;
+            }
+
+            var uiPos = ConvertLogicalToUi(m_State.Position);
+            m_View.SetPosition(uiPos);
         }
 
         /// <summary>
@@ -689,16 +843,18 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
+            var logical = ConvertUiToLogical(positionPx);
+
             if (m_HasPositionBounds)
             {
-                m_State.SetPositionClamped(positionPx, m_PositionBoundsPx);
+                m_State.SetPositionClamped(logical, m_PositionBoundsLogical);
             }
             else
             {
-                m_State.SetPositionUnchecked(positionPx);
+                m_State.SetPositionUnchecked(logical);
             }
 
-            m_View?.SetPosition(m_State.Position);
+            UpdateViewPosition();
         }
 
         /// <summary>
@@ -712,16 +868,168 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
+            var logicalDelta = ConvertDeltaToLogical(deltaPx);
+
             if (m_HasPositionBounds)
             {
-                m_State.AddPositionClamped(deltaPx, m_PositionBoundsPx);
+                m_State.AddPositionClamped(logicalDelta, m_PositionBoundsLogical);
             }
             else
             {
-                m_State.SetPositionUnchecked(m_State.Position + deltaPx);
+                m_State.SetPositionUnchecked(m_State.Position + logicalDelta);
             }
 
-            m_View?.SetPosition(m_State.Position);
+            UpdateViewPosition();
+        }
+
+        /// <summary>
+        /// 論理座標を UI 座標へ変換する。中央原点時はステージサイズを利用して中心を原点に写像する。
+        /// </summary>
+        /// <param name="logical">論理座標。</param>
+        /// <returns>左上原点の UI 座標。</returns>
+        private Vector2 ConvertLogicalToUi(Vector2 logical)
+        {
+            if (m_CoordinateOrigin != CoordinateOrigin.Center)
+            {
+                return logical;
+            }
+
+            if (m_StageCoordinateRoot != null)
+            {
+                var converted = CoordinateConverter.LogicalToUI(logical, m_StageCoordinateRoot, m_CoordinateOrigin);
+                var rs = m_StageCoordinateRoot.resolvedStyle;
+                if (rs.width > 0f && rs.height > 0f)
+                {
+                    return converted;
+                }
+            }
+
+            var fallback = ResolveStageSize();
+            if (fallback.x <= 0f || fallback.y <= 0f)
+            {
+                return logical;
+            }
+
+            var x = logical.x + (fallback.x * 0.5f);
+            var y = (fallback.y * 0.5f) - logical.y;
+            return new Vector2(x, y);
+        }
+
+        /// <summary>
+        /// UI 座標を論理座標へ変換する。中央原点時は中心を原点とする座標へ写像する。
+        /// </summary>
+        /// <param name="ui">左上原点の UI 座標。</param>
+        /// <returns>論理座標。</returns>
+        private Vector2 ConvertUiToLogical(Vector2 ui)
+        {
+            if (m_CoordinateOrigin != CoordinateOrigin.Center)
+            {
+                return ui;
+            }
+
+            if (m_StageCoordinateRoot != null)
+            {
+                var converted = CoordinateConverter.UIToLogical(ui, m_StageCoordinateRoot, m_CoordinateOrigin);
+                var rs = m_StageCoordinateRoot.resolvedStyle;
+                if (rs.width > 0f && rs.height > 0f)
+                {
+                    return converted;
+                }
+            }
+
+            var fallback = ResolveStageSize();
+            if (fallback.x <= 0f || fallback.y <= 0f)
+            {
+                return ui;
+            }
+
+            var x = ui.x - (fallback.x * 0.5f);
+            var y = (fallback.y * 0.5f) - ui.y;
+            return new Vector2(x, y);
+        }
+
+        /// <summary>
+        /// UI ベースの差分ベクトルを論理座標の差分へ変換する。中央原点時は Y 軸の正負を反転させる。
+        /// </summary>
+        /// <param name="delta">UI 座標系での差分。</param>
+        /// <returns>論理座標系での差分。</returns>
+        private Vector2 ConvertDeltaToLogical(Vector2 delta)
+        {
+            if (m_CoordinateOrigin != CoordinateOrigin.Center)
+            {
+                return delta;
+            }
+
+            return new Vector2(delta.x, -delta.y);
+        }
+
+        /// <summary>
+        /// 論理座標系の差分を UI 座標系へ変換する。
+        /// </summary>
+        /// <param name="delta">論理座標系の差分。</param>
+        /// <returns>UI 座標系での差分。</returns>
+        private Vector2 ConvertLogicalDeltaToUi(Vector2 delta)
+        {
+            if (m_CoordinateOrigin != CoordinateOrigin.Center)
+            {
+                return delta;
+            }
+
+            return new Vector2(delta.x, -delta.y);
+        }
+
+        /// <summary>
+        /// ステージ要素から現在のサイズを取得する。未確定の場合はモード設定のフォールバックを返す。
+        /// </summary>
+        /// <returns>ステージ幅・高さ（px）。取得できない場合は <see cref="Vector2.zero"/>。</returns>
+        private Vector2 ResolveStageSize()
+        {
+            if (m_StageCoordinateRoot != null)
+            {
+                var rs = m_StageCoordinateRoot.resolvedStyle;
+                if (rs.width > 0f && rs.height > 0f)
+                {
+                    return new Vector2(rs.width, rs.height);
+                }
+            }
+
+            if (m_ModeStagePixelsFallback.x > 0f && m_ModeStagePixelsFallback.y > 0f)
+            {
+                return m_ModeStagePixelsFallback;
+            }
+
+            return Vector2.zero;
+        }
+
+        /// <summary>
+        /// モード設定からステージサイズのフォールバック値を抽出する。
+        /// </summary>
+        /// <param name="config">参照するモード設定。</param>
+        /// <returns>幅・高さ（px）。取得できない場合は <see cref="Vector2.zero"/>。</returns>
+        private static Vector2 ResolveModeStagePixels(FUnityModeConfig config)
+        {
+            if (config == null)
+            {
+                return Vector2.zero;
+            }
+
+            var stagePixels = config.StagePixels;
+            if (stagePixels.x > 0 && stagePixels.y > 0)
+            {
+                return new Vector2(stagePixels.x, stagePixels.y);
+            }
+
+            if (config.UseScratchFixedStage)
+            {
+                var width = Mathf.Max(0, config.ScratchStageWidth);
+                var height = Mathf.Max(0, config.ScratchStageHeight);
+                if (width > 0 && height > 0)
+                {
+                    return new Vector2(width, height);
+                }
+            }
+
+            return Vector2.zero;
         }
 
         /// <summary>
