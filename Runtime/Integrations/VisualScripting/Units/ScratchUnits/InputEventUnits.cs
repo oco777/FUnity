@@ -40,7 +40,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         /// <param name="reference">現在のグラフ参照。</param>
         /// <returns>利用する EventHook。</returns>
-        protected override EventHook GetHook(GraphReference reference)
+        public override EventHook GetHook(GraphReference reference)
         {
             return EventHooks.Update;
         }
