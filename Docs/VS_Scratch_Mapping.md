@@ -38,6 +38,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 ### 補足
 - 対応表は Tools/generate_vs_scratch_mapping.py により自動生成されたログをもとにしています（自動生成日時: 2025-10-21 12:25:56）。
 - Scratch モードがアクティブな場合、移動系ユニットはステージ中央原点の論理座標で動作します。UI Toolkit 座標への変換はランタイムが自動で行います。
+- `FUnityActorData.Anchor` により、Visual Scripting が扱う座標は既定で画像中心（Center）を指します。TopLeft を選択すると Scratch ブロック側の座標も左上基準になります。
 
 ### 使い方メモ
 - Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置

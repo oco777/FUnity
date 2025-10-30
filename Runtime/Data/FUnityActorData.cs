@@ -6,6 +6,18 @@ using Unity.VisualScripting;
 namespace FUnity.Runtime.Core
 {
     /// <summary>
+    /// 俳優画像をステージ上に配置する際のアンカー（基準点）を定義する列挙体。
+    /// </summary>
+    public enum ActorAnchor
+    {
+        /// <summary>左上隅をアンカーとします。UI Toolkit の style.left/top に一致します。</summary>
+        TopLeft,
+
+        /// <summary>画像の中心点をアンカーとします。Scratch に近い見た目で配置されます。</summary>
+        Center
+    }
+
+    /// <summary>
     /// 俳優（キャラクター）の静的設定を保持する Model レイヤーの ScriptableObject。
     /// </summary>
     /// <remarks>
@@ -45,6 +57,11 @@ namespace FUnity.Runtime.Core
         /// </summary>
         [SerializeField] private Vector2 m_size = new Vector2(128, 128);
 
+        /// <summary>
+        /// 俳優の座標がどの点を指すかを決めるアンカー設定。既定は画像中心。
+        /// </summary>
+        [SerializeField] private ActorAnchor m_anchor = ActorAnchor.Center;
+
         [Header("Visual Scripting")]
         /// <summary>俳優個別の Visual Scripting グラフ。<see cref="ScriptMachine"/> へ割り当てられる。</summary>
         [SerializeField] private ScriptGraphAsset m_scriptGraph;
@@ -75,5 +92,8 @@ namespace FUnity.Runtime.Core
 
         /// <summary>俳優専用の Visual Scripting グラフ。</summary>
         public ScriptGraphAsset ScriptGraph => m_scriptGraph;
+
+        /// <summary>俳優座標が指すアンカー位置。</summary>
+        public ActorAnchor Anchor => m_anchor;
     }
 }
