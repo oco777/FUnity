@@ -77,6 +77,12 @@ namespace FUnity.Runtime.Presenter
         /// <summary>ステージジオメトリの購読状態。多重登録を避けるために利用する。</summary>
         private bool m_IsStageGeometrySubscribed;
 
+        /// <summary>アンカー補正の再計算が必要な際に監視する俳優要素。</summary>
+        private VisualElement m_AnchorGeometryElement;
+
+        /// <summary>アンカー補正用 GeometryChangedEvent を登録済みかを示す。</summary>
+        private bool m_IsAnchorGeometrySubscribed;
+
         /// <summary>モード設定から取得したステージサイズのフォールバック値。</summary>
         private Vector2 m_ModeStagePixelsFallback = Vector2.zero;
 
@@ -109,6 +115,7 @@ namespace FUnity.Runtime.Presenter
 
             DetachViewEvents();
             DetachStageGeometryCallbacks();
+            DetachAnchorGeometryCallback();
 
             m_State = resolvedState;
             m_View = view;
@@ -673,6 +680,7 @@ namespace FUnity.Runtime.Presenter
             }
 
             m_IsSubscribedToBounds = false;
+            DetachAnchorGeometryCallback();
         }
 
         /// <summary>
@@ -759,19 +767,8 @@ namespace FUnity.Runtime.Presenter
         /// </summary>
         private void UpdateRenderedSizeFromView()
         {
-            if (m_View != null && m_View.TryGetVisualSize(out var measured) && measured.sqrMagnitude > 0f)
-            {
-                m_LastMeasuredSizePx = measured;
-            }
-            else if (m_BaseSize.x > 0f || m_BaseSize.y > 0f)
-            {
-                m_LastMeasuredSizePx = m_BaseSize * m_CurrentScale;
-            }
-            else
-            {
-                m_LastMeasuredSizePx = Vector2.zero;
-            }
-
+            var actorElement = ResolveActorVisualElement();
+            ResolveCurrentVisualSizeForAnchor(actorElement);
             UpdatePositionBoundsInternal();
         }
 
@@ -844,9 +841,19 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
+            var actorElement = ResolveActorVisualElement();
             var anchorUi = ConvertLogicalToUi(m_State.Position);
-            var topLeftUi = ApplyAnchorOffset(anchorUi);
+            var visualSize = ResolveCurrentVisualSizeForAnchor(actorElement);
+            var topLeftUi = ApplyAnchorOffset(anchorUi, visualSize);
+            var requiresGeometryWatch = NeedsGeometryResolution(actorElement);
+
+            EnsureAnchorGeometrySubscription(actorElement, requiresGeometryWatch);
+
             m_View.SetPosition(topLeftUi);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            ValidateCenterAnchorAlignment(topLeftUi, visualSize);
+#endif
         }
 
         /// <summary>
@@ -856,12 +863,25 @@ namespace FUnity.Runtime.Presenter
         /// <returns>style.left/top に適用する左上座標。</returns>
         private Vector2 ApplyAnchorOffset(Vector2 anchorUi)
         {
+            var actorElement = ResolveActorVisualElement();
+            var size = ResolveCurrentVisualSizeForAnchor(actorElement);
+            return ApplyAnchorOffset(anchorUi, size);
+        }
+
+        /// <summary>
+        /// サイズを指定してアンカー位置の UI 座標を左上座標へ変換する。
+        /// </summary>
+        /// <param name="anchorUi">アンカー基準の UI 座標。</param>
+        /// <param name="visualSize">俳優要素の描画サイズ。</param>
+        /// <returns>style.left/top に適用する左上座標。</returns>
+        private Vector2 ApplyAnchorOffset(Vector2 anchorUi, Vector2 visualSize)
+        {
             if (m_Anchor == ActorAnchor.TopLeft)
             {
                 return anchorUi;
             }
 
-            var offset = CalculateAnchorOffset();
+            var offset = CalculateAnchorOffset(visualSize);
             if (offset.sqrMagnitude <= 0f)
             {
                 return anchorUi;
@@ -897,7 +917,8 @@ namespace FUnity.Runtime.Presenter
         /// <returns>左上原点からアンカー位置までのオフセット。</returns>
         private Vector2 CalculateAnchorOffset()
         {
-            var size = ResolveCurrentVisualSizeForAnchor();
+            var actorElement = ResolveActorVisualElement();
+            var size = ResolveCurrentVisualSizeForAnchor(actorElement);
             return CalculateAnchorOffset(size);
         }
 
@@ -930,8 +951,18 @@ namespace FUnity.Runtime.Presenter
         /// アンカー計算に利用できる最新の俳優サイズを取得する。
         /// </summary>
         /// <returns>幅・高さ（px）。未取得時は 0。</returns>
-        private Vector2 ResolveCurrentVisualSizeForAnchor()
+        private Vector2 ResolveCurrentVisualSizeForAnchor(VisualElement actorElement = null)
         {
+            if (actorElement != null)
+            {
+                var extracted = ExtractUnscaledSize(actorElement);
+                if (extracted.sqrMagnitude > 0f)
+                {
+                    m_LastMeasuredSizePx = extracted;
+                    return extracted;
+                }
+            }
+
             if (m_View != null && m_View.TryGetVisualSize(out var measured) && measured.sqrMagnitude > 0f)
             {
                 m_LastMeasuredSizePx = measured;
@@ -948,11 +979,174 @@ namespace FUnity.Runtime.Presenter
                 var scaled = m_BaseSize * m_CurrentScale;
                 if (scaled.sqrMagnitude > 0f)
                 {
+                    m_LastMeasuredSizePx = scaled;
                     return scaled;
                 }
             }
 
+            m_LastMeasuredSizePx = Vector2.zero;
             return Vector2.zero;
+        }
+
+        /// <summary>
+        /// VisualElement から UIScale 非依存の描画サイズを抽出する。
+        /// </summary>
+        /// <param name="element">測定対象の UI 要素。</param>
+        /// <returns>幅・高さ（px）。未確定時は 0。</returns>
+        private static Vector2 ExtractUnscaledSize(VisualElement element)
+        {
+            if (element == null)
+            {
+                return Vector2.zero;
+            }
+
+            var rect = element.contentRect;
+            var width = rect.width;
+            var height = rect.height;
+
+            if (float.IsNaN(width) || width <= 0f)
+            {
+                width = element.resolvedStyle.width;
+            }
+
+            if (float.IsNaN(height) || height <= 0f)
+            {
+                height = element.resolvedStyle.height;
+            }
+
+            if (float.IsNaN(width) || width < 0f)
+            {
+                width = 0f;
+            }
+
+            if (float.IsNaN(height) || height < 0f)
+            {
+                height = 0f;
+            }
+
+            return new Vector2(width, height);
+        }
+
+        /// <summary>
+        /// 俳優 View が保持する VisualElement を解決する。ActorView 専用処理に限定し、NullActorView 時は null を返す。
+        /// </summary>
+        /// <returns>俳優要素。取得できない場合は null。</returns>
+        private VisualElement ResolveActorVisualElement()
+        {
+            if (m_View is ActorView actorView)
+            {
+                return actorView.ActorRoot ?? actorView.BoundElement;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// ジオメトリ未確定かどうかを判定し、GeometryChangedEvent 監視が必要かを返す。
+        /// </summary>
+        /// <param name="element">判定対象。</param>
+        /// <returns>幅または高さが未確定の場合は <c>true</c>。</returns>
+        private static bool NeedsGeometryResolution(VisualElement element)
+        {
+            if (element == null)
+            {
+                return false;
+            }
+
+            var size = ExtractUnscaledSize(element);
+            return size.x <= 0f || size.y <= 0f;
+        }
+
+        /// <summary>
+        /// アンカー補正のために GeometryChangedEvent を必要に応じて登録・解除する。
+        /// </summary>
+        /// <param name="element">監視対象。</param>
+        /// <param name="shouldSubscribe">登録が必要かどうか。</param>
+        private void EnsureAnchorGeometrySubscription(VisualElement element, bool shouldSubscribe)
+        {
+            if (!shouldSubscribe || element == null)
+            {
+                DetachAnchorGeometryCallback();
+                return;
+            }
+
+            if (m_IsAnchorGeometrySubscribed && m_AnchorGeometryElement == element)
+            {
+                return;
+            }
+
+            DetachAnchorGeometryCallback();
+            element.RegisterCallback<GeometryChangedEvent>(OnActorGeometryChanged);
+            m_AnchorGeometryElement = element;
+            m_IsAnchorGeometrySubscribed = true;
+        }
+
+        /// <summary>
+        /// GeometryChangedEvent の購読を解除し、不要な参照を破棄する。
+        /// </summary>
+        private void DetachAnchorGeometryCallback()
+        {
+            if (m_AnchorGeometryElement != null && m_IsAnchorGeometrySubscribed)
+            {
+                m_AnchorGeometryElement.UnregisterCallback<GeometryChangedEvent>(OnActorGeometryChanged);
+            }
+
+            m_IsAnchorGeometrySubscribed = false;
+            m_AnchorGeometryElement = null;
+        }
+
+        /// <summary>
+        /// 俳優要素のジオメトリ確定時に呼び出され、サイズキャッシュと座標を再評価する。
+        /// </summary>
+        /// <param name="evt">UI Toolkit から渡されるジオメトリイベント。</param>
+        private void OnActorGeometryChanged(GeometryChangedEvent evt)
+        {
+            DetachAnchorGeometryCallback();
+            UpdateRenderedSizeFromView();
+            UpdateViewPosition();
+        }
+
+        /// <summary>
+        /// 中央原点×アンカー中心の整合性をデバッグモードで確認し、ズレが大きい場合は警告する。
+        /// </summary>
+        /// <param name="computedTopLeft">現在計算された左上座標。</param>
+        /// <param name="visualSize">俳優の描画サイズ。</param>
+        private void ValidateCenterAnchorAlignment(Vector2 computedTopLeft, Vector2 visualSize)
+        {
+            if (!Debug.isDebugBuild && !Application.isEditor)
+            {
+                return;
+            }
+
+            if (m_CoordinateOrigin != CoordinateOrigin.Center || m_Anchor != ActorAnchor.Center)
+            {
+                return;
+            }
+
+            if (m_State == null)
+            {
+                return;
+            }
+
+            if (Mathf.Abs(m_State.Position.x) > 0.001f || Mathf.Abs(m_State.Position.y) > 0.001f)
+            {
+                return;
+            }
+
+            var stageSize = ResolveStageSize();
+            if (stageSize.x <= 0f || stageSize.y <= 0f || visualSize.x <= 0f || visualSize.y <= 0f)
+            {
+                return;
+            }
+
+            var expectedLeft = (stageSize.x * 0.5f) - (visualSize.x * 0.5f);
+            var expectedTop = (stageSize.y * 0.5f) - (visualSize.y * 0.5f);
+
+            if (Mathf.Abs(computedTopLeft.x - expectedLeft) >= 0.5f || Mathf.Abs(computedTopLeft.y - expectedTop) >= 0.5f)
+            {
+                Debug.LogWarning(
+                    $"[FUnity] ActorPresenter: Scratch 中央原点でのアンカー補正が想定外です。left={computedTopLeft.x:F2} (expected {expectedLeft:F2}), top={computedTopLeft.y:F2} (expected {expectedTop:F2}).");
+            }
         }
 
         /// <summary>

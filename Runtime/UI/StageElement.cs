@@ -130,6 +130,8 @@ namespace FUnity.Runtime.UI
             m_ActorContainer.style.position = Position.Relative;
             m_ActorContainer.style.flexGrow = 1f;
             m_ActorContainer.style.flexShrink = 0f;
+            m_ActorContainer.style.justifyContent = Justify.FlexStart;
+            m_ActorContainer.style.alignItems = Align.FlexStart;
             Add(m_ActorContainer);
 
             m_OverlayContainer = new VisualElement
