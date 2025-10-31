@@ -1,3 +1,4 @@
+using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Presenter;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -23,6 +24,12 @@ namespace FUnity.Runtime.UI
 
         /// <summary>UIDocument が未検出の際に重複警告を避けるためのフラグ。</summary>
         private bool m_LoggedMissingDocument;
+
+        /// <summary>アクティブモード設定のキャッシュ。Scratch 表示スケール判定に利用する。</summary>
+        private FUnityModeConfig m_ActiveModeConfig;
+
+        /// <summary>モード設定未検出時に警告を一度だけ表示するためのフラグ。</summary>
+        private bool m_LoggedMissingModeConfig;
 
         /// <summary>
         /// スクリプト初期化時にレイアウト適用を試み、可能であれば UI 全体をパネルへフィットさせる。
@@ -73,6 +80,11 @@ namespace FUnity.Runtime.UI
 
             ApplyRootLayout(m_RootElement);
             EnsureBackgroundLayerLayout(m_RootElement);
+            var activeMode = ResolveActiveModeConfig();
+            if (activeMode != null)
+            {
+                UIScaleService.ApplyScaleIfScratchMode(m_RootElement, activeMode);
+            }
             RegisterGeometryCallback();
         }
 
@@ -223,6 +235,34 @@ namespace FUnity.Runtime.UI
                 background.style.backgroundImage = new StyleBackground(resolvedTexture);
                 StageBackgroundService.ForceClearInlineBackgroundSize(background);
             }
+        }
+
+        /// <summary>
+        /// アクティブなモード設定を Resources から読み込み、Scratch 表示スケール適用用にキャッシュする。
+        /// </summary>
+        /// <returns>取得したモード設定。見つからない場合は null。</returns>
+        private FUnityModeConfig ResolveActiveModeConfig()
+        {
+            if (m_ActiveModeConfig != null)
+            {
+                return m_ActiveModeConfig;
+            }
+
+            var loaded = Resources.Load<FUnityModeConfig>("FUnityActiveMode");
+            if (loaded == null)
+            {
+                if (!m_LoggedMissingModeConfig)
+                {
+                    Debug.LogWarning("[FUnity.Root] FUnityActiveMode.asset が見つからないため Scratch 表示スケールを適用できません。", this);
+                    m_LoggedMissingModeConfig = true;
+                }
+
+                return null;
+            }
+
+            m_LoggedMissingModeConfig = false;
+            m_ActiveModeConfig = loaded;
+            return m_ActiveModeConfig;
         }
     }
 }
