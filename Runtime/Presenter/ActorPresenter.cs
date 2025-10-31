@@ -1013,30 +1013,7 @@ namespace FUnity.Runtime.Presenter
         /// <returns>左上原点の UI 座標。</returns>
         private Vector2 ConvertLogicalToUi(Vector2 logical)
         {
-            if (m_CoordinateOrigin != CoordinateOrigin.Center)
-            {
-                return logical;
-            }
-
-            if (m_StageCoordinateRoot != null)
-            {
-                var converted = CoordinateConverter.LogicalToUI(logical, m_StageCoordinateRoot, m_CoordinateOrigin);
-                var rs = m_StageCoordinateRoot.resolvedStyle;
-                if (rs.width > 0f && rs.height > 0f)
-                {
-                    return converted;
-                }
-            }
-
-            var fallback = ResolveStageSize();
-            if (fallback.x <= 0f || fallback.y <= 0f)
-            {
-                return logical;
-            }
-
-            var x = logical.x + (fallback.x * 0.5f);
-            var y = (fallback.y * 0.5f) - logical.y;
-            return new Vector2(x, y);
+            return CoordinateConverter.LogicalToUI(logical, m_CoordinateOrigin);
         }
 
         /// <summary>
@@ -1046,30 +1023,7 @@ namespace FUnity.Runtime.Presenter
         /// <returns>論理座標。</returns>
         private Vector2 ConvertUiToLogical(Vector2 ui)
         {
-            if (m_CoordinateOrigin != CoordinateOrigin.Center)
-            {
-                return ui;
-            }
-
-            if (m_StageCoordinateRoot != null)
-            {
-                var converted = CoordinateConverter.UIToLogical(ui, m_StageCoordinateRoot, m_CoordinateOrigin);
-                var rs = m_StageCoordinateRoot.resolvedStyle;
-                if (rs.width > 0f && rs.height > 0f)
-                {
-                    return converted;
-                }
-            }
-
-            var fallback = ResolveStageSize();
-            if (fallback.x <= 0f || fallback.y <= 0f)
-            {
-                return ui;
-            }
-
-            var x = ui.x - (fallback.x * 0.5f);
-            var y = (fallback.y * 0.5f) - ui.y;
-            return new Vector2(x, y);
+            return CoordinateConverter.UIToLogical(ui, m_CoordinateOrigin);
         }
 
         /// <summary>
