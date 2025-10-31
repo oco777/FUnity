@@ -9,6 +9,18 @@ namespace FUnity.Runtime.Core
     /// </summary>
     public static class CoordinateConverter
     {
+        /// <summary>
+        /// 座標系の原点種別を示す列挙体です。UI と論理座標の変換方式を統一的に扱うために使用します。
+        /// </summary>
+        public enum OriginMode
+        {
+            /// <summary>左上を原点とする座標系です。unityroom モードなどで採用されます。</summary>
+            TopLeft,
+
+            /// <summary>中央を原点とし、右を +X / 上を +Y とする座標系です。Scratch 互換モードで使用します。</summary>
+            Center
+        }
+
         /// <summary>Scratch 論理座標の幅（px）。</summary>
         private const float ScratchLogicalWidth = 480f;
 
@@ -29,17 +41,48 @@ namespace FUnity.Runtime.Core
         /// <returns>使用する座標原点。</returns>
         public static CoordinateOrigin GetActiveOrigin(FUnityModeConfig activeConfig)
         {
+            var originMode = GetActiveOriginMode(activeConfig);
+            return ToCoordinateOrigin(originMode);
+        }
+
+        /// <summary>
+        /// 現在のモード設定から原点種別を <see cref="OriginMode"/> として決定します。
+        /// </summary>
+        /// <param name="activeConfig">アクティブなモード設定。</param>
+        /// <returns>使用する座標原点。</returns>
+        public static OriginMode GetActiveOriginMode(FUnityModeConfig activeConfig)
+        {
             if (activeConfig == null)
             {
-                return CoordinateOrigin.TopLeft;
+                return OriginMode.TopLeft;
             }
 
             if (activeConfig.Mode == FUnityAuthoringMode.Scratch)
             {
-                return CoordinateOrigin.Center;
+                return OriginMode.Center;
             }
 
-            return activeConfig.Origin;
+            return ToOriginMode(activeConfig.Origin);
+        }
+
+        /// <summary>
+        /// <see cref="CoordinateOrigin"/> から <see cref="OriginMode"/> への変換を行います。
+        /// </summary>
+        /// <param name="origin">変換対象の原点列挙値。</param>
+        /// <returns>対応する <see cref="OriginMode"/>。</returns>
+        public static OriginMode ToOriginMode(CoordinateOrigin origin)
+        {
+            return origin == CoordinateOrigin.Center ? OriginMode.Center : OriginMode.TopLeft;
+        }
+
+        /// <summary>
+        /// <see cref="OriginMode"/> から <see cref="CoordinateOrigin"/> への変換を行います。
+        /// </summary>
+        /// <param name="originMode">変換対象の原点列挙値。</param>
+        /// <returns>対応する <see cref="CoordinateOrigin"/>。</returns>
+        public static CoordinateOrigin ToCoordinateOrigin(OriginMode originMode)
+        {
+            return originMode == OriginMode.Center ? CoordinateOrigin.Center : CoordinateOrigin.TopLeft;
         }
 
         /// <summary>
@@ -62,7 +105,19 @@ namespace FUnity.Runtime.Core
         /// <returns>論理座標（px）。</returns>
         public static Vector2 UIToLogical(Vector2 uiPx, CoordinateOrigin origin)
         {
-            if (origin == CoordinateOrigin.Center)
+            var mode = ToOriginMode(origin);
+            return UIToLogical(uiPx, mode);
+        }
+
+        /// <summary>
+        /// 原点種別を直接指定して UI 座標から論理座標へ変換します。
+        /// </summary>
+        /// <param name="uiPx">UI Toolkit ベースの座標。</param>
+        /// <param name="origin">使用する原点。</param>
+        /// <returns>論理座標（px）。</returns>
+        public static Vector2 UIToLogical(Vector2 uiPx, OriginMode origin)
+        {
+            if (origin == OriginMode.Center)
             {
                 var logicalX = uiPx.x - ScratchHalfWidth;
                 var logicalY = ScratchHalfHeight - uiPx.y;
@@ -92,7 +147,19 @@ namespace FUnity.Runtime.Core
         /// <returns>UI Toolkit ベースの座標。</returns>
         public static Vector2 LogicalToUI(Vector2 logical, CoordinateOrigin origin)
         {
-            if (origin == CoordinateOrigin.Center)
+            var mode = ToOriginMode(origin);
+            return LogicalToUI(logical, mode);
+        }
+
+        /// <summary>
+        /// 原点種別を直接指定して論理座標から UI 座標へ変換します。
+        /// </summary>
+        /// <param name="logical">論理座標。</param>
+        /// <param name="origin">使用する原点。</param>
+        /// <returns>UI Toolkit ベースの座標。</returns>
+        public static Vector2 LogicalToUI(Vector2 logical, OriginMode origin)
+        {
+            if (origin == OriginMode.Center)
             {
                 var uiX = logical.x + ScratchHalfWidth;
                 var uiY = ScratchHalfHeight - logical.y;

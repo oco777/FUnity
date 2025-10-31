@@ -22,7 +22,8 @@ Scratch モードは「Scratch 3.0 と同等の制作体験」を目標とした
   - `logicalX = uiX - 240`
   - `logicalY = 180 - uiY`
 - unityroom など左上原点モードでは UI Toolkit 座標をそのまま論理座標として扱います。
-- 背景画像は `StageBackgroundService` により常に中央配置され、拡大縮小は行いません（`contain/cover` の指定のみ適用）。
+- 座標変換ロジックは `Runtime/Core/CoordinateConverter` に集約されており、`OriginMode` で中央原点／左上原点を明示的に切り替えます。
+- 背景画像は `StageBackgroundService` により常に中央配置され、拡大縮小は行いません（`contain/cover` の指定のみ適用）。`StageBackgroundService` からも `CoordinateConverter.OriginMode` を参照して中央寄せを制御します。
 - `FUnityActorData.Anchor` で **Center (既定)** / **TopLeft** を切り替えられます。Center を選ぶと座標が画像中心に一致し、TopLeft は UI Toolkit と同じ左上基準になります。
 
 ## ブロック互換ポリシー
