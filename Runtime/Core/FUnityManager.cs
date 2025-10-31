@@ -325,7 +325,8 @@ namespace FUnity.Core
 
             var modeConfig = ResolveActiveModeConfig();
             var origin = CoordinateConverter.GetActiveOrigin(modeConfig);
-            m_StageBackgroundService.SetCoordinateOrigin(origin);
+            var originMode = CoordinateConverter.ToOriginMode(origin);
+            m_StageBackgroundService.SetCoordinateOrigin(originMode);
 
             if (!m_BackgroundInitialized)
             {

@@ -64,13 +64,13 @@ namespace FUnity.Runtime.Presenter
         private const string InlineGuardClassName = "bg--inline-guarded";
 
         /// <summary>現在使用している座標原点。Scratch では中央寄せに利用する。</summary>
-        private CoordinateOrigin m_CoordinateOrigin = CoordinateOrigin.TopLeft;
+        private CoordinateConverter.OriginMode m_CoordinateOrigin = CoordinateConverter.OriginMode.TopLeft;
 
         /// <summary>
         /// 座標原点を更新し、中央原点時は背景レイアウトを中央寄せに切り替える。
         /// </summary>
         /// <param name="origin">適用する座標原点。</param>
-        public void SetCoordinateOrigin(CoordinateOrigin origin)
+        public void SetCoordinateOrigin(CoordinateConverter.OriginMode origin)
         {
             m_CoordinateOrigin = origin;
             ApplyTargetRootLayout();
@@ -485,7 +485,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            if (m_CoordinateOrigin == CoordinateOrigin.Center)
+            if (m_CoordinateOrigin == CoordinateConverter.OriginMode.Center)
             {
                 m_TargetRoot.style.justifyContent = Justify.Center;
                 m_TargetRoot.style.alignItems = Align.Center;
@@ -507,7 +507,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            if (m_CoordinateOrigin == CoordinateOrigin.Center)
+            if (m_CoordinateOrigin == CoordinateConverter.OriginMode.Center)
             {
                 m_BackgroundLayer.style.backgroundPositionX = new BackgroundPosition(BackgroundPositionKeyword.Center);
                 m_BackgroundLayer.style.backgroundPositionY = new BackgroundPosition(BackgroundPositionKeyword.Center);
