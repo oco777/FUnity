@@ -224,7 +224,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return m_ActorPresenter.ToUiPosition(logical);
             }
 
-            return CoordinateConverter.LogicalToUI(logical, ResolveStageRootForConversion(), CoordinateOrigin);
+            return CoordinateConverter.LogicalToUI(logical, CoordinateOrigin);
         }
 
         /// <summary>
@@ -239,7 +239,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return m_ActorPresenter.ToLogicalPosition(ui);
             }
 
-            return CoordinateConverter.UIToLogical(ui, ResolveStageRootForConversion(), CoordinateOrigin);
+            return CoordinateConverter.UIToLogical(ui, CoordinateOrigin);
         }
 
         /// <summary>

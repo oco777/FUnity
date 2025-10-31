@@ -15,11 +15,14 @@ Scratch モードは「Scratch 3.0 と同等の制作体験」を目標とした
 - 480 x 360 未満のウィンドウでは縮小せず、論理ステージをそのまま表示します（1.0 倍表示）。
 
 ## 座標系（重要）
-- 原点は **ステージ中央(0,0)**。右が +X、上が +Y です。
-- UI Toolkit の左上原点座標とはランタイムで自動変換されます。
-  - `UI(x, y)` → `Logical(X, Y)` = `(x - W/2, H/2 - y)`
-  - `Logical(X, Y)` → `UI(x, y)` = `(X + W/2, H/2 - Y)`
-- クランプ処理は実際のステージサイズ `W x H` を基準とし、固定値 480x360 に依存しません。
+- 原点は **ステージ中央(0,0)**。右が +X、上が +Y です。論理サイズは常に **480×360**（±240 / ±180）で計算します。
+- UI Toolkit の左上原点座標とはランタイムで自動変換されます。Scratch モードでは次の式が適用されます。
+  - `uiX = logicalX + 240`
+  - `uiY = 180 - logicalY`
+  - `logicalX = uiX - 240`
+  - `logicalY = 180 - uiY`
+- unityroom など左上原点モードでは UI Toolkit 座標をそのまま論理座標として扱います。
+- 背景画像は `StageBackgroundService` により常に中央配置され、拡大縮小は行いません（`contain/cover` の指定のみ適用）。
 - `FUnityActorData.Anchor` で **Center (既定)** / **TopLeft** を切り替えられます。Center を選ぶと座標が画像中心に一致し、TopLeft は UI Toolkit と同じ左上基準になります。
 
 ## ブロック互換ポリシー

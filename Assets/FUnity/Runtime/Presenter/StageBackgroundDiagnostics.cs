@@ -83,10 +83,10 @@ namespace FUnity.Runtime.Presenter
 
                 if (stageForCoords != null)
                 {
-                    var uiZero = CoordinateConverter.LogicalToUI(Vector2.zero, stageForCoords, origin);
+                    var uiZero = CoordinateConverter.LogicalToUI(Vector2.zero, origin);
                     Log($"[Coord] logical(0,0) -> ui({uiZero.x:F1},{uiZero.y:F1})");
 
-                    var uiHundred = CoordinateConverter.LogicalToUI(new Vector2(100f, 100f), stageForCoords, origin);
+                    var uiHundred = CoordinateConverter.LogicalToUI(new Vector2(100f, 100f), origin);
                     Log($"[Coord] logical(100,100) -> ui({uiHundred.x:F1},{uiHundred.y:F1})");
 
                     var panel = stageForCoords.panel ?? panelRoot.panel;
@@ -94,7 +94,7 @@ namespace FUnity.Runtime.Presenter
                     {
                         var mouseScreen = UInput.mousePosition;
                         var uiMouse = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(mouseScreen.x, mouseScreen.y));
-                        var logicalMouse = CoordinateConverter.UIToLogical(uiMouse, stageForCoords, origin);
+                        var logicalMouse = CoordinateConverter.UIToLogical(uiMouse, origin);
                         Log($"[Coord] mouse ui({uiMouse.x:F1},{uiMouse.y:F1}) -> logical({logicalMouse.x:F1},{logicalMouse.y:F1})");
                     }
                 }

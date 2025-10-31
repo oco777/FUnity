@@ -1,6 +1,7 @@
 // Updated: 2025-03-14
 using UnityEngine;
 using UnityEngine.UIElements;
+using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Core;
 
 namespace FUnity.Runtime.UI
@@ -173,6 +174,25 @@ namespace FUnity.Runtime.UI
             {
                 m_ActorContainer.Add(actorElement);
             }
+        }
+
+        /// <summary>
+        /// 論理座標（Scratch 中央原点）を UI Toolkit 座標へ変換し、指定要素の left/top に適用するヘルパーです。
+        /// </summary>
+        /// <param name="child">座標を適用したい子要素。</param>
+        /// <param name="logical">論理座標（px）。右が +X、上が +Y。</param>
+        /// <param name="activeMode">アクティブなモード設定。null の場合は unityroom と同じ左上原点を仮定します。</param>
+        public void SetChildPositionByLogical(VisualElement child, Vector2 logical, FUnityModeConfig activeMode)
+        {
+            if (child == null)
+            {
+                return;
+            }
+
+            var ui = CoordinateConverter.LogicalToUI(logical, activeMode);
+            child.style.position = Position.Absolute;
+            child.style.left = ui.x;
+            child.style.top = ui.y;
         }
 
         /// <summary>

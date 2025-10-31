@@ -63,6 +63,20 @@ namespace FUnity.Runtime.Presenter
         /// <summary>inline background-size を監視済みであることを示す USS クラス名。</summary>
         private const string InlineGuardClassName = "bg--inline-guarded";
 
+        /// <summary>現在使用している座標原点。Scratch では中央寄せに利用する。</summary>
+        private CoordinateOrigin m_CoordinateOrigin = CoordinateOrigin.TopLeft;
+
+        /// <summary>
+        /// 座標原点を更新し、中央原点時は背景レイアウトを中央寄せに切り替える。
+        /// </summary>
+        /// <param name="origin">適用する座標原点。</param>
+        public void SetCoordinateOrigin(CoordinateOrigin origin)
+        {
+            m_CoordinateOrigin = origin;
+            ApplyTargetRootLayout();
+            ApplyBackgroundAlignment();
+        }
+
         /// <summary>
         /// 指定した背景要素の inline background-size を確実に未設定へ戻し、ライフサイクルでも再適用されないよう監視します。
         /// </summary>
@@ -185,6 +199,8 @@ namespace FUnity.Runtime.Presenter
                 m_TargetRoot = panelRoot;
                 m_BackgroundLayer = null;
             }
+
+            ApplyTargetRootLayout();
 
             if (!EnsureBackgroundLayer())
             {
@@ -436,6 +452,8 @@ namespace FUnity.Runtime.Presenter
 
             EnsureBackgroundStyleSheet(m_BackgroundLayer);
 
+            ApplyBackgroundAlignment();
+
             if (m_BackgroundLayer.parent != m_TargetRoot)
             {
                 m_BackgroundLayer.RemoveFromHierarchy();
@@ -455,6 +473,50 @@ namespace FUnity.Runtime.Presenter
             EnsureInlineGuardRegistered(m_BackgroundLayer);
 
             return true;
+        }
+
+        /// <summary>
+        /// 背景ルートのレイアウトを原点種別に合わせて更新する。
+        /// </summary>
+        private void ApplyTargetRootLayout()
+        {
+            if (m_TargetRoot == null)
+            {
+                return;
+            }
+
+            if (m_CoordinateOrigin == CoordinateOrigin.Center)
+            {
+                m_TargetRoot.style.justifyContent = Justify.Center;
+                m_TargetRoot.style.alignItems = Align.Center;
+            }
+            else
+            {
+                m_TargetRoot.style.justifyContent = StyleKeyword.Null;
+                m_TargetRoot.style.alignItems = StyleKeyword.Null;
+            }
+        }
+
+        /// <summary>
+        /// 背景レイヤーの背景画像を原点種別に合わせて整列させる。
+        /// </summary>
+        private void ApplyBackgroundAlignment()
+        {
+            if (m_BackgroundLayer == null)
+            {
+                return;
+            }
+
+            if (m_CoordinateOrigin == CoordinateOrigin.Center)
+            {
+                m_BackgroundLayer.style.backgroundPositionX = new BackgroundPosition(BackgroundPositionKeyword.Center);
+                m_BackgroundLayer.style.backgroundPositionY = new BackgroundPosition(BackgroundPositionKeyword.Center);
+            }
+            else
+            {
+                m_BackgroundLayer.style.backgroundPositionX = StyleKeyword.Null;
+                m_BackgroundLayer.style.backgroundPositionY = StyleKeyword.Null;
+            }
         }
 
         /// <summary>

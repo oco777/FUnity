@@ -323,6 +323,10 @@ namespace FUnity.Core
                 return;
             }
 
+            var modeConfig = ResolveActiveModeConfig();
+            var origin = CoordinateConverter.GetActiveOrigin(modeConfig);
+            m_StageBackgroundService.SetCoordinateOrigin(origin);
+
             if (!m_BackgroundInitialized)
             {
                 m_StageBackgroundService.Initialize(stageRoot, DefaultStageBackgroundName);
