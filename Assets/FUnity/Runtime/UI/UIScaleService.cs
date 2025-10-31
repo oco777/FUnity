@@ -133,7 +133,7 @@ namespace FUnity.Runtime.UI
                 return;
             }
 
-            if (m_ActiveModeConfig == null || m_ActiveModeConfig.Mode != FUnityAuthoringMode.Scratch)
+            if (m_ActiveModeConfig == null || m_ActiveModeConfig.Mode != FUnity.Runtime.Core.FUnityAuthoringMode.Scratch)
             {
                 ResetToUnityroomLayout();
                 return;
