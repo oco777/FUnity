@@ -268,9 +268,25 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// UIDocument のルート直下に <see cref="StageElement"/> を確保し、以降の再構築で再利用できるようにする。
+        /// StageElement を配置する親要素を決定する。UIScaleService が生成したスケール用子要素を優先する。
         /// </summary>
-        /// <param name="root">親として使用するルート要素。</param>
+        /// <param name="root">UIDocument のルート要素。</param>
+        /// <returns>StageElement を追加すべき親要素。見つからない場合は null。</returns>
+        private static VisualElement ResolveStageParent(VisualElement root)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            var scaledRoot = root.Q<VisualElement>(UIScaleService.ScaledContentRootName);
+            return scaledRoot ?? root;
+        }
+
+        /// <summary>
+        /// UIScaleService が用意したコンテンツルート配下に <see cref="StageElement"/> を確保し、再構築時に再利用できるようにする。
+        /// </summary>
+        /// <param name="root">UIDocument のルート要素。</param>
         /// <returns>確保した <see cref="StageElement"/>。失敗時は null。</returns>
         private StageElement EnsureStageElement(VisualElement root)
         {
@@ -279,7 +295,13 @@ namespace FUnity.Core
                 return null;
             }
 
-            if (m_StageElement != null && m_StageElement.parent != root)
+            var stageParent = ResolveStageParent(root);
+            if (stageParent == null)
+            {
+                return null;
+            }
+
+            if (m_StageElement != null && m_StageElement.parent != stageParent)
             {
                 m_StageElement.RemoveFromHierarchy();
                 m_StageElement = null;
@@ -287,15 +309,29 @@ namespace FUnity.Core
 
             if (m_StageElement == null)
             {
-                m_StageElement = root.Q<StageElement>();
+                m_StageElement = stageParent.Q<StageElement>();
             }
 
             if (m_StageElement == null)
             {
-                var existingByName = root.Q<VisualElement>(StageElement.StageRootName);
+                m_StageElement = root.Q<StageElement>();
+                if (m_StageElement != null && m_StageElement.parent != stageParent)
+                {
+                    m_StageElement.RemoveFromHierarchy();
+                }
+            }
+
+            if (m_StageElement == null)
+            {
+                var existingByName = stageParent.Q<VisualElement>(StageElement.StageRootName)
+                    ?? root.Q<VisualElement>(StageElement.StageRootName);
                 if (existingByName is StageElement typedElement)
                 {
                     m_StageElement = typedElement;
+                    if (m_StageElement.parent != stageParent)
+                    {
+                        m_StageElement.RemoveFromHierarchy();
+                    }
                 }
             }
 
@@ -304,9 +340,9 @@ namespace FUnity.Core
                 m_StageElement = new StageElement();
             }
 
-            if (m_StageElement.parent != root)
+            if (m_StageElement.parent != stageParent)
             {
-                root.Add(m_StageElement);
+                stageParent.Add(m_StageElement);
             }
 
             return m_StageElement;
