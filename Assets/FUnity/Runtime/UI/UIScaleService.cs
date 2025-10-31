@@ -1,4 +1,5 @@
 using FUnity.Runtime.Authoring;
+using FUnity.Runtime.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -17,7 +18,7 @@ namespace FUnity.Runtime.UI
         private const float LogicalHeight = 360f;
 
         /// <summary>Scratch 表示用コンテンツを内包する要素名称。他クラスから検索できるよう internal に公開する。</summary>
-        internal const string ScaledContentRootName = "FUnityScaledContentRoot";
+        internal const string ScaledContentRootName = "FUnity-ScaledContentRoot";
 
         /// <summary>スケール対象となるルート要素。UIDocument の rootVisualElement を想定する。</summary>
         private VisualElement m_RootElement;
@@ -54,6 +55,10 @@ namespace FUnity.Runtime.UI
             m_ActiveModeConfig = activeMode;
 
             EnsureContentRoot();
+
+            m_RootElement.style.position = Position.Relative;
+            m_RootElement.transform.scale = Vector3.one;
+
             ApplyScale();
 
             if (!m_GeometryCallbackRegistered)
@@ -101,26 +106,19 @@ namespace FUnity.Runtime.UI
             if (existing != null)
             {
                 m_ContentRoot = existing;
+                EnsureContentRootStyle();
                 return;
             }
 
             m_ContentRoot = new VisualElement
             {
                 name = ScaledContentRootName,
-                pickingMode = PickingMode.Ignore,
                 focusable = false
             };
 
-            m_ContentRoot.style.position = Position.Relative;
-            m_ContentRoot.style.left = StyleKeyword.Auto;
-            m_ContentRoot.style.top = StyleKeyword.Auto;
-            m_ContentRoot.style.width = new Length(100f, LengthUnit.Percent);
-            m_ContentRoot.style.height = new Length(100f, LengthUnit.Percent);
-            m_ContentRoot.style.flexGrow = 1f;
-            m_ContentRoot.style.flexShrink = 0f;
-            m_ContentRoot.transform.scale = Vector3.one;
-
             m_RootElement.Add(m_ContentRoot);
+
+            EnsureContentRootStyle();
         }
 
         /// <summary>
@@ -133,14 +131,14 @@ namespace FUnity.Runtime.UI
                 return;
             }
 
-            if (m_ActiveModeConfig == null || m_ActiveModeConfig.Mode != FUnity.Runtime.Core.FUnityAuthoringMode.Scratch)
+            if (m_ActiveModeConfig == null || m_ActiveModeConfig.Mode != FUnityAuthoringMode.Scratch)
             {
                 ResetToUnityroomLayout();
                 return;
             }
 
-            var resolvedWidth = m_RootElement.worldBound.width;
-            var resolvedHeight = m_RootElement.worldBound.height;
+            var resolvedWidth = m_RootElement.resolvedStyle.width;
+            var resolvedHeight = m_RootElement.resolvedStyle.height;
             if (resolvedWidth <= 0f || resolvedHeight <= 0f)
             {
                 return;
@@ -160,6 +158,8 @@ namespace FUnity.Runtime.UI
             m_ContentRoot.style.top = offsetY;
             m_ContentRoot.style.width = LogicalWidth;
             m_ContentRoot.style.height = LogicalHeight;
+            m_ContentRoot.style.flexGrow = 0f;
+            m_ContentRoot.style.flexShrink = 0f;
             m_ContentRoot.transform.scale = new Vector3(scale, scale, 1f);
 
             m_RootElement.transform.scale = Vector3.one;
@@ -170,17 +170,36 @@ namespace FUnity.Runtime.UI
         /// </summary>
         private void ResetToUnityroomLayout()
         {
+            EnsureContentRootStyle();
             m_ContentRoot.style.position = Position.Relative;
             m_ContentRoot.style.left = StyleKeyword.Auto;
             m_ContentRoot.style.top = StyleKeyword.Auto;
             m_ContentRoot.style.width = new Length(100f, LengthUnit.Percent);
             m_ContentRoot.style.height = new Length(100f, LengthUnit.Percent);
+            m_ContentRoot.style.flexGrow = 1f;
+            m_ContentRoot.style.flexShrink = 0f;
             m_ContentRoot.transform.scale = Vector3.one;
 
             if (m_RootElement != null)
             {
                 m_RootElement.transform.scale = Vector3.one;
             }
+        }
+
+        /// <summary>
+        /// Scratch モード向けコンテンツルートの基本スタイルを保証し、拡大時の原点を左上へ固定する。
+        /// </summary>
+        private void EnsureContentRootStyle()
+        {
+            if (m_ContentRoot == null)
+            {
+                return;
+            }
+
+            m_ContentRoot.pickingMode = PickingMode.Position;
+            m_ContentRoot.focusable = false;
+            m_ContentRoot.style.transformOrigin = new StyleTransformOrigin(
+                new TransformOrigin(new Length(0f, LengthUnit.Percent), new Length(0f, LengthUnit.Percent), 0f));
         }
 
         /// <summary>
