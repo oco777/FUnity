@@ -11,9 +11,10 @@ Scratch モードは「Scratch 3.0 と同等の制作体験」を目標とした
 
 ### 表示スケール（Scratch 専用）
 - 論理ステージは常に **480 x 360** として扱い、ゲーム内の座標・当たり判定は固定サイズを基準に維持します。
-- 実ウィンドウが 480 x 360 より大きい場合は `scale = min(width / 480, height / 360)`（ただし `scale >= 1`）で **`FUnityScaledContentRoot`** の `transform.scale` を更新し、論理 480x360 の矩形を中央に配置します。
+- 実ウィンドウが 480 x 360 より大きい場合は `scale = min(width / 480, height / 360)`（ただし `scale >= 1`）で **`FUnity-ScaledContentRoot`** の `transform.scale` を更新し、論理 480x360 の矩形を中央に配置します。
+- `FUnity-ScaledContentRoot` の `transform-origin` は **左上 (0%, 0%) 固定** とし、`left`/`top` を `(パネルサイズ - 表示サイズ) / 2` で計算することで中央配置を実現します。
 - ルート要素（`UIDocument.rootVisualElement`）は常に `transform.scale = 1` を維持し、`worldBound` はパネル解像度と一致します。
-- StageElement と俳優 UI は `FUnityScaledContentRoot` 配下に追加されるため、Scratch 用の座標変換は既存ロジックのまま利用できます。
+- StageElement と俳優 UI は `FUnity-ScaledContentRoot` 配下に追加されるため、Scratch 用の座標変換は既存ロジックのまま利用できます。
 - 480 x 360 未満のウィンドウでは縮小せず、論理ステージをそのまま表示します（1.0 倍表示）。
 
 ## 座標系（重要）
