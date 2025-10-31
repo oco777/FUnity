@@ -31,6 +31,9 @@ namespace FUnity.Runtime.UI
         /// <summary>モード設定未検出時に警告を一度だけ表示するためのフラグ。</summary>
         private bool m_LoggedMissingModeConfig;
 
+        /// <summary>Scratch 表示用スケールを管理し、ルート worldBound をパネルサイズへ維持するサービス。</summary>
+        private readonly UIScaleService m_UiScaleService = new UIScaleService();
+
         /// <summary>
         /// スクリプト初期化時にレイアウト適用を試み、可能であれば UI 全体をパネルへフィットさせる。
         /// </summary>
@@ -48,10 +51,11 @@ namespace FUnity.Runtime.UI
         }
 
         /// <summary>
-        /// 無効化時に GeometryChangedEvent の登録を解除し、不要なコールバック実行を防ぐ。
+        /// 無効化時に Scratch 用スケールと GeometryChangedEvent の登録を解除し、不要なコールバック実行を防ぐ。
         /// </summary>
         private void OnDisable()
         {
+            m_UiScaleService.Dispose();
             UnregisterGeometryCallback();
         }
 
@@ -75,16 +79,14 @@ namespace FUnity.Runtime.UI
         {
             if (!TryCacheDocument())
             {
+                m_UiScaleService.Dispose();
                 return;
             }
 
             ApplyRootLayout(m_RootElement);
             EnsureBackgroundLayerLayout(m_RootElement);
             var activeMode = ResolveActiveModeConfig();
-            if (activeMode != null)
-            {
-                UIScaleService.ApplyScaleIfScratchMode(m_RootElement, activeMode);
-            }
+            m_UiScaleService.Initialize(m_RootElement, activeMode);
             RegisterGeometryCallback();
         }
 
