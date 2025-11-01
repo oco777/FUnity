@@ -62,7 +62,7 @@ namespace FUnity.Runtime.Authoring
         private bool m_UseScratchFixedStage = true;
 
         [SerializeField]
-        [Tooltip("Scratch 固定ステージ適用時の幅（px）。")] 
+        [Tooltip("Scratch 固定ステージ適用時の幅（px）。")]
         private int m_ScratchStageWidth = DefaultScratchStageWidth;
 
         [SerializeField]
@@ -72,6 +72,10 @@ namespace FUnity.Runtime.Authoring
         [SerializeField]
         [Tooltip("論理座標の原点を指定します。unityroom では TopLeft、Scratch では Center を推奨します。")]
         private CoordinateOrigin m_Origin = CoordinateOrigin.TopLeft;
+
+        [SerializeField]
+        [Tooltip("浮遊アニメーション用の論理オフセット適用を許可するかどうか。Scratch モードでは揺れ防止のため無効化を推奨します。")]
+        private bool m_EnableFloatOffset = true;
 
         /// <summary>制作モードの種類。UI やビルド設定の切り替え条件として参照します。</summary>
         public FUnityAuthoringMode Mode => m_Mode;
@@ -106,6 +110,9 @@ namespace FUnity.Runtime.Authoring
         /// <summary>論理座標の原点設定。UI Toolkit との座標変換で参照されます。</summary>
         public CoordinateOrigin Origin => m_Origin;
 
+        /// <summary>浮遊アニメーション時に論理オフセットを適用できるかどうか。</summary>
+        public bool EnableFloatOffset => m_EnableFloatOffset;
+
         /// <summary>
         /// 他のモード設定から値を複製し、アクティブ設定を更新します。
         /// </summary>
@@ -128,6 +135,7 @@ namespace FUnity.Runtime.Authoring
             m_ScratchStageWidth = source.m_ScratchStageWidth;
             m_ScratchStageHeight = source.m_ScratchStageHeight;
             m_Origin = source.m_Origin;
+            m_EnableFloatOffset = source.m_EnableFloatOffset;
 
             if (m_EnabledExtensions == null)
             {

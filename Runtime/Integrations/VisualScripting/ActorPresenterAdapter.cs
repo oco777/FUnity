@@ -52,11 +52,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// <summary>周期計算用の内部フェーズ。</summary>
         private float m_Phase;
 
-        /// <summary>現在の浮遊オフセット（px）。Presenter 経由で View に伝える。</summary>
-        private float m_FloatOffset;
+        /// <summary>現在の浮遊オフセット（UI 基準, px）。Presenter へ論理座標として伝える。</summary>
+        private Vector2 m_FloatOffset = Vector2.zero;
 
-        /// <summary>NudgeY で調整した静的な Y オフセット（px）。</summary>
-        private float m_StaticYOffset;
+        /// <summary>NudgeY などで調整した静的オフセット（UI 基準, px）。</summary>
+        private Vector2 m_StaticOffset = Vector2.zero;
 
         /// <summary>UI Toolkit の schedule.Execute を保持し、再利用する。</summary>
         private IVisualElementScheduledItem m_Ticker;
@@ -139,8 +139,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting
 
             m_BoundSource = ve;
             m_SourceGeometryNotified = false;
-            m_StaticYOffset = 0f;
-            m_FloatOffset = 0f;
+            m_StaticOffset = Vector2.zero;
+            m_FloatOffset = Vector2.zero;
             SubscribeSourceGeometry();
             ApplyPresenterTransforms();
 
@@ -391,7 +391,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
 
             if (!m_FloatEnabled)
             {
-                m_FloatOffset = 0f;
+                m_FloatOffset = Vector2.zero;
                 ApplyPresenterOffsets();
                 m_Ticker?.Pause();
                 return;
@@ -455,7 +455,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// </example>
         public void NudgeY(float deltaPx)
         {
-            m_StaticYOffset += deltaPx;
+            m_StaticOffset.y += deltaPx;
             ApplyPresenterOffsets();
         }
 
@@ -484,7 +484,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
             if (m_BoundSource == null) return;
 
             m_Phase = 0f;
-            m_FloatOffset = 0f;
+            m_FloatOffset = Vector2.zero;
             ApplyPresenterOffsets();
             m_Ticker = m_BoundSource.schedule.Execute(() =>
             {
@@ -494,7 +494,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 if (m_Phase > 1f) m_Phase -= 1f;
 
                 float offset = Mathf.Sin(m_Phase * Mathf.PI * 2f) * m_Amplitude;
-                m_FloatOffset = offset;
+                m_FloatOffset = new Vector2(0f, offset);
                 ApplyPresenterOffsets();
             }).Every(16); // ~60 FPS
         }
@@ -517,12 +517,29 @@ namespace FUnity.Runtime.Integrations.VisualScripting
             m_Applying = true;
             try
             {
-                m_ActorPresenter.SetVisualYOffset(m_StaticYOffset + m_FloatOffset);
+                var uiOffset = m_StaticOffset + m_FloatOffset;
+                var logicalOffset = ConvertUiOffsetToLogical(uiOffset);
+                m_ActorPresenter.SetFloatOffset(logicalOffset);
             }
             finally
             {
                 m_Applying = false;
             }
+        }
+
+        /// <summary>
+        /// UI 基準の中心オフセットを現在の座標原点に合わせた論理座標へ変換する。
+        /// </summary>
+        /// <param name="uiOffset">UI Toolkit 基準でのオフセット（px）。</param>
+        /// <returns>論理座標系でのオフセット。</returns>
+        private Vector2 ConvertUiOffsetToLogical(Vector2 uiOffset)
+        {
+            if (CoordinateOrigin == CoordinateOrigin.Center)
+            {
+                return new Vector2(uiOffset.x, -uiOffset.y);
+            }
+
+            return uiOffset;
         }
 
         /// <summary>
