@@ -89,8 +89,11 @@ namespace FUnity.Runtime.Presenter
         /// <summary>モード設定から取得したステージサイズのフォールバック値。</summary>
         private Vector2 m_ModeStagePixelsFallback = Vector2.zero;
 
-        /// <summary>View に伝える追加の縦方向オフセット（px）。浮遊アニメーションなどの視覚効果に利用する。</summary>
-        private float m_VisualYOffset;
+        /// <summary>論理座標で扱う浮遊オフセット（px）。中心座標に加算して View に伝える。</summary>
+        private Vector2 m_FloatOffset = Vector2.zero;
+
+        /// <summary>モード設定で浮遊オフセットの適用を許可しているか。</summary>
+        private bool m_EnableFloatOffset = true;
 
         /// <summary>ステージのピクセル境界（左上原点）。</summary>
         public Rect StageBoundsPx => m_StageBoundsUi;
@@ -128,6 +131,7 @@ namespace FUnity.Runtime.Presenter
             m_CoordinateOrigin = CoordinateConverter.GetActiveOrigin(modeConfig);
             m_IsScratchMode = modeConfig != null && modeConfig.Mode == FUnityAuthoringMode.Scratch;
             m_ModeStagePixelsFallback = ResolveModeStagePixels(modeConfig);
+            m_EnableFloatOffset = ResolveFloatOffsetEnabled(modeConfig);
             AttachStageGeometryCallback(stageRoot);
 
             if (m_State != null)
@@ -148,7 +152,7 @@ namespace FUnity.Runtime.Presenter
             m_Anchor = data != null ? data.Anchor : ActorAnchor.Center;
             m_BaseSize = data != null ? data.Size : Vector2.zero;
             m_LastMeasuredSizePx = Vector2.zero;
-            m_VisualYOffset = 0f;
+            m_FloatOffset = Vector2.zero;
 
             var initialCenterUi = data != null ? data.InitialPosition : Vector2.zero;
             var anchorInitialUi = ConvertCenterToAnchor(initialCenterUi);
@@ -636,12 +640,12 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 視覚効果として中心座標へ加算する縦方向のオフセットを設定する。Model の座標値は変更しない。
+        /// 浮遊演出に利用する論理座標オフセットを設定し、View へ即時反映する。モード設定で無効化されている場合は 0 扱いとする。
         /// </summary>
-        /// <param name="offsetPx">加算するピクセル量。正で下方向、負で上方向。</param>
-        public void SetVisualYOffset(float offsetPx)
+        /// <param name="offsetLogical">論理座標系での中心オフセット（px）。Scratch 中央原点では上方向が正。</param>
+        public void SetFloatOffset(Vector2 offsetLogical)
         {
-            m_VisualYOffset = offsetPx;
+            m_FloatOffset = m_EnableFloatOffset ? offsetLogical : Vector2.zero;
 
             if (m_View == null)
             {
@@ -649,6 +653,19 @@ namespace FUnity.Runtime.Presenter
             }
 
             UpdateViewPosition();
+        }
+
+        /// <summary>
+        /// 旧来の縦方向オフセット API を互換目的で残したラッパー。UI 基準の値を論理座標へ変換して <see cref="SetFloatOffset"/> に委譲する。
+        /// </summary>
+        /// <param name="offsetPx">UI Toolkit 基準での縦方向オフセット（px）。</param>
+        [System.Obsolete("SetVisualYOffset は SetFloatOffset(Vector2) に置き換えられました。", false)]
+        public void SetVisualYOffset(float offsetPx)
+        {
+            var logical = m_CoordinateOrigin == CoordinateOrigin.Center
+                ? new Vector2(0f, -offsetPx)
+                : new Vector2(0f, offsetPx);
+            SetFloatOffset(logical);
         }
 
         /// <summary>
@@ -895,13 +912,18 @@ namespace FUnity.Runtime.Presenter
             }
 
             var actorElement = ResolveActorVisualElement();
-            var anchorUi = ConvertLogicalToUi(m_State.Position);
             var visualSize = ResolveCurrentVisualSizeForAnchor(actorElement);
-            var centerUi = ConvertAnchorToCenter(anchorUi, visualSize);
-            if (Mathf.Abs(m_VisualYOffset) > Mathf.Epsilon)
+            var offsetLogical = m_EnableFloatOffset ? m_FloatOffset : Vector2.zero;
+            var centerLogical = m_State.Position + offsetLogical;
+
+            if (m_IsScratchMode && m_CoordinateOrigin == CoordinateOrigin.Center)
             {
-                centerUi.y += m_VisualYOffset;
+                var scaledSize = m_View != null ? m_View.GetScaledSizePx() : Vector2.zero;
+                centerLogical = ScratchBounds.ClampCenter(centerLogical, scaledSize);
             }
+
+            var anchorUi = ConvertLogicalToUi(centerLogical);
+            var centerUi = ConvertAnchorToCenter(anchorUi, visualSize);
             var requiresGeometryWatch = NeedsGeometryResolution(actorElement);
 
             EnsureAnchorGeometrySubscription(actorElement, requiresGeometryWatch);
@@ -1432,6 +1454,21 @@ namespace FUnity.Runtime.Presenter
             }
 
             return Vector2.zero;
+        }
+
+        /// <summary>
+        /// モード設定に応じて浮遊オフセット機能を有効化するかどうかを判断する。設定が無い場合は中央原点モードのみ無効化する。
+        /// </summary>
+        /// <param name="config">参照するモード設定。</param>
+        /// <returns>浮遊オフセットを適用可能な場合は true。</returns>
+        private bool ResolveFloatOffsetEnabled(FUnityModeConfig config)
+        {
+            if (config == null)
+            {
+                return m_CoordinateOrigin != CoordinateOrigin.Center;
+            }
+
+            return config.EnableFloatOffset;
         }
 
         /// <summary>

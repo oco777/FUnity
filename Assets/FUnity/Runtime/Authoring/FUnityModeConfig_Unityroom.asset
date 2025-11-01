@@ -28,3 +28,4 @@ MonoBehaviour:
   m_ScratchStageWidth: 480
   m_ScratchStageHeight: 360
   m_Origin: 0
+  m_EnableFloatOffset: 1
