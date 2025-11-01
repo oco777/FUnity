@@ -182,9 +182,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
-        /// 俳優の絶対座標をピクセル単位で取得する。
+        /// 俳優の中心座標をピクセル単位で取得する。
         /// </summary>
-        /// <returns>現在の座標（px）。Presenter が未接続の場合は <see cref="Vector2.zero"/> を返す。</returns>
+        /// <returns>現在の中心座標（px）。Presenter が未接続の場合は <see cref="Vector2.zero"/> を返す。</returns>
         public Vector2 GetPositionPixels()
         {
             if (m_ActorPresenter == null)
@@ -198,9 +198,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
-        /// 俳優の絶対座標をピクセル単位で設定する。
+        /// 俳優の絶対座標（中心）をピクセル単位で設定する。
         /// </summary>
-        /// <param name="positionPx">適用する座標（px）。右=+X、下=+Y。</param>
+        /// <param name="positionPx">適用する中心座標（px）。右=+X、下=+Y。</param>
         public void SetPositionPixels(Vector2 positionPx)
         {
             if (m_ActorPresenter == null)
@@ -216,7 +216,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// 論理座標を UI 座標へ変換する。
         /// </summary>
         /// <param name="logical">論理座標。</param>
-        /// <returns>左上原点の UI 座標。</returns>
+        /// <returns>俳優画像の中心座標（UI）。</returns>
         public Vector2 ToUiPosition(Vector2 logical)
         {
             if (m_ActorPresenter != null)
@@ -228,9 +228,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
-        /// UI 座標を論理座標へ変換する。
+        /// UI 座標（中心）を論理座標へ変換する。
         /// </summary>
-        /// <param name="ui">左上原点の UI 座標。</param>
+        /// <param name="ui">俳優画像の中心座標。</param>
         /// <returns>論理座標。</returns>
         public Vector2 ToLogicalPosition(Vector2 ui)
         {

@@ -142,9 +142,9 @@ namespace FUnity.Runtime.Presenter
             m_BaseSize = data != null ? data.Size : Vector2.zero;
             m_LastMeasuredSizePx = Vector2.zero;
 
-            var initialPositionUi = data != null ? data.InitialPosition : Vector2.zero;
-            var anchorAdjustedInitialUi = RemoveAnchorOffset(initialPositionUi);
-            var logicalInitial = ConvertUiToLogical(anchorAdjustedInitialUi);
+            var initialCenterUi = data != null ? data.InitialPosition : Vector2.zero;
+            var anchorInitialUi = ConvertCenterToAnchor(initialCenterUi);
+            var logicalInitial = ConvertUiToLogical(anchorInitialUi);
             m_State.SetPositionUnchecked(logicalInitial);
             m_State.Speed = Mathf.Max(0f, data != null ? GetConfiguredSpeed(data) : 300f);
             if (shouldInitializeDirection)
@@ -285,7 +285,7 @@ namespace FUnity.Runtime.Presenter
         /// 絶対座標を直接指定して俳優を移動させる。
         /// Visual Scripting の Custom Event "Actor/SetPosition" から利用することを想定。
         /// </summary>
-        /// <param name="position">UI 座標（px）。中央原点モードでは <see cref="ToUiPosition(Vector2)"/> で変換してから渡します。</param>
+        /// <param name="position">UI 座標（px）。俳優画像の中心座標。中央原点モードでは <see cref="ToUiPosition(Vector2)"/> で変換してから渡します。</param>
         public void SetPosition(Vector2 position)
         {
             ApplyPosition(position);
@@ -306,25 +306,25 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 論理座標を UI 座標へ変換し、アンカー補正済みの left/top を返すヘルパー。
+        /// 論理座標を UI 座標へ変換し、中心座標を返すヘルパー。
         /// Visual Scripting アダプタ等から利用する。
         /// </summary>
         /// <param name="logical">論理座標。</param>
-        /// <returns>アンカー適用後の左上原点 UI 座標。</returns>
+        /// <returns>アンカー適用後の中心座標。</returns>
         public Vector2 ToUiPosition(Vector2 logical)
         {
             var anchorUi = ConvertLogicalToUi(logical);
-            return ApplyAnchorOffset(anchorUi);
+            return ConvertAnchorToCenter(anchorUi);
         }
 
         /// <summary>
         /// UI 座標（left/top）をアンカー逆補正して論理座標へ変換するヘルパー。入力デバイス座標の解釈に利用する。
         /// </summary>
-        /// <param name="ui">左上原点の UI 座標。</param>
+        /// <param name="ui">中心座標の UI 値。</param>
         /// <returns>アンカー逆補正後の論理座標。</returns>
         public Vector2 ToLogicalPosition(Vector2 ui)
         {
-            var anchorUi = RemoveAnchorOffset(ui);
+            var anchorUi = ConvertCenterToAnchor(ui);
             return ConvertUiToLogical(anchorUi);
         }
 
@@ -371,7 +371,7 @@ namespace FUnity.Runtime.Presenter
         /// <summary>
         /// 指定した UI 座標を現在のクランプ矩形に合わせて補正する。境界未設定時は入力値を返す。
         /// </summary>
-        /// <param name="positionPx">補正対象の UI 座標（px）。</param>
+        /// <param name="positionPx">補正対象の中心座標（px）。</param>
         /// <param name="clampedPx">クランプ後の UI 座標。</param>
         /// <returns>クランプを実行した場合は <c>true</c>。</returns>
         public bool TryClampPosition(Vector2 positionPx, out Vector2 clampedPx)
@@ -382,7 +382,7 @@ namespace FUnity.Runtime.Presenter
                 return false;
             }
 
-            var anchorUi = RemoveAnchorOffset(positionPx);
+            var anchorUi = ConvertCenterToAnchor(positionPx);
             var logical = ConvertUiToLogical(anchorUi);
 
             var minX = m_PositionBoundsLogical.xMin;
@@ -395,7 +395,7 @@ namespace FUnity.Runtime.Presenter
                 Mathf.Clamp(logical.y, minY, maxY));
 
             var clampedAnchor = ConvertLogicalToUi(clampedLogical);
-            clampedPx = ApplyAnchorOffset(clampedAnchor);
+            clampedPx = ConvertAnchorToCenter(clampedAnchor);
             return true;
         }
 
@@ -612,7 +612,7 @@ namespace FUnity.Runtime.Presenter
         /// <summary>
         /// 絶対座標をピクセル単位で設定し、View に反映する。
         /// </summary>
-        /// <param name="positionPx">UI 座標（px）。アンカー補正済みの left/top。Scratch など中央原点の場合は <see cref="ToUiPosition(Vector2)"/> で変換してから渡してください。</param>
+        /// <param name="positionPx">UI 座標（px）。俳優画像の中心座標。Scratch など中央原点の場合は <see cref="ToUiPosition(Vector2)"/> で変換してから渡してください。</param>
         public void SetPositionPixels(Vector2 positionPx)
         {
             ApplyPosition(positionPx);
@@ -844,71 +844,71 @@ namespace FUnity.Runtime.Presenter
             var actorElement = ResolveActorVisualElement();
             var anchorUi = ConvertLogicalToUi(m_State.Position);
             var visualSize = ResolveCurrentVisualSizeForAnchor(actorElement);
-            var topLeftUi = ApplyAnchorOffset(anchorUi, visualSize);
+            var centerUi = ConvertAnchorToCenter(anchorUi, visualSize);
             var requiresGeometryWatch = NeedsGeometryResolution(actorElement);
 
             EnsureAnchorGeometrySubscription(actorElement, requiresGeometryWatch);
 
-            m_View.SetPosition(topLeftUi);
+            m_View.SetCenterPosition(centerUi);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ValidateCenterAnchorAlignment(topLeftUi, visualSize);
+            ValidateCenterAlignment(centerUi);
 #endif
         }
 
         /// <summary>
-        /// アンカー位置の UI 座標を View が要求する左上座標へ変換する。
+        /// アンカー基準の UI 座標を中心座標へ変換する。
         /// </summary>
         /// <param name="anchorUi">アンカー基準の UI 座標。</param>
-        /// <returns>style.left/top に適用する左上座標。</returns>
-        private Vector2 ApplyAnchorOffset(Vector2 anchorUi)
+        /// <returns>俳優画像の中心座標。</returns>
+        private Vector2 ConvertAnchorToCenter(Vector2 anchorUi)
         {
             var actorElement = ResolveActorVisualElement();
             var size = ResolveCurrentVisualSizeForAnchor(actorElement);
-            return ApplyAnchorOffset(anchorUi, size);
+            return ConvertAnchorToCenter(anchorUi, size);
         }
 
         /// <summary>
-        /// サイズを指定してアンカー位置の UI 座標を左上座標へ変換する。
+        /// 指定サイズを用いてアンカー基準の UI 座標を中心座標へ変換する。
         /// </summary>
         /// <param name="anchorUi">アンカー基準の UI 座標。</param>
         /// <param name="visualSize">俳優要素の描画サイズ。</param>
-        /// <returns>style.left/top に適用する左上座標。</returns>
-        private Vector2 ApplyAnchorOffset(Vector2 anchorUi, Vector2 visualSize)
+        /// <returns>俳優画像の中心座標。</returns>
+        private Vector2 ConvertAnchorToCenter(Vector2 anchorUi, Vector2 visualSize)
         {
-            if (m_Anchor == ActorAnchor.TopLeft)
+            if (m_Anchor != ActorAnchor.TopLeft)
             {
                 return anchorUi;
             }
 
-            var offset = CalculateAnchorOffset(visualSize);
+            var offset = CalculateAnchorToCenterOffset(visualSize);
             if (offset.sqrMagnitude <= 0f)
             {
                 return anchorUi;
             }
 
-            return anchorUi - offset;
+            return anchorUi + offset;
         }
 
         /// <summary>
-        /// View から取得した左上座標をアンカー基準の座標へ戻す。
+        /// 中心座標をアンカー基準の UI 座標へ変換する。
         /// </summary>
-        /// <param name="topLeftUi">style.left/top で表現された座標。</param>
+        /// <param name="centerUi">俳優画像の中心座標。</param>
         /// <returns>アンカー基準の UI 座標。</returns>
-        private Vector2 RemoveAnchorOffset(Vector2 topLeftUi)
+        private Vector2 ConvertCenterToAnchor(Vector2 centerUi)
         {
-            if (m_Anchor == ActorAnchor.TopLeft)
+            if (m_Anchor != ActorAnchor.TopLeft)
             {
-                return topLeftUi;
+                return centerUi;
             }
 
-            var offset = CalculateAnchorOffset();
+            var offset = CalculateAnchorToCenterOffset();
             if (offset.sqrMagnitude <= 0f)
             {
-                return topLeftUi;
+                return centerUi;
             }
 
-            return topLeftUi + offset;
+            return centerUi - offset;
         }
 
         /// <summary>
@@ -930,6 +930,42 @@ namespace FUnity.Runtime.Presenter
         private Vector2 CalculateAnchorOffset(Vector2 size)
         {
             if (m_Anchor != ActorAnchor.Center)
+            {
+                return Vector2.zero;
+            }
+
+            var width = Mathf.Max(0f, size.x);
+            var height = Mathf.Max(0f, size.y);
+
+            if (width <= 0f && height <= 0f)
+            {
+                return Vector2.zero;
+            }
+
+            var offsetX = width > 0f ? width * 0.5f : 0f;
+            var offsetY = height > 0f ? height * 0.5f : 0f;
+            return new Vector2(offsetX, offsetY);
+        }
+
+        /// <summary>
+        /// アンカーが左上の場合に中心までのオフセットを計算する。
+        /// </summary>
+        /// <returns>アンカー（左上）から中心までのベクトル。</returns>
+        private Vector2 CalculateAnchorToCenterOffset()
+        {
+            var actorElement = ResolveActorVisualElement();
+            var size = ResolveCurrentVisualSizeForAnchor(actorElement);
+            return CalculateAnchorToCenterOffset(size);
+        }
+
+        /// <summary>
+        /// 指定したサイズからアンカー→中心のオフセットを計算する。
+        /// </summary>
+        /// <param name="size">俳優要素の幅・高さ。</param>
+        /// <returns>アンカー（左上）から中心までのベクトル。</returns>
+        private Vector2 CalculateAnchorToCenterOffset(Vector2 size)
+        {
+            if (m_Anchor != ActorAnchor.TopLeft)
             {
                 return Vector2.zero;
             }
@@ -1109,9 +1145,8 @@ namespace FUnity.Runtime.Presenter
         /// <summary>
         /// 中央原点×アンカー中心の整合性をデバッグモードで確認し、ズレが大きい場合は警告する。
         /// </summary>
-        /// <param name="computedTopLeft">現在計算された左上座標。</param>
-        /// <param name="visualSize">俳優の描画サイズ。</param>
-        private void ValidateCenterAnchorAlignment(Vector2 computedTopLeft, Vector2 visualSize)
+        /// <param name="computedCenter">現在計算された中心座標。</param>
+        private void ValidateCenterAlignment(Vector2 computedCenter)
         {
             if (!Debug.isDebugBuild && !Application.isEditor)
             {
@@ -1134,33 +1169,32 @@ namespace FUnity.Runtime.Presenter
             }
 
             var stageSize = ResolveStageSize();
-            if (stageSize.x <= 0f || stageSize.y <= 0f || visualSize.x <= 0f || visualSize.y <= 0f)
+            if (stageSize.x <= 0f || stageSize.y <= 0f)
             {
                 return;
             }
 
-            var expectedLeft = (stageSize.x * 0.5f) - (visualSize.x * 0.5f);
-            var expectedTop = (stageSize.y * 0.5f) - (visualSize.y * 0.5f);
+            var expectedCenter = new Vector2(stageSize.x * 0.5f, stageSize.y * 0.5f);
 
-            if (Mathf.Abs(computedTopLeft.x - expectedLeft) >= 0.5f || Mathf.Abs(computedTopLeft.y - expectedTop) >= 0.5f)
+            if (Mathf.Abs(computedCenter.x - expectedCenter.x) >= 0.5f || Mathf.Abs(computedCenter.y - expectedCenter.y) >= 0.5f)
             {
                 Debug.LogWarning(
-                    $"[FUnity] ActorPresenter: Scratch 中央原点でのアンカー補正が想定外です。left={computedTopLeft.x:F2} (expected {expectedLeft:F2}), top={computedTopLeft.y:F2} (expected {expectedTop:F2}).");
+                    $"[FUnity] ActorPresenter: Scratch 中央原点での中心座標が想定外です。centerX={computedCenter.x:F2} (expected {expectedCenter.x:F2}), centerY={computedCenter.y:F2} (expected {expectedCenter.y:F2}).");
             }
         }
 
         /// <summary>
         /// 指定座標を Model へ適用し、必要に応じてクランプして View に反映する。
         /// </summary>
-        /// <param name="positionPx">適用する座標。</param>
-        private void ApplyPosition(Vector2 positionPx)
+        /// <param name="centerPx">適用する中心座標。</param>
+        private void ApplyPosition(Vector2 centerPx)
         {
             if (m_State == null)
             {
                 return;
             }
 
-            var anchorUi = RemoveAnchorOffset(positionPx);
+            var anchorUi = ConvertCenterToAnchor(centerPx);
             var logical = ConvertUiToLogical(anchorUi);
 
             if (m_HasPositionBounds)
@@ -1204,7 +1238,7 @@ namespace FUnity.Runtime.Presenter
         /// 論理座標を UI 座標へ変換する。中央原点時はステージサイズを利用して中心を原点に写像する。
         /// </summary>
         /// <param name="logical">論理座標。</param>
-        /// <returns>左上原点の UI 座標。</returns>
+        /// <returns>アンカー基準の UI 座標。</returns>
         private Vector2 ConvertLogicalToUi(Vector2 logical)
         {
             return CoordinateConverter.LogicalToUI(logical, m_CoordinateOrigin);
@@ -1213,7 +1247,7 @@ namespace FUnity.Runtime.Presenter
         /// <summary>
         /// UI 座標を論理座標へ変換する。中央原点時は中心を原点とする座標へ写像する。
         /// </summary>
-        /// <param name="ui">左上原点の UI 座標。</param>
+        /// <param name="ui">アンカー基準の UI 座標。</param>
         /// <returns>論理座標。</returns>
         private Vector2 ConvertUiToLogical(Vector2 ui)
         {

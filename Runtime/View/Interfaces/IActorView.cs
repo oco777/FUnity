@@ -22,15 +22,15 @@ namespace FUnity.Runtime.View
         event Action<Rect> StageBoundsChanged;
 
         /// <summary>
-        /// 左上原点（px）での座標を UI 上に反映する。
+        /// 俳優画像の中心座標（px）を UI 上に反映する。
         /// </summary>
-        /// <param name="pos">UI Toolkit の描画領域内座標。Presenter 側でクランプ済みであることを想定。</param>
+        /// <param name="center">ステージ左上を原点とした中心座標。Presenter 側でクランプ済みであることを想定します。</param>
         /// <example>
         /// <code>
-        /// actorView.SetPosition(model.Position);
+        /// actorView.SetCenterPosition(centerPx);
         /// </code>
         /// </example>
-        void SetPosition(Vector2 pos);
+        void SetCenterPosition(Vector2 center);
 
         /// <summary>
         /// 俳優のポートレート画像を View に設定する。

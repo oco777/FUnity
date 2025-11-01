@@ -55,6 +55,9 @@ namespace FUnity.Runtime.View
         /// <summary>現在の回転角度（度）。中心ピボットを基準に UI へ適用する。</summary>
         private float m_CurrentRotationDeg;
 
+        /// <summary>現在の中心座標（px）。左上原点で右+ / 下+。</summary>
+        private Vector2 m_CurrentCenterPx = Vector2.zero;
+
         /// <summary>吹き出しテキストを表示するラベル。</summary>
         private Label m_SpeechLabel;
 
@@ -70,8 +73,8 @@ namespace FUnity.Runtime.View
         /// <summary>現在適用している等倍基準のスケール値。</summary>
         private float m_CurrentScale = 1f;
 
-        /// <summary>transform-origin を左上へ固定するための定数。</summary>
-        private static readonly TransformOrigin TopLeftTransformOrigin = new TransformOrigin(0f, 0f, 0f);
+        /// <summary>transform-origin を中央へ固定するための定数。</summary>
+        private static readonly TransformOrigin CenterTransformOrigin = new TransformOrigin(50f, 50f, 0f);
 
         /// <summary>ポートレートのスケールを初期化する際に使用する等倍スタイル。</summary>
         private static readonly StyleScale IdentityScale = new StyleScale(new Scale(Vector3.one));
@@ -161,7 +164,7 @@ namespace FUnity.Runtime.View
             if (m_ActorRoot != null)
             {
                 m_ActorRoot.style.position = Position.Absolute;
-                m_ActorRoot.style.transformOrigin = TopLeftTransformOrigin;
+                m_ActorRoot.style.transformOrigin = CenterTransformOrigin;
             }
 
             if (m_Bridge != null)
@@ -181,8 +184,9 @@ namespace FUnity.Runtime.View
             m_RootElement = searchBase;
             if (m_RootElement != null)
             {
-                m_RootElement.style.transformOrigin = TopLeftTransformOrigin;
+                m_RootElement.style.transformOrigin = CenterTransformOrigin;
                 ApplyScaleToRoot();
+                ApplyRotationToRoot();
             }
             m_SpeechLabel = searchBase?.Q<Label>("speech") ?? element?.Q<Label>("speech");
             if (m_SpeechLabel != null)
@@ -195,6 +199,8 @@ namespace FUnity.Runtime.View
 
             RegisterGeometryCallbacks();
             NotifyStageBounds();
+
+            UpdateLayoutPosition();
         }
 
         /// <summary>
@@ -212,30 +218,21 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// Presenter から通知された座標を UI Toolkit 要素へ適用する。
+        /// Presenter から通知された中心座標を UI Toolkit 要素へ適用する。
         /// </summary>
-        /// <param name="pos">左上原点基準（px）のワールド内 UI 座標。</param>
+        /// <param name="centerPx">左上原点基準（px）の中心座標。</param>
         /// <remarks>
-        /// <see cref="FooniUIBridge"/> 経由で `style.left/top` を更新する。要素未バインド時は静かに無視する。
+        /// 要素の自然サイズを参照して左上座標へ変換し、<see cref="FooniUIBridge"/> 経由で `style.left/top` を更新する。
         /// </remarks>
         /// <example>
         /// <code>
-        /// m_ActorView.SetPosition(model.Position);
+        /// m_ActorView.SetCenterPosition(centerPx);
         /// </code>
         /// </example>
-        public void SetPosition(Vector2 pos)
+        public void SetCenterPosition(Vector2 centerPx)
         {
-            if (m_Bridge == null)
-            {
-                return;
-            }
-
-            if (!m_Bridge.HasBoundElement && !m_Bridge.TryBind())
-            {
-                return;
-            }
-
-            m_Bridge.SetPosition(pos);
+            m_CurrentCenterPx = centerPx;
+            UpdateLayoutPosition();
         }
 
         /// <summary>
@@ -327,6 +324,7 @@ namespace FUnity.Runtime.View
                 m_RootElement.style.height = StyleKeyword.Auto;
             }
 
+            UpdateLayoutPosition();
             NotifyStageBounds();
         }
 
@@ -367,15 +365,7 @@ namespace FUnity.Runtime.View
         public void SetRotationDegrees(float degrees)
         {
             m_CurrentRotationDeg = NormalizeDegrees(degrees);
-
-            var portrait = ResolvePortraitElement();
-            if (portrait == null)
-            {
-                return;
-            }
-
-            portrait.style.transformOrigin = new TransformOrigin(50f, 50f, 0f);
-            portrait.style.rotate = new Rotate(Angle.Degrees(m_CurrentRotationDeg));
+            ApplyRotationToRoot();
         }
 
         /// <summary>
@@ -463,6 +453,7 @@ namespace FUnity.Runtime.View
         /// <param name="evt">UI Toolkit が発行する GeometryChangedEvent。</param>
         private void OnElementGeometryChanged(GeometryChangedEvent evt)
         {
+            UpdateLayoutPosition();
             NotifyStageBounds();
         }
 
@@ -555,7 +546,74 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 現在のスケール値を #root 要素へ適用し、左上原点のまま拡縮できるようにする。
+        /// 現在の中心座標を基準に left/top を計算し、UI 要素へ適用する。
+        /// </summary>
+        private void UpdateLayoutPosition()
+        {
+            if (m_Bridge == null)
+            {
+                return;
+            }
+
+            if (!m_Bridge.HasBoundElement && !m_Bridge.TryBind())
+            {
+                return;
+            }
+
+            var size = GetUnscaledRootSize();
+            if (size.sqrMagnitude <= 0f)
+            {
+                m_Bridge.SetPosition(m_CurrentCenterPx);
+                return;
+            }
+
+            var halfWidth = size.x * 0.5f;
+            var halfHeight = size.y * 0.5f;
+            var left = m_CurrentCenterPx.x - halfWidth;
+            var top = m_CurrentCenterPx.y - halfHeight;
+
+            m_Bridge.SetPosition(new Vector2(left, top));
+        }
+
+        /// <summary>
+        /// ルート要素の自然サイズ（スケール適用前）を取得する。
+        /// </summary>
+        /// <returns>幅・高さ（px）。未確定時は 0。</returns>
+        private Vector2 GetUnscaledRootSize()
+        {
+            if (m_RootElement == null)
+            {
+                return Vector2.zero;
+            }
+
+            var width = m_RootElement.layout.width;
+            var height = m_RootElement.layout.height;
+
+            if (float.IsNaN(width) || width <= 0f)
+            {
+                width = m_RootElement.resolvedStyle.width;
+            }
+
+            if (float.IsNaN(height) || height <= 0f)
+            {
+                height = m_RootElement.resolvedStyle.height;
+            }
+
+            if (float.IsNaN(width) || width < 0f)
+            {
+                width = 0f;
+            }
+
+            if (float.IsNaN(height) || height < 0f)
+            {
+                height = 0f;
+            }
+
+            return new Vector2(width, height);
+        }
+
+        /// <summary>
+        /// 現在のスケール値を #root 要素へ適用し、中心を基点に拡縮できるようにする。
         /// </summary>
         private void ApplyScaleToRoot()
         {
@@ -564,9 +622,24 @@ namespace FUnity.Runtime.View
                 return;
             }
 
-            m_RootElement.style.transformOrigin = TopLeftTransformOrigin;
+            m_RootElement.style.transformOrigin = CenterTransformOrigin;
             var scaleVector = new Vector3(m_CurrentScale, m_CurrentScale, 1f);
             m_RootElement.style.scale = new StyleScale(new Scale(scaleVector));
+            UpdateLayoutPosition();
+        }
+
+        /// <summary>
+        /// 現在保持している回転角を #root 要素へ適用する。
+        /// </summary>
+        private void ApplyRotationToRoot()
+        {
+            if (m_RootElement == null)
+            {
+                return;
+            }
+
+            m_RootElement.style.transformOrigin = CenterTransformOrigin;
+            m_RootElement.style.rotate = new Rotate(Angle.Degrees(m_CurrentRotationDeg));
         }
 
         /// <summary>

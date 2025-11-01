@@ -9,9 +9,9 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
-| Scratch/Change X By | x座標を ◯ ずつ変える | X 座標を相対移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
-| Scratch/Change Y By | y座標を ◯ ずつ変える | Y 座標を相対移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
-| Scratch/Go To X,Y | x:◯ y:◯ へ行く | 指定座標（px）に移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
+| Scratch/Change X By | x座標を ◯ ずつ変える | 中心 X 座標を相対移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
+| Scratch/Change Y By | y座標を ◯ ずつ変える | 中心 Y 座標を相対移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
+| Scratch/Go To X,Y | x:◯ y:◯ へ行く | 指定中心座標（px）に移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
 | Scratch/Move Steps | ◯歩動かす | 現在の向きに沿って移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MoveStepsUnit.cs |
 | Scratch/Point Direction | ◯度に向ける | 向きを絶対角度に設定 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TurnAndPointUnits.cs |
 | Scratch/Set X | x座標を ◯ にする | X 座標を代入 | 未実装: 対応する Unit が見つかりません |
@@ -38,8 +38,8 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
 | Scratch/Say | ◯ と言う | 吹き出し表示 | 未実装: 対応する Unit が見つかりません |
-| Scratch/Set Size % | 大きさを ◯ % にする | 拡大率を絶対指定で適用 (#root が左上原点のまま拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
-| Scratch/Change Size by % | 大きさを ◯ % ずつ変える | 拡大率を相対変更 (#root 拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
+| Scratch/Set Size % | 大きさを ◯ % にする | 拡大率を絶対指定で適用 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
+| Scratch/Change Size by % | 大きさを ◯ % ずつ変える | 拡大率を相対変更 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
 
 ## イベント
 
@@ -51,7 +51,8 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 ### 補足
 - 対応表は Tools/generate_vs_scratch_mapping.py により自動生成されたログをもとにしています（自動生成日時: 2025-10-21 12:25:56）。
 - Scratch モードがアクティブな場合、移動系ユニットはステージ中央原点の論理座標で動作します。UI Toolkit 座標への変換はランタイムが自動で行います。
-- `FUnityActorData.Anchor` により、Visual Scripting が扱う座標は既定で画像中心（Center）を指します。TopLeft を選択すると Scratch ブロック側の座標も左上基準になります。
+- すべての位置系ユニットは画像中心座標（px）を受け渡しします。Presenter が内部でアンカー種別に応じて補正します。
+- `FUnityActorData.Anchor` を TopLeft に設定した場合でも、Visual Scripting から扱う座標は画像中心です（境界計算のみ左上基準で処理されます）。
 
 ### 使い方メモ
 - Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置
