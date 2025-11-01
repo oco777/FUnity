@@ -157,6 +157,8 @@ namespace FUnity.Core
 
             ResolveActiveModeConfig();
 
+            ApplyProjectFrameRate();
+
             if (m_Project != null && m_Project.runners != null)
             {
                 foreach (var runner in m_Project.runners)
@@ -486,6 +488,29 @@ namespace FUnity.Core
             }
 
             bootstrapper.SetProjectData(m_Project);
+        }
+
+        /// <summary>
+        /// ProjectData に設定されたフレームレート構成を適用し、必要に応じて vSync を無効化する。
+        /// </summary>
+        private void ApplyProjectFrameRate()
+        {
+            if (m_Project == null)
+            {
+                return;
+            }
+
+            if (!m_Project.ApplyFrameRateOnStartup)
+            {
+                return;
+            }
+
+            if (m_Project.DisableVSync)
+            {
+                QualitySettings.vSyncCount = 0;
+            }
+
+            Application.targetFrameRate = m_Project.TargetFPS;
         }
 
         /// <summary>
