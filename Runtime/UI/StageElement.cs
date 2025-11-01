@@ -7,7 +7,8 @@ using FUnity.Runtime.Core;
 namespace FUnity.Runtime.UI
 {
     /// <summary>
-    /// ステージ全体を表現する UI Toolkit のカスタム要素。背景・俳優コンテナ・オーバーレイの 3 層構造を提供する View レイヤーの土台。
+    /// ステージ全体を表現する UI Toolkit のカスタム要素。背景・俳優・オーバーレイの 3 層構造を提供し、
+    /// ステージサイズに応じたクリッピングと Scratch 互換の座標系を維持する View レイヤーの土台。
     /// </summary>
     [UxmlElement]
     public partial class StageElement : VisualElement
@@ -27,26 +28,14 @@ namespace FUnity.Runtime.UI
         /// <summary>背景用 USS を読み込む際の Resources パス。</summary>
         private const string BackgroundStyleSheetResourcePath = "UI/StageBackground";
 
-        /// <summary>背景 USS のキャッシュ。null のまま読み込み失敗を示す。</summary>
-        private static StyleSheet s_cachedBackgroundStyleSheet;
-
-        /// <summary>背景 USS 読み込みを試行したかどうか。</summary>
-        private static bool s_backgroundStyleSheetLoaded;
+        /// <summary>ステージ要素へ付与する USS クラス名。</summary>
+        private const string StageRootClassName = "funity-stage";
 
         /// <summary>俳優要素を格納するコンテナの既定名称。</summary>
         internal const string ActorContainerName = "FUnityActorContainer";
 
         /// <summary>オーバーレイ表示（UI 等）を格納するコンテナの既定名称。</summary>
         internal const string OverlayContainerName = "FUnityOverlayContainer";
-
-        /// <summary>ステージ要素へ付与する USS クラス名。</summary>
-        private const string StageRootClassName = "funity-stage";
-
-        /// <summary>俳優コンテナへ付与する USS クラス名。</summary>
-        private const string ActorContainerClassName = "funity-stage__actors";
-
-        /// <summary>オーバーレイコンテナへ付与する USS クラス名。</summary>
-        private const string OverlayContainerClassName = "funity-stage__overlay";
 
         /// <summary>Scratch 固定ステージ適用時に付与する USS クラス名。</summary>
         internal const string ScratchStageClassName = "scratch-stage";
@@ -57,17 +46,50 @@ namespace FUnity.Runtime.UI
         /// <summary>ステージ名ラベルの要素名称。</summary>
         private const string StageNameElementName = "FUnityStageName";
 
+        /// <summary>俳優コンテナへ付与する USS クラス名。</summary>
+        private const string ActorContainerClassName = "funity-stage__actors";
+
+        /// <summary>オーバーレイコンテナへ付与する USS クラス名。</summary>
+        private const string OverlayContainerClassName = "funity-stage__overlay";
+
+        /// <summary>ステージ内でクリッピングを行うビューポート要素の名称。</summary>
+        internal const string StageViewportName = "FUnityStageViewport";
+
+        /// <summary>ステージビューポートへ付与する USS クラス名。</summary>
+        private const string StageViewportClassName = "funity-stage__viewport";
+
+        /// <summary>背景レイヤーの描画順序（z-index）。</summary>
+        private const int BackgroundLayerZ = 0;
+
+        /// <summary>俳優レイヤーの描画順序（z-index）。</summary>
+        private const int ActorLayerZ = 100;
+
+        /// <summary>オーバーレイレイヤーの描画順序（z-index）。</summary>
+        private const int OverlayLayerZ = 200;
+
+        /// <summary>背景 USS のキャッシュ。null のまま読み込み失敗を示す。</summary>
+        private static StyleSheet s_cachedBackgroundStyleSheet;
+
+        /// <summary>背景 USS 読み込みを試行したかどうか。</summary>
+        private static bool s_backgroundStyleSheetLoaded;
+
+        /// <summary>ステージ表示を行うビューポート。overflow:hidden によるクリッピングを担当。</summary>
+        private readonly VisualElement m_stageViewport;
+
         /// <summary>背景を描画するためのレイヤー。</summary>
-        private readonly VisualElement m_BackgroundLayer;
+        private readonly VisualElement m_backgroundLayer;
 
         /// <summary>俳優を配置するためのコンテナ。</summary>
-        private readonly VisualElement m_ActorContainer;
+        private readonly VisualElement m_actorContainer;
 
         /// <summary>UI オーバーレイを配置するためのコンテナ。</summary>
-        private readonly VisualElement m_OverlayContainer;
+        private readonly VisualElement m_overlayContainer;
 
         /// <summary>ステージ名を表示するためのラベル。</summary>
-        private Label m_StageNameLabel;
+        private Label m_stageNameLabel;
+
+        /// <summary>現在のステージ論理サイズ（px）。背景・俳優レイヤーの幅と高さに使用する。</summary>
+        private Vector2Int m_stageSize = new Vector2Int(FUnityStageData.DefaultStageWidth, FUnityStageData.DefaultStageHeight);
 
         /// <summary>
         /// 背景・俳優・オーバーレイの 3 層を初期化し、親へ追加された直後から利用可能な状態にする。
@@ -86,75 +108,53 @@ namespace FUnity.Runtime.UI
 
             AddToClassList(StageRootClassName);
 
-            m_BackgroundLayer = new VisualElement
+            m_stageViewport = new VisualElement
             {
-                name = BackgroundLayerName,
+                name = StageViewportName,
                 pickingMode = PickingMode.Ignore,
                 focusable = false
             };
-            m_BackgroundLayer.AddToClassList(BackgroundLayerClassName);
-            m_BackgroundLayer.style.position = Position.Absolute;
-            m_BackgroundLayer.style.left = 0f;
-            m_BackgroundLayer.style.top = 0f;
-            m_BackgroundLayer.style.right = 0f;
-            m_BackgroundLayer.style.bottom = 0f;
-            m_BackgroundLayer.style.flexGrow = 1f;
-            m_BackgroundLayer.style.flexShrink = 0f;
-            EnsureBackgroundStyleSheet(m_BackgroundLayer);
-            m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
-            if (!m_BackgroundLayer.ClassListContains(BackgroundInlineGuardClassName))
-            {
-                m_BackgroundLayer.AddToClassList(BackgroundInlineGuardClassName);
-                m_BackgroundLayer.schedule.Execute(() =>
-                {
-                    m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
-                }).StartingIn(0);
-                m_BackgroundLayer.RegisterCallback<AttachToPanelEvent>(_ =>
-                {
-                    m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
-                });
-                m_BackgroundLayer.RegisterCallback<GeometryChangedEvent>(_ =>
-                {
-                    m_BackgroundLayer.style.backgroundSize = StyleKeyword.Null;
-                });
-            }
-            Add(m_BackgroundLayer);
+            m_stageViewport.AddToClassList(StageViewportClassName);
+            m_stageViewport.style.position = Position.Relative;
+            m_stageViewport.style.overflow = Overflow.Hidden;
+            m_stageViewport.style.flexGrow = 0f;
+            m_stageViewport.style.flexShrink = 0f;
 
-            m_ActorContainer = new VisualElement
-            {
-                name = ActorContainerName,
-                pickingMode = PickingMode.Ignore,
-                focusable = false
-            };
-            m_ActorContainer.AddToClassList(ActorContainerClassName);
-            m_ActorContainer.style.position = Position.Relative;
-            m_ActorContainer.style.flexGrow = 1f;
-            m_ActorContainer.style.flexShrink = 0f;
-            m_ActorContainer.style.justifyContent = Justify.FlexStart;
-            m_ActorContainer.style.alignItems = Align.FlexStart;
-            Add(m_ActorContainer);
+            m_backgroundLayer = CreateLayer(BackgroundLayerName, BackgroundLayerClassName, PickingMode.Ignore, BackgroundLayerZ);
+            EnsureBackgroundStyleSheet(m_backgroundLayer);
+            EnsureBackgroundInlineGuard(m_backgroundLayer);
 
-            m_OverlayContainer = new VisualElement
-            {
-                name = OverlayContainerName,
-                pickingMode = PickingMode.Ignore,
-                focusable = false
-            };
-            m_OverlayContainer.AddToClassList(OverlayContainerClassName);
-            m_OverlayContainer.style.position = Position.Relative;
-            m_OverlayContainer.style.flexGrow = 0f;
-            m_OverlayContainer.style.flexShrink = 0f;
-            Add(m_OverlayContainer);
+            m_actorContainer = CreateLayer(ActorContainerName, ActorContainerClassName, PickingMode.Position, ActorLayerZ);
+            m_actorContainer.style.justifyContent = Justify.FlexStart;
+            m_actorContainer.style.alignItems = Align.FlexStart;
+
+            m_overlayContainer = CreateLayer(OverlayContainerName, OverlayContainerClassName, PickingMode.Position, OverlayLayerZ);
+
+            m_stageViewport.Add(m_backgroundLayer);
+            m_stageViewport.Add(m_actorContainer);
+            m_stageViewport.Add(m_overlayContainer);
+
+            Add(m_stageViewport);
+
+            ApplyStageSize(m_stageSize);
+
+            RegisterCallback<GeometryChangedEvent>(_ => ApplyStageSize(m_stageSize));
         }
 
         /// <summary>背景レイヤーを内部から公開し、Presenter 側での再利用を可能にする。</summary>
-        internal VisualElement BackgroundLayer => m_BackgroundLayer;
+        internal VisualElement BackgroundLayer => m_backgroundLayer;
 
         /// <summary>俳優コンテナを公開する。Presenter から直接 UI ツリーを操作しないように注意する。</summary>
-        public VisualElement ActorContainer => m_ActorContainer;
+        public VisualElement ActorContainer => m_actorContainer;
 
         /// <summary>オーバーレイコンテナを公開する。HUD やダイアログなどの拡張に利用する。</summary>
-        public VisualElement OverlayContainer => m_OverlayContainer;
+        public VisualElement OverlayContainer => m_overlayContainer;
+
+        /// <summary>ステージビューポートを公開する。背景サービスでのクリッピング対象に利用する。</summary>
+        internal VisualElement StageViewport => m_stageViewport;
+
+        /// <summary>現在のステージ論理サイズ（px）。UIScaleService がスケール計算に利用する。</summary>
+        public Vector2Int StageSize => m_stageSize;
 
         /// <summary>
         /// 俳優要素をステージへ追加する。既に別の親に属している場合は移動させる。
@@ -162,19 +162,19 @@ namespace FUnity.Runtime.UI
         /// <param name="actorElement">追加する俳優の UI 要素。</param>
         public void AddActorElement(VisualElement actorElement)
         {
-            if (actorElement == null || m_ActorContainer == null)
+            if (actorElement == null || m_actorContainer == null)
             {
                 return;
             }
 
-            if (actorElement.parent != null && actorElement.parent != m_ActorContainer)
+            if (actorElement.parent != null && actorElement.parent != m_actorContainer)
             {
                 actorElement.RemoveFromHierarchy();
             }
 
-            if (actorElement.parent != m_ActorContainer)
+            if (actorElement.parent != m_actorContainer)
             {
-                m_ActorContainer.Add(actorElement);
+                m_actorContainer.Add(actorElement);
             }
         }
 
@@ -202,22 +202,24 @@ namespace FUnity.Runtime.UI
         /// </summary>
         public void ClearActors()
         {
-            m_ActorContainer?.Clear();
+            m_actorContainer?.Clear();
         }
 
         /// <summary>
-        /// ステージ設定を反映し、ラベルやツールチップを更新する。
+        /// ステージ設定を反映し、ラベルやツールチップおよびレイヤーサイズを更新する。
         /// </summary>
-        /// <param name="stage">適用するステージ設定。null の場合は名称を非表示にする。</param>
+        /// <param name="stage">適用するステージ設定。null の場合は名称とサイズを既定値へ戻す。</param>
         public void Configure(FUnityStageData stage)
         {
             if (stage == null)
             {
+                ApplyStageSize(new Vector2Int(FUnityStageData.DefaultStageWidth, FUnityStageData.DefaultStageHeight));
                 UpdateStageName(string.Empty);
                 tooltip = string.Empty;
                 return;
             }
 
+            ApplyStageSize(stage.StageSize);
             UpdateStageName(stage.StageName);
             tooltip = string.IsNullOrEmpty(stage.StageName) ? string.Empty : stage.StageName;
         }
@@ -230,29 +232,29 @@ namespace FUnity.Runtime.UI
         {
             if (string.IsNullOrEmpty(stageName))
             {
-                if (m_StageNameLabel != null)
+                if (m_stageNameLabel != null)
                 {
-                    m_StageNameLabel.text = string.Empty;
-                    m_StageNameLabel.style.display = DisplayStyle.None;
+                    m_stageNameLabel.text = string.Empty;
+                    m_stageNameLabel.style.display = DisplayStyle.None;
                 }
 
                 return;
             }
 
-            if (m_StageNameLabel == null)
+            if (m_stageNameLabel == null)
             {
-                m_StageNameLabel = new Label
+                m_stageNameLabel = new Label
                 {
                     name = StageNameElementName,
                     pickingMode = PickingMode.Ignore,
                     focusable = false
                 };
-                m_StageNameLabel.AddToClassList(StageNameClassName);
-                m_OverlayContainer.Add(m_StageNameLabel);
+                m_stageNameLabel.AddToClassList(StageNameClassName);
+                m_overlayContainer.Add(m_stageNameLabel);
             }
 
-            m_StageNameLabel.text = stageName;
-            m_StageNameLabel.style.display = DisplayStyle.Flex;
+            m_stageNameLabel.text = stageName;
+            m_stageNameLabel.style.display = DisplayStyle.Flex;
         }
 
         /// <summary>
@@ -292,6 +294,113 @@ namespace FUnity.Runtime.UI
             }
 
             styleSheets.Add(s_cachedBackgroundStyleSheet);
+        }
+
+        /// <summary>
+        /// ステージレイヤーを生成し、absolute で敷くための基本スタイルを適用する。
+        /// </summary>
+        /// <param name="elementName">生成する要素の名称。</param>
+        /// <param name="className">適用する USS クラス。</param>
+        /// <param name="picking">ピッキングモード。</param>
+        /// <param name="zIndex">描画順序。</param>
+        /// <returns>生成した VisualElement。</returns>
+        private static VisualElement CreateLayer(string elementName, string className, PickingMode picking, int zIndex)
+        {
+            var layer = new VisualElement
+            {
+                name = elementName,
+                pickingMode = picking,
+                focusable = false
+            };
+
+            layer.AddToClassList(className);
+            layer.style.position = Position.Absolute;
+            layer.style.left = 0f;
+            layer.style.top = 0f;
+            layer.style.zIndex = zIndex;
+
+            return layer;
+        }
+
+        /// <summary>
+        /// 現在のステージサイズを正規化し、レイヤー各要素へ反映する。
+        /// </summary>
+        /// <param name="size">適用するステージサイズ（px）。</param>
+        private void ApplyStageSize(Vector2Int size)
+        {
+            var normalized = NormalizeStageSize(size);
+            m_stageSize = normalized;
+
+            if (m_stageViewport != null)
+            {
+                m_stageViewport.style.width = normalized.x;
+                m_stageViewport.style.height = normalized.y;
+            }
+
+            ApplyLayerSize(m_backgroundLayer, normalized);
+            ApplyLayerSize(m_actorContainer, normalized);
+            ApplyLayerSize(m_overlayContainer, normalized);
+        }
+
+        /// <summary>
+        /// 与えられたレイヤーへステージサイズを適用する。null の場合は何もしない。
+        /// </summary>
+        /// <param name="layer">サイズを更新する対象。</param>
+        /// <param name="size">適用するステージサイズ。</param>
+        private static void ApplyLayerSize(VisualElement layer, Vector2Int size)
+        {
+            if (layer == null)
+            {
+                return;
+            }
+
+            layer.style.width = size.x;
+            layer.style.height = size.y;
+        }
+
+        /// <summary>
+        /// ステージサイズを 1px 以上へ丸め、安全な値を返す。
+        /// </summary>
+        /// <param name="size">正規化前のステージサイズ。</param>
+        /// <returns>幅・高さとも 1 以上へ補正した結果。</returns>
+        private static Vector2Int NormalizeStageSize(Vector2Int size)
+        {
+            var width = Mathf.Max(1, size.x);
+            var height = Mathf.Max(1, size.y);
+            return new Vector2Int(width, height);
+        }
+
+        /// <summary>
+        /// 背景レイヤーに inline background-size 監視用のガードを設定する。
+        /// </summary>
+        /// <param name="backgroundLayer">ガードを設定する対象。</param>
+        private static void EnsureBackgroundInlineGuard(VisualElement backgroundLayer)
+        {
+            if (backgroundLayer == null)
+            {
+                return;
+            }
+
+            backgroundLayer.style.backgroundSize = StyleKeyword.Null;
+
+            if (backgroundLayer.ClassListContains(BackgroundInlineGuardClassName))
+            {
+                return;
+            }
+
+            backgroundLayer.AddToClassList(BackgroundInlineGuardClassName);
+            backgroundLayer.schedule.Execute(() =>
+            {
+                backgroundLayer.style.backgroundSize = StyleKeyword.Null;
+            }).StartingIn(0);
+            backgroundLayer.RegisterCallback<AttachToPanelEvent>(_ =>
+            {
+                backgroundLayer.style.backgroundSize = StyleKeyword.Null;
+            });
+            backgroundLayer.RegisterCallback<GeometryChangedEvent>(_ =>
+            {
+                backgroundLayer.style.backgroundSize = StyleKeyword.Null;
+            });
         }
     }
 }

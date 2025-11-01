@@ -112,6 +112,48 @@ namespace FUnity.Runtime.Presenter
                 Warn("Root のレイアウトが 0x0。親のサイズ/レイアウトを確認してください。");
             }
 
+            if (stageData != null)
+            {
+                Log($"Configured stage size: {stageData.StageWidth} x {stageData.StageHeight}");
+            }
+            else
+            {
+                Log("Configured stage size: (stage data null)");
+            }
+
+            var scaledRoot = panelRoot.Q<VisualElement>(UIScaleService.ScaledContentRootName);
+            if (scaledRoot != null)
+            {
+                var scaledBounds = scaledRoot.worldBound;
+                Log($"ScaledContentRoot worldBound: {scaledBounds}");
+            }
+            else
+            {
+                Log("ScaledContentRoot not found.");
+            }
+
+            var stageElement = panelRoot.Q<StageElement>();
+            if (stageElement != null)
+            {
+                var logicalSize = stageElement.StageSize;
+                Log($"StageElement.StageSize: {logicalSize.x} x {logicalSize.y}");
+            }
+            else
+            {
+                Log("StageElement not found under panel root.");
+            }
+
+            var viewport = panelRoot.Q<VisualElement>(StageElement.StageViewportName);
+            if (viewport != null)
+            {
+                var viewportBounds = viewport.worldBound;
+                Log($"Stage viewport worldBound: {viewportBounds}");
+            }
+            else
+            {
+                Log("Stage viewport not found.");
+            }
+
             var layer = panelRoot.Q<VisualElement>(BackgroundLayerIdA) ?? panelRoot.Q<VisualElement>(BackgroundLayerIdB);
             Log($"Background layer found: {(layer != null ? layer.name : "null")}");
 
