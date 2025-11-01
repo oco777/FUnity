@@ -828,8 +828,8 @@ namespace FUnity.Runtime.Presenter
                 return centerLogical;
             }
 
-            var scaledSize = m_View != null ? m_View.GetScaledSizePx() : Vector2.zero;
-            return ScratchBounds.ClampCenter(centerLogical, scaledSize);
+            var rootScaledSize = m_View != null ? m_View.GetRootScaledSizePx() : Vector2.zero;
+            return ScratchBounds.ClampCenter(centerLogical, rootScaledSize);
         }
 
         /// <summary>
@@ -921,8 +921,8 @@ namespace FUnity.Runtime.Presenter
 
             if (m_IsScratchMode && m_CoordinateOrigin == CoordinateOrigin.Center)
             {
-                var scaledSize = m_View != null ? m_View.GetScaledSizePx() : Vector2.zero;
-                centerLogical = ScratchBounds.ClampCenter(centerLogical, scaledSize);
+                var rootScaledSize = m_View != null ? m_View.GetRootScaledSizePx() : Vector2.zero;
+                centerLogical = ScratchBounds.ClampCenter(centerLogical, rootScaledSize);
             }
 
             var anchorUi = ConvertLogicalToUi(centerLogical);
