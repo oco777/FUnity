@@ -328,13 +328,11 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 現在適用されているスケールを反映した俳優要素の見た目サイズ（px）を返す。
+        /// #root 要素のレイアウトサイズへ scale を掛け合わせ、見た目上の実寸（px）を算出する。
+        /// Scratch クランプおよび表示位置の決定に利用するため、ポートレート側のサイズ/スケールは参照しない。
         /// </summary>
-        /// <returns>
-        /// スケール反映後の幅・高さ（px）。#root 未確定時は 0 ベクトルを返す。レイアウトサイズと
-        /// resolvedStyle.scale を掛け合わせて算出する。
-        /// </returns>
-        public Vector2 GetScaledSizePx()
+        /// <returns>#root のスケール適用後サイズ（px）。未解決時は <see cref="Vector2.zero"/>。</returns>
+        public Vector2 GetRootScaledSizePx()
         {
             var root = GetRootElement();
             if (root == null)
@@ -350,8 +348,19 @@ namespace FUnity.Runtime.View
             var scaleValue = ResolveScaleXY(root, 1f);
             return new Vector2(width * scaleValue.x, height * scaleValue.y);
 #else
-            return new Vector2(width, height) * m_CurrentScale;
+            var scaledWidth = width * m_CurrentScale;
+            var scaledHeight = height * m_CurrentScale;
+            return new Vector2(scaledWidth, scaledHeight);
 #endif
+        }
+
+        /// <summary>
+        /// 旧 API 互換のために残すラッパー。内部的には <see cref="GetRootScaledSizePx"/> を呼び出す。
+        /// </summary>
+        /// <returns>#root のスケール適用後サイズ（px）。</returns>
+        public Vector2 GetScaledSizePx()
+        {
+            return GetRootScaledSizePx();
         }
 
         /// <summary>
@@ -647,9 +656,9 @@ namespace FUnity.Runtime.View
                 return;
             }
 
-            var scaledSize = GetScaledSizePx();
-            var halfWidth = scaledSize.x * 0.5f;
-            var halfHeight = scaledSize.y * 0.5f;
+            var rootScaledSize = GetRootScaledSizePx();
+            var halfWidth = rootScaledSize.x * 0.5f;
+            var halfHeight = rootScaledSize.y * 0.5f;
 
             var left = Mathf.RoundToInt(m_CurrentCenterPx.x - halfWidth);
             var top = Mathf.RoundToInt(m_CurrentCenterPx.y - halfHeight);

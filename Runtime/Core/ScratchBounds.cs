@@ -19,12 +19,12 @@ namespace FUnity.Runtime.Core
         /// 幅・高さの半分をステージ半径に足し引きした境界で判定し、回転は中心回転を前提とします。
         /// </summary>
         /// <param name="center">中心座標（Scratch 論理座標系）。</param>
-        /// <param name="scaledSize">拡大率適用後の幅・高さ（px）。</param>
+        /// <param name="rootScaledSize">#root のスケール適用後サイズ（px）。</param>
         /// <returns>指定ルールでクランプした中心座標。</returns>
-        public static Vector2 ClampCenter(Vector2 center, Vector2 scaledSize)
+        public static Vector2 ClampCenter(Vector2 center, Vector2 rootScaledSize)
         {
-            var width = Mathf.Max(0f, scaledSize.x);
-            var height = Mathf.Max(0f, scaledSize.y);
+            var width = Mathf.Max(0f, rootScaledSize.x);
+            var height = Mathf.Max(0f, rootScaledSize.y);
             var halfWidth = width * 0.5f;
             var halfHeight = height * 0.5f;
 

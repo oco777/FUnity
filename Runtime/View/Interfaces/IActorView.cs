@@ -90,9 +90,17 @@ namespace FUnity.Runtime.View
         bool TryGetVisualSize(out Vector2 sizePx);
 
         /// <summary>
-        /// スケール適用後の俳優サイズ（px）を取得する。Scratch モードでのクランプ計算に利用する。
+        /// スケール適用後の #root サイズ（px）を取得する。Scratch モードのクランプや表示計算に利用する。
         /// </summary>
-        /// <returns>拡大率を反映した幅・高さ（px）。要素未バインド時は <see cref="Vector2.zero"/>。</returns>
+        /// <returns>
+        /// #root のレイアウトサイズへ scale を掛け合わせた実寸（px）。未解決時は <see cref="Vector2.zero"/>。
+        /// </returns>
+        Vector2 GetRootScaledSizePx();
+
+        /// <summary>
+        /// 旧互換 API。現在は <see cref="GetRootScaledSizePx"/> を呼び出す薄いラッパーとして提供する。
+        /// </summary>
+        /// <returns>#root のスケール後サイズ（px）。</returns>
         Vector2 GetScaledSizePx();
 
         /// <summary>
