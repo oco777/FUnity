@@ -78,6 +78,12 @@ namespace FUnity.Runtime.View
         }
 
         /// <inheritdoc />
+        public Vector2 GetScaledSizePx()
+        {
+            return Vector2.zero;
+        }
+
+        /// <inheritdoc />
         public void SetActorPresenter(ActorPresenter presenter)
         {
         }

@@ -70,6 +70,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             var logical = new Vector2(flow.GetValue<float>(m_X), flow.GetValue<float>(m_Y));
             var uiPosition = controller.ToUiPosition(logical);
+            // Scratch モードでは Presenter 側でスケール済みサイズを考慮したクランプが適用される。
             controller.SetPositionPixels(uiPosition);
             return m_Exit;
         }
@@ -132,6 +133,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             var delta = flow.GetValue<float>(m_DeltaX);
             var uiDelta = controller.ToUiDelta(new Vector2(delta, 0f));
+            // Scratch モードでは Presenter 側で中心座標をクランプするため、ここではそのまま転送する。
             controller.AddPositionPixels(uiDelta);
             return m_Exit;
         }
@@ -194,6 +196,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             var delta = flow.GetValue<float>(m_DeltaY);
             var uiDelta = controller.ToUiDelta(new Vector2(0f, delta));
+            // Scratch モードでは Presenter が移動後に中心座標をクランプする。
             controller.AddPositionPixels(uiDelta);
             return m_Exit;
         }

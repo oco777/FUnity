@@ -89,6 +89,12 @@ namespace FUnity.Runtime.View
         bool TryGetVisualSize(out Vector2 sizePx);
 
         /// <summary>
+        /// スケール適用後の俳優サイズ（px）を取得する。Scratch モードでのクランプ計算に利用する。
+        /// </summary>
+        /// <returns>拡大率を反映した幅・高さ（px）。要素未バインド時は <see cref="Vector2.zero"/>。</returns>
+        Vector2 GetScaledSizePx();
+
+        /// <summary>
         /// Presenter 参照を View 側へ伝達し、旧 API 経由のフォールバック呼び出しを可能にする。
         /// </summary>
         /// <param name="presenter">紐付ける <see cref="ActorPresenter"/>。</param>

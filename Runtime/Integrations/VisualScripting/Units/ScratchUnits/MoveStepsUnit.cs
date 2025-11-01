@@ -61,6 +61,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             var steps = flow.GetValue<float>(m_Steps);
+            // Scratch モードでは Presenter 側で移動後の中心座標がクランプされる。
             controller.MoveSteps(steps);
             return m_Exit;
         }
