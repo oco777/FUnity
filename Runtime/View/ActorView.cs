@@ -645,7 +645,7 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 中心座標と拡大後サイズから left/top を算出し、#root 要素へ反映する。
+        /// 中心座標とスケール前レイアウトサイズから left/top を算出し、#root 要素へ反映する。
         /// 描画揺れを抑えるため整数ピクセルへ丸めて適用する。
         /// </summary>
         private void UpdateLayoutForCenter()
@@ -656,9 +656,9 @@ namespace FUnity.Runtime.View
                 return;
             }
 
-            var rootScaledSize = GetRootScaledSizePx();
-            var halfWidth = rootScaledSize.x * 0.5f;
-            var halfHeight = rootScaledSize.y * 0.5f;
+            var rootSize = root.layout.size;
+            var halfWidth = rootSize.x * 0.5f;
+            var halfHeight = rootSize.y * 0.5f;
 
             var left = Mathf.RoundToInt(m_CurrentCenterPx.x - halfWidth);
             var top = Mathf.RoundToInt(m_CurrentCenterPx.y - halfHeight);
