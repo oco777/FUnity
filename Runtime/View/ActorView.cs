@@ -268,6 +268,32 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
+        /// 現在適用されているスケールを反映した俳優要素の見た目サイズ（px）を返す。
+        /// </summary>
+        /// <returns>スケール反映後の幅・高さ（px）。要素未バインド時は <see cref="Vector2.zero"/> を返す。</returns>
+        public Vector2 GetScaledSizePx()
+        {
+            var root = m_RootElement ?? m_BoundElement;
+            if (root == null)
+            {
+                return Vector2.zero;
+            }
+
+            var layoutSize = root.layout.size;
+            var baseWidth = Mathf.Max(0f, layoutSize.x);
+            var baseHeight = Mathf.Max(0f, layoutSize.y);
+
+#if UNITY_2022_3_OR_NEWER
+            var scaleValue = root.resolvedStyle.scale.value;
+            var scaleX = Mathf.Approximately(scaleValue.x, 0f) ? 0f : scaleValue.x;
+            var scaleY = Mathf.Approximately(scaleValue.y, 0f) ? 0f : scaleValue.y;
+            return new Vector2(baseWidth * scaleX, baseHeight * scaleY);
+#else
+            return new Vector2(baseWidth, baseHeight) * m_CurrentScale;
+#endif
+        }
+
+        /// <summary>
         /// 俳優のポートレート画像を UI Toolkit の `portrait` 要素へ設定する。
         /// </summary>
         /// <param name="sprite">`Sprite.Create` 等で生成済みのスプライト。</param>

@@ -53,6 +53,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>使用中の座標原点。Scratch では Center、unityroom では TopLeft。</summary>
         private CoordinateOrigin m_CoordinateOrigin = CoordinateOrigin.TopLeft;
 
+        /// <summary>アクティブなモードが Scratch 互換かどうか。</summary>
+        private bool m_IsScratchMode;
+
         /// <summary>俳優座標が指し示すアンカー種別。既定は画像中心。</summary>
         private ActorAnchor m_Anchor = ActorAnchor.Center;
 
@@ -120,6 +123,7 @@ namespace FUnity.Runtime.Presenter
             m_State = resolvedState;
             m_View = view;
             m_CoordinateOrigin = CoordinateConverter.GetActiveOrigin(modeConfig);
+            m_IsScratchMode = modeConfig != null && modeConfig.Mode == FUnityAuthoringMode.Scratch;
             m_ModeStagePixelsFallback = ResolveModeStagePixels(modeConfig);
             AttachStageGeometryCallback(stageRoot);
 
@@ -773,6 +777,22 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// Scratch モード時に中心座標を許容範囲へクランプする。
+        /// </summary>
+        /// <param name="centerLogical">Scratch 論理座標系の中心座標。</param>
+        /// <returns>必要に応じてクランプした中心座標。</returns>
+        private Vector2 ClampToScratchIfNeeded(Vector2 centerLogical)
+        {
+            if (!m_IsScratchMode || m_CoordinateOrigin != CoordinateOrigin.Center)
+            {
+                return centerLogical;
+            }
+
+            var scaledSize = m_View != null ? m_View.GetScaledSizePx() : Vector2.zero;
+            return ScratchBounds.ClampCenter(centerLogical, scaledSize);
+        }
+
+        /// <summary>
         /// ステージ境界と俳優サイズからクランプ矩形を計算する。
         /// </summary>
         private void UpdatePositionBoundsInternal()
@@ -822,7 +842,20 @@ namespace FUnity.Runtime.Presenter
         /// </summary>
         private void ClampStateToBounds()
         {
-            if (m_State == null || !m_HasPositionBounds)
+            if (m_State == null)
+            {
+                return;
+            }
+
+            if (m_IsScratchMode && m_CoordinateOrigin == CoordinateOrigin.Center)
+            {
+                var clamped = ClampToScratchIfNeeded(m_State.Position);
+                m_State.SetPositionUnchecked(clamped);
+                UpdateViewPosition();
+                return;
+            }
+
+            if (!m_HasPositionBounds)
             {
                 return;
             }
@@ -1197,7 +1230,12 @@ namespace FUnity.Runtime.Presenter
             var anchorUi = ConvertCenterToAnchor(centerPx);
             var logical = ConvertUiToLogical(anchorUi);
 
-            if (m_HasPositionBounds)
+            if (m_IsScratchMode && m_CoordinateOrigin == CoordinateOrigin.Center)
+            {
+                var clampedCenter = ClampToScratchIfNeeded(logical);
+                m_State.SetPositionUnchecked(clampedCenter);
+            }
+            else if (m_HasPositionBounds)
             {
                 m_State.SetPositionClamped(logical, m_PositionBoundsLogical);
             }
@@ -1221,14 +1259,20 @@ namespace FUnity.Runtime.Presenter
             }
 
             var logicalDelta = ConvertDeltaToLogical(deltaPx);
+            var targetLogical = m_State.Position + logicalDelta;
 
-            if (m_HasPositionBounds)
+            if (m_IsScratchMode && m_CoordinateOrigin == CoordinateOrigin.Center)
+            {
+                var clampedCenter = ClampToScratchIfNeeded(targetLogical);
+                m_State.SetPositionUnchecked(clampedCenter);
+            }
+            else if (m_HasPositionBounds)
             {
                 m_State.AddPositionClamped(logicalDelta, m_PositionBoundsLogical);
             }
             else
             {
-                m_State.SetPositionUnchecked(m_State.Position + logicalDelta);
+                m_State.SetPositionUnchecked(targetLogical);
             }
 
             UpdateViewPosition();

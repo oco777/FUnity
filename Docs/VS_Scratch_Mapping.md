@@ -53,6 +53,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 - Scratch モードがアクティブな場合、移動系ユニットはステージ中央原点の論理座標で動作します。UI Toolkit 座標への変換はランタイムが自動で行います。
 - すべての位置系ユニットは画像中心座標（px）を受け渡しします。Presenter が内部でアンカー種別に応じて補正します。
 - `FUnityActorData.Anchor` を TopLeft に設定した場合でも、Visual Scripting から扱う座標は画像中心です（境界計算のみ左上基準で処理されます）。
+- Scratch モードでは `ActorPresenter` が `ScratchBounds.ClampCenter` を通じて中心座標を `[-240 - width_afterScale, 240 + width_afterScale]` / `[-180 - height_afterScale, 180 + height_afterScale]` にクランプします。ユニット側での追加クランプは不要です。
 
 ### 使い方メモ
 - Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置
