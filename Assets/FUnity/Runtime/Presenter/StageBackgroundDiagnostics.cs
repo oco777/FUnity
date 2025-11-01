@@ -1,3 +1,4 @@
+using FUnity.Core;
 using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.UI;
@@ -58,7 +59,7 @@ namespace FUnity.Runtime.Presenter
         /// <param name="backgroundName">Resources/Backgrounds 内で検索するテクスチャ名。</param>
         /// <param name="tryTemporaryFix">診断中に暫定修正（可視化）を適用するかどうか。</param>
         /// <param name="stageData">診断対象ステージの設定値。null の場合は未設定として扱う。</param>
-        public static void RunBackgroundDiagnostics(VisualElement panelRoot, string backgroundName = "Background_01", bool tryTemporaryFix = true, FUnityStageData stageData = null)
+        public static void RunBackgroundDiagnostics(VisualElement panelRoot, string backgroundName = "Background_01", bool tryTemporaryFix = true, FUnityStageData stageData = null, FUnityProjectData projectData = null)
         {
             void Log(string msg) => Debug.Log($"[FUnity.BGDiag] {msg}");
             void Warn(string msg) => Debug.LogWarning($"[FUnity.BGDiag] {msg}");
@@ -72,7 +73,7 @@ namespace FUnity.Runtime.Presenter
 
             Log($"RunBackgroundDiagnostics start (background='{backgroundName}')");
 
-            var activeConfig = Resources.Load<FUnityModeConfig>("FUnityActiveMode");
+            var activeConfig = ResolveActiveModeConfig(projectData);
             var origin = CoordinateConverter.GetActiveOrigin(activeConfig);
 
             if (origin == CoordinateOrigin.Center)
@@ -268,6 +269,49 @@ namespace FUnity.Runtime.Presenter
             }
 
             Log("RunBackgroundDiagnostics end");
+        }
+
+        /// <summary>
+        /// ProjectData およびシーン上の FUnityManager からアクティブな ModeConfig を探索する。
+        /// </summary>
+        /// <param name="projectData">明示指定された ProjectData。null の場合は内部で探索する。</param>
+        /// <returns>取得した ModeConfig。見つからない場合は null。</returns>
+        private static FUnityModeConfig ResolveActiveModeConfig(FUnityProjectData projectData)
+        {
+            if (projectData != null)
+            {
+                var config = projectData.GetActiveModeConfig();
+                if (config != null)
+                {
+                    config.EnsureScratchStageDefaults();
+                    return config;
+                }
+            }
+
+            var manager = Object.FindObjectOfType<FUnityManager>();
+            if (manager != null && manager.ProjectData != null)
+            {
+                var config = manager.ProjectData.GetActiveModeConfig();
+                if (config != null)
+                {
+                    config.EnsureScratchStageDefaults();
+                    return config;
+                }
+            }
+
+            var fallbackProject = Resources.Load<FUnityProjectData>("FUnityProjectData");
+            if (fallbackProject != null)
+            {
+                var config = fallbackProject.GetActiveModeConfig();
+                if (config != null)
+                {
+                    config.EnsureScratchStageDefaults();
+                    return config;
+                }
+            }
+
+            Debug.LogWarning("[FUnity.BGDiag] ProjectData から ModeConfig を解決できませんでした。座標診断を既定原点で続行します。");
+            return null;
         }
     }
 }

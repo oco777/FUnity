@@ -40,7 +40,7 @@ Scratch モードは「Scratch 3.0 と同等の制作体験」を目標とした
 ## SB3 インポート
 実験的な `.sb3` インポート機能を提供します。手順は以下の通りです。
 
-1. `FUnity / Authoring / Switch Mode…` で Scratch モードをアクティブ化します。
+1. `FUnityProjectData` アセットの Inspector で Scratch モードをアクティブ化します。
 2. `Assets` 配下に `.sb3` ファイルをドラッグ＆ドロップします。
 3. インポーターが `project.json` を解析し、`FUnityProjectData` / `FUnityActorData` に変換します。
 4. `assets/` 内の画像は Sprite 化され、音声は `AudioClip` として保存されます。

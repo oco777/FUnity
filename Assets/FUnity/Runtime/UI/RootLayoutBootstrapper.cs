@@ -1,4 +1,6 @@
+using FUnity.Core;
 using FUnity.Runtime.Authoring;
+using FUnity.Runtime.Core;
 using FUnity.Runtime.Presenter;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,6 +17,14 @@ namespace FUnity.Runtime.UI
         /// <summary>対象となる UIDocument。未設定時は同一 GameObject から自動取得する。</summary>
         [SerializeField]
         private UIDocument m_Document;
+
+        /// <summary>プロジェクト全体の設定アセット。モード選択を含む。</summary>
+        [SerializeField]
+        private FUnityProjectData m_ProjectData;
+
+        /// <summary>FUnityManager 参照。ProjectData 未指定時に補完する。</summary>
+        [SerializeField]
+        private FUnityManager m_Manager;
 
         /// <summary>レイアウト調整対象のルート要素。UIDocument の変更に追従して再取得する。</summary>
         private VisualElement m_RootElement;
@@ -250,21 +260,65 @@ namespace FUnity.Runtime.UI
                 return m_ActiveModeConfig;
             }
 
-            var loaded = Resources.Load<FUnityModeConfig>("FUnityActiveMode");
-            if (loaded == null)
+            var project = ResolveProjectData();
+            if (project != null)
             {
-                if (!m_LoggedMissingModeConfig)
+                var config = project.GetActiveModeConfig();
+                if (config != null)
                 {
-                    Debug.LogWarning("[FUnity.Root] FUnityActiveMode.asset が見つからないため Scratch 表示スケールを適用できません。", this);
-                    m_LoggedMissingModeConfig = true;
+                    config.EnsureScratchStageDefaults();
+                    m_LoggedMissingModeConfig = false;
+                    m_ActiveModeConfig = config;
+                    return m_ActiveModeConfig;
                 }
-
-                return null;
             }
 
-            m_LoggedMissingModeConfig = false;
-            m_ActiveModeConfig = loaded;
-            return m_ActiveModeConfig;
+            if (!m_LoggedMissingModeConfig)
+            {
+                Debug.LogWarning("[FUnity.Root] FUnityProjectData から有効な ModeConfig を取得できませんでした。Scratch 表示スケールを省略します。", this);
+                m_LoggedMissingModeConfig = true;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// ProjectData の参照を解決し、未設定の場合は FUnityManager から補完する。
+        /// </summary>
+        /// <returns>解決できた <see cref="FUnityProjectData"/>。失敗時は null。</returns>
+        private FUnityProjectData ResolveProjectData()
+        {
+            if (m_ProjectData != null)
+            {
+                return m_ProjectData;
+            }
+
+            if (m_Manager != null)
+            {
+                m_ProjectData = m_Manager.ProjectData;
+                if (m_ProjectData != null)
+                {
+                    return m_ProjectData;
+                }
+            }
+
+            m_Manager = FindObjectOfType<FUnityManager>();
+            if (m_Manager != null)
+            {
+                m_ProjectData = m_Manager.ProjectData;
+            }
+
+            return m_ProjectData;
+        }
+
+        /// <summary>
+        /// 外部から ProjectData を割り当てるためのヘルパー。EnsureFUnityUI 実行時に利用される。
+        /// </summary>
+        /// <param name="projectData">割り当てる ProjectData。null を指定するとリセットのみ行う。</param>
+        public void SetProjectData(FUnityProjectData projectData)
+        {
+            m_ProjectData = projectData;
+            m_ActiveModeConfig = null;
         }
     }
 }

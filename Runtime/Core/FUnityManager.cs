@@ -41,9 +41,12 @@ namespace FUnity.Core
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("project")]
         private FUnityProjectData m_Project;
 
-        /// <summary>アクティブな制作モード設定。Inspector で未指定の場合は Resources から補完する。</summary>
+        /// <summary>アクティブな制作モード設定。ProjectData からの選択結果をキャッシュし、未設定時は Inspector 値を利用する。</summary>
         [SerializeField]
         private FUnityModeConfig m_ActiveModeConfig;
+
+        /// <summary>現在使用中の ProjectData。RootLayoutBootstrapper など外部コンポーネントが参照する。</summary>
+        public FUnityProjectData ProjectData => m_Project;
 
         /// <summary>
         /// Visual Scripting から参照する既定の <see cref="ActorPresenterAdapter"/>。Inspector で明示設定し、未設定時はシーン内を探索する。
@@ -149,6 +152,8 @@ namespace FUnity.Core
                 EnsurePresenterBridge();
                 ResolveDefaultActorPresenterAdapter();
             }
+
+            UpdateBootstrapperProjectData();
 
             ResolveActiveModeConfig();
 
@@ -451,12 +456,36 @@ namespace FUnity.Core
             }
 
             var bootstrapper = m_FUnityUI.GetComponent<RootLayoutBootstrapper>();
-            if (bootstrapper != null)
+            if (bootstrapper == null)
+            {
+                bootstrapper = m_FUnityUI.AddComponent<RootLayoutBootstrapper>();
+            }
+
+            bootstrapper.SetProjectData(m_Project);
+        }
+
+        /// <summary>
+        /// RootLayoutBootstrapper に ProjectData を再割り当てし、モード設定変更時の参照ずれを解消する。
+        /// </summary>
+        private void UpdateBootstrapperProjectData()
+        {
+            if (m_FUnityUI == null)
+            {
+                m_FUnityUI = GameObject.Find("FUnity UI");
+            }
+
+            if (m_FUnityUI == null)
             {
                 return;
             }
 
-            m_FUnityUI.AddComponent<RootLayoutBootstrapper>();
+            var bootstrapper = m_FUnityUI.GetComponent<RootLayoutBootstrapper>();
+            if (bootstrapper == null)
+            {
+                return;
+            }
+
+            bootstrapper.SetProjectData(m_Project);
         }
 
         /// <summary>
@@ -1167,33 +1196,43 @@ namespace FUnity.Core
         }
 
         /// <summary>
-        /// アクティブモード設定を取得し、未指定の場合は Resources からロードして Scratch 既定値を補完する。
+        /// アクティブモード設定を取得し、ProjectData の選択結果に基づいて Scratch 固有設定を適用する。
         /// </summary>
         /// <returns>取得した <see cref="FUnityModeConfig"/>。見つからない場合は null。</returns>
         private FUnityModeConfig ResolveActiveModeConfig()
         {
+            if (m_Project != null)
+            {
+                var fromProject = m_Project.GetActiveModeConfig();
+                if (fromProject != null)
+                {
+                    m_ActiveModeConfig = fromProject;
+                    m_ActiveModeConfig.EnsureScratchStageDefaults();
+                    m_LoggedMissingModeConfig = false;
+                    return m_ActiveModeConfig;
+                }
+            }
+
             if (m_ActiveModeConfig != null)
             {
                 m_ActiveModeConfig.EnsureScratchStageDefaults();
-                return m_ActiveModeConfig;
-            }
 
-            var loaded = Resources.Load<FUnityModeConfig>("FUnityActiveMode");
-            if (loaded == null)
-            {
                 if (!m_LoggedMissingModeConfig)
                 {
-                    Debug.LogWarning("[FUnity] FUnityActiveMode.asset が見つからないため、Scratch 固定ステージ設定を適用できません。");
+                    Debug.LogWarning("[FUnity] ProjectData に ModeConfig が未設定のため、FUnityManager の ActiveModeConfig をフォールバック利用します。");
                     m_LoggedMissingModeConfig = true;
                 }
 
-                return null;
+                return m_ActiveModeConfig;
             }
 
-            m_ActiveModeConfig = loaded;
-            m_ActiveModeConfig.EnsureScratchStageDefaults();
-            m_LoggedMissingModeConfig = false;
-            return m_ActiveModeConfig;
+            if (!m_LoggedMissingModeConfig)
+            {
+                Debug.LogWarning("[FUnity] ProjectData から ModeConfig を取得できなかったため、Scratch 固有設定を適用できません。");
+                m_LoggedMissingModeConfig = true;
+            }
+
+            return null;
         }
 
         /// <summary>
