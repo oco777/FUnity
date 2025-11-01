@@ -67,6 +67,18 @@ namespace FUnity.Runtime.View
         /// <summary>GeometryChangedEvent の登録済みかどうかを示すフラグ。</summary>
         private bool m_GeometryCallbacksRegistered;
 
+        /// <summary>現在適用している等倍基準のスケール値。</summary>
+        private float m_CurrentScale = 1f;
+
+        /// <summary>transform-origin を左上へ固定するための定数。</summary>
+        private static readonly TransformOrigin TopLeftTransformOrigin = new TransformOrigin(0f, 0f, 0f);
+
+        /// <summary>ポートレートのスケールを初期化する際に使用する等倍スタイル。</summary>
+        private static readonly StyleScale IdentityScale = new StyleScale(new Scale(Vector3.one));
+
+        /// <summary>UI Toolkit の scale に適用する下限値。</summary>
+        private const float MinimumScale = 0.01f;
+
         /// <summary>
         /// Presenter からバインドされた VisualElement。Visual Scripting の Graph Variables へ登録する際に利用する。
         /// </summary>
@@ -149,6 +161,7 @@ namespace FUnity.Runtime.View
             if (m_ActorRoot != null)
             {
                 m_ActorRoot.style.position = Position.Absolute;
+                m_ActorRoot.style.transformOrigin = TopLeftTransformOrigin;
             }
 
             if (m_Bridge != null)
@@ -166,6 +179,11 @@ namespace FUnity.Runtime.View
             var searchBase = m_ActorRoot ?? element;
             m_BoundElement = searchBase;
             m_RootElement = searchBase;
+            if (m_RootElement != null)
+            {
+                m_RootElement.style.transformOrigin = TopLeftTransformOrigin;
+                ApplyScaleToRoot();
+            }
             m_SpeechLabel = searchBase?.Q<Label>("speech") ?? element?.Q<Label>("speech");
             if (m_SpeechLabel != null)
             {
@@ -173,6 +191,7 @@ namespace FUnity.Runtime.View
             }
 
             m_PortraitElement = null;
+            ResetPortraitScaleToIdentity();
 
             RegisterGeometryCallbacks();
             NotifyStageBounds();
@@ -322,30 +341,23 @@ namespace FUnity.Runtime.View
                 return;
             }
 
-            var safeScale = Mathf.Max(0.01f, scale);
-            m_RootElement.style.scale = new StyleScale(new Scale(new Vector3(safeScale, safeScale, 1f)));
-
-            NotifyStageBounds();
+            var safeScale = Mathf.Max(MinimumScale, scale);
+            ApplyScaleInternal(safeScale);
         }
 
         /// <summary>
-        /// 拡大率（%）をポートレート要素へ適用し、中心ピボットで等比スケールさせる。
+        /// 拡大率（%）を等倍スケールへ変換し、#root 要素に対して拡縮を適用する。
         /// </summary>
         /// <param name="percent">100 で等倍となる拡大率（%）。</param>
         public void SetSizePercent(float percent)
         {
-            var portrait = ResolvePortraitElement();
-            if (portrait == null)
+            if (m_RootElement == null)
             {
                 return;
             }
 
-            portrait.style.transformOrigin = new TransformOrigin(50f, 50f, 0f);
-
-            var safeScale = Mathf.Max(0.01f, percent / 100f);
-            portrait.style.scale = new StyleScale(new Scale(new Vector3(safeScale, safeScale, 1f)));
-
-            NotifyStageBounds();
+            var safeScale = Mathf.Max(MinimumScale, percent / 100f);
+            ApplyScaleInternal(safeScale);
         }
 
         /// <summary>
@@ -540,6 +552,46 @@ namespace FUnity.Runtime.View
             }
 
             return element.Q<VisualElement>(className: "actor-root");
+        }
+
+        /// <summary>
+        /// 現在のスケール値を #root 要素へ適用し、左上原点のまま拡縮できるようにする。
+        /// </summary>
+        private void ApplyScaleToRoot()
+        {
+            if (m_RootElement == null)
+            {
+                return;
+            }
+
+            m_RootElement.style.transformOrigin = TopLeftTransformOrigin;
+            var scaleVector = new Vector3(m_CurrentScale, m_CurrentScale, 1f);
+            m_RootElement.style.scale = new StyleScale(new Scale(scaleVector));
+        }
+
+        /// <summary>
+        /// 指定したスケール値を内部状態へ反映し、ステージ境界の再計算を行う。
+        /// </summary>
+        /// <param name="scale">適用する安全なスケール値。</param>
+        private void ApplyScaleInternal(float scale)
+        {
+            m_CurrentScale = scale;
+            ApplyScaleToRoot();
+            NotifyStageBounds();
+        }
+
+        /// <summary>
+        /// ポートレート要素の scale を等倍へ戻し、#root 側の拡縮へ責務を集約する。
+        /// </summary>
+        private void ResetPortraitScaleToIdentity()
+        {
+            var portrait = ResolvePortraitElement();
+            if (portrait == null)
+            {
+                return;
+            }
+
+            portrait.style.scale = IdentityScale;
         }
 
         /// <summary>

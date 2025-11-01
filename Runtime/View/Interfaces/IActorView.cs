@@ -56,7 +56,7 @@ namespace FUnity.Runtime.View
         void SetScale(float scale);
 
         /// <summary>
-        /// 拡大率（%）を適用し、ポートレート画像を中心ピボットで等比スケールさせる。
+        /// 拡大率（%）を適用し、#root 要素を左上原点のまま等比スケールさせる。
         /// </summary>
         /// <param name="percent">100 で等倍となる拡大率（%）。</param>
         void SetSizePercent(float percent);
