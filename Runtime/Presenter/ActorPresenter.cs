@@ -424,7 +424,7 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 拡大率（%）を絶対値で設定し、View 側へ等比スケールを反映する。
+        /// 拡大率（%）を絶対値で設定し、View 側で #root に対する等比スケールとして反映する。
         /// </summary>
         /// <param name="percent">100 で等倍となる拡大率（%）。</param>
         public void SetSizePercent(float percent)

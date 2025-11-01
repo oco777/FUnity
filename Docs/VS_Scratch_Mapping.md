@@ -38,8 +38,8 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
 | Scratch/Say | ◯ と言う | 吹き出し表示 | 未実装: 対応する Unit が見つかりません |
-| Scratch/Set Size % | 大きさを ◯ % にする | 拡大率を絶対指定で適用 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
-| Scratch/Change Size by % | 大きさを ◯ % ずつ変える | 拡大率を相対変更 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
+| Scratch/Set Size % | 大きさを ◯ % にする | 拡大率を絶対指定で適用 (#root が左上原点のまま拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
+| Scratch/Change Size by % | 大きさを ◯ % ずつ変える | 拡大率を相対変更 (#root 拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
 
 ## イベント
 
