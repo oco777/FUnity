@@ -5,8 +5,8 @@
 ![FUnity overview](Docs/images/readme-hero.png)
 
 ## ⚙ Modes
-- メニュー `FUnity / Authoring / Switch Mode…` から Scratch モードと unityroom モードを切り替えできます。
-- アクティブな設定は `Assets/FUnity/Resources/FUnityActiveMode.asset` に保存され、ランタイム初期化で参照されます。
+- `FUnityProjectData` アセットの Inspector で Scratch モードと unityroom モードを切り替えられます。
+- 選択したモードに応じて `FUnityProjectData` 内の ModeConfig 参照がランタイム起動時に自動適用されます。
 - 各モードの仕様やブロック互換ポリシーは [`Assets/FUnity/Docs/Modes/README.md`](Assets/FUnity/Docs/Modes/README.md) を参照してください。
 
 ## 現状機能サマリ
