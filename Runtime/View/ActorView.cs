@@ -76,8 +76,16 @@ namespace FUnity.Runtime.View
         /// <summary>現在適用している等倍基準のスケール値。</summary>
         private float m_CurrentScale = 1f;
 
-        /// <summary>transform-origin を中央へ固定するための定数。</summary>
-        private static readonly TransformOrigin CenterTransformOrigin = new TransformOrigin(50f, 50f, 0f);
+        /// <summary>transform-origin を中央へ固定するためのスタイル値。</summary>
+#if UNITY_2022_3_OR_NEWER
+        private static readonly StyleTransformOrigin CenterTransformOrigin = new StyleTransformOrigin(TransformOrigin.Center);
+#else
+        private static readonly StyleTransformOrigin CenterTransformOrigin = new StyleTransformOrigin(
+            new TransformOrigin(
+                new Length(50f, LengthUnit.Percent),
+                new Length(50f, LengthUnit.Percent),
+                0f));
+#endif
 
         /// <summary>ポートレートのスケールを初期化する際に使用する等倍スタイル。</summary>
         private static readonly StyleScale IdentityScale = new StyleScale(new Scale(Vector3.one));
@@ -167,7 +175,7 @@ namespace FUnity.Runtime.View
             if (m_ActorRoot != null)
             {
                 m_ActorRoot.style.position = Position.Absolute;
-                m_ActorRoot.style.transformOrigin = CenterTransformOrigin;
+                ApplyCenterPivot(m_ActorRoot);
             }
 
             if (m_Bridge != null)
@@ -188,7 +196,7 @@ namespace FUnity.Runtime.View
             m_HasValidGeometry = false;
             if (m_RootElement != null)
             {
-                m_RootElement.style.transformOrigin = CenterTransformOrigin;
+                ApplyCenterPivot(m_RootElement);
                 ApplyScaleToRoot();
                 ApplyRotationToRoot();
             }
@@ -673,7 +681,7 @@ namespace FUnity.Runtime.View
                 return;
             }
 
-            m_RootElement.style.transformOrigin = CenterTransformOrigin;
+            ApplyCenterPivot(m_RootElement);
             var scaleVector = new Vector3(m_CurrentScale, m_CurrentScale, 1f);
             m_RootElement.style.scale = new StyleScale(new Scale(scaleVector));
         }
@@ -688,7 +696,7 @@ namespace FUnity.Runtime.View
                 return;
             }
 
-            m_RootElement.style.transformOrigin = CenterTransformOrigin;
+            ApplyCenterPivot(m_RootElement);
             m_RootElement.style.rotate = new Rotate(Angle.Degrees(m_CurrentRotationDeg));
         }
 
@@ -702,6 +710,21 @@ namespace FUnity.Runtime.View
             ApplyScaleToRoot();
             UpdateLayoutPosition();
             NotifyStageBounds();
+        }
+
+        /// <summary>
+        /// 指定された要素の transform-origin を中央 (50% 50%) へ固定する。
+        /// UITK の拡縮・回転を要素中心で行うための前提条件として用いる。
+        /// </summary>
+        /// <param name="element">ピボットを適用する対象要素。</param>
+        private static void ApplyCenterPivot(VisualElement element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            element.style.transformOrigin = CenterTransformOrigin;
         }
 
         /// <summary>
