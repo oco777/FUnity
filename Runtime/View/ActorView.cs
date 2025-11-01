@@ -208,7 +208,7 @@ namespace FUnity.Runtime.View
             RegisterGeometryCallbacks();
             NotifyStageBounds();
 
-            UpdateLayoutPosition();
+            UpdateLayoutForCenter();
         }
 
         /// <summary>
@@ -240,7 +240,7 @@ namespace FUnity.Runtime.View
         public void SetCenterPosition(Vector2 centerPx)
         {
             m_CurrentCenterPx = centerPx;
-            UpdateLayoutPosition();
+            UpdateLayoutForCenter();
         }
 
         /// <summary>
@@ -341,7 +341,7 @@ namespace FUnity.Runtime.View
                 m_RootElement.style.height = StyleKeyword.Auto;
             }
 
-            UpdateLayoutPosition();
+            UpdateLayoutForCenter();
             NotifyStageBounds();
         }
 
@@ -475,7 +475,7 @@ namespace FUnity.Runtime.View
                 m_HasValidGeometry = evt.newRect.width > 0f && evt.newRect.height > 0f;
             }
 
-            UpdateLayoutPosition();
+            UpdateLayoutForCenter();
             NotifyStageBounds();
         }
 
@@ -569,8 +569,9 @@ namespace FUnity.Runtime.View
 
         /// <summary>
         /// 現在の中心座標を基準に、スケール適用後のサイズから left/top を算出して UI 要素へ適用する。
+        /// 描画揺れを抑えるため整数ピクセルへ丸める。
         /// </summary>
-        private void UpdateLayoutPosition()
+        private void UpdateLayoutForCenter()
         {
             if (m_Bridge == null)
             {
@@ -585,14 +586,17 @@ namespace FUnity.Runtime.View
             var scaledSize = GetScaledRootSize();
             if (scaledSize.sqrMagnitude <= 0f)
             {
+                var roundedCenterX = Mathf.RoundToInt(m_CurrentCenterPx.x);
+                var roundedCenterY = Mathf.RoundToInt(m_CurrentCenterPx.y);
+
                 if (!m_HasValidGeometry)
                 {
-                    m_Bridge.SetPosition(m_CurrentCenterPx);
+                    m_Bridge.SetPosition(new Vector2(roundedCenterX, roundedCenterY));
                     return;
                 }
 
                 m_HasValidGeometry = false;
-                m_Bridge.SetPosition(m_CurrentCenterPx);
+                m_Bridge.SetPosition(new Vector2(roundedCenterX, roundedCenterY));
                 return;
             }
 
@@ -602,8 +606,10 @@ namespace FUnity.Runtime.View
             var halfHeight = scaledSize.y * 0.5f;
             var left = m_CurrentCenterPx.x - halfWidth;
             var top = m_CurrentCenterPx.y - halfHeight;
+            var roundedLeft = Mathf.RoundToInt(left);
+            var roundedTop = Mathf.RoundToInt(top);
 
-            m_Bridge.SetPosition(new Vector2(left, top));
+            m_Bridge.SetPosition(new Vector2(roundedLeft, roundedTop));
         }
 
         /// <summary>
@@ -704,7 +710,7 @@ namespace FUnity.Runtime.View
         {
             m_CurrentScale = scale;
             ApplyScaleToRoot();
-            UpdateLayoutPosition();
+            UpdateLayoutForCenter();
             NotifyStageBounds();
         }
 
