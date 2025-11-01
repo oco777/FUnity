@@ -89,6 +89,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>モード設定から取得したステージサイズのフォールバック値。</summary>
         private Vector2 m_ModeStagePixelsFallback = Vector2.zero;
 
+        /// <summary>View に伝える追加の縦方向オフセット（px）。浮遊アニメーションなどの視覚効果に利用する。</summary>
+        private float m_VisualYOffset;
+
         /// <summary>ステージのピクセル境界（左上原点）。</summary>
         public Rect StageBoundsPx => m_StageBoundsUi;
 
@@ -145,6 +148,7 @@ namespace FUnity.Runtime.Presenter
             m_Anchor = data != null ? data.Anchor : ActorAnchor.Center;
             m_BaseSize = data != null ? data.Size : Vector2.zero;
             m_LastMeasuredSizePx = Vector2.zero;
+            m_VisualYOffset = 0f;
 
             var initialCenterUi = data != null ? data.InitialPosition : Vector2.zero;
             var anchorInitialUi = ConvertCenterToAnchor(initialCenterUi);
@@ -632,6 +636,22 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 視覚効果として中心座標へ加算する縦方向のオフセットを設定する。Model の座標値は変更しない。
+        /// </summary>
+        /// <param name="offsetPx">加算するピクセル量。正で下方向、負で上方向。</param>
+        public void SetVisualYOffset(float offsetPx)
+        {
+            m_VisualYOffset = offsetPx;
+
+            if (m_View == null)
+            {
+                return;
+            }
+
+            UpdateViewPosition();
+        }
+
+        /// <summary>
         /// 現在の向きを取得する。Presenter 未初期化時は既定値の 90 度を返す。
         /// </summary>
         /// <returns>現在の向き（度）。</returns>
@@ -878,6 +898,10 @@ namespace FUnity.Runtime.Presenter
             var anchorUi = ConvertLogicalToUi(m_State.Position);
             var visualSize = ResolveCurrentVisualSizeForAnchor(actorElement);
             var centerUi = ConvertAnchorToCenter(anchorUi, visualSize);
+            if (Mathf.Abs(m_VisualYOffset) > Mathf.Epsilon)
+            {
+                centerUi.y += m_VisualYOffset;
+            }
             var requiresGeometryWatch = NeedsGeometryResolution(actorElement);
 
             EnsureAnchorGeometrySubscription(actorElement, requiresGeometryWatch);
@@ -887,6 +911,34 @@ namespace FUnity.Runtime.Presenter
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ValidateCenterAlignment(centerUi);
 #endif
+        }
+
+        /// <summary>
+        /// 現在保持しているスケール・回転・座標を View に再適用し、外部要因で崩れたスタイルを復元する。
+        /// </summary>
+        public void ApplyAllTransforms()
+        {
+            if (m_View == null)
+            {
+                return;
+            }
+
+            if (m_State != null)
+            {
+                var percent = Mathf.Clamp(m_State.SizePercent, MinSizePercent, MaxSizePercent);
+                m_CurrentScale = percent / 100f;
+                m_View.SetSizePercent(percent);
+                m_View.SetRotationDegrees(m_State.RotationDeg);
+                UpdateRenderedSizeFromView();
+                ClampStateToBounds();
+            }
+            else
+            {
+                m_View.SetSizePercent(m_CurrentScale * 100f);
+                m_View.SetRotationDegrees(0f);
+            }
+
+            UpdateViewPosition();
         }
 
         /// <summary>

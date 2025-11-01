@@ -28,20 +28,43 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         private float m_LocalDirectionDeg = 90f;
 
         // Cached references and animation state
-        private VisualElement m_BoundElement;
-        private bool m_FloatEnabled = true;
-        private float m_Amplitude = 10f;   // px
-        private float m_PeriodSec = 3f;    // seconds
-        private float m_Phase;
-        private Vector3 m_BaseTranslation;
-        private float m_CurrentOffset;
+        /// <summary>Presenter へ状態を伝える際の参照元となる VisualElement。</summary>
+        private VisualElement m_BoundSource;
 
+        /// <summary>UI への書き込み中かどうかを示す再入防止フラグ。</summary>
+        private bool m_Applying;
+
+        /// <summary>GeometryChangedEvent を購読済みかどうか。</summary>
+        private bool m_IsGeometrySubscribed;
+
+        /// <summary>GeometryChangedEvent を 1 度だけ処理したか。</summary>
+        private bool m_SourceGeometryNotified;
+
+        /// <summary>浮遊アニメーションが有効か。</summary>
+        private bool m_FloatEnabled = true;
+
+        /// <summary>上下方向の振幅（px）。</summary>
+        private float m_Amplitude = 10f;
+
+        /// <summary>1 周の周期（秒）。</summary>
+        private float m_PeriodSec = 3f;
+
+        /// <summary>周期計算用の内部フェーズ。</summary>
+        private float m_Phase;
+
+        /// <summary>現在の浮遊オフセット（px）。Presenter 経由で View に伝える。</summary>
+        private float m_FloatOffset;
+
+        /// <summary>NudgeY で調整した静的な Y オフセット（px）。</summary>
+        private float m_StaticYOffset;
+
+        /// <summary>UI Toolkit の schedule.Execute を保持し、再利用する。</summary>
         private IVisualElementScheduledItem m_Ticker;
 
         /// <summary>
-        /// 現在バインドされている UI Toolkit 要素。
+        /// 現在バインドされている UI Toolkit 要素。Presenter への参照入力専用であり、直接スタイルは変更しない。
         /// </summary>
-        public VisualElement BoundElement => m_BoundElement;
+        public VisualElement BoundElement => m_BoundSource;
 
         /// <summary>現在の座標原点。Presenter 未設定時は TopLeft。</summary>
         public CoordinateOrigin CoordinateOrigin
@@ -57,7 +80,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// </summary>
         private void OnEnable()
         {
-            if (!m_FloatEnabled || m_BoundElement == null)
+            if (m_BoundSource != null)
+            {
+                SubscribeSourceGeometry();
+                ApplyPresenterTransforms();
+                ApplyPresenterOffsets();
+            }
+
+            if (!m_FloatEnabled || m_BoundSource == null)
             {
                 return;
             }
@@ -78,6 +108,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         private void OnDisable()
         {
             m_Ticker?.Pause();
+            UnsubscribeSourceGeometry();
         }
 
         // ===== Visual Scripting APIs (auto-exposed as units) =====
@@ -99,16 +130,19 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            if (m_BoundElement != ve)
+            if (m_BoundSource != ve)
             {
                 m_Ticker?.Pause();
                 m_Ticker = null;
+                UnsubscribeSourceGeometry();
             }
 
-            m_BoundElement = ve;
-            m_BaseTranslation = ResolveBaseTranslation(m_BoundElement);
-            m_CurrentOffset = 0f;
-            ApplyTranslation();
+            m_BoundSource = ve;
+            m_SourceGeometryNotified = false;
+            m_StaticYOffset = 0f;
+            m_FloatOffset = 0f;
+            SubscribeSourceGeometry();
+            ApplyPresenterTransforms();
 
             if (m_FloatEnabled && isActiveAndEnabled)
             {
@@ -130,6 +164,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
             }
 
             m_ActorPresenter.SetDirection(m_LocalDirectionDeg);
+            ApplyPresenterOffsets();
         }
 
         /// <summary>
@@ -288,7 +323,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return m_ActorPresenter.StageRootElement;
             }
 
-            return m_BoundElement != null ? m_BoundElement.parent : null;
+            return m_BoundSource != null ? m_BoundSource.parent : null;
         }
 
         /// <summary>
@@ -356,17 +391,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting
 
             if (!m_FloatEnabled)
             {
-                if (m_BoundElement != null)
-                {
-                    // Reset translation when disabled (visual reset)
-                    m_CurrentOffset = 0f;
-                    ApplyTranslation();
-                }
+                m_FloatOffset = 0f;
+                ApplyPresenterOffsets();
                 m_Ticker?.Pause();
                 return;
             }
 
-            if (m_BoundElement == null)
+            if (m_BoundSource == null)
             {
                 Debug.LogWarning("[FUnity] ActorPresenterAdapter: EnableFloat called without a bound actor element.");
                 return;
@@ -377,6 +408,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 StartTicker();
             }
             m_Ticker?.Resume();
+            ApplyPresenterOffsets();
         }
 
         /// <summary>
@@ -406,7 +438,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         {
             m_PeriodSec = Mathf.Max(0.1f, periodSeconds);
 
-            if (m_FloatEnabled && m_BoundElement != null && m_Ticker != null)
+            if (m_FloatEnabled && m_BoundSource != null && m_Ticker != null)
             {
                 StartTicker();
             }
@@ -423,10 +455,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// </example>
         public void NudgeY(float deltaPx)
         {
-            if (m_BoundElement == null) return;
-
-            m_BaseTranslation.y += deltaPx;
-            ApplyTranslation();
+            m_StaticYOffset += deltaPx;
+            ApplyPresenterOffsets();
         }
 
         /// <summary>
@@ -451,11 +481,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         private void StartTicker()
         {
             m_Ticker?.Pause();
-            if (m_BoundElement == null) return;
+            if (m_BoundSource == null) return;
 
             m_Phase = 0f;
-            m_CurrentOffset = 0f;
-            m_Ticker = m_BoundElement.schedule.Execute(() =>
+            m_FloatOffset = 0f;
+            ApplyPresenterOffsets();
+            m_Ticker = m_BoundSource.schedule.Execute(() =>
             {
                 if (!m_FloatEnabled || m_PeriodSec <= 0f) return;
 
@@ -463,45 +494,116 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 if (m_Phase > 1f) m_Phase -= 1f;
 
                 float offset = Mathf.Sin(m_Phase * Mathf.PI * 2f) * m_Amplitude;
-                m_CurrentOffset = offset;
-                ApplyTranslation();
+                m_FloatOffset = offset;
+                ApplyPresenterOffsets();
             }).Every(16); // ~60 FPS
         }
 
         /// <summary>
-        /// 現在のベース位置と浮遊オフセットを <see cref="VisualElement.style"/> に反映する。
+        /// Presenter へ現在のオフセットを伝え、View を更新させる。
         /// </summary>
-        private void ApplyTranslation()
+        private void ApplyPresenterOffsets()
         {
-            if (m_BoundElement == null)
+            if (m_ActorPresenter == null)
             {
                 return;
             }
 
-            m_BoundElement.style.translate = new Translate(m_BaseTranslation.x, m_BaseTranslation.y + m_CurrentOffset, m_BaseTranslation.z);
+            if (m_Applying)
+            {
+                return;
+            }
+
+            m_Applying = true;
+            try
+            {
+                m_ActorPresenter.SetVisualYOffset(m_StaticYOffset + m_FloatOffset);
+            }
+            finally
+            {
+                m_Applying = false;
+            }
         }
 
         /// <summary>
-        /// 要素が既に保持している translate 値を初期値として取得する。
+        /// Presenter が保持している座標・角度・スケールを再適用させる。
         /// </summary>
-        /// <param name="element">対象要素。</param>
-        /// <returns>translate のベース値。</returns>
-        private static Vector3 ResolveBaseTranslation(VisualElement element)
+        private void ApplyPresenterTransforms()
         {
-            if (element == null)
+            if (m_ActorPresenter == null)
             {
-                return Vector3.zero;
+                return;
             }
 
-            var translate = element.style.translate;
-            if (translate.keyword == StyleKeyword.Undefined)
+            if (m_Applying)
             {
-                var value = translate.value;
-                return new Vector3(value.x.value, value.y.value, value.z);
+                return;
             }
 
-            var resolved = element.resolvedStyle.translate;
-            return new Vector3(resolved.x, resolved.y, resolved.z);
+            m_Applying = true;
+            try
+            {
+                m_ActorPresenter.ApplyAllTransforms();
+            }
+            finally
+            {
+                m_Applying = false;
+            }
+        }
+
+        /// <summary>
+        /// バインド元要素の GeometryChangedEvent を監視し、初回レイアウト確定で Presenter を起動する。
+        /// </summary>
+        private void SubscribeSourceGeometry()
+        {
+            if (m_BoundSource == null)
+            {
+                return;
+            }
+
+            if (m_IsGeometrySubscribed || m_SourceGeometryNotified)
+            {
+                return;
+            }
+
+            m_BoundSource.RegisterCallback<GeometryChangedEvent>(OnSourceGeometryChanged);
+            m_IsGeometrySubscribed = true;
+        }
+
+        /// <summary>
+        /// GeometryChangedEvent の購読を解除し、ループを防止する。
+        /// </summary>
+        private void UnsubscribeSourceGeometry()
+        {
+            if (m_BoundSource == null)
+            {
+                return;
+            }
+
+            if (!m_IsGeometrySubscribed)
+            {
+                return;
+            }
+
+            m_BoundSource.UnregisterCallback<GeometryChangedEvent>(OnSourceGeometryChanged);
+            m_IsGeometrySubscribed = false;
+        }
+
+        /// <summary>
+        /// バインド元のレイアウトが確定した際に Presenter へ再適用を要求する。
+        /// </summary>
+        /// <param name="evt">UI Toolkit が通知するジオメトリ情報。</param>
+        private void OnSourceGeometryChanged(GeometryChangedEvent evt)
+        {
+            if (m_SourceGeometryNotified)
+            {
+                return;
+            }
+
+            m_SourceGeometryNotified = true;
+            UnsubscribeSourceGeometry();
+            ApplyPresenterTransforms();
+            ApplyPresenterOffsets();
         }
     }
 }
