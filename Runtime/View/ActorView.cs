@@ -70,6 +70,9 @@ namespace FUnity.Runtime.View
         /// <summary>GeometryChangedEvent の登録済みかどうかを示すフラグ。</summary>
         private bool m_GeometryCallbacksRegistered;
 
+        /// <summary>俳優ルート要素のジオメトリが有効（幅・高さが確定済み）かを示すフラグ。</summary>
+        private bool m_HasValidGeometry;
+
         /// <summary>現在適用している等倍基準のスケール値。</summary>
         private float m_CurrentScale = 1f;
 
@@ -182,6 +185,7 @@ namespace FUnity.Runtime.View
             var searchBase = m_ActorRoot ?? element;
             m_BoundElement = searchBase;
             m_RootElement = searchBase;
+            m_HasValidGeometry = false;
             if (m_RootElement != null)
             {
                 m_RootElement.style.transformOrigin = CenterTransformOrigin;
@@ -273,24 +277,7 @@ namespace FUnity.Runtime.View
         /// <returns>スケール反映後の幅・高さ（px）。要素未バインド時は <see cref="Vector2.zero"/> を返す。</returns>
         public Vector2 GetScaledSizePx()
         {
-            var root = m_RootElement ?? m_BoundElement;
-            if (root == null)
-            {
-                return Vector2.zero;
-            }
-
-            var layoutSize = root.layout.size;
-            var baseWidth = Mathf.Max(0f, layoutSize.x);
-            var baseHeight = Mathf.Max(0f, layoutSize.y);
-
-#if UNITY_2022_3_OR_NEWER
-            var scaleValue = root.resolvedStyle.scale.value;
-            var scaleX = Mathf.Approximately(scaleValue.x, 0f) ? 0f : scaleValue.x;
-            var scaleY = Mathf.Approximately(scaleValue.y, 0f) ? 0f : scaleValue.y;
-            return new Vector2(baseWidth * scaleX, baseHeight * scaleY);
-#else
-            return new Vector2(baseWidth, baseHeight) * m_CurrentScale;
-#endif
+            return GetScaledRootSize();
         }
 
         /// <summary>
@@ -479,6 +466,11 @@ namespace FUnity.Runtime.View
         /// <param name="evt">UI Toolkit が発行する GeometryChangedEvent。</param>
         private void OnElementGeometryChanged(GeometryChangedEvent evt)
         {
+            if (evt != null)
+            {
+                m_HasValidGeometry = evt.newRect.width > 0f && evt.newRect.height > 0f;
+            }
+
             UpdateLayoutPosition();
             NotifyStageBounds();
         }
@@ -572,7 +564,7 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 現在の中心座標を基準に left/top を計算し、UI 要素へ適用する。
+        /// 現在の中心座標を基準に、スケール適用後のサイズから left/top を算出して UI 要素へ適用する。
         /// </summary>
         private void UpdateLayoutPosition()
         {
@@ -586,15 +578,24 @@ namespace FUnity.Runtime.View
                 return;
             }
 
-            var size = GetUnscaledRootSize();
-            if (size.sqrMagnitude <= 0f)
+            var scaledSize = GetScaledRootSize();
+            if (scaledSize.sqrMagnitude <= 0f)
             {
+                if (!m_HasValidGeometry)
+                {
+                    m_Bridge.SetPosition(m_CurrentCenterPx);
+                    return;
+                }
+
+                m_HasValidGeometry = false;
                 m_Bridge.SetPosition(m_CurrentCenterPx);
                 return;
             }
 
-            var halfWidth = size.x * 0.5f;
-            var halfHeight = size.y * 0.5f;
+            m_HasValidGeometry = true;
+
+            var halfWidth = scaledSize.x * 0.5f;
+            var halfHeight = scaledSize.y * 0.5f;
             var left = m_CurrentCenterPx.x - halfWidth;
             var top = m_CurrentCenterPx.y - halfHeight;
 
@@ -607,22 +608,23 @@ namespace FUnity.Runtime.View
         /// <returns>幅・高さ（px）。未確定時は 0。</returns>
         private Vector2 GetUnscaledRootSize()
         {
-            if (m_RootElement == null)
+            var root = m_RootElement ?? m_BoundElement;
+            if (root == null)
             {
                 return Vector2.zero;
             }
 
-            var width = m_RootElement.layout.width;
-            var height = m_RootElement.layout.height;
+            var width = root.layout.width;
+            var height = root.layout.height;
 
             if (float.IsNaN(width) || width <= 0f)
             {
-                width = m_RootElement.resolvedStyle.width;
+                width = root.resolvedStyle.width;
             }
 
             if (float.IsNaN(height) || height <= 0f)
             {
-                height = m_RootElement.resolvedStyle.height;
+                height = root.resolvedStyle.height;
             }
 
             if (float.IsNaN(width) || width < 0f)
@@ -639,6 +641,29 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
+        /// スケール適用後の俳優ルート要素サイズを計算し、中心アンカーでの配置計算に利用する。
+        /// </summary>
+        /// <returns>スケール済み幅・高さ（px）。未確定時は <see cref="Vector2.zero"/>。</returns>
+        private Vector2 GetScaledRootSize()
+        {
+            var baseSize = GetUnscaledRootSize();
+            if (baseSize.sqrMagnitude <= 0f)
+            {
+                return Vector2.zero;
+            }
+
+#if UNITY_2022_3_OR_NEWER
+            var root = m_RootElement ?? m_BoundElement;
+            var scaleValue = root != null ? root.resolvedStyle.scale.value : Vector3.one;
+            var scaleX = Mathf.Approximately(scaleValue.x, 0f) ? 0f : scaleValue.x;
+            var scaleY = Mathf.Approximately(scaleValue.y, 0f) ? 0f : scaleValue.y;
+            return new Vector2(baseSize.x * scaleX, baseSize.y * scaleY);
+#else
+            return baseSize * m_CurrentScale;
+#endif
+        }
+
+        /// <summary>
         /// 現在のスケール値を #root 要素へ適用し、中心を基点に拡縮できるようにする。
         /// </summary>
         private void ApplyScaleToRoot()
@@ -651,7 +676,6 @@ namespace FUnity.Runtime.View
             m_RootElement.style.transformOrigin = CenterTransformOrigin;
             var scaleVector = new Vector3(m_CurrentScale, m_CurrentScale, 1f);
             m_RootElement.style.scale = new StyleScale(new Scale(scaleVector));
-            UpdateLayoutPosition();
         }
 
         /// <summary>
@@ -676,6 +700,7 @@ namespace FUnity.Runtime.View
         {
             m_CurrentScale = scale;
             ApplyScaleToRoot();
+            UpdateLayoutPosition();
             NotifyStageBounds();
         }
 
