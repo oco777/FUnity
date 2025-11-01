@@ -58,15 +58,6 @@ namespace FUnity.Runtime.UI
         /// <summary>ステージビューポートへ付与する USS クラス名。</summary>
         private const string StageViewportClassName = "funity-stage__viewport";
 
-        /// <summary>背景レイヤーの描画順序（z-index）。</summary>
-        private const int BackgroundLayerZ = 0;
-
-        /// <summary>俳優レイヤーの描画順序（z-index）。</summary>
-        private const int ActorLayerZ = 100;
-
-        /// <summary>オーバーレイレイヤーの描画順序（z-index）。</summary>
-        private const int OverlayLayerZ = 200;
-
         /// <summary>背景 USS のキャッシュ。null のまま読み込み失敗を示す。</summary>
         private static StyleSheet s_cachedBackgroundStyleSheet;
 
@@ -120,15 +111,15 @@ namespace FUnity.Runtime.UI
             m_stageViewport.style.flexGrow = 0f;
             m_stageViewport.style.flexShrink = 0f;
 
-            m_backgroundLayer = CreateLayer(BackgroundLayerName, BackgroundLayerClassName, PickingMode.Ignore, BackgroundLayerZ);
+            m_backgroundLayer = CreateLayer(BackgroundLayerName, BackgroundLayerClassName, PickingMode.Ignore);
             EnsureBackgroundStyleSheet(m_backgroundLayer);
             EnsureBackgroundInlineGuard(m_backgroundLayer);
 
-            m_actorContainer = CreateLayer(ActorContainerName, ActorContainerClassName, PickingMode.Position, ActorLayerZ);
+            m_actorContainer = CreateLayer(ActorContainerName, ActorContainerClassName, PickingMode.Position);
             m_actorContainer.style.justifyContent = Justify.FlexStart;
             m_actorContainer.style.alignItems = Align.FlexStart;
 
-            m_overlayContainer = CreateLayer(OverlayContainerName, OverlayContainerClassName, PickingMode.Position, OverlayLayerZ);
+            m_overlayContainer = CreateLayer(OverlayContainerName, OverlayContainerClassName, PickingMode.Position);
 
             m_stageViewport.Add(m_backgroundLayer);
             m_stageViewport.Add(m_actorContainer);
@@ -138,7 +129,13 @@ namespace FUnity.Runtime.UI
 
             ApplyStageSize(m_stageSize);
 
-            RegisterCallback<GeometryChangedEvent>(_ => ApplyStageSize(m_stageSize));
+            EnsureLayerOrder();
+
+            RegisterCallback<GeometryChangedEvent>(_ =>
+            {
+                ApplyStageSize(m_stageSize);
+                EnsureLayerOrder();
+            });
         }
 
         /// <summary>背景レイヤーを内部から公開し、Presenter 側での再利用を可能にする。</summary>
@@ -302,9 +299,8 @@ namespace FUnity.Runtime.UI
         /// <param name="elementName">生成する要素の名称。</param>
         /// <param name="className">適用する USS クラス。</param>
         /// <param name="picking">ピッキングモード。</param>
-        /// <param name="zIndex">描画順序。</param>
         /// <returns>生成した VisualElement。</returns>
-        private static VisualElement CreateLayer(string elementName, string className, PickingMode picking, int zIndex)
+        private static VisualElement CreateLayer(string elementName, string className, PickingMode picking)
         {
             var layer = new VisualElement
             {
@@ -317,9 +313,29 @@ namespace FUnity.Runtime.UI
             layer.style.position = Position.Absolute;
             layer.style.left = 0f;
             layer.style.top = 0f;
-            layer.style.zIndex = zIndex;
 
             return layer;
+        }
+
+        /// <summary>
+        /// 背景・俳優・オーバーレイの順序を追加順に合わせて補強し、z-index 非対応環境でも描画順を維持する。
+        /// </summary>
+        private void EnsureLayerOrder()
+        {
+            if (m_stageViewport == null)
+            {
+                return;
+            }
+
+            if (m_backgroundLayer != null)
+            {
+                m_backgroundLayer.SendToBack();
+            }
+
+            if (m_overlayContainer != null)
+            {
+                m_overlayContainer.BringToFront();
+            }
         }
 
         /// <summary>
