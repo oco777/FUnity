@@ -29,7 +29,7 @@ namespace FUnity.Runtime.View
         }
 
         /// <inheritdoc />
-        public void SetPosition(Vector2 pos)
+        public void SetCenterPosition(Vector2 center)
         {
         }
 

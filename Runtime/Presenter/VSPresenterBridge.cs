@@ -84,10 +84,10 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 俳優を絶対座標へ移動させる。Custom Event "Actor/SetPosition" を想定。
+        /// 俳優を絶対座標（中心）へ移動させる。Custom Event "Actor/SetPosition" を想定。
         /// </summary>
-        /// <param name="x">X 座標（px）。</param>
-        /// <param name="y">Y 座標（px）。</param>
+        /// <param name="x">中心の X 座標（px）。</param>
+        /// <param name="y">中心の Y 座標（px）。</param>
         public void OnActorSetPosition(float x, float y)
         {
             if (m_Target == null)

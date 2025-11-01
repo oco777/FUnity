@@ -139,6 +139,8 @@ public class StageElement : VisualElement
 }
 ```
 
+> 📝 座標系メモ: ランタイムの `ActorView` は `style.left/top` を内部で補正し、Presenter や Visual Scripting から渡す座標が常に画像中心（px）になるよう配置しています。拡大・回転は `#root` 要素の `transform-origin` を中央 (50%, 50%) に固定して適用するため、スケールや回転後も中心位置は不変です。
+
 > ℹ️ ステージ内オーバーレイ (`FUnityOverlayContainer`) は StageElement のビューポート内に生成され、UIScaleService による拡縮へ追従します。画面全体に固定表示したいクローム UI は StageElement の外側にあるグローバルオーバーレイへ配置してください。
 
 ### 🧍 ActorElement.cs
