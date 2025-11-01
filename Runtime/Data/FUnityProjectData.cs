@@ -59,6 +59,22 @@ namespace FUnity.Runtime.Core
         /// <summary>生成する俳優の静的設定コレクション。</summary>
         [SerializeField] private List<FUnityActorData> m_actors = new List<FUnityActorData>();
 
+        [Header("Performance / Frame Rate")]
+        /// <summary>
+        /// 起動時に設定するフレームレート。-1 を指定するとプラットフォーム既定値を維持し、60 以上を推奨する。
+        /// </summary>
+        [SerializeField] private int m_TargetFPS = 60;
+
+        /// <summary>
+        /// true の場合は QualitySettings.vSyncCount を 0 にし、targetFrameRate の制御を優先させる。
+        /// </summary>
+        [SerializeField] private bool m_DisableVSync = true;
+
+        /// <summary>
+        /// true の場合は起動時に自動でフレームレート設定を適用し、false なら既存設定を変更しない。
+        /// </summary>
+        [SerializeField] private bool m_ApplyFrameRateOnStartup = true;
+
         [Header("Mode Configuration")]
         /// <summary>現在のゲームモードを示す列挙値。Scratch / unityroom いずれかを選択する。</summary>
         [SerializeField] private FUnityGameMode m_GameMode = FUnityGameMode.Scratch;
@@ -74,6 +90,15 @@ namespace FUnity.Runtime.Core
 
         /// <summary>俳優データのリスト。Presenter 初期化時に順次消費される。</summary>
         public List<FUnityActorData> Actors => m_actors;
+
+        /// <summary>起動時に設定するフレームレート。-1 の場合はプラットフォーム既定値を尊重する。</summary>
+        public int TargetFPS => m_TargetFPS;
+
+        /// <summary>vSync を無効化し targetFrameRate 優先とするかどうか。</summary>
+        public bool DisableVSync => m_DisableVSync;
+
+        /// <summary>起動時に自動でフレームレート設定を適用するかどうか。</summary>
+        public bool ApplyFrameRateOnStartup => m_ApplyFrameRateOnStartup;
 
         /// <summary>現在選択されているゲームモード。Inspector で切り替え可能。</summary>
         public FUnityGameMode GameMode => m_GameMode;
