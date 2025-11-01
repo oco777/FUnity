@@ -16,7 +16,7 @@ namespace FUnity.Runtime.Core
 
         /// <summary>
         /// 拡大率適用後のスプライトサイズを考慮し、中心座標を許容範囲へクランプします。
-        /// 回転は中心回転を前提とし、判定には反映しません。
+        /// 幅・高さの半分をステージ半径に足し引きした境界で判定し、回転は中心回転を前提とします。
         /// </summary>
         /// <param name="center">中心座標（Scratch 論理座標系）。</param>
         /// <param name="scaledSize">拡大率適用後の幅・高さ（px）。</param>
@@ -25,11 +25,13 @@ namespace FUnity.Runtime.Core
         {
             var width = Mathf.Max(0f, scaledSize.x);
             var height = Mathf.Max(0f, scaledSize.y);
+            var halfWidth = width * 0.5f;
+            var halfHeight = height * 0.5f;
 
-            var minX = -StageHalfW - width;
-            var maxX = StageHalfW + width;
-            var minY = -StageHalfH - height;
-            var maxY = StageHalfH + height;
+            var minX = -StageHalfW - halfWidth;
+            var maxX = StageHalfW + halfWidth;
+            var minY = -StageHalfH - halfHeight;
+            var maxY = StageHalfH + halfHeight;
 
             var clampedX = Mathf.Clamp(center.x, minX, maxX);
             var clampedY = Mathf.Clamp(center.y, minY, maxY);
