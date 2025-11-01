@@ -70,8 +70,8 @@ namespace FUnity.Runtime.View
         /// <summary>GeometryChangedEvent の登録済みかどうかを示すフラグ。</summary>
         private bool m_GeometryCallbacksRegistered;
 
-        /// <summary>俳優ルート要素のジオメトリが有効（幅・高さが確定済み）かを示すフラグ。</summary>
-        private bool m_HasValidGeometry;
+        /// <summary>俳優ルート要素のジオメトリが確定済みかを示すフラグ。</summary>
+        private bool m_GeometryReady;
 
         /// <summary>現在適用している等倍基準のスケール値。</summary>
         private float m_CurrentScale = 1f;
@@ -189,12 +189,10 @@ namespace FUnity.Runtime.View
             var searchBase = m_ActorRoot ?? element;
             m_BoundElement = searchBase;
             m_RootElement = searchBase;
-            m_HasValidGeometry = false;
+            m_GeometryReady = false;
             if (m_RootElement != null)
             {
                 ApplyCenterPivot(m_RootElement);
-                ApplyScaleToRoot();
-                ApplyRotationToRoot();
             }
             m_SpeechLabel = searchBase?.Q<Label>("speech") ?? element?.Q<Label>("speech");
             if (m_SpeechLabel != null)
@@ -206,9 +204,7 @@ namespace FUnity.Runtime.View
             ResetPortraitScaleToIdentity();
 
             RegisterGeometryCallbacks();
-            NotifyStageBounds();
-
-            UpdateLayoutForCenter();
+            ApplyAllTransforms();
         }
 
         /// <summary>
@@ -351,13 +347,11 @@ namespace FUnity.Runtime.View
         /// <param name="scale">適用するスケール。</param>
         public void SetScale(float scale)
         {
-            if (m_RootElement == null)
-            {
-                return;
-            }
-
             var safeScale = Mathf.Max(MinimumScale, scale);
-            ApplyScaleInternal(safeScale);
+            m_CurrentScale = safeScale;
+            ApplyScaleToRoot();
+            UpdateLayoutForCenter();
+            NotifyStageBounds();
         }
 
         /// <summary>
@@ -366,13 +360,8 @@ namespace FUnity.Runtime.View
         /// <param name="percent">100 で等倍となる拡大率（%）。</param>
         public void SetSizePercent(float percent)
         {
-            if (m_RootElement == null)
-            {
-                return;
-            }
-
             var safeScale = Mathf.Max(MinimumScale, percent / 100f);
-            ApplyScaleInternal(safeScale);
+            SetScale(safeScale);
         }
 
         /// <summary>
@@ -443,13 +432,14 @@ namespace FUnity.Runtime.View
         /// </summary>
         private void RegisterGeometryCallbacks()
         {
-            if (m_BoundElement != null && !m_GeometryCallbacksRegistered)
+            var geometryTarget = m_RootElement ?? m_BoundElement;
+            if (geometryTarget != null && !m_GeometryCallbacksRegistered)
             {
-                m_BoundElement.RegisterCallback<GeometryChangedEvent>(OnElementGeometryChanged);
+                geometryTarget.RegisterCallback<GeometryChangedEvent>(OnElementGeometryChanged);
                 m_GeometryCallbacksRegistered = true;
             }
 
-            var panelRoot = m_BoundElement?.panel?.visualTree;
+            var panelRoot = geometryTarget?.panel?.visualTree;
             if (panelRoot == null || panelRoot == m_PanelRoot)
             {
                 return;
@@ -472,11 +462,10 @@ namespace FUnity.Runtime.View
         {
             if (evt != null)
             {
-                m_HasValidGeometry = evt.newRect.width > 0f && evt.newRect.height > 0f;
+                m_GeometryReady = evt.newRect.width > 0f && evt.newRect.height > 0f;
             }
 
-            UpdateLayoutForCenter();
-            NotifyStageBounds();
+            ApplyAllTransforms();
         }
 
         /// <summary>
@@ -509,9 +498,10 @@ namespace FUnity.Runtime.View
         /// </summary>
         private void UnregisterGeometryCallbacks()
         {
-            if (m_BoundElement != null && m_GeometryCallbacksRegistered)
+            if (m_GeometryCallbacksRegistered)
             {
-                m_BoundElement.UnregisterCallback<GeometryChangedEvent>(OnElementGeometryChanged);
+                var geometryTarget = m_RootElement ?? m_BoundElement;
+                geometryTarget?.UnregisterCallback<GeometryChangedEvent>(OnElementGeometryChanged);
             }
 
             m_GeometryCallbacksRegistered = false;
@@ -568,48 +558,52 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 現在の中心座標を基準に、スケール適用後のサイズから left/top を算出して UI 要素へ適用する。
-        /// 描画揺れを抑えるため整数ピクセルへ丸める。
+        /// スケール・回転・座標適用対象となる #root 要素を解決する。
+        /// </summary>
+        /// <returns>俳優のルート VisualElement。</returns>
+        private VisualElement GetRootElement()
+        {
+            return m_RootElement ?? m_ActorRoot ?? m_BoundElement;
+        }
+
+        /// <summary>
+        /// 中心座標と拡大後サイズから left/top を算出し、#root 要素へ反映する。
+        /// 描画揺れを抑えるため整数ピクセルへ丸めて適用する。
         /// </summary>
         private void UpdateLayoutForCenter()
         {
-            if (m_Bridge == null)
+            var root = GetRootElement();
+            if (root == null)
             {
                 return;
             }
 
-            if (!m_Bridge.HasBoundElement && !m_Bridge.TryBind())
+            if (!m_GeometryReady)
             {
+                var fallbackLeft = Mathf.RoundToInt(m_CurrentCenterPx.x);
+                var fallbackTop = Mathf.RoundToInt(m_CurrentCenterPx.y);
+                root.style.left = fallbackLeft;
+                root.style.top = fallbackTop;
                 return;
             }
 
-            var scaledSize = GetScaledRootSize();
+            var scaledSize = GetScaledSizePx();
             if (scaledSize.sqrMagnitude <= 0f)
             {
-                var roundedCenterX = Mathf.RoundToInt(m_CurrentCenterPx.x);
-                var roundedCenterY = Mathf.RoundToInt(m_CurrentCenterPx.y);
-
-                if (!m_HasValidGeometry)
-                {
-                    m_Bridge.SetPosition(new Vector2(roundedCenterX, roundedCenterY));
-                    return;
-                }
-
-                m_HasValidGeometry = false;
-                m_Bridge.SetPosition(new Vector2(roundedCenterX, roundedCenterY));
+                var centerLeft = Mathf.RoundToInt(m_CurrentCenterPx.x);
+                var centerTop = Mathf.RoundToInt(m_CurrentCenterPx.y);
+                root.style.left = centerLeft;
+                root.style.top = centerTop;
                 return;
             }
-
-            m_HasValidGeometry = true;
 
             var halfWidth = scaledSize.x * 0.5f;
             var halfHeight = scaledSize.y * 0.5f;
-            var left = m_CurrentCenterPx.x - halfWidth;
-            var top = m_CurrentCenterPx.y - halfHeight;
-            var roundedLeft = Mathf.RoundToInt(left);
-            var roundedTop = Mathf.RoundToInt(top);
+            var left = Mathf.RoundToInt(m_CurrentCenterPx.x - halfWidth);
+            var top = Mathf.RoundToInt(m_CurrentCenterPx.y - halfHeight);
 
-            m_Bridge.SetPosition(new Vector2(roundedLeft, roundedTop));
+            root.style.left = left;
+            root.style.top = top;
         }
 
         /// <summary>
@@ -618,7 +612,7 @@ namespace FUnity.Runtime.View
         /// <returns>幅・高さ（px）。未確定時は 0。</returns>
         private Vector2 GetUnscaledRootSize()
         {
-            var root = m_RootElement ?? m_BoundElement;
+            var root = GetRootElement();
             if (root == null)
             {
                 return Vector2.zero;
@@ -663,8 +657,8 @@ namespace FUnity.Runtime.View
             }
 
 #if UNITY_2022_3_OR_NEWER
-            var root = m_RootElement ?? m_BoundElement;
-            var scaleValue = root != null ? root.resolvedStyle.scale.value : Vector3.one;
+            var root = GetRootElement();
+            var scaleValue = root != null ? root.resolvedStyle.scale.value : Vector2.one;
             var scaleX = Mathf.Approximately(scaleValue.x, 0f) ? 0f : scaleValue.x;
             var scaleY = Mathf.Approximately(scaleValue.y, 0f) ? 0f : scaleValue.y;
             return new Vector2(baseSize.x * scaleX, baseSize.y * scaleY);
@@ -674,18 +668,32 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
+        /// 現在保持しているスケール・回転・中心座標を再適用し、ジオメトリ変化後の揺らぎを抑制する。
+        /// </summary>
+        private void ApplyAllTransforms()
+        {
+            ApplyScaleToRoot();
+            ApplyRotationToRoot();
+            UpdateLayoutForCenter();
+            NotifyStageBounds();
+        }
+
+        /// <summary>
         /// 現在のスケール値を #root 要素へ適用し、中心を基点に拡縮できるようにする。
         /// </summary>
         private void ApplyScaleToRoot()
         {
-            if (m_RootElement == null)
+            var root = GetRootElement();
+            if (root == null)
             {
                 return;
             }
 
-            ApplyCenterPivot(m_RootElement);
-            var scaleVector = new Vector3(m_CurrentScale, m_CurrentScale, 1f);
-            m_RootElement.style.scale = new StyleScale(new Scale(scaleVector));
+            ApplyCenterPivot(root);
+#if UNITY_2022_3_OR_NEWER
+            var scaleVector = new Vector2(m_CurrentScale, m_CurrentScale);
+            root.style.scale = new StyleScale(new Scale(scaleVector));
+#endif
         }
 
         /// <summary>
@@ -693,25 +701,14 @@ namespace FUnity.Runtime.View
         /// </summary>
         private void ApplyRotationToRoot()
         {
-            if (m_RootElement == null)
+            var root = GetRootElement();
+            if (root == null)
             {
                 return;
             }
 
-            ApplyCenterPivot(m_RootElement);
-            m_RootElement.style.rotate = new Rotate(Angle.Degrees(m_CurrentRotationDeg));
-        }
-
-        /// <summary>
-        /// 指定したスケール値を内部状態へ反映し、ステージ境界の再計算を行う。
-        /// </summary>
-        /// <param name="scale">適用する安全なスケール値。</param>
-        private void ApplyScaleInternal(float scale)
-        {
-            m_CurrentScale = scale;
-            ApplyScaleToRoot();
-            UpdateLayoutForCenter();
-            NotifyStageBounds();
+            ApplyCenterPivot(root);
+            root.style.rotate = new Rotate(Angle.Degrees(m_CurrentRotationDeg));
         }
 
         /// <summary>

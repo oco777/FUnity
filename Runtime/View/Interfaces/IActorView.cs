@@ -57,6 +57,7 @@ namespace FUnity.Runtime.View
 
         /// <summary>
         /// 拡大率（%）を適用し、#root 要素を左上原点のまま等比スケールさせる。
+        /// 実装は内部的に <see cref="SetScale(float)"/> へフォワードしてもよい。
         /// </summary>
         /// <param name="percent">100 で等倍となる拡大率（%）。</param>
         void SetSizePercent(float percent);

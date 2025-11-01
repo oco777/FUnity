@@ -327,7 +327,22 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
-        /// 拡大率（%）を絶対値で設定し、Presenter 経由で UI へ反映する。
+        /// 等倍基準のスケール値を直接指定し、Presenter に転送する。
+        /// </summary>
+        /// <param name="scale">適用するスケール。1 で等倍。</param>
+        public void SetScale(float scale)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため SetScale を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.SetScale(scale);
+        }
+
+        /// <summary>
+        /// 拡大率（%）を指定し、内部的にスケールへ変換して <see cref="SetScale(float)"/> に委譲する。
         /// </summary>
         /// <param name="percent">100 で等倍となる拡大率（%）。</param>
         public void SetSizePercent(float percent)
@@ -338,7 +353,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            m_ActorPresenter.SetSizePercent(percent);
+            SetScale(percent / 100f);
         }
 
         /// <summary>

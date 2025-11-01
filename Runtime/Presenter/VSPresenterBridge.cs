@@ -167,20 +167,31 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 俳優のスケールを直接指定し、Presenter 層に適用する。Scratch の Set Size などから使用される。
+        /// </summary>
+        /// <param name="scale">等倍基準のスケール。</param>
+        /// <param name="actorId">対象俳優の識別子。null で既定俳優。</param>
+        public void SetActorScale(float scale, string actorId = null)
+        {
+            var presenter = ResolveActorPresenter(actorId);
+            if (presenter == null)
+            {
+                Debug.LogWarning($"[FUnity] VSPresenterBridge: ActorPresenter が未設定のためスケールを設定できません。(actorId={actorId ?? "<default>"})");
+                return;
+            }
+
+            presenter.SetScale(scale);
+        }
+
+        /// <summary>
         /// 俳優の大きさを絶対値（%）で設定する。Scratch の「大きさを ◯ % にする」を想定する。
         /// </summary>
         /// <param name="percent">100 で等倍となる拡大率（%）。</param>
         /// <param name="actorId">将来的に複数俳優へ対応するための識別子。null で既定俳優。</param>
         public void SetActorSizePercent(float percent, string actorId = null)
         {
-            var presenter = ResolveActorPresenter(actorId);
-            if (presenter == null)
-            {
-                Debug.LogWarning($"[FUnity] VSPresenterBridge: ActorPresenter が未設定のため大きさを設定できません。(actorId={actorId ?? "<default>"})");
-                return;
-            }
-
-            presenter.SetSizePercent(percent);
+            var scale = percent / 100f;
+            SetActorScale(scale, actorId);
         }
 
         /// <summary>

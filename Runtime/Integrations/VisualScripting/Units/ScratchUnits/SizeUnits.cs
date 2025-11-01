@@ -54,11 +54,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private ControlOutput OnEnter(Flow flow)
         {
             var percent = flow.GetValue<float>(m_Percent);
+            var scale = Mathf.Max(0.01f, percent / 100f);
 
             var bridge = VSPresenterBridge.Instance;
             if (bridge != null)
             {
-                bridge.SetActorSizePercent(percent);
+                bridge.SetActorScale(scale);
             }
             else
             {
@@ -72,7 +73,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return m_Exit;
             }
 
-            adapter.SetSizePercent(percent);
+            adapter.SetScale(scale);
             return m_Exit;
         }
     }
