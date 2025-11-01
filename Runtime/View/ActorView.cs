@@ -76,16 +76,12 @@ namespace FUnity.Runtime.View
         /// <summary>現在適用している等倍基準のスケール値。</summary>
         private float m_CurrentScale = 1f;
 
+        /// <summary>transform-origin を中央 (50%/50%) へ固定するためのパーセント指定。</summary>
+        private static readonly Length CenterPivotPercent = new Length(50f, LengthUnit.Percent);
+
         /// <summary>transform-origin を中央へ固定するためのスタイル値。</summary>
-#if UNITY_2022_3_OR_NEWER
-        private static readonly StyleTransformOrigin CenterTransformOrigin = new StyleTransformOrigin(TransformOrigin.Center);
-#else
         private static readonly StyleTransformOrigin CenterTransformOrigin = new StyleTransformOrigin(
-            new TransformOrigin(
-                new Length(50f, LengthUnit.Percent),
-                new Length(50f, LengthUnit.Percent),
-                0f));
-#endif
+            new TransformOrigin(CenterPivotPercent, CenterPivotPercent, 0f));
 
         /// <summary>ポートレートのスケールを初期化する際に使用する等倍スタイル。</summary>
         private static readonly StyleScale IdentityScale = new StyleScale(new Scale(Vector3.one));
