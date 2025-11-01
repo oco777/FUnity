@@ -30,14 +30,12 @@ Scene (Unity)
 └── FUnityUI (GameObject)
      └── UIDocument
           └── rootVisualElement
-                ├── StageElement（背景）
-                │     ├── LayerElement（複数レイヤー）
-                │     └── BackgroundImage
-                ├── ActorContainer
-                │     ├── ActorElement（キャラ）
-                │     ├── ActorElement（キャラ）
-                │     └── ...
-                └── UIOverlay（メニュー、ボタンなど）
+                ├── StageElement（ステージ本体）
+                │     └── StageViewport（overflow:hidden）
+                │           ├── FUnityBackgroundLayer（背景）
+                │           ├── FUnityActorContainer（俳優）
+                │           └── FUnityOverlayContainer（ステージ内オーバーレイ）
+                └── UIOverlay（画面全体のクローム）
 ```
 
 ---
@@ -74,8 +72,11 @@ public class FUnityActorData
 [System.Serializable]
 public class FUnityStageData
 {
-    public string name;
-    public Sprite background;
+    public string stageName;
+    public Texture2D backgroundImage;
+    public Color backgroundColor = Color.black;
+    public int stageWidth = 480;
+    public int stageHeight = 360;
 }
 ```
 
@@ -137,6 +138,8 @@ public class StageElement : VisualElement
     }
 }
 ```
+
+> ℹ️ ステージ内オーバーレイ (`FUnityOverlayContainer`) は StageElement のビューポート内に生成され、UIScaleService による拡縮へ追従します。画面全体に固定表示したいクローム UI は StageElement の外側にあるグローバルオーバーレイへ配置してください。
 
 ### 🧍 ActorElement.cs
 ```csharp

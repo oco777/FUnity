@@ -1,3 +1,4 @@
+using System;
 using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Core;
 using UnityEngine;
@@ -7,15 +8,15 @@ namespace FUnity.Runtime.UI
 {
     /// <summary>
     /// Scratch モード時に UI ルート直下へスケール用の子要素を用意し、ルート worldBound をパネルサイズへ維持するサービスです。
-    /// 論理座標は 480x360 に固定し、実ウィンドウが大きい場合のみ子要素を拡大します。
+    /// 論理座標は <see cref="FUnityStageData"/> の設定サイズを基準にし、設定が無い場合のみ 480x360 を使用します。
     /// </summary>
     public sealed class UIScaleService
     {
-        /// <summary>Scratch モードの論理幅（px）。</summary>
-        private const float LogicalWidth = 480f;
+        /// <summary>Scratch モードの論理幅既定値（px）。</summary>
+        private const float DefaultLogicalWidth = FUnityStageData.DefaultStageWidth;
 
-        /// <summary>Scratch モードの論理高さ（px）。</summary>
-        private const float LogicalHeight = 360f;
+        /// <summary>Scratch モードの論理高さ既定値（px）。</summary>
+        private const float DefaultLogicalHeight = FUnityStageData.DefaultStageHeight;
 
         /// <summary>Scratch 表示用コンテンツを内包する要素名称。他クラスから検索できるよう internal に公開する。</summary>
         internal const string ScaledContentRootName = "FUnity-ScaledContentRoot";
@@ -26,11 +27,20 @@ namespace FUnity.Runtime.UI
         /// <summary>Scratch 表示時に拡大対象となる子要素。ルート直下へ生成し、論理 480x360 の座標系を保持する。</summary>
         private VisualElement m_ContentRoot;
 
+        /// <summary>最新のステージ論理幅（px）。StageElement から取得し、未検出時は既定値を使用する。</summary>
+        private float m_LogicalWidth = DefaultLogicalWidth;
+
+        /// <summary>最新のステージ論理高さ（px）。StageElement から取得し、未検出時は既定値を使用する。</summary>
+        private float m_LogicalHeight = DefaultLogicalHeight;
+
         /// <summary>GeometryChangedEvent の登録状態を示すフラグ。二重登録を防ぐ。</summary>
         private bool m_GeometryCallbackRegistered;
 
         /// <summary>現在アクティブなモード設定。Scratch 判定や論理サイズ計算に利用する。</summary>
         private FUnityModeConfig m_ActiveModeConfig;
+
+        /// <summary>スケール適用後に通知されるイベント。第1引数はスケール対象ルート、第2引数は論理ステージサイズ。</summary>
+        public event Action<VisualElement, Vector2Int> AfterScaleApplied;
 
         /// <summary>
         /// ルート要素を対象にコンテンツルートを保証し、Scratch モード時のみ内側へスケールを適用します。
@@ -144,25 +154,32 @@ namespace FUnity.Runtime.UI
                 return;
             }
 
-            var scaleX = resolvedWidth / LogicalWidth;
-            var scaleY = resolvedHeight / LogicalHeight;
+            RefreshLogicalStageSize();
+
+            var scaleX = resolvedWidth / m_LogicalWidth;
+            var scaleY = resolvedHeight / m_LogicalHeight;
             var scale = Mathf.Max(1f, Mathf.Min(scaleX, scaleY));
 
-            var scaledWidth = LogicalWidth * scale;
-            var scaledHeight = LogicalHeight * scale;
+            var scaledWidth = m_LogicalWidth * scale;
+            var scaledHeight = m_LogicalHeight * scale;
             var offsetX = (resolvedWidth - scaledWidth) * 0.5f;
             var offsetY = (resolvedHeight - scaledHeight) * 0.5f;
 
             m_ContentRoot.style.position = Position.Absolute;
             m_ContentRoot.style.left = offsetX;
             m_ContentRoot.style.top = offsetY;
-            m_ContentRoot.style.width = LogicalWidth;
-            m_ContentRoot.style.height = LogicalHeight;
+            m_ContentRoot.style.width = m_LogicalWidth;
+            m_ContentRoot.style.height = m_LogicalHeight;
             m_ContentRoot.style.flexGrow = 0f;
             m_ContentRoot.style.flexShrink = 0f;
             m_ContentRoot.transform.scale = new Vector3(scale, scale, 1f);
 
             m_RootElement.transform.scale = Vector3.one;
+
+            if (m_ContentRoot != null)
+            {
+                AfterScaleApplied?.Invoke(m_ContentRoot, new Vector2Int(Mathf.RoundToInt(m_LogicalWidth), Mathf.RoundToInt(m_LogicalHeight)));
+            }
         }
 
         /// <summary>
@@ -183,6 +200,12 @@ namespace FUnity.Runtime.UI
             if (m_RootElement != null)
             {
                 m_RootElement.transform.scale = Vector3.one;
+            }
+
+            RefreshLogicalStageSize();
+            if (m_ContentRoot != null)
+            {
+                AfterScaleApplied?.Invoke(m_ContentRoot, new Vector2Int(Mathf.RoundToInt(m_LogicalWidth), Mathf.RoundToInt(m_LogicalHeight)));
             }
         }
 
@@ -214,6 +237,34 @@ namespace FUnity.Runtime.UI
             }
 
             ApplyScale();
+        }
+
+        /// <summary>
+        /// 現在のコンテンツルートから StageElement を探索し、論理ステージサイズを更新する。
+        /// </summary>
+        private void RefreshLogicalStageSize()
+        {
+            if (m_ContentRoot == null)
+            {
+                m_LogicalWidth = DefaultLogicalWidth;
+                m_LogicalHeight = DefaultLogicalHeight;
+                return;
+            }
+
+            var stageElement = m_ContentRoot.Q<StageElement>();
+            if (stageElement != null)
+            {
+                var stageSize = stageElement.StageSize;
+                if (stageSize.x > 0 && stageSize.y > 0)
+                {
+                    m_LogicalWidth = stageSize.x;
+                    m_LogicalHeight = stageSize.y;
+                    return;
+                }
+            }
+
+            m_LogicalWidth = DefaultLogicalWidth;
+            m_LogicalHeight = DefaultLogicalHeight;
         }
     }
 }

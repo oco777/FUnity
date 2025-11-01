@@ -199,7 +199,7 @@ namespace FUnity.Core
 
             var stageElement = EnsureStageElement(root);
             ApplyScratchStageSizing(stageElement);
-            var backgroundRoot = (VisualElement)stageElement ?? root;
+            var backgroundRoot = stageElement != null ? stageElement.StageViewport : root;
 
             EnsureStageBackgroundRoot(backgroundRoot);
 
@@ -1109,18 +1109,23 @@ namespace FUnity.Core
             }
 
             var modeConfig = ResolveActiveModeConfig();
+            var stageSize = stageElement.StageSize;
+            if (stageSize.x <= 0 || stageSize.y <= 0)
+            {
+                var fallbackWidth = modeConfig != null ? Mathf.Max(1, modeConfig.ScratchStageWidth) : FUnityStageData.DefaultStageWidth;
+                var fallbackHeight = modeConfig != null ? Mathf.Max(1, modeConfig.ScratchStageHeight) : FUnityStageData.DefaultStageHeight;
+                stageSize = new Vector2Int(fallbackWidth, fallbackHeight);
+            }
+
             if (modeConfig != null && modeConfig.Mode == FUnityAuthoringMode.Scratch && modeConfig.UseScratchFixedStage)
             {
-                var width = Mathf.Max(1, modeConfig.ScratchStageWidth);
-                var height = Mathf.Max(1, modeConfig.ScratchStageHeight);
-
-                stageElement.style.width = width;
-                stageElement.style.height = height;
+                stageElement.style.width = stageSize.x;
+                stageElement.style.height = stageSize.y;
                 stageElement.style.flexGrow = 0f;
                 stageElement.style.flexShrink = 0f;
                 stageElement.style.marginLeft = StyleKeyword.Auto;
                 stageElement.style.marginRight = StyleKeyword.Auto;
-                stageElement.style.overflow = Overflow.Hidden; // Scratch 固定ステージ時は領域外を隠す
+                stageElement.style.overflow = Overflow.Visible;
                 stageElement.AddToClassList(StageElement.ScratchStageClassName);
                 return;
             }
@@ -1131,7 +1136,7 @@ namespace FUnity.Core
             stageElement.style.flexShrink = 0f;
             stageElement.style.marginLeft = StyleKeyword.Null;
             stageElement.style.marginRight = StyleKeyword.Null;
-            stageElement.style.overflow = StyleKeyword.Null; // 他モード復帰時はマスク解除
+            stageElement.style.overflow = StyleKeyword.Null;
             stageElement.RemoveFromClassList(StageElement.ScratchStageClassName);
         }
 
@@ -1143,6 +1148,7 @@ namespace FUnity.Core
         private void ApplyStage(StageElement stageElement, FUnityStageData stage)
         {
             stageElement?.Configure(stage);
+            ApplyScratchStageSizing(stageElement);
 
             if (stage == null)
             {
