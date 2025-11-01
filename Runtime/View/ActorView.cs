@@ -89,6 +89,65 @@ namespace FUnity.Runtime.View
         /// <summary>UI Toolkit の scale に適用する下限値。</summary>
         private const float MinimumScale = 0.01f;
 
+#if UNITY_2022_3_OR_NEWER
+        /// <summary>
+        /// UI Toolkit の `style.scale` を参照し、XY 成分のみを Vector2 として安全に取得するヘルパー。
+        /// 未解決・未設定時はフォールバック値を返し、0 近傍の値は厳密に 0 として扱う。
+        /// </summary>
+        /// <param name="element">スケールを取得する対象要素。</param>
+        /// <param name="fallback">要素や値が未設定だった場合に使用する等倍スケール。</param>
+        /// <returns>XY 成分を正規化したスケール値。</returns>
+        private static Vector2 ResolveScaleXY(VisualElement element, float fallback = 1f)
+        {
+            var resolved = element != null
+                ? element.resolvedStyle.scale.value
+                : new Vector3(fallback, fallback, 1f);
+            var resolvedX = float.IsNaN(resolved.x) ? fallback : resolved.x;
+            var resolvedY = float.IsNaN(resolved.y) ? fallback : resolved.y;
+            var scaleX = Mathf.Approximately(resolvedX, 0f) ? 0f : resolvedX;
+            var scaleY = Mathf.Approximately(resolvedY, 0f) ? 0f : resolvedY;
+            return new Vector2(scaleX, scaleY);
+        }
+
+        /// <summary>
+        /// UI Toolkit の `style.scale` へ XY 成分を Vector3(x, y, 1) として適用するヘルパー。
+        /// Z 成分は 1 固定とし、2D UI における期待どおりの拡縮を保証する。
+        /// </summary>
+        /// <param name="element">スケールを適用する対象要素。</param>
+        /// <param name="scaleX">X 方向のスケール値。</param>
+        /// <param name="scaleY">Y 方向のスケール値。</param>
+        private static void ApplyScaleXY(VisualElement element, float scaleX, float scaleY)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            element.style.scale = new StyleScale(new Scale(new Vector3(scaleX, scaleY, 1f)));
+        }
+#else
+        /// <summary>
+        /// Unity 2021.x 以前では resolvedStyle.scale が未提供のため、常にフォールバック値を返すヘルパー。
+        /// </summary>
+        /// <param name="element">未使用。</param>
+        /// <param name="fallback">返却する等倍スケール。</param>
+        /// <returns>フォールバックとして渡された等倍スケール値。</returns>
+        private static Vector2 ResolveScaleXY(VisualElement element, float fallback = 1f)
+        {
+            return new Vector2(fallback, fallback);
+        }
+
+        /// <summary>
+        /// Unity 2021.x 以前では UI Toolkit の style.scale が利用できないため、ダミー実装として何も行わない。
+        /// </summary>
+        /// <param name="element">未使用。</param>
+        /// <param name="scaleX">未使用。</param>
+        /// <param name="scaleY">未使用。</param>
+        private static void ApplyScaleXY(VisualElement element, float scaleX, float scaleY)
+        {
+        }
+#endif
+
         /// <summary>
         /// Presenter からバインドされた VisualElement。Visual Scripting の Graph Variables へ登録する際に利用する。
         /// </summary>
@@ -277,6 +336,11 @@ namespace FUnity.Runtime.View
         /// <returns>スケール反映後の幅・高さ（px）。要素未バインド時は <see cref="Vector2.zero"/> を返す。</returns>
         public Vector2 GetScaledSizePx()
         {
+            if (m_RootElement == null && m_BoundElement == null)
+            {
+                return Vector2.zero;
+            }
+
             return GetScaledRootSize();
         }
 
@@ -658,10 +722,8 @@ namespace FUnity.Runtime.View
 
 #if UNITY_2022_3_OR_NEWER
             var root = GetRootElement();
-            var scaleValue = root != null ? root.resolvedStyle.scale.value : Vector2.one;
-            var scaleX = Mathf.Approximately(scaleValue.x, 0f) ? 0f : scaleValue.x;
-            var scaleY = Mathf.Approximately(scaleValue.y, 0f) ? 0f : scaleValue.y;
-            return new Vector2(baseSize.x * scaleX, baseSize.y * scaleY);
+            var scaleValue = ResolveScaleXY(root, 1f);
+            return new Vector2(baseSize.x * scaleValue.x, baseSize.y * scaleValue.y);
 #else
             return baseSize * m_CurrentScale;
 #endif
@@ -691,8 +753,7 @@ namespace FUnity.Runtime.View
 
             ApplyCenterPivot(root);
 #if UNITY_2022_3_OR_NEWER
-            var scaleVector = new Vector2(m_CurrentScale, m_CurrentScale);
-            root.style.scale = new StyleScale(new Scale(scaleVector));
+            ApplyScaleXY(root, m_CurrentScale, m_CurrentScale);
 #endif
         }
 
