@@ -70,9 +70,6 @@ namespace FUnity.Runtime.View
         /// <summary>GeometryChangedEvent の登録済みかどうかを示すフラグ。</summary>
         private bool m_GeometryCallbacksRegistered;
 
-        /// <summary>俳優ルート要素のジオメトリが確定済みかを示すフラグ。</summary>
-        private bool m_GeometryReady;
-
         /// <summary>現在適用している等倍基準のスケール値。</summary>
         private float m_CurrentScale = 1f;
 
@@ -248,7 +245,6 @@ namespace FUnity.Runtime.View
             var searchBase = m_ActorRoot ?? element;
             m_BoundElement = searchBase;
             m_RootElement = searchBase;
-            m_GeometryReady = false;
             if (m_RootElement != null)
             {
                 ApplyCenterPivot(m_RootElement);
@@ -281,11 +277,12 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// Presenter から通知された中心座標を UI Toolkit 要素へ適用する。
+        /// Presenter から通知された中心座標（px）を受け取り、#root の left/top を中心基準で配置する。
         /// </summary>
-        /// <param name="centerPx">左上原点基準（px）の中心座標。</param>
+        /// <param name="centerPx">UI ステージ左上を原点とした中心座標（px）。</param>
         /// <remarks>
-        /// 要素の自然サイズを参照して左上座標へ変換し、<see cref="FooniUIBridge"/> 経由で `style.left/top` を更新する。
+        /// スケール適用後の見た目サイズを取得し、<c>center − scaledSize / 2</c> で left/top を算出する。
+        /// これにより、中心がステージ境界へ移動した際にちょうど画像が見切れる。
         /// </remarks>
         /// <example>
         /// <code>
@@ -333,15 +330,28 @@ namespace FUnity.Runtime.View
         /// <summary>
         /// 現在適用されているスケールを反映した俳優要素の見た目サイズ（px）を返す。
         /// </summary>
-        /// <returns>スケール反映後の幅・高さ（px）。要素未バインド時は <see cref="Vector2.zero"/> を返す。</returns>
+        /// <returns>
+        /// スケール反映後の幅・高さ（px）。#root 未確定時は 0 ベクトルを返す。レイアウトサイズと
+        /// resolvedStyle.scale を掛け合わせて算出する。
+        /// </returns>
         public Vector2 GetScaledSizePx()
         {
-            if (m_RootElement == null && m_BoundElement == null)
+            var root = GetRootElement();
+            if (root == null)
             {
                 return Vector2.zero;
             }
 
-            return GetScaledRootSize();
+            var layoutSize = root.layout.size;
+            var width = NormalizeLength(layoutSize.x, root.resolvedStyle.width);
+            var height = NormalizeLength(layoutSize.y, root.resolvedStyle.height);
+
+#if UNITY_2022_3_OR_NEWER
+            var scaleValue = ResolveScaleXY(root, 1f);
+            return new Vector2(width * scaleValue.x, height * scaleValue.y);
+#else
+            return new Vector2(width, height) * m_CurrentScale;
+#endif
         }
 
         /// <summary>
@@ -524,11 +534,6 @@ namespace FUnity.Runtime.View
         /// <param name="evt">UI Toolkit が発行する GeometryChangedEvent。</param>
         private void OnElementGeometryChanged(GeometryChangedEvent evt)
         {
-            if (evt != null)
-            {
-                m_GeometryReady = evt.newRect.width > 0f && evt.newRect.height > 0f;
-            }
-
             ApplyAllTransforms();
         }
 
@@ -642,27 +647,10 @@ namespace FUnity.Runtime.View
                 return;
             }
 
-            if (!m_GeometryReady)
-            {
-                var fallbackLeft = Mathf.RoundToInt(m_CurrentCenterPx.x);
-                var fallbackTop = Mathf.RoundToInt(m_CurrentCenterPx.y);
-                root.style.left = fallbackLeft;
-                root.style.top = fallbackTop;
-                return;
-            }
-
             var scaledSize = GetScaledSizePx();
-            if (scaledSize.sqrMagnitude <= 0f)
-            {
-                var centerLeft = Mathf.RoundToInt(m_CurrentCenterPx.x);
-                var centerTop = Mathf.RoundToInt(m_CurrentCenterPx.y);
-                root.style.left = centerLeft;
-                root.style.top = centerTop;
-                return;
-            }
-
             var halfWidth = scaledSize.x * 0.5f;
             var halfHeight = scaledSize.y * 0.5f;
+
             var left = Mathf.RoundToInt(m_CurrentCenterPx.x - halfWidth);
             var top = Mathf.RoundToInt(m_CurrentCenterPx.y - halfHeight);
 
@@ -671,62 +659,25 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// ルート要素の自然サイズ（スケール適用前）を取得する。
+        /// layout.size もしくは resolvedStyle.width/height を正規化し、負値・NaN を 0 として扱う。
         /// </summary>
-        /// <returns>幅・高さ（px）。未確定時は 0。</returns>
-        private Vector2 GetUnscaledRootSize()
+        /// <param name="layoutValue">layout から取得した値。</param>
+        /// <param name="resolvedValue">resolvedStyle から取得したフォールバック値。</param>
+        /// <returns>正規化済みの長さ（px）。</returns>
+        private static float NormalizeLength(float layoutValue, float resolvedValue)
         {
-            var root = GetRootElement();
-            if (root == null)
+            var hasLayout = !float.IsNaN(layoutValue) && layoutValue > 0f;
+            if (hasLayout)
             {
-                return Vector2.zero;
+                return layoutValue;
             }
 
-            var width = root.layout.width;
-            var height = root.layout.height;
-
-            if (float.IsNaN(width) || width <= 0f)
+            if (!float.IsNaN(resolvedValue) && resolvedValue > 0f)
             {
-                width = root.resolvedStyle.width;
+                return resolvedValue;
             }
 
-            if (float.IsNaN(height) || height <= 0f)
-            {
-                height = root.resolvedStyle.height;
-            }
-
-            if (float.IsNaN(width) || width < 0f)
-            {
-                width = 0f;
-            }
-
-            if (float.IsNaN(height) || height < 0f)
-            {
-                height = 0f;
-            }
-
-            return new Vector2(width, height);
-        }
-
-        /// <summary>
-        /// スケール適用後の俳優ルート要素サイズを計算し、中心アンカーでの配置計算に利用する。
-        /// </summary>
-        /// <returns>スケール済み幅・高さ（px）。未確定時は <see cref="Vector2.zero"/>。</returns>
-        private Vector2 GetScaledRootSize()
-        {
-            var baseSize = GetUnscaledRootSize();
-            if (baseSize.sqrMagnitude <= 0f)
-            {
-                return Vector2.zero;
-            }
-
-#if UNITY_2022_3_OR_NEWER
-            var root = GetRootElement();
-            var scaleValue = ResolveScaleXY(root, 1f);
-            return new Vector2(baseSize.x * scaleValue.x, baseSize.y * scaleValue.y);
-#else
-            return baseSize * m_CurrentScale;
-#endif
+            return 0f;
         }
 
         /// <summary>
