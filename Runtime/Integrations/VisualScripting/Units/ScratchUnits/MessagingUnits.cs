@@ -3,7 +3,6 @@
 using System;
 using System.Collections;
 using Unity.VisualScripting;
-using UnityEngine;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -21,12 +20,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             /// <summary>メッセージ名です。未指定時は空文字列に正規化します。</summary>
             public string Message;
-
-            /// <summary>任意の追加情報です。null を許容します。</summary>
-            public object Payload;
-
-            /// <summary>送信元を表す UnityEngine.Object です。null を許容します。</summary>
-            public UnityEngine.Object Sender;
         }
     }
 
@@ -49,14 +42,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ValueInput m_Message;
 
-        /// <summary>受け渡す任意ペイロードを受け取るポートです。</summary>
-        [DoNotSerialize]
-        private ValueInput m_Payload;
-
-        /// <summary>送信元を指定するポートです。未接続時は null を送信します。</summary>
-        [DoNotSerialize]
-        private ValueInput m_Sender;
-
         /// <summary>
         /// ポート定義を行い、入力から出力への制御線を構築します。
         /// </summary>
@@ -65,8 +50,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
             m_Message = ValueInput<string>("message", string.Empty);
-            m_Payload = ValueInput<object>("payload", null);
-            m_Sender = ValueInput<UnityEngine.Object>("sender", null);
 
             Succession(m_Enter, m_Exit);
             Requirement(m_Message, m_Enter);
@@ -80,14 +63,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private ControlOutput OnEnter(Flow flow)
         {
             var message = flow.GetValue<string>(m_Message) ?? string.Empty;
-            var payload = flow.GetValue<object>(m_Payload);
-            var sender = flow.GetValue<UnityEngine.Object>(m_Sender);
-
             var args = new MessagingCommon.Args
             {
-                Message = message,
-                Payload = payload,
-                Sender = sender
+                Message = message
             };
 
             EventBus.Trigger(new EventHook(MessagingCommon.EventName), args);
@@ -114,14 +92,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ValueInput m_Message;
 
-        /// <summary>受け渡す任意ペイロードを受け取るポートです。</summary>
-        [DoNotSerialize]
-        private ValueInput m_Payload;
-
-        /// <summary>送信元を指定するポートです。未接続時は null を送信します。</summary>
-        [DoNotSerialize]
-        private ValueInput m_Sender;
-
         /// <summary>
         /// ポート定義を行い、入力から出力への制御線を構築します。
         /// </summary>
@@ -130,8 +100,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             m_Enter = ControlInputCoroutine("enter", OnEnterCoroutine);
             m_Exit = ControlOutput("exit");
             m_Message = ValueInput<string>("message", string.Empty);
-            m_Payload = ValueInput<object>("payload", null);
-            m_Sender = ValueInput<UnityEngine.Object>("sender", null);
 
             Succession(m_Enter, m_Exit);
             Requirement(m_Message, m_Enter);
@@ -145,14 +113,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private IEnumerator OnEnterCoroutine(Flow flow)
         {
             var message = flow.GetValue<string>(m_Message) ?? string.Empty;
-            var payload = flow.GetValue<object>(m_Payload);
-            var sender = flow.GetValue<UnityEngine.Object>(m_Sender);
-
             var args = new MessagingCommon.Args
             {
-                Message = message,
-                Payload = payload,
-                Sender = sender
+                Message = message
             };
 
             EventBus.Trigger(new EventHook(MessagingCommon.EventName), args);
@@ -179,14 +142,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ValueOutput m_OutMessage;
 
-        /// <summary>受信したペイロードを参照できる ValueOutput です。</summary>
-        [DoNotSerialize]
-        private ValueOutput m_OutPayload;
-
-        /// <summary>送信元を参照できる ValueOutput です。</summary>
-        [DoNotSerialize]
-        private ValueOutput m_OutSender;
-
         /// <summary>
         /// イベントバスで購読する EventHook を返します。
         /// </summary>
@@ -205,8 +160,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             base.Definition();
             m_Filter = ValueInput<string>("filter", string.Empty);
             m_OutMessage = ValueOutput<string>("message");
-            m_OutPayload = ValueOutput<object>("payload");
-            m_OutSender = ValueOutput<UnityEngine.Object>("sender");
         }
 
         /// <summary>
@@ -217,8 +170,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         protected override void AssignArguments(Flow flow, MessagingCommon.Args args)
         {
             flow.SetValue(m_OutMessage, args.Message ?? string.Empty);
-            flow.SetValue(m_OutPayload, args.Payload);
-            flow.SetValue(m_OutSender, args.Sender);
         }
 
         /// <summary>
