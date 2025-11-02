@@ -36,7 +36,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
-            m_Message = ValueInput<string>("message", "message");
+            m_Message = ValueInput<string>("message", string.Empty);
             m_Payload = ValueInput<object>("payload", null);
 
             Succession(m_Enter, m_Exit);
@@ -51,12 +51,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private ControlOutput OnEnter(Flow flow)
         {
             var message = flow.GetValue<string>(m_Message);
-            object payload = null;
-
-            if (m_Payload != null && (m_Payload.hasAnyConnection || flow.HasValue(m_Payload)))
-            {
-                payload = flow.GetValue<object>(m_Payload);
-            }
+            var payload = flow.GetValue<object>(m_Payload);
 
             MessageBus.Publish(message, payload);
             return m_Exit;
@@ -93,7 +88,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             m_Enter = ControlInputCoroutine("enter", OnEnterCoroutine);
             m_Exit = ControlOutput("exit");
-            m_Message = ValueInput<string>("message", "message");
+            m_Message = ValueInput<string>("message", string.Empty);
             m_Payload = ValueInput<object>("payload", null);
 
             Succession(m_Enter, m_Exit);
@@ -108,12 +103,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private IEnumerator OnEnterCoroutine(Flow flow)
         {
             var message = flow.GetValue<string>(m_Message);
-            object payload = null;
-
-            if (m_Payload != null && (m_Payload.hasAnyConnection || flow.HasValue(m_Payload)))
-            {
-                payload = flow.GetValue<object>(m_Payload);
-            }
+            var payload = flow.GetValue<object>(m_Payload);
 
             MessageBus.Publish(message, payload);
 
@@ -166,7 +156,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         protected override void Definition()
         {
             base.Definition();
-            m_Message = ValueInput<string>("message", "message");
+            m_Message = ValueInput<string>("message", string.Empty);
             m_Payload = ValueOutput<object>("payload", flow => m_LastArgs.Payload);
         }
 
