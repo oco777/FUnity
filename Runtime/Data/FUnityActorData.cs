@@ -21,7 +21,7 @@ namespace FUnity.Runtime.Core
     /// 俳優（キャラクター）の静的設定を保持する Model レイヤーの ScriptableObject。
     /// </summary>
     /// <remarks>
-    /// 依存関係: <see cref="FUnity.Core.FUnityManager"/>（初期化）、<see cref="FUnity.Runtime.Presenter.ActorPresenter"/>
+    /// 依存関係: <see cref="FUnity.Runtime.Core.FUnityManager"/>（初期化）、<see cref="FUnity.Runtime.Presenter.ActorPresenter"/>
     /// 想定ライフサイクル: プロジェクト設定時に作成し、ランタイムでは読み取り専用。
     /// `Size` は生成時に UI 要素へ適用する設計であり、動的変更が必要な場合は Presenter を通じて再適用する。
     /// </remarks>

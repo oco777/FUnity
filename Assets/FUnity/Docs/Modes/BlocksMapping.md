@@ -11,7 +11,7 @@ Scratch 標準ブロックと FUnity Visual Scripting ユニットの対応表�
 | Looks | set size to _ % | `Scratch/Looks/SetSize` | ✅ | 1%〜300% へ自動クランプ |
 | Sound | play sound _ until done | `Scratch/Sound/PlaySoundAwait` | ✅ | Unity `AudioSource` を逐次再生 |
 | Sound | change volume by _ | `Scratch/Sound/ChangeVolume` | ✅ | `AudioMixer` のボリュームに反映 |
-| Events | when green flag clicked | `Scratch/Events/OnGreenFlag` | ✅ | `FUnity.Core.FUnityManager` の再生イベントを受信 |
+| Events | when green flag clicked | `Scratch/Events/OnGreenFlag` | ✅ | `FUnity.Runtime.Core.FUnityManager` の再生イベントを受信 |
 | Events | when I receive _ | `Scratch/Events/OnBroadcast` | ✅ | Visual Scripting イベントバスで同期 |
 | Events | when _ key pressed | `Scratch/Events/OnKeyPressed` | ✅ | ScratchKey 列挙からキーを選択し、押下瞬間で発火 |
 | Control | forever | `Scratch/Control/Forever` | ✅ | 1 フレーム待機で CPU 占有を防止 |

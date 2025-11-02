@@ -7,7 +7,7 @@ namespace FUnity.Runtime.Core
     /// ステージ背景などの静的設定を保持する Model レイヤーの ScriptableObject。
     /// </summary>
     /// <remarks>
-    /// 依存関係: <see cref="FUnity.Core.FUnityManager"/>（Presenter 経由で View へ適用）
+    /// 依存関係: <see cref="FUnity.Runtime.Core.FUnityManager"/>（Presenter 経由で View へ適用）
     /// 想定ライフサイクル: プロジェクト設定時に作成し、ランタイムでは読み取り専用。
     /// 背景画像は Resources/Art 等に配置し、UI Toolkit の `backgroundImage` プロパティへ <see cref="UnityEngine.UIElements.StyleBackground"/>
     ///     の Texture2D コンストラクタで割り当てる。

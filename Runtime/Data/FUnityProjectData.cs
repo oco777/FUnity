@@ -10,7 +10,7 @@ namespace FUnity.Runtime.Core
     /// プロジェクト全体のステージ・俳優・Visual Scripting Runner 設定をまとめた Model レイヤーの ScriptableObject。
     /// </summary>
     /// <remarks>
-    /// 依存関係: <see cref="FUnity.Core.FUnityManager"/>（ランタイム初期化時に読み取る）
+    /// 依存関係: <see cref="FUnity.Runtime.Core.FUnityManager"/>（ランタイム初期化時に読み取る）
     /// 想定ライフサイクル: プロジェクト構築時にアセットを作成し、ランタイムでは参照のみ。
     /// Presenter から View へ渡されるデータの静的ソースとして機能する。
     /// </remarks>
@@ -42,7 +42,7 @@ namespace FUnity.Runtime.Core
 
         [Header("Runtime setup")]
         /// <summary>
-        /// `true` の場合、<see cref="FUnity.Core.FUnityManager"/> が UI ドキュメントと必須コンポーネントを自動生成する。
+        /// `true` の場合、<see cref="FUnity.Runtime.Core.FUnityManager"/> が UI ドキュメントと必須コンポーネントを自動生成する。
         /// </summary>
         public bool ensureFUnityUI = true;
 

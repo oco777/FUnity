@@ -15,7 +15,7 @@ namespace FUnity.Runtime.Presenter
     /// </summary>
     /// <remarks>
     /// 依存関係: <see cref="FUnityActorData"/>, <see cref="ActorState"/>, <see cref="IActorView"/>
-    /// 想定ライフサイクル: <see cref="FUnity.Core.FUnityManager"/> が俳優生成時に <see cref="Initialize"/> を呼び出し、
+    /// 想定ライフサイクル: <see cref="FUnity.Runtime.Core.FUnityManager"/> が俳優生成時に <see cref="Initialize"/> を呼び出し、
     ///     以降は <see cref="Tick"/> をフレーム毎に実行する。Presenter 自体はステートレスであり、Model/View 間の同期のみを担当。
     /// </remarks>
     public sealed class ActorPresenter

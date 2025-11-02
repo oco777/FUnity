@@ -13,7 +13,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
     /// </summary>
     /// <remarks>
     /// 依存関係: <see cref="FooniElement"/>, Unity Visual Scripting <see cref="CustomEvent"/>, <see cref="ActorPresenter"/>
-    /// 想定ライフサイクル: <see cref="FUnity.Core.FUnityManager"/> によって UI GameObject や Runner に付与され、Presenter から
+    /// 想定ライフサイクル: <see cref="FUnity.Runtime.Core.FUnityManager"/> によって UI GameObject や Runner に付与され、Presenter から
     ///     <see cref="BindActorElement"/> および <see cref="SetActorPresenter"/> が呼び出される。ビジネスロジックは保持せず、Presenter
     ///     を経由した命令転送と View 操作に限定する。
     /// </remarks>
