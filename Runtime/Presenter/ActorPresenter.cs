@@ -50,6 +50,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>現在のスケール。等倍は 1。</summary>
         private float m_CurrentScale = 1f;
 
+        /// <summary>現在保持している拡大率（%）。Presenter ごとに独立して管理する。</summary>
+        private float m_SizePercent = 100f;
+
         /// <summary>使用中の座標原点。Scratch では Center、unityroom では TopLeft。</summary>
         private CoordinateOrigin m_CoordinateOrigin = CoordinateOrigin.TopLeft;
 
@@ -101,6 +104,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>使用中の座標原点。外部から参照する際はこのプロパティを利用します。</summary>
         public CoordinateOrigin CoordinateOrigin => m_CoordinateOrigin;
 
+        /// <summary>現在の拡大率（%）。View へ適用されている値を返す。</summary>
+        public float SizePercent => m_SizePercent;
+
         /// <summary>座標変換に利用するステージ要素。null の場合は中央原点変換を利用できません。</summary>
         public VisualElement StageRootElement => m_StageCoordinateRoot;
 
@@ -142,10 +148,12 @@ namespace FUnity.Runtime.Presenter
                 }
 
                 m_State.SizePercent = Mathf.Clamp(m_State.SizePercent, MinSizePercent, MaxSizePercent);
-                m_CurrentScale = m_State.SizePercent / 100f;
+                m_SizePercent = m_State.SizePercent;
+                m_CurrentScale = m_SizePercent / 100f;
             }
             else
             {
+                m_SizePercent = 100f;
                 m_CurrentScale = 1f;
             }
 
@@ -427,48 +435,52 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 等倍基準のスケール値を直接設定し、Model と View の双方へ反映する。
-        /// スケール変更後は見た目サイズを再計測し、Scratch クランプ処理を適用する。
+        /// 等倍基準のスケール値を直接設定し、内部的には拡大率（%）へ変換して統一ロジックに委譲する。
         /// </summary>
-        /// <param name="scale">等倍=1 としたスケール値。</param>
+        /// <param name="scale">等倍=1 を基準としたスケール値。</param>
         public void SetScale(float scale)
         {
             var clampedScale = Mathf.Clamp(scale, MinSizePercent / 100f, MaxSizePercent / 100f);
             var percent = clampedScale * 100f;
+            SetSizePercent(percent);
+        }
 
-            if (m_State != null)
+        /// <summary>
+        /// 拡大率（%）を絶対値で設定し、Model・View・境界情報を俳優ごとに更新する。
+        /// </summary>
+        /// <param name="percent">100 で等倍となる拡大率（%）。</param>
+        public void SetSizePercent(float percent)
+        {
+            var clamped = Mathf.Clamp(percent, MinSizePercent, MaxSizePercent);
+
+            if (!Mathf.Approximately(m_SizePercent, clamped))
             {
-                m_State.SizePercent = percent;
+                m_SizePercent = clamped;
+                m_CurrentScale = m_SizePercent / 100f;
+
+                if (m_State != null)
+                {
+                    m_State.SizePercent = m_SizePercent;
+                }
+            }
+            else if (m_State != null)
+            {
+                m_State.SizePercent = m_SizePercent;
             }
 
-            m_CurrentScale = clampedScale;
-
-            if (m_View != null)
-            {
-                m_View.SetScale(clampedScale);
-            }
+            m_View?.SetSizePercent(m_SizePercent);
 
             UpdateRenderedSizeFromView();
             ClampStateToBounds();
         }
 
         /// <summary>
-        /// 拡大率（%）を絶対値で設定し、内部的に等倍スケールへ変換して <see cref="SetScale(float)"/> に委譲する。
-        /// </summary>
-        /// <param name="percent">100 で等倍となる拡大率（%）。</param>
-        public void SetSizePercent(float percent)
-        {
-            var clamped = Mathf.Clamp(percent, MinSizePercent, MaxSizePercent);
-            SetScale(clamped / 100f);
-        }
-
-        /// <summary>
-        /// 拡大率（%）を相対値で変更し、現在値に加算した結果を即時反映する。
+        /// 拡大率（%）を相対値で変更し、現在値へ加算した結果をクランプのうえ反映する。
         /// </summary>
         /// <param name="deltaPercent">加算する差分（%）。正で拡大、負で縮小。</param>
         public void ChangeSizeByPercent(float deltaPercent)
         {
-            var currentPercent = m_State != null ? m_State.SizePercent : m_CurrentScale * 100f;
+            var currentPercent = m_SizePercent;
             SetSizePercent(currentPercent + deltaPercent);
         }
 
@@ -950,17 +962,15 @@ namespace FUnity.Runtime.Presenter
 
             if (m_State != null)
             {
-                var percent = Mathf.Clamp(m_State.SizePercent, MinSizePercent, MaxSizePercent);
-                m_CurrentScale = percent / 100f;
-                m_View.SetScale(m_CurrentScale);
+                SetSizePercent(m_State.SizePercent);
                 m_View.SetRotationDegrees(m_State.RotationDeg);
-                UpdateRenderedSizeFromView();
-                ClampStateToBounds();
             }
             else
             {
-                m_View.SetScale(m_CurrentScale);
+                m_View.SetSizePercent(m_SizePercent);
                 m_View.SetRotationDegrees(0f);
+                UpdateRenderedSizeFromView();
+                ClampStateToBounds();
             }
 
             UpdateViewPosition();

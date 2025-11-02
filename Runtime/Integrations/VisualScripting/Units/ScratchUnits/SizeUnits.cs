@@ -1,7 +1,6 @@
 // Updated: 2025-10-21
 using UnityEngine;
 using Unity.VisualScripting;
-using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -54,17 +53,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private ControlOutput OnEnter(Flow flow)
         {
             var percent = flow.GetValue<float>(m_Percent);
-            var scale = Mathf.Max(0.01f, percent / 100f);
-
-            var bridge = VSPresenterBridge.Instance;
-            if (bridge != null)
-            {
-                bridge.SetActorScale(scale);
-            }
-            else
-            {
-                Debug.LogWarning("[FUnity] Scratch/Set Size %: VSPresenterBridge.Instance が未設定のため UI へ拡大率を反映できません。FUnityManager の初期化を確認してください。");
-            }
 
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
@@ -73,7 +61,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return m_Exit;
             }
 
-            adapter.SetScale(scale);
+            adapter.SetSizePercent(percent);
             return m_Exit;
         }
     }
@@ -127,16 +115,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private ControlOutput OnEnter(Flow flow)
         {
             var delta = flow.GetValue<float>(m_DeltaPercent);
-
-            var bridge = VSPresenterBridge.Instance;
-            if (bridge != null)
-            {
-                bridge.ChangeActorSizeByPercent(delta);
-            }
-            else
-            {
-                Debug.LogWarning("[FUnity] Scratch/Change Size by %: VSPresenterBridge.Instance が未設定のため UI へ拡大率の差分を反映できません。FUnityManager の初期化を確認してください。");
-            }
 
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
