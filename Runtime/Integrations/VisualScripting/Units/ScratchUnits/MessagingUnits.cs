@@ -51,7 +51,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private ControlOutput OnEnter(Flow flow)
         {
             var message = flow.GetValue<string>(m_Message);
-            var payload = flow.GetValue<object>(m_Payload);
+            object payload = null;
+
+            if (m_Payload != null && (m_Payload.hasAnyConnection || flow.HasValue(m_Payload)))
+            {
+                payload = flow.GetValue<object>(m_Payload);
+            }
+
             MessageBus.Publish(message, payload);
             return m_Exit;
         }
@@ -102,7 +108,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private IEnumerator OnEnterCoroutine(Flow flow)
         {
             var message = flow.GetValue<string>(m_Message);
-            var payload = flow.GetValue<object>(m_Payload);
+            object payload = null;
+
+            if (m_Payload != null && (m_Payload.hasAnyConnection || flow.HasValue(m_Payload)))
+            {
+                payload = flow.GetValue<object>(m_Payload);
+            }
+
             MessageBus.Publish(message, payload);
 
             while (MessageBus.GetActiveHandlerCount(message) > 0)
