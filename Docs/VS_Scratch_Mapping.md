@@ -46,6 +46,9 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
 | Scratch/Events/On Key Pressed | 〇キーが押されたとき | 指定キーの押下瞬間にトリガーを発火 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputEventUnits.cs / ScratchKey で監視キーを選択 / 押しっぱなしでは再発火しない |
+| Scratch/Broadcast Message | メッセージを送る | 指定メッセージを全リスナーへ配信 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs |
+| Scratch/Broadcast And Wait | メッセージを送って待つ | 受信ハンドラがすべて完了するまで待機 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs |
+| Scratch/When I Receive | メッセージを受け取ったとき | 指定メッセージ受信時にフロー発火（payload 出力あり） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs |
 
 ---
 ### 補足
