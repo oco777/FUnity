@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
+using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -142,6 +143,34 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             LogResolutionFailureOnce();
+            return null;
+        }
+
+        /// <summary>
+        /// Flow 情報と任意のアダプタから <see cref="ActorPresenter"/> を解決する。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。null 許容。</param>
+        /// <param name="adapter">優先的に使用する <see cref="ActorPresenterAdapter"/>。null 時は自動解決を試みる。</param>
+        /// <returns>解決した <see cref="ActorPresenter"/>。取得できない場合は null。</returns>
+        public static ActorPresenter ResolveActorPresenter(Flow flow, ActorPresenterAdapter adapter)
+        {
+            var resolvedAdapter = adapter ?? ResolveAdapter(flow);
+            if (resolvedAdapter != null && resolvedAdapter.Presenter != null)
+            {
+                return resolvedAdapter.Presenter;
+            }
+
+            if (GetPresenter(flow) is ActorPresenter presenterFromVariables && presenterFromVariables != null)
+            {
+                return presenterFromVariables;
+            }
+
+            var bridge = VSPresenterBridge.Instance;
+            if (bridge != null && bridge.Target != null)
+            {
+                return bridge.Target;
+            }
+
             return null;
         }
 
