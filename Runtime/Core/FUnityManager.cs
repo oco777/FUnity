@@ -29,6 +29,12 @@ namespace FUnity.Core
     /// </remarks>
     public sealed class FUnityManager : MonoBehaviour
     {
+        /// <summary>クローン Runner 名に付与するサフィックス。</summary>
+        public const string CloneSuffix = "(clone)";
+
+        /// <summary>シーン内で最後に有効化された FUnityManager への参照。</summary>
+        public static FUnityManager Instance { get; private set; }
+
         /// <summary>
         /// 制御対象の <see cref="UIDocument"/>。Inspector で未設定の場合は Awake/Start で探索する。
         /// </summary>
@@ -99,6 +105,9 @@ namespace FUnity.Core
         /// <summary>アクティブモード設定探索の警告重複を防ぐフラグ。</summary>
         private bool m_LoggedMissingModeConfig;
 
+        /// <summary>実行時に生成されたクローン俳優を追跡するリスト。</summary>
+        private readonly List<ActorCloneRuntime> m_RuntimeActorClones = new List<ActorCloneRuntime>();
+
         /// <summary>既定俳優テンプレートの Resources パス。</summary>
         private const string DefaultActorTemplatePath = "UI/ActorElement";
 
@@ -136,11 +145,45 @@ namespace FUnity.Core
         }
 
         /// <summary>
+        /// 実行中に生成した俳優クローンの付帯情報をまとめる構造体。
+        /// </summary>
+        private struct ActorCloneRuntime
+        {
+            /// <summary>元となった俳優設定。null の場合もある。</summary>
+            public FUnityActorData ActorData;
+
+            /// <summary>クローンとして生成された Presenter。</summary>
+            public ActorPresenter Presenter;
+
+            /// <summary>クローン用に割り当てた View。</summary>
+            public IActorView View;
+
+            /// <summary>クローンが使用する UI Toolkit 要素。</summary>
+            public VisualElement Element;
+
+            /// <summary>View を保持する GameObject。</summary>
+            public GameObject ViewHost;
+
+            /// <summary>Visual Scripting Runner のインスタンス。</summary>
+            public GameObject Runner;
+
+            /// <summary>Runner に付与された ActorPresenterAdapter。</summary>
+            public ActorPresenterAdapter Adapter;
+        }
+
+        /// <summary>
         /// Resources から設定アセットを探索し、UI ルートと Presenter ブリッジを生成する。
         /// Visual Scripting Runner もこの段階でスポーンする。
         /// </summary>
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: 複数のインスタンスが同時に有効化されています。最新のコンポーネントを Instance として使用します。");
+            }
+
+            Instance = this;
+
             if (m_Project == null)
             {
                 m_Project = Resources.Load<FUnityProjectData>("FUnityProjectData");
@@ -173,6 +216,17 @@ namespace FUnity.Core
             }
 
             SpawnActorRunnersFromProjectData();
+        }
+
+        /// <summary>
+        /// 破棄時にシングルトン参照を解放する。
+        /// </summary>
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         /// <summary>
@@ -1756,5 +1810,299 @@ namespace FUnity.Core
             controllers.Clear();
             m_PendingActorControllers.Remove(actor);
         }
+
+        /// <summary>
+        /// Presenter を複製してクローンを生成します。
+        /// </summary>
+        /// <param name="original">複製元の Presenter。</param>
+        /// <returns>生成されたクローン Presenter。失敗時は null。</returns>
+        public static ActorPresenter CloneActor(ActorPresenter original)
+        {
+            var manager = Instance != null ? Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager.CloneActor: FUnityManager が見つからないためクローンを生成できません。");
+                return null;
+            }
+
+            return manager.CloneActorInternal(original);
+        }
+
+        /// <summary>
+        /// 指定したクローン Presenter を破棄します。
+        /// </summary>
+        /// <param name="clonePresenter">破棄対象の Presenter。</param>
+        public static void DeleteActorClone(ActorPresenter clonePresenter)
+        {
+            var manager = Instance != null ? Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager.DeleteActorClone: FUnityManager が見つからないためクローンを削除できません。");
+                return;
+            }
+
+            manager.DeleteActorCloneInternal(clonePresenter);
+        }
+
+        /// <summary>
+        /// 複製元 Presenter をもとにクローンを生成し、状態をコピーします。
+        /// </summary>
+        /// <param name="original">複製元の Presenter。</param>
+        /// <returns>生成したクローン Presenter。失敗時は null。</returns>
+        private ActorPresenter CloneActorInternal(ActorPresenter original)
+        {
+            if (original == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: CloneActorInternal に null が渡されたため処理を中止します。");
+                return null;
+            }
+
+            if (!TryResolveCloneContext(original, out var actorData, out _, out var sourceRunner, out _))
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: 複製元のコンテキストを解決できないためクローンを生成できません。");
+                return null;
+            }
+
+            var cloneVisual = new ActorVisual
+            {
+                Data = actorData
+            };
+
+            EnsureActorElement(ref cloneVisual);
+            if (cloneVisual.Element == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: クローン用の俳優要素を生成できなかったため処理を終了します。");
+                return null;
+            }
+
+            var displayName = actorData != null && !string.IsNullOrEmpty(actorData.DisplayName)
+                ? actorData.DisplayName
+                : "Actor";
+            if (string.IsNullOrEmpty(cloneVisual.Element.name))
+            {
+                cloneVisual.Element.name = ($"{displayName} {CloneSuffix}").Trim();
+            }
+
+            var hostNameBase = string.IsNullOrEmpty(displayName) ? "Actor" : displayName;
+            var viewHostParent = m_FUnityUI != null ? m_FUnityUI.transform : transform;
+            var cloneViewHost = new GameObject($"{hostNameBase} Clone View");
+            cloneViewHost.transform.SetParent(viewHostParent, false);
+            cloneVisual.ViewHost = cloneViewHost;
+
+            List<FooniUIBridge> bridgeCache = null;
+            var bridgeIndex = 0;
+            var view = CreateOrConfigureActorView(ref cloneVisual, ref bridgeCache, ref bridgeIndex);
+            if (view == null || ReferenceEquals(view, NullActorView.Instance))
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: クローン用 View の構築に失敗したため生成を中止します。");
+                cloneVisual.Element.RemoveFromHierarchy();
+                Object.Destroy(cloneViewHost);
+                return null;
+            }
+
+            var state = new ActorState();
+            var presenter = new ActorPresenter();
+            var stageRoot = m_StageElement != null ? m_StageElement.ActorContainer : null;
+            presenter.Initialize(actorData, state, view, m_ActiveModeConfig, stageRoot);
+            view.SetActorPresenter(presenter);
+
+            GameObject cloneRunner = null;
+            ScriptMachine cloneMachine = null;
+            ActorPresenterAdapter cloneAdapter = null;
+
+            if (sourceRunner != null)
+            {
+                cloneRunner = Object.Instantiate(sourceRunner, sourceRunner.transform.parent);
+                cloneRunner.name = $"{sourceRunner.name} {CloneSuffix}";
+                cloneMachine = cloneRunner.GetComponent<ScriptMachine>();
+                cloneAdapter = cloneRunner.GetComponent<ActorPresenterAdapter>();
+            }
+            else
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: 複製元 Runner が未設定のため、クローン Runner を生成できません。");
+            }
+
+            if (cloneAdapter != null)
+            {
+                cloneAdapter.BindActorElement(cloneVisual.Element);
+                if (actorData != null)
+                {
+                    cloneAdapter.EnableFloat(actorData.FloatAnimation);
+                }
+                cloneAdapter.SetActorPresenter(presenter);
+            }
+            else if (cloneRunner != null)
+            {
+                Debug.LogWarning($"[FUnity] FUnityManager: '{cloneRunner.name}' に ActorPresenterAdapter が見つからないため、自動解決に依存します。");
+            }
+
+            if (cloneMachine != null)
+            {
+                presenter.BindScriptMachine(cloneMachine, cloneVisual.Element);
+            }
+            else if (cloneRunner != null)
+            {
+                Debug.LogWarning($"[FUnity] FUnityManager: '{cloneRunner.name}' に ScriptMachine が見つからないため Graph Variables への Self 登録をスキップします。");
+            }
+
+            if (cloneRunner != null)
+            {
+                var runnerVariables = Variables.Object(cloneRunner);
+                if (runnerVariables != null)
+                {
+                    runnerVariables.Set("presenter", presenter);
+                    runnerVariables.Set(nameof(ActorPresenter), presenter);
+                    if (cloneAdapter != null)
+                    {
+                        runnerVariables.Set("adapter", cloneAdapter);
+                        runnerVariables.Set(nameof(ActorPresenterAdapter), cloneAdapter);
+                    }
+                    runnerVariables.Set("view", view);
+                    runnerVariables.Set("ui", cloneVisual.Element);
+                }
+
+                m_ActorRunnerInstances.Add(cloneRunner);
+            }
+
+            presenter.Runner = cloneRunner;
+            presenter.IsClone = true;
+            presenter.Original = original;
+            presenter.CopyRuntimeStateFrom(original);
+
+            var cloneInfo = new ActorCloneRuntime
+            {
+                ActorData = actorData,
+                Presenter = presenter,
+                View = view,
+                Element = cloneVisual.Element,
+                ViewHost = cloneVisual.ViewHost,
+                Runner = cloneRunner,
+                Adapter = cloneAdapter
+            };
+
+            m_RuntimeActorClones.Add(cloneInfo);
+            m_ActorPresenters.Add(presenter);
+
+            var eventTarget = cloneRunner != null ? (object)cloneRunner : (object)cloneViewHost;
+            EventBus.Trigger(new EventHook(FUnityEventNames.OnCloneStart, eventTarget), new CloneEventArgs());
+
+            return presenter;
+        }
+
+        /// <summary>
+        /// 指定したクローン Presenter を破棄し、関連する Runner や UI を後始末します。
+        /// </summary>
+        /// <param name="presenter">破棄するクローン Presenter。</param>
+        private void DeleteActorCloneInternal(ActorPresenter presenter)
+        {
+            if (presenter == null)
+            {
+                return;
+            }
+
+            if (!presenter.IsClone)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: DeleteActorCloneInternal が本体 Presenter に対して呼び出されたため処理をスキップします。");
+                return;
+            }
+
+            var index = m_RuntimeActorClones.FindIndex(x => x.Presenter == presenter);
+            if (index < 0)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: 破棄対象のクローンが追跡リストに存在しません。");
+                return;
+            }
+
+            var info = m_RuntimeActorClones[index];
+            m_RuntimeActorClones.RemoveAt(index);
+            m_ActorPresenters.Remove(presenter);
+
+            if (info.Element != null)
+            {
+                info.Element.RemoveFromHierarchy();
+            }
+
+            if (info.ViewHost != null)
+            {
+                Object.Destroy(info.ViewHost);
+            }
+
+            if (info.Runner != null)
+            {
+                m_ActorRunnerInstances.Remove(info.Runner);
+                Object.Destroy(info.Runner);
+            }
+
+            presenter.IsClone = false;
+            presenter.Original = null;
+            presenter.Runner = null;
+
+            if (m_VsBridge != null && m_VsBridge.Target == presenter)
+            {
+                m_VsBridge.Target = m_ActorPresenters.Count > 0 ? m_ActorPresenters[0] : null;
+            }
+        }
+
+        /// <summary>
+        /// クローン生成元の情報を解析し、俳優設定や Runner を取得します。
+        /// </summary>
+        /// <param name="presenter">解析対象の Presenter。</param>
+        /// <param name="actorData">関連付けられた俳優設定。</param>
+        /// <param name="element">割り当て済みの UI 要素。</param>
+        /// <param name="runner">紐付く Runner。</param>
+        /// <param name="adapter">Runner 上の ActorPresenterAdapter。</param>
+        /// <returns>解決に成功した場合は true。</returns>
+        private bool TryResolveCloneContext(ActorPresenter presenter, out FUnityActorData actorData, out VisualElement element, out GameObject runner, out ActorPresenterAdapter adapter)
+        {
+            actorData = null;
+            element = null;
+            runner = null;
+            adapter = null;
+
+            if (presenter == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < m_ActorVisuals.Count; i++)
+            {
+                var visual = m_ActorVisuals[i];
+                if (visual.Presenter == presenter)
+                {
+                    actorData = visual.Data;
+                    element = visual.Element;
+                    runner = presenter.Runner;
+                    adapter = runner != null ? runner.GetComponent<ActorPresenterAdapter>() : null;
+                    return true;
+                }
+            }
+
+            for (var i = 0; i < m_RuntimeActorClones.Count; i++)
+            {
+                var clone = m_RuntimeActorClones[i];
+                if (clone.Presenter == presenter)
+                {
+                    actorData = clone.ActorData;
+                    element = clone.Element;
+                    runner = clone.Runner;
+                    adapter = clone.Adapter;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>Visual Scripting 用のイベント名定数をまとめたクラス。</summary>
+    public static class FUnityEventNames
+    {
+        /// <summary>クローン開始時に発火するイベント名。</summary>
+        public const string OnCloneStart = "FUnity.OnCloneStart";
+    }
+
+    /// <summary>クローン開始イベントに付随する引数（値は持たない）。</summary>
+    public readonly struct CloneEventArgs
+    {
     }
 }

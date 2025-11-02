@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- feat(vs/control): add Scratch clone units (create clone of self / when I start as a clone / delete this clone) with manager-driven spawn and VS event.
 - feat(vs): add Scratch speech Units (say/think, with duration).
 - feat(vs): speech units now block for seconds variants.
 - feat(vs): add Scratch messaging Units (broadcast / broadcast & wait / when I receive).
@@ -43,6 +44,7 @@
 - VS: Fooni float units removed (`Fooni_EnableFloatUnit`, `Fooni_SetFloatAmplitudeUnit`, `Fooni_SetFloatPeriodUnit`). Feature is deprecated and no longer supported.
 
 ### Docs
+- docs(vs): document Scratch clone units and note actor自動解決 in VS mapping.
 - docs(vs): VS Scratch 対応表に大きさユニットと Presenter 連携の解説を追加。
 - docs(vs): note Scratch Unit adapter auto-resolution and removal of Adapter ports in VS mapping.
 - docs: update Runtime XML comments to clarify MVP responsibilities and UI Toolkit constraints.
