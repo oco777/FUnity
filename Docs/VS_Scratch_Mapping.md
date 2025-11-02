@@ -43,8 +43,8 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | Scratch/Think | ◯ と考える | 思考吹き出しを無期限表示（新しい吹き出しで上書き） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs / 表示後ただちに exit へ進むノンブロッキング |
 | Scratch/Set Size % | 大きさを ◯ % にする | 拡大率を絶対指定で適用 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
 | Scratch/Change Size by % | 大きさを ◯ % ずつ変える | 拡大率を相対変更 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
-| Scratch/Looks/Show | 表示する | style.display を Flex に設定して俳優を表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/VisibilityUnits.cs / actor ポート未接続時は自動解決を試行 |
-| Scratch/Looks/Hide | 隠す | style.display を None に設定して俳優を非表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/VisibilityUnits.cs / actor ポート未接続時は自動解決を試行 |
+| Show (Scratch/Looks) | 表示する | style.display を Flex に設定して俳優を表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/VisibilityUnits.cs / ActorPresenterAdapter は Unit 内で自動解決 |
+| Hide (Scratch/Looks) | 隠す | style.display を None に設定して俳優を非表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/VisibilityUnits.cs / ActorPresenterAdapter は Unit 内で自動解決 |
 
 ## イベント
 
