@@ -342,7 +342,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
-        /// 拡大率（%）を指定し、内部的にスケールへ変換して <see cref="SetScale(float)"/> に委譲する。
+        /// 拡大率（%）を指定し、Presenter の <see cref="ActorPresenter.SetSizePercent(float)"/> を直接呼び出す。
         /// </summary>
         /// <param name="percent">100 で等倍となる拡大率（%）。</param>
         public void SetSizePercent(float percent)
@@ -353,7 +353,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            SetScale(percent / 100f);
+            m_ActorPresenter.SetSizePercent(percent);
         }
 
         /// <summary>
