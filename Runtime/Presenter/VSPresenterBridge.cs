@@ -1,4 +1,6 @@
 // Updated: 2025-03-03
+using System;
+using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Core;
@@ -193,6 +195,53 @@ namespace FUnity.Runtime.Presenter
         {
             var scale = percent / 100f;
             SetActorScale(scale, actorId);
+        }
+
+        /// <summary>
+        /// DisplayName で指定した俳優のテンプレートからクローンを生成し、生成されたアダプタを返します。
+        /// </summary>
+        /// <param name="source">クローン生成を要求する実行中のアダプタ。</param>
+        /// <param name="targetDisplayName">複製元となる俳優の DisplayName。</param>
+        /// <returns>生成されたクローンの <see cref="ActorPresenterAdapter"/>。失敗時は null。</returns>
+        public ActorPresenterAdapter RequestCloneByDisplayName(ActorPresenterAdapter source, string targetDisplayName)
+        {
+            if (source == null)
+            {
+                Debug.LogWarning("[FUnity] VSPresenterBridge: RequestCloneByDisplayName に null アダプタが渡されたため処理を中止します。");
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(targetDisplayName))
+            {
+                Debug.LogWarning("[FUnity] VSPresenterBridge: DisplayName が空のためクローンを生成できません。");
+                return null;
+            }
+
+            var normalizedDisplayName = targetDisplayName.Trim();
+
+            var manager = FUnityManager.Instance != null ? FUnityManager.Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] VSPresenterBridge: FUnityManager が見つからないためクローンを生成できません。");
+                return null;
+            }
+
+            var project = manager.ProjectData;
+            if (project?.Actors == null || project.Actors.Count == 0)
+            {
+                Debug.LogWarning("[FUnity] VSPresenterBridge: ProjectData に俳優が登録されていないためクローンを生成できません。");
+                return null;
+            }
+
+            var template = project.Actors.FirstOrDefault(actor => actor != null && actor.DisplayName == normalizedDisplayName);
+            if (template == null)
+            {
+                Debug.LogWarning($"[FUnity] VSPresenterBridge: DisplayName='{normalizedDisplayName}' に一致する俳優が見つかりません。");
+                return null;
+            }
+
+            var cloneAdapter = manager.SpawnCloneFromTemplate(source, template);
+            return cloneAdapter;
         }
 
         /// <summary>
