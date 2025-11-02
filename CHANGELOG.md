@@ -23,6 +23,7 @@
 - refactor(editor): stop auto-attaching ActorPresenterAdapter to 'FUnity UI' and expose explicit assignment in FUnityManager.
 
 ### Fixed
+- fix(vs): implement EventHook for WhenIReceiveMessageUnit and unify messaging bus.
 - fix(vs): messaging units no longer throw when payload is unset.
 - fix(setup): PanelSettings テーマ割当と Fooni_FloatSetup の不足検知を堅牢化し、セットアップ時の警告を解消。
 - fix(setup): filter invalid asset search folders and auto-generate Fooni placeholders to silence setup warnings.
