@@ -98,6 +98,18 @@ namespace FUnity.Runtime.Presenter
         /// <summary>モード設定で浮遊オフセットの適用を許可しているか。</summary>
         private bool m_EnableFloatOffset = true;
 
+        /// <summary>現在表示している吹き出しの本文。null の場合は吹き出し非表示を意味する。</summary>
+        private string m_SpeechText;
+
+        /// <summary>吹き出しが残り何秒表示されるか。タイマー無効時は 0 以下を保持する。</summary>
+        private float m_SpeechRemainSeconds;
+
+        /// <summary>吹き出しが思考（考える）表現かどうか。true で思考、false で発言。</summary>
+        private bool m_SpeechIsThought;
+
+        /// <summary>吹き出しの表示時間をカウントダウンするかどうか。</summary>
+        private bool m_SpeechUsesTimer;
+
         /// <summary>ステージのピクセル境界（左上原点）。</summary>
         public Rect StageBoundsPx => m_StageBoundsUi;
 
@@ -131,6 +143,8 @@ namespace FUnity.Runtime.Presenter
             DetachViewEvents();
             DetachStageGeometryCallbacks();
             DetachAnchorGeometryCallback();
+
+            m_View?.HideSpeech();
 
             m_State = resolvedState;
             m_View = view;
@@ -211,6 +225,7 @@ namespace FUnity.Runtime.Presenter
             UpdatePositionBoundsInternal();
             ClampStateToBounds();
             UpdateViewPosition();
+            HideSpeech();
         }
 
         /// <summary>
@@ -278,6 +293,8 @@ namespace FUnity.Runtime.Presenter
             {
                 return;
             }
+
+            UpdateSpeechTimer(deltaTime);
 
             if (deltaTime <= 0f)
             {
@@ -420,18 +437,33 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 吹き出しを表示する。View 実装側で時間管理を行う。
+        /// 吹き出しを表示し、必要に応じて寿命タイマーを開始する。
         /// </summary>
-        /// <param name="message">表示するメッセージ。</param>
-        /// <param name="seconds">表示時間。</param>
-        public void Say(string message, float seconds)
+        /// <param name="text">表示する本文。null の場合は空文字として扱う。</param>
+        /// <param name="seconds">表示継続時間（秒）。0 以下で無期限表示。</param>
+        /// <param name="isThought">思考吹き出しとして表示する場合は true。</param>
+        public void ShowSpeech(string text, float seconds, bool isThought)
         {
-            if (m_View == null)
-            {
-                return;
-            }
+            m_SpeechText = text ?? string.Empty;
+            m_SpeechIsThought = isThought;
+            var safeSeconds = Mathf.Max(0f, seconds);
+            m_SpeechUsesTimer = safeSeconds > 0f;
+            m_SpeechRemainSeconds = m_SpeechUsesTimer ? safeSeconds : 0f;
 
-            m_View.ShowSpeech(message, Mathf.Max(0.1f, seconds));
+            m_View?.ShowSpeech(m_SpeechText, m_SpeechIsThought);
+        }
+
+        /// <summary>
+        /// 表示中の吹き出しを即座に閉じ、タイマーも停止する。
+        /// </summary>
+        public void HideSpeech()
+        {
+            m_SpeechText = null;
+            m_SpeechRemainSeconds = 0f;
+            m_SpeechUsesTimer = false;
+            m_SpeechIsThought = false;
+
+            m_View?.HideSpeech();
         }
 
         /// <summary>
@@ -482,6 +514,30 @@ namespace FUnity.Runtime.Presenter
         {
             var currentPercent = m_SizePercent;
             SetSizePercent(currentPercent + deltaPercent);
+        }
+
+        /// <summary>
+        /// 吹き出しの残り表示時間を更新し、時間切れの場合は自動で非表示にする。
+        /// </summary>
+        /// <param name="deltaTime">経過時間（秒）。負値が渡された場合は 0 として扱う。</param>
+        private void UpdateSpeechTimer(float deltaTime)
+        {
+            if (!m_SpeechUsesTimer || m_SpeechText == null)
+            {
+                return;
+            }
+
+            var safeDelta = Mathf.Max(0f, deltaTime);
+            if (safeDelta <= 0f)
+            {
+                return;
+            }
+
+            m_SpeechRemainSeconds -= safeDelta;
+            if (m_SpeechRemainSeconds <= 0f)
+            {
+                HideSpeech();
+            }
         }
 
         /// <summary>

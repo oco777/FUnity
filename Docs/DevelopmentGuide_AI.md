@@ -137,7 +137,7 @@ git commit -m "Add dynamic UI generation via StageElement and ActorElement (#12)
 |------------------|--------------|-----------|
 | 「x座標を～にする」 | `Actor/SetPosition` | `VSPresenterBridge.OnActorSetPosition(x, y)` → `ActorPresenter.SetPosition` |
 | 「x座標を～ずつ変える」 | `Actor/MoveBy` | `VSPresenterBridge.OnActorMoveBy(dx, dy)` → `ActorPresenter.MoveBy` |
-| 「～と言う」 | `Actor/Say` | `VSPresenterBridge.OnActorSay` → `ActorView.ShowSpeech` |
+| 「～と言う」 | `Actor/Say` | `VSPresenterBridge.OnActorSay` → `ActorPresenter.ShowSpeech` |
 | 「大きさを～％にする」 | `Scratch/Set Size %` | `VSPresenterBridge.SetActorScale` → `ActorPresenter.SetScale` |
 | 「大きさを～％ずつ変える」 | `Scratch/Change Size by %` | `VSPresenterBridge.ChangeActorSizeByPercent` → `ActorPresenter.ChangeSizeByPercent` |
 | 「背景を～にする」 | `Stage/SetBackground` | `StageBackgroundService.SetBackground` |
