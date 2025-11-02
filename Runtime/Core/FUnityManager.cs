@@ -1866,7 +1866,7 @@ namespace FUnity.Core
         /// </summary>
         /// <param name="original">複製元の Presenter。</param>
         /// <returns>生成したクローン Presenter。失敗時は null。</returns>
-        private ActorPresenter CloneActorInternal(ActorPresenter original)
+        private ActorPresenter CloneActorInternal(ActorPresenter original, bool suppressCloneStartEvent = false)
         {
             if (original == null)
             {
@@ -2000,10 +2000,157 @@ namespace FUnity.Core
             m_RuntimeActorClones.Add(cloneInfo);
             m_ActorPresenters.Add(presenter);
 
-            var eventTarget = cloneRunner != null ? (object)cloneRunner : (object)cloneViewHost;
-            EventBus.Trigger(new EventHook(FUnityEventNames.OnCloneStart, eventTarget), new CloneEventArgs());
+            if (!suppressCloneStartEvent)
+            {
+                RaiseVsEvent_WhenStartAsClone(cloneAdapter, presenter);
+            }
 
             return presenter;
+        }
+
+        /// <summary>
+        /// DisplayName で指定された俳優設定をテンプレートとしてクローンを生成します。
+        /// </summary>
+        /// <param name="source">クローン生成を要求したアダプタ。null 時は警告のみ表示します。</param>
+        /// <param name="template">複製元となる俳優設定。</param>
+        /// <returns>生成したクローンの <see cref="ActorPresenterAdapter"/>。失敗時は null。</returns>
+        internal ActorPresenterAdapter SpawnCloneFromTemplate(ActorPresenterAdapter source, FUnityActorData template)
+        {
+            if (template == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: SpawnCloneFromTemplate に null テンプレートが渡されたため処理を中止します。");
+                return null;
+            }
+
+            if (source == null)
+            {
+                Debug.LogWarning($"[FUnity] FUnityManager: SpawnCloneFromTemplate に送信元アダプタが指定されていません。(template={template.DisplayName})");
+            }
+
+            if (!m_ActorPresenterMap.TryGetValue(template, out var originalPresenter) || originalPresenter == null)
+            {
+                Debug.LogWarning($"[FUnity] FUnityManager: '{template.DisplayName}' の Presenter を解決できないためクローンを生成できません。");
+                return null;
+            }
+
+            var clonePresenter = CloneActorInternal(originalPresenter, true);
+            if (clonePresenter == null)
+            {
+                return null;
+            }
+
+            var cloneAdapter = ResolveAdapterForPresenter(clonePresenter);
+            RaiseVsEvent_WhenStartAsClone(cloneAdapter, clonePresenter);
+            return cloneAdapter;
+        }
+
+        /// <summary>
+        /// クローン生成直後の VS イベントを発火し、「クローンされたとき」ユニットを起動します。
+        /// </summary>
+        /// <param name="cloneAdapter">生成したクローンのアダプタ。null の場合は presenter から解決を試みます。</param>
+        /// <param name="clonePresenter">クローンの Presenter。null の場合は adapter から取得します。</param>
+        internal void RaiseVsEvent_WhenStartAsClone(ActorPresenterAdapter cloneAdapter, ActorPresenter clonePresenter = null)
+        {
+            var presenter = clonePresenter ?? (cloneAdapter != null ? cloneAdapter.Presenter : null);
+            object eventTarget = null;
+
+            if (cloneAdapter != null)
+            {
+                eventTarget = cloneAdapter.gameObject;
+            }
+
+            if (eventTarget == null)
+            {
+                if (cloneAdapter != null && TryFindRuntimeClone(cloneAdapter, out var runtimeByAdapter))
+                {
+                    eventTarget = runtimeByAdapter.Runner != null ? (object)runtimeByAdapter.Runner : runtimeByAdapter.ViewHost;
+                }
+                else if (presenter != null && TryFindRuntimeClone(presenter, out var runtimeByPresenter))
+                {
+                    eventTarget = runtimeByPresenter.Runner != null ? (object)runtimeByPresenter.Runner : runtimeByPresenter.ViewHost;
+                }
+            }
+
+            if (eventTarget == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: クローン開始イベントを発火する対象を特定できませんでした。");
+                return;
+            }
+
+            EventBus.Trigger(new EventHook(FUnityEventNames.OnCloneStart, eventTarget), new CloneEventArgs());
+        }
+
+        /// <summary>
+        /// 指定した Presenter に対応するクローンのアダプタを解決します。
+        /// </summary>
+        /// <param name="presenter">対象の Presenter。</param>
+        /// <returns>対応する <see cref="ActorPresenterAdapter"/>。見つからない場合は null。</returns>
+        private ActorPresenterAdapter ResolveAdapterForPresenter(ActorPresenter presenter)
+        {
+            if (presenter == null)
+            {
+                return null;
+            }
+
+            if (presenter.Runner != null)
+            {
+                var fromRunner = presenter.Runner.GetComponent<ActorPresenterAdapter>();
+                if (fromRunner != null)
+                {
+                    return fromRunner;
+                }
+            }
+
+            if (TryFindRuntimeClone(presenter, out var runtime))
+            {
+                return runtime.Adapter;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Runtime で追跡中のクローン情報から、指定アダプタに対応するエントリを検索します。
+        /// </summary>
+        /// <param name="adapter">検索対象のアダプタ。</param>
+        /// <param name="info">見つかった場合のクローン情報。</param>
+        /// <returns>見つかった場合 true。</returns>
+        private bool TryFindRuntimeClone(ActorPresenterAdapter adapter, out ActorCloneRuntime info)
+        {
+            for (var i = 0; i < m_RuntimeActorClones.Count; i++)
+            {
+                var entry = m_RuntimeActorClones[i];
+                if (entry.Adapter == adapter)
+                {
+                    info = entry;
+                    return true;
+                }
+            }
+
+            info = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Runtime で追跡中のクローン情報から、指定 Presenter に対応するエントリを検索します。
+        /// </summary>
+        /// <param name="presenter">検索対象の Presenter。</param>
+        /// <param name="info">見つかった場合のクローン情報。</param>
+        /// <returns>見つかった場合 true。</returns>
+        private bool TryFindRuntimeClone(ActorPresenter presenter, out ActorCloneRuntime info)
+        {
+            for (var i = 0; i < m_RuntimeActorClones.Count; i++)
+            {
+                var entry = m_RuntimeActorClones[i];
+                if (entry.Presenter == presenter)
+                {
+                    info = entry;
+                    return true;
+                }
+            }
+
+            info = default;
+            return false;
         }
 
         /// <summary>

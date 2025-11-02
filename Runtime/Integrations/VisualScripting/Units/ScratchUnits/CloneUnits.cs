@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
+using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -45,6 +46,74 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             FUnityManager.CloneActor(adapter.Presenter);
+            return m_Exit;
+        }
+    }
+
+    /// <summary>
+    /// Scratch の「(名前)のクローンを作る」に対応し、DisplayName で指定した俳優 Presenter を複製する Unit です。
+    /// 実行中のグラフから <see cref="ActorPresenterAdapter"/> を解決し、<see cref="VSPresenterBridge"/> 経由でクローン生成を依頼します。
+    /// </summary>
+    [UnitTitle("Create Clone Of (DisplayName)")]
+    [UnitCategory("Scratch/Control")]
+    [TypeIcon(typeof(ControlOutput))]
+    public sealed class CreateCloneOfDisplayNameUnit : Unit
+    {
+        /// <summary>制御フローの入口。</summary>
+        [DoNotSerialize]
+        private ControlInput m_Enter;
+
+        /// <summary>制御フローの出口。</summary>
+        [DoNotSerialize]
+        private ControlOutput m_Exit;
+
+        /// <summary>複製元を識別する DisplayName 入力。</summary>
+        [DoNotSerialize]
+        private ValueInput m_TargetDisplayName;
+
+        /// <summary>生成したクローンのアダプタ出力。失敗時は null。</summary>
+        [DoNotSerialize]
+        private ValueOutput m_CloneAdapter;
+
+        /// <summary>enter→exit の制御線および入出力ポートを定義します。</summary>
+        protected override void Definition()
+        {
+            m_Enter = ControlInput("enter", OnEnter);
+            m_Exit = ControlOutput("exit");
+
+            m_TargetDisplayName = ValueInput<string>("TargetDisplayName", string.Empty);
+            m_CloneAdapter = ValueOutput<ActorPresenterAdapter>("CloneAdapter", flow => null);
+
+            Succession(m_Enter, m_Exit);
+            Requirement(m_TargetDisplayName, m_Enter);
+        }
+
+        /// <summary>
+        /// 実行中の Adapter と DisplayName を基にクローン生成を依頼します。
+        /// </summary>
+        /// <param name="flow">現在のフロー。</param>
+        /// <returns>常に exit ポートを返します。</returns>
+        private ControlOutput OnEnter(Flow flow)
+        {
+            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
+            if (adapter == null)
+            {
+                Debug.LogWarning("[FUnity] Scratch/Create Clone Of (DisplayName): ActorPresenterAdapter を解決できないためクローンを生成できません。");
+                flow.SetValue(m_CloneAdapter, null);
+                return m_Exit;
+            }
+
+            var bridge = VSPresenterBridge.Instance;
+            if (bridge == null)
+            {
+                Debug.LogWarning("[FUnity] Scratch/Create Clone Of (DisplayName): VSPresenterBridge が未初期化のためクローン生成を依頼できません。");
+                flow.SetValue(m_CloneAdapter, null);
+                return m_Exit;
+            }
+
+            var displayName = flow.GetValue<string>(m_TargetDisplayName);
+            var cloneAdapter = bridge.RequestCloneByDisplayName(adapter, displayName);
+            flow.SetValue(m_CloneAdapter, cloneAdapter);
             return m_Exit;
         }
     }
