@@ -219,10 +219,11 @@ namespace FUnity.Runtime.Presenter
 
             var normalizedDisplayName = targetDisplayName.Trim();
 
-            var manager = FUnityManager.Instance != null ? FUnityManager.Instance : FindObjectOfType<FUnityManager>();
+            var manager = FUnityManager.Instance;
+            // FUnityManager がシーンに存在しないケースを早期に検出するための防御コード。
             if (manager == null)
             {
-                Debug.LogWarning("[FUnity] VSPresenterBridge: FUnityManager が見つからないためクローンを生成できません。");
+                Debug.LogError("[FUnity] FUnityManager.Instance が見つかりません。サンプルシーンのセットアップを確認してください。");
                 return null;
             }
 
