@@ -1,4 +1,5 @@
 // Updated: 2025-10-21
+using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -46,32 +47,40 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
             m_Text = ValueInput<string>("text", string.Empty);
             m_Seconds = ValueInput<float>("seconds", 2f);
+            m_Enter = ControlInputCoroutine("enter", OnEnterCoroutine);
 
             Succession(m_Enter, m_Exit);
         }
 
         /// <summary>
-        /// 入力フローを受け取り、ActorPresenterAdapter を介して吹き出し表示を実行する。
+        /// 入力フローを受け取り、指定秒数だけ吹き出しを表示した後に非表示へ戻すコルーチンを実行する。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>exit ポートを返し、後続ユニットへ制御を渡す。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>処理完了後に exit ポートへ遷移する列挙子。</returns>
+        private IEnumerator OnEnterCoroutine(Flow flow)
         {
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Say For Seconds: ActorPresenterAdapter が見つからないため吹き出しを表示できません。VSPresenterBridge などでアダプタを登録してください。");
-                return m_Exit;
+                yield break;
             }
 
-            var text = flow.GetValue<string>(m_Text);
-            var seconds = flow.GetValue<float>(m_Seconds);
+            var text = flow.GetValue<string>(m_Text) ?? string.Empty;
+            var seconds = Mathf.Max(0f, flow.GetValue<float>(m_Seconds));
+
             adapter.ShowSpeech(text, seconds, false);
-            return m_Exit;
+
+            if (seconds > 0f)
+            {
+                yield return new WaitForSeconds(seconds);
+            }
+
+            adapter.HideSpeech();
+            yield return m_Exit;
         }
     }
 
@@ -129,7 +138,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return m_Exit;
             }
 
-            var text = flow.GetValue<string>(m_Text);
+            var text = flow.GetValue<string>(m_Text) ?? string.Empty;
             adapter.ShowSpeech(text, 0f, false);
             return m_Exit;
         }
@@ -175,32 +184,40 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
             m_Exit = ControlOutput("exit");
             m_Text = ValueInput<string>("text", string.Empty);
             m_Seconds = ValueInput<float>("seconds", 2f);
+            m_Enter = ControlInputCoroutine("enter", OnEnterCoroutine);
 
             Succession(m_Enter, m_Exit);
         }
 
         /// <summary>
-        /// 入力フローを受け取り、ActorPresenterAdapter を介して思考吹き出しを表示する。
+        /// 入力フローを受け取り、指定秒数だけ思考吹き出しを表示してから非表示に戻すコルーチンを実行する。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>exit ポートを返し、後続ユニットへ制御を渡す。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>処理完了後に exit ポートへ遷移する列挙子。</returns>
+        private IEnumerator OnEnterCoroutine(Flow flow)
         {
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Think For Seconds: ActorPresenterAdapter が見つからないため吹き出しを表示できません。VSPresenterBridge などでアダプタを登録してください。");
-                return m_Exit;
+                yield break;
             }
 
-            var text = flow.GetValue<string>(m_Text);
-            var seconds = flow.GetValue<float>(m_Seconds);
+            var text = flow.GetValue<string>(m_Text) ?? string.Empty;
+            var seconds = Mathf.Max(0f, flow.GetValue<float>(m_Seconds));
+
             adapter.ShowSpeech(text, seconds, true);
-            return m_Exit;
+
+            if (seconds > 0f)
+            {
+                yield return new WaitForSeconds(seconds);
+            }
+
+            adapter.HideSpeech();
+            yield return m_Exit;
         }
     }
 
@@ -258,7 +275,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return m_Exit;
             }
 
-            var text = flow.GetValue<string>(m_Text);
+            var text = flow.GetValue<string>(m_Text) ?? string.Empty;
             adapter.ShowSpeech(text, 0f, true);
             return m_Exit;
         }

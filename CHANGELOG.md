@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - feat(vs): add Scratch speech Units (say/think, with duration).
+- feat(vs): speech units now block for seconds variants.
 - feat(vs): add Scratch messaging Units (broadcast / broadcast & wait / when I receive).
 - feat(vs/ui): Scratch の大きさ操作（Set Size %, Change Size by %）を追加し、Presenter が 1～300% にクランプした `style.scale` を適用。
 - feat(vs): Units read ActorPresenterAdapter from ScriptGraphAsset variables; editor assigns via ConfigureScriptMachine.
