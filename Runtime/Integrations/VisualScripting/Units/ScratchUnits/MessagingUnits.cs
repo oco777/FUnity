@@ -125,7 +125,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         public struct Args
         {
             /// <summary>受信したペイロードを保持します。</summary>
-            public object m_Payload;
+            public object Payload;
         }
 
         /// <summary>EventUnit の自動登録を有効にします。</summary>
@@ -145,6 +145,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <summary>直近に受信したイベント引数を保持します。</summary>
         private Args m_LastArgs;
 
+        /// <summary>Trigger 呼び出し時に利用する GraphReference です。</summary>
+        private GraphReference m_Reference;
+
         /// <summary>
         /// ポート定義と EventUnit 基底の初期化を行います。
         /// </summary>
@@ -152,7 +155,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             base.Definition();
             m_Message = ValueInput<string>("message", "message");
-            m_Payload = ValueOutput<object>("payload", flow => m_LastArgs.m_Payload);
+            m_Payload = ValueOutput<object>("payload", flow => m_LastArgs.Payload);
         }
 
         /// <summary>
@@ -162,7 +165,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         public override void StartListening(GraphStack stack)
         {
             base.StartListening(stack);
-            using (var flow = Flow.New(stack.ToReference()))
+            m_Reference = stack.ToReference();
+            using (var flow = Flow.New(m_Reference))
             {
                 m_CurrentMessage = flow.GetValue<string>(m_Message);
             }
@@ -179,6 +183,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             MessageBus.Unsubscribe(m_CurrentMessage, OnMessage);
             m_CurrentMessage = null;
             m_LastArgs = default;
+            m_Reference = null;
             base.StopListening(stack);
         }
 
@@ -188,10 +193,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <param name="payload">受信したペイロード。</param>
         private void OnMessage(object payload)
         {
-            m_LastArgs = new Args { m_Payload = payload };
-            using (var flow = Flow.New(Reference))
+            m_LastArgs = new Args { Payload = payload };
+            if (m_Reference != null)
             {
-                Trigger(flow);
+                Trigger(m_Reference, m_LastArgs);
             }
         }
     }
