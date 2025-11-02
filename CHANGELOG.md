@@ -17,6 +17,7 @@
 ### Changed
 - refactor(vs): remove payload/sender ports from messaging units.
 - refactor(vs): remove ActorPresenterAdapter input ports from Scratch Units and rely on internal auto-resolution.
+- refactor(vs/looks): remove ActorPresenterAdapter input ports from Looks/Show & Looks/Hide; auto-resolve via ScratchUnitUtil.ResolveAdapter.
 - refactor(vs): fix Variables.Object overload and qualify UnityEngine.Object usage in Scratch units.
 - refactor(vs): stop auto-attaching ScriptMachine to 'FUnity UI'; require explicit placement
 - Theme の正規パスを `Assets/FUnity/UI/USS/` に統一し、UI Builder 既定テーマを優先する運用に更新。
