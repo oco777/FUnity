@@ -58,11 +58,11 @@ namespace FUnity.Runtime.View
         /// <summary>現在の中心座標（px）。左上原点で右+ / 下+。</summary>
         private Vector2 m_CurrentCenterPx = Vector2.zero;
 
+        /// <summary>吹き出し全体を包む VisualElement。</summary>
+        private VisualElement m_SpeechBubble;
+
         /// <summary>吹き出しテキストを表示するラベル。</summary>
         private Label m_SpeechLabel;
-
-        /// <summary>吹き出し非表示を遅延実行するスケジュール項目。</summary>
-        private IVisualElementScheduledItem m_SpeechHideItem;
 
         /// <summary>パネル全体の GeometryChangedEvent を購読する際に利用するルート要素。</summary>
         private VisualElement m_PanelRoot;
@@ -248,12 +248,15 @@ namespace FUnity.Runtime.View
             if (m_RootElement != null)
             {
                 ApplyCenterPivot(m_RootElement);
+                EnsureSpeechElements();
             }
-            m_SpeechLabel = searchBase?.Q<Label>("speech") ?? element?.Q<Label>("speech");
-            if (m_SpeechLabel != null)
+            else
             {
-                m_SpeechLabel.style.display = DisplayStyle.None;
+                m_SpeechBubble = null;
+                m_SpeechLabel = null;
             }
+
+            HideSpeech();
 
             m_PortraitElement = null;
             ResetPortraitScaleToIdentity();
@@ -468,38 +471,39 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 吹き出しを表示し、指定秒数後に自動で非表示へ戻す。
+        /// 吹き出しを表示し、発言か思考かに応じてクラスを切り替える。
         /// </summary>
-        /// <param name="message">表示するテキスト。</param>
-        /// <param name="seconds">表示時間。</param>
-        public void ShowSpeech(string message, float seconds)
+        /// <param name="message">表示する本文。</param>
+        /// <param name="isThought">思考吹き出しとして表示する場合は true。</param>
+        public void ShowSpeech(string message, bool isThought)
         {
-            if (m_SpeechLabel == null)
+            EnsureSpeechElements();
+            if (m_SpeechBubble == null || m_SpeechLabel == null)
             {
                 return;
             }
 
             m_SpeechLabel.text = message ?? string.Empty;
-            m_SpeechLabel.style.display = DisplayStyle.Flex;
-
-            m_SpeechHideItem?.Pause();
-            m_SpeechHideItem = m_SpeechLabel.schedule.Execute(() =>
-            {
-                m_SpeechLabel.style.display = DisplayStyle.None;
-            });
-            // UI Toolkit スケジューラはミリ秒 long を要求するため、秒 float を ms long に変換
-            m_SpeechHideItem.StartingIn(SecToMs(Mathf.Max(0.1f, seconds)));
+            m_SpeechBubble.EnableInClassList("speech-think", isThought);
+            m_SpeechBubble.EnableInClassList("speech-say", !isThought);
+            m_SpeechBubble.style.display = DisplayStyle.Flex;
         }
 
         /// <summary>
-        /// UI Toolkit のスケジューラへ渡す時間を秒からミリ秒へ変換するヘルパー。
-        /// 負数が渡された場合でも 0 以上に正規化した上で long 型を返す。
+        /// 表示中の吹き出しを非表示にし、本文をリセットする。
         /// </summary>
-        /// <param name="seconds">秒単位で指定された時間。</param>
-        /// <returns>ミリ秒単位へ変換した値。</returns>
-        private static long SecToMs(float seconds)
+        public void HideSpeech()
         {
-            return (long)(Mathf.Max(0f, seconds) * 1000f);
+            if (m_SpeechBubble == null)
+            {
+                return;
+            }
+
+            m_SpeechBubble.style.display = DisplayStyle.None;
+            if (m_SpeechLabel != null)
+            {
+                m_SpeechLabel.text = string.Empty;
+            }
         }
 
         /// <summary>
@@ -633,6 +637,63 @@ namespace FUnity.Runtime.View
             }
 
             return element.Q<VisualElement>(className: "actor-root");
+        }
+
+        /// <summary>
+        /// 吹き出し用の VisualElement を生成し、俳優ルート要素へ追加する。
+        /// </summary>
+        private void EnsureSpeechElements()
+        {
+            if (m_RootElement == null)
+            {
+                return;
+            }
+
+            if (m_SpeechBubble != null && m_SpeechBubble.parent != m_RootElement)
+            {
+                m_SpeechBubble.RemoveFromHierarchy();
+                m_SpeechBubble = null;
+                m_SpeechLabel = null;
+            }
+
+            if (m_SpeechBubble == null)
+            {
+                m_SpeechBubble = new VisualElement
+                {
+                    name = "speech-bubble",
+                    pickingMode = PickingMode.Ignore,
+                };
+                m_SpeechBubble.AddToClassList("speech-bubble");
+                m_SpeechBubble.AddToClassList("speech-say");
+                m_SpeechBubble.style.position = Position.Absolute;
+                m_SpeechBubble.style.left = new Length(50f, LengthUnit.Percent);
+                m_SpeechBubble.style.bottom = new Length(100f, LengthUnit.Percent);
+                m_SpeechBubble.style.translate = new Translate(
+                    new Length(-50f, LengthUnit.Percent),
+                    new Length(-8f, LengthUnit.Pixel),
+                    0f);
+                m_SpeechBubble.style.display = DisplayStyle.None;
+
+                m_SpeechLabel = new Label
+                {
+                    name = "speech-text",
+                    pickingMode = PickingMode.Ignore,
+                };
+                m_SpeechLabel.AddToClassList("speech-text");
+                m_SpeechBubble.Add(m_SpeechLabel);
+
+                m_RootElement.Add(m_SpeechBubble);
+            }
+            else if (m_SpeechLabel == null)
+            {
+                m_SpeechLabel = new Label
+                {
+                    name = "speech-text",
+                    pickingMode = PickingMode.Ignore,
+                };
+                m_SpeechLabel.AddToClassList("speech-text");
+                m_SpeechBubble.Add(m_SpeechLabel);
+            }
         }
 
         /// <summary>

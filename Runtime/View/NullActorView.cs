@@ -59,7 +59,12 @@ namespace FUnity.Runtime.View
         }
 
         /// <inheritdoc />
-        public void ShowSpeech(string message, float seconds)
+        public void ShowSpeech(string text, bool isThought)
+        {
+        }
+
+        /// <inheritdoc />
+        public void HideSpeech()
         {
         }
 

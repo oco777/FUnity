@@ -37,7 +37,10 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
-| Scratch/Say | ◯ と言う | 吹き出し表示 | 未実装: 対応する Unit が見つかりません |
+| Scratch/Say For Seconds | ◯ と◯秒言う | 指定秒数だけ発言吹き出しを表示し自動で非表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs |
+| Scratch/Say | ◯ と言う | 発言吹き出しを無期限表示（新しい発言で上書き） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs |
+| Scratch/Think For Seconds | ◯ と◯秒考える | 指定秒数だけ思考吹き出しを表示し自動で非表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs |
+| Scratch/Think | ◯ と考える | 思考吹き出しを無期限表示（新しい吹き出しで上書き） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs |
 | Scratch/Set Size % | 大きさを ◯ % にする | 拡大率を絶対指定で適用 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
 | Scratch/Change Size by % | 大きさを ◯ % ずつ変える | 拡大率を相対変更 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
 

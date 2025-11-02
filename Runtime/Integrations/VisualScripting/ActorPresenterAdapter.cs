@@ -372,6 +372,37 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
+        /// 吹き出しを表示し、必要に応じて表示時間とスタイルを指定する。
+        /// </summary>
+        /// <param name="message">表示する本文。</param>
+        /// <param name="seconds">表示継続時間（秒）。0 以下で無期限。</param>
+        /// <param name="isThought">思考吹き出しとして表示する場合は true。</param>
+        public void ShowSpeech(string message, float seconds, bool isThought)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため ShowSpeech を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.ShowSpeech(message, seconds, isThought);
+        }
+
+        /// <summary>
+        /// 現在表示中の吹き出しを即座に非表示へ戻す。
+        /// </summary>
+        public void HideSpeech()
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため HideSpeech を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.HideSpeech();
+        }
+
+        /// <summary>
         /// 俳優の座標にピクセル単位の差分を加算する。
         /// </summary>
         /// <param name="deltaPx">加算する座標差分（px）。右=+X、下=+Y。</param>

@@ -69,11 +69,16 @@ namespace FUnity.Runtime.View
         void SetRotationDegrees(float degrees);
 
         /// <summary>
-        /// 吹き出しテキストを表示する。指定時間経過後は自動で非表示にする。
+        /// 吹き出しを表示し、発言か思考かに応じてスタイルを切り替える。
         /// </summary>
-        /// <param name="message">表示するメッセージ。</param>
-        /// <param name="seconds">表示継続時間（秒）。</param>
-        void ShowSpeech(string message, float seconds);
+        /// <param name="text">表示する本文。null の場合は空文字。</param>
+        /// <param name="isThought">思考吹き出しなら true。</param>
+        void ShowSpeech(string text, bool isThought);
+
+        /// <summary>
+        /// 表示中の吹き出しを即座に非表示へ戻す。
+        /// </summary>
+        void HideSpeech();
 
         /// <summary>
         /// 現在のステージ境界（px）を取得する。取得に成功した場合のみ <c>true</c> を返す。

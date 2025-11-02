@@ -132,7 +132,7 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            m_Target.Say(message, seconds);
+            m_Target.ShowSpeech(message, seconds, false);
         }
 
         /// <summary>
