@@ -53,6 +53,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
+| Scratch/Events/When Green Flag Clicked | 緑の旗が押されたとき | 本体俳優に対して緑の旗イベントを発火 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GreenFlagUnits.cs / FUnityManager.TriggerGreenFlag() で Runner 単位に配信（クローンは除外） |
 | Scratch/Events/On Key Pressed | 〇キーが押されたとき | 指定キーの押下瞬間にトリガーを発火 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputEventUnits.cs / ScratchKey で監視キーを選択 / 押しっぱなしでは再発火しない |
 | Scratch/Broadcast Message | メッセージを送る | 指定メッセージ名を全リスナーへ配信 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / メッセージ名のみを送信（payload/sender ポート廃止） |
 | Scratch/Broadcast And Wait | メッセージを送って待つ | EventBus.Trigger で同期的に配信し、処理完了後に続行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / メッセージ名のみを送信（payload/sender ポート廃止） |

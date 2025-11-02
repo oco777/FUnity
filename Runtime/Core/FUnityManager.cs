@@ -720,6 +720,8 @@ namespace FUnity.Core
             {
                 m_VsBridge.Target = m_ActorPresenters.Count > 0 ? m_ActorPresenters[0] : null;
             }
+
+            TriggerGreenFlagInternal();
         }
 
         /// <summary>
@@ -1829,6 +1831,21 @@ namespace FUnity.Core
         }
 
         /// <summary>
+        /// Scratch の「緑の旗が押されたとき」イベントを全俳優（クローン除く）へ配信します。
+        /// </summary>
+        public static void TriggerGreenFlag()
+        {
+            var manager = Instance != null ? Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager.TriggerGreenFlag: FUnityManager が見つからないためイベントを発火できません。");
+                return;
+            }
+
+            manager.TriggerGreenFlagInternal();
+        }
+
+        /// <summary>
         /// 指定したクローン Presenter を破棄します。
         /// </summary>
         /// <param name="clonePresenter">破棄対象の Presenter。</param>
@@ -1990,6 +2007,44 @@ namespace FUnity.Core
         }
 
         /// <summary>
+        /// 登録済みの俳優 Presenter のうちクローンではない対象に対して緑の旗イベントを発火します。
+        /// </summary>
+        private void TriggerGreenFlagInternal()
+        {
+            if (m_ActorPresenters.Count == 0)
+            {
+                return;
+            }
+
+            var eventArgs = new EmptyEventArgs();
+            var dispatched = false;
+
+            for (var i = 0; i < m_ActorPresenters.Count; i++)
+            {
+                var presenter = m_ActorPresenters[i];
+                if (presenter == null || presenter.IsClone)
+                {
+                    continue;
+                }
+
+                var runner = presenter.Runner;
+                if (runner == null)
+                {
+                    Debug.LogWarning("[FUnity] FUnityManager: Runner が未割り当ての俳優が存在するため、緑の旗イベントをスキップしました。");
+                    continue;
+                }
+
+                EventBus.Trigger(new EventHook(FUnityEventNames.OnGreenFlag, runner), eventArgs);
+                dispatched = true;
+            }
+
+            if (!dispatched)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: 緑の旗イベントを配送できる俳優が存在しませんでした。");
+            }
+        }
+
+        /// <summary>
         /// 指定したクローン Presenter を破棄し、関連する Runner や UI を後始末します。
         /// </summary>
         /// <param name="presenter">破棄するクローン Presenter。</param>
@@ -2097,6 +2152,9 @@ namespace FUnity.Core
     /// <summary>Visual Scripting 用のイベント名定数をまとめたクラス。</summary>
     public static class FUnityEventNames
     {
+        /// <summary>Scratch の緑の旗が押された際に発火するイベント名。</summary>
+        public const string OnGreenFlag = "FUnity.OnGreenFlag";
+
         /// <summary>クローン開始時に発火するイベント名。</summary>
         public const string OnCloneStart = "FUnity.OnCloneStart";
     }
