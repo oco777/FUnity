@@ -79,13 +79,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続ノードへ進める ControlOutput。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var message = flow.GetValue<string>(m_Message);
+            var message = flow.GetValue<string>(m_Message) ?? string.Empty;
             var payload = flow.GetValue<object>(m_Payload);
             var sender = flow.GetValue<UnityEngine.Object>(m_Sender);
 
             var args = new MessagingCommon.Args
             {
-                Message = message ?? string.Empty,
+                Message = message,
                 Payload = payload,
                 Sender = sender
             };
@@ -144,13 +144,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>待機処理を表す IEnumerator。</returns>
         private IEnumerator OnEnterCoroutine(Flow flow)
         {
-            var message = flow.GetValue<string>(m_Message);
+            var message = flow.GetValue<string>(m_Message) ?? string.Empty;
             var payload = flow.GetValue<object>(m_Payload);
             var sender = flow.GetValue<UnityEngine.Object>(m_Sender);
 
             var args = new MessagingCommon.Args
             {
-                Message = message ?? string.Empty,
+                Message = message,
                 Payload = payload,
                 Sender = sender
             };
