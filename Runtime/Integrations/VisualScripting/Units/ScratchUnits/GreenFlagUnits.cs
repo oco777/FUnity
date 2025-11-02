@@ -25,13 +25,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// イベントの ControlOutput を構成し、下流にコルーチン系ユニットを接続できるようにします。
+        /// EventUnit 側で定義済みの trigger ポートを活用するため、基底実装のみを呼び出します。
         /// </summary>
         protected override void Definition()
         {
             base.Definition();
-            var trigger = ControlOutput("trigger");
-            Succession(trigger);
         }
 
         /// <summary>
