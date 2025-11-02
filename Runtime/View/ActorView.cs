@@ -486,6 +486,33 @@ namespace FUnity.Runtime.View
             m_SpeechLabel.text = message ?? string.Empty;
             m_SpeechBubble.EnableInClassList("speech-think", isThought);
             m_SpeechBubble.EnableInClassList("speech-say", !isThought);
+            // 吹き出し表示のたびに視認性を最優先で担保するため、インライン style を強制適用する。
+            // USS 側の競合を無視して文字色・背景色・フォントサイズを確実に反映する。
+            m_SpeechLabel.style.color = Color.black;
+
+            // 既定フォントサイズが未解決または 0/NaN の場合は 14px を基準として 2 倍にする。
+            var resolvedFontSize = m_SpeechLabel.resolvedStyle.fontSize;
+            var baseFontPx = float.IsNaN(resolvedFontSize) || resolvedFontSize <= 0f
+                ? 14f
+                : resolvedFontSize;
+            m_SpeechLabel.style.fontSize = baseFontPx * 2f;
+
+            // 背景はわずかに透過を抑えた白、境界線と余白を最低限付与して読みやすさを向上させる。
+            m_SpeechBubble.style.backgroundColor = new Color(1f, 1f, 1f, 0.98f);
+            m_SpeechBubble.style.paddingLeft = 6f;
+            m_SpeechBubble.style.paddingRight = 6f;
+            m_SpeechBubble.style.paddingTop = 4f;
+            m_SpeechBubble.style.paddingBottom = 4f;
+            m_SpeechBubble.style.borderTopWidth = 1f;
+            m_SpeechBubble.style.borderRightWidth = 1f;
+            m_SpeechBubble.style.borderBottomWidth = 1f;
+            m_SpeechBubble.style.borderLeftWidth = 1f;
+            var borderColor = new Color(0f, 0f, 0f, 0.25f);
+            m_SpeechBubble.style.borderTopColor = borderColor;
+            m_SpeechBubble.style.borderRightColor = borderColor;
+            m_SpeechBubble.style.borderBottomColor = borderColor;
+            m_SpeechBubble.style.borderLeftColor = borderColor;
+
             m_SpeechBubble.style.display = DisplayStyle.Flex;
         }
 
