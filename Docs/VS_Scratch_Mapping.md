@@ -49,9 +49,9 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
 | Scratch/Events/On Key Pressed | 〇キーが押されたとき | 指定キーの押下瞬間にトリガーを発火 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputEventUnits.cs / ScratchKey で監視キーを選択 / 押しっぱなしでは再発火しない |
-| Scratch/Broadcast Message | メッセージを送る | 指定メッセージを全リスナーへ配信 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / payload・sender ポートは未接続可（null を送信） |
-| Scratch/Broadcast And Wait | メッセージを送って待つ | EventBus.Trigger で同期的に配信し、処理完了後に続行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / payload・sender ポートは未接続可（null を送信） |
-| Scratch/When I Receive | メッセージを受け取ったとき | 指定メッセージ受信時にフロー発火（message/payload/sender 出力あり） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / filter 空欄でワイルドカード受信 |
+| Scratch/Broadcast Message | メッセージを送る | 指定メッセージ名を全リスナーへ配信 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / メッセージ名のみを送信（payload/sender ポート廃止） |
+| Scratch/Broadcast And Wait | メッセージを送って待つ | EventBus.Trigger で同期的に配信し、処理完了後に続行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / メッセージ名のみを送信（payload/sender ポート廃止） |
+| Scratch/When I Receive | メッセージを受け取ったとき | 指定メッセージ受信時にフロー発火（message 出力のみ） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / filter 空欄でワイルドカード受信 |
 
 ---
 ### 補足
@@ -60,6 +60,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 - すべての位置系ユニットは画像中心座標（px）を受け渡しします。Presenter が内部でアンカー種別に応じて補正します。
 - `FUnityActorData.Anchor` を TopLeft に設定した場合でも、Visual Scripting から扱う座標は画像中心です（境界計算のみ左上基準で処理されます）。
 - Scratch モードでは `ActorPresenter` が `ScratchBounds.ClampCenter` を通じて中心座標を `[-240 - width_afterScale, 240 + width_afterScale]` / `[-180 - height_afterScale, 180 + height_afterScale]` にクランプします。ユニット側での追加クランプは不要です。
+- メッセージ関連ユニットはメッセージ名のみを送受信し、payload/sender ポートや出力は廃止されています。
 
 ### 使い方メモ
 - Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置

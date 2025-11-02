@@ -14,6 +14,7 @@
 - feat(vs/ui): Scratch/Turn Degrees で Presenter 経由の `style.rotate` を適用し、UI 上の俳優画像を回転。
 
 ### Changed
+- refactor(vs): remove payload/sender ports from messaging units.
 - refactor(vs): remove ActorPresenterAdapter input ports from Scratch Units and rely on internal auto-resolution.
 - refactor(vs): fix Variables.Object overload and qualify UnityEngine.Object usage in Scratch units.
 - refactor(vs): stop auto-attaching ScriptMachine to 'FUnity UI'; require explicit placement
