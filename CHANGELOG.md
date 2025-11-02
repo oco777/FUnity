@@ -6,6 +6,7 @@
 - feat(vs): speech units now block for seconds variants.
 - feat(vs): add Scratch messaging Units (broadcast / broadcast & wait / when I receive).
 - feat(vs/ui): Scratch の大きさ操作（Set Size %, Change Size by %）を追加し、Presenter が 1～300% にクランプした `style.scale` を適用。
+- feat(vs/ui): Scratch/Looks Show & Hide ユニットを追加し、Presenter 経由で style.display による可視制御を実装。
 - feat(vs): Units read ActorPresenterAdapter from ScriptGraphAsset variables; editor assigns via ConfigureScriptMachine.
 - feat(core): move clamping to state mutation; deprecate FooniUIBridge.ClampToPanel().
 - PanelSettingsInitializer.EnsurePanelSettings() による Theme 自動割当（Editor 実行時）。

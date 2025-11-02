@@ -461,6 +461,21 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
+        /// 俳優要素の可視状態を切り替える。style.display を直接操作し、Flex/None で表示を制御する。
+        /// </summary>
+        /// <param name="visible">true で表示、false で非表示。</param>
+        public void SetVisible(bool visible)
+        {
+            var target = m_RootElement ?? m_BoundElement;
+            if (target == null)
+            {
+                return;
+            }
+
+            target.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        /// <summary>
         /// 現在角度に相対加算で回転させる。Presenter からの「自分を回す」命令を UI に伝える際に利用する。
         /// </summary>
         /// <param name="deltaDegrees">加算する角度（度）。正で反時計回り。</param>

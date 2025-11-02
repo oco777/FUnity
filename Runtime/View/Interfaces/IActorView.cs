@@ -69,6 +69,12 @@ namespace FUnity.Runtime.View
         void SetRotationDegrees(float degrees);
 
         /// <summary>
+        /// 俳優要素の表示/非表示を切り替える。style.display を利用し、アニメーションを伴わず即時に反映する。
+        /// </summary>
+        /// <param name="visible">true で表示、false で非表示。</param>
+        void SetVisible(bool visible);
+
+        /// <summary>
         /// 吹き出しを表示し、発言か思考かに応じてスタイルを切り替える。
         /// </summary>
         /// <param name="text">表示する本文。null の場合は空文字。</param>

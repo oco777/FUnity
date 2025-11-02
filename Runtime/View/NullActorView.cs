@@ -59,6 +59,11 @@ namespace FUnity.Runtime.View
         }
 
         /// <inheritdoc />
+        public void SetVisible(bool visible)
+        {
+        }
+
+        /// <inheritdoc />
         public void ShowSpeech(string text, bool isThought)
         {
         }

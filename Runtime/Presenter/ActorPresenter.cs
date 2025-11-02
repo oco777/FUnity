@@ -467,6 +467,15 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 俳優の表示/非表示を切り替え、View へ style.display の更新を委譲する。
+        /// </summary>
+        /// <param name="visible">true で表示、false で非表示。</param>
+        public void SetVisible(bool visible)
+        {
+            m_View?.SetVisible(visible);
+        }
+
+        /// <summary>
         /// 等倍基準のスケール値を直接設定し、内部的には拡大率（%）へ変換して統一ロジックに委譲する。
         /// </summary>
         /// <param name="scale">等倍=1 を基準としたスケール値。</param>

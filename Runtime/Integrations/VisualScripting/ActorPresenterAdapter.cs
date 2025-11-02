@@ -66,6 +66,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// </summary>
         public VisualElement BoundElement => m_BoundSource;
 
+        /// <summary>
+        /// Presenter 層の参照を公開し、ScratchUnitUtil などの補助クラスから可視制御や移動命令を直接転送できるようにする。
+        /// Presenter が未設定の場合は null を返す。
+        /// </summary>
+        public ActorPresenter Presenter => m_ActorPresenter;
+
         /// <summary>現在の座標原点。Presenter 未設定時は TopLeft。</summary>
         public CoordinateOrigin CoordinateOrigin
         {
