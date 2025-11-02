@@ -2,6 +2,7 @@
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Core;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Presenter
 {
@@ -337,6 +338,36 @@ namespace FUnity.Runtime.Presenter
             }
 
             return m_Target;
+        }
+
+        /// <summary>
+        /// 指定した Runner から ActorPresenter を解決する静的ヘルパー。
+        /// </summary>
+        /// <param name="runner">Visual Scripting Runner。</param>
+        /// <returns>解決した Presenter。存在しない場合は null。</returns>
+        public static ActorPresenter TryGetPresenterFromRunner(GameObject runner)
+        {
+            if (runner == null)
+            {
+                return null;
+            }
+
+            var variables = Variables.Object(runner);
+            if (variables != null)
+            {
+                if (variables.IsDefined("presenter") && variables.Get("presenter") is ActorPresenter presenter && presenter != null)
+                {
+                    return presenter;
+                }
+
+                if (variables.IsDefined(nameof(ActorPresenter)) && variables.Get(nameof(ActorPresenter)) is ActorPresenter namedPresenter && namedPresenter != null)
+                {
+                    return namedPresenter;
+                }
+            }
+
+            var adapter = runner.GetComponent<ActorPresenterAdapter>();
+            return adapter != null ? adapter.Presenter : null;
         }
     }
 }

@@ -44,6 +44,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>この俳優専用にバインドされた Visual Scripting の ScriptMachine。</summary>
         private ScriptMachine m_ScriptMachine;
 
+        /// <summary>Visual Scripting Runner（GameObject）への参照。</summary>
+        private GameObject m_Runner;
+
         /// <summary>初期サイズ（幅・高さ）。0 の場合は View 側の既定値を利用する。</summary>
         private Vector2 m_BaseSize = Vector2.zero;
 
@@ -121,6 +124,19 @@ namespace FUnity.Runtime.Presenter
 
         /// <summary>座標変換に利用するステージ要素。null の場合は中央原点変換を利用できません。</summary>
         public VisualElement StageRootElement => m_StageCoordinateRoot;
+
+        /// <summary>この Presenter がクローンかどうかを示します。</summary>
+        public bool IsClone { get; internal set; }
+
+        /// <summary>複製元の Presenter。クローンでない場合は null。</summary>
+        public ActorPresenter Original { get; internal set; }
+
+        /// <summary>紐付いている Visual Scripting Runner の GameObject。</summary>
+        public GameObject Runner
+        {
+            get => m_Runner;
+            internal set => m_Runner = value;
+        }
 
         /// <summary>
         /// モデルとビューを初期化し、初期位置・速度・ポートレートを反映する。
@@ -242,6 +258,7 @@ namespace FUnity.Runtime.Presenter
             }
 
             m_ScriptMachine = machine;
+            m_Runner = machine.gameObject;
 
             var objectVariables = Variables.Object(machine);
             if (objectVariables == null)
@@ -275,6 +292,74 @@ namespace FUnity.Runtime.Presenter
             {
                 Debug.LogWarning("[FUnity] ActorPresenter: ScriptMachine の Object Variables にアクセスできないため Self を登録できません。Variables.Object(flow.stack) から参照できるよう Runner の構成を確認してください。");
             }
+        }
+
+        /// <summary>
+        /// 他の Presenter から状態をコピーし、位置・サイズ・吹き出しなどを同期します。
+        /// </summary>
+        /// <param name="source">コピー元となる Presenter。</param>
+        public void CopyRuntimeStateFrom(ActorPresenter source)
+        {
+            if (source == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenter: CopyRuntimeStateFrom に null が渡されたためクローン状態を複製できません。");
+                return;
+            }
+
+            if (m_State != null && source.m_State != null)
+            {
+                m_State.Speed = source.m_State.Speed;
+                m_State.DirectionDeg = source.m_State.DirectionDeg;
+                m_State.RotationDeg = source.m_State.RotationDeg;
+                m_State.SizePercent = source.m_State.SizePercent;
+            }
+
+            m_EnableFloatOffset = source.m_EnableFloatOffset;
+            m_FloatOffset = source.m_FloatOffset;
+            m_ModeStagePixelsFallback = source.m_ModeStagePixelsFallback;
+            m_CoordinateOrigin = source.m_CoordinateOrigin;
+            m_IsScratchMode = source.m_IsScratchMode;
+            m_Anchor = source.m_Anchor;
+            m_BaseSize = source.m_BaseSize;
+
+            SetSizePercent(source.SizePercent);
+            SetDirection(source.GetDirection());
+            SetRotation(source.GetRotationDegrees());
+            SetFloatOffset(source.m_FloatOffset);
+
+            var sourceLogical = source.GetPosition();
+            var sourceUi = source.ToUiPosition(sourceLogical);
+            SetPositionPixels(sourceUi);
+
+            var sourceElement = source.ResolveActorVisualElement();
+            if (sourceElement != null)
+            {
+                var isVisible = sourceElement.resolvedStyle.display != DisplayStyle.None;
+                SetVisible(isVisible);
+            }
+
+            if (!string.IsNullOrEmpty(source.m_SpeechText))
+            {
+                ShowSpeech(source.m_SpeechText, source.m_SpeechUsesTimer ? source.m_SpeechRemainSeconds : 0f, source.m_SpeechIsThought);
+            }
+            else
+            {
+                HideSpeech();
+            }
+        }
+
+        /// <summary>
+        /// 現在の回転角度（度）を取得します。
+        /// </summary>
+        /// <returns>0～360 度の範囲に正規化された角度。</returns>
+        public float GetRotationDegrees()
+        {
+            if (m_State == null)
+            {
+                return 0f;
+            }
+
+            return m_State.RotationDeg;
         }
 
         /// <summary>

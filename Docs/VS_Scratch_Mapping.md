@@ -25,6 +25,9 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | Scratch/Forever | ずっと | 無限ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
 | Scratch/Repeat N | ◯ 回繰り返す | 指定回数ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
 | Scratch/Wait Seconds | ◯ 秒待つ | 指定秒だけ待機 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/WaitSecondsUnit.cs |
+| Scratch/Control/Create Clone of Self | クローンを作る（自分） | 現在の俳優 Presenter を複製 | Actor 入力不要。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
+| Scratch/Control/When I Start as a Clone | クローンされたとき | クローン生成直後にトリガーを発火 | target=Self（Runner）のカスタムイベント。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
+| Scratch/Control/Delete This Clone | このクローンを削除する | クローンのみ破棄（本体は警告） | Actor 入力不要。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
 | Scratch/Control/If Then | もし <条件> なら | 条件が true のとき Body を 1 回実行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ConditionUnits.cs / Body 実行後は同フレームで exit ポートに戻る |
 
 ## 調べる（入力判定）
