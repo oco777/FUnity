@@ -13,7 +13,7 @@ namespace FUnity.Runtime.View
     /// </summary>
     /// <remarks>
     /// 依存関係: <see cref="FooniUIBridge"/>（UI Toolkit 要素への操作ラッパー）
-    /// 想定ライフサイクル: <see cref="FUnity.Core.FUnityManager"/> が生成した UI GameObject にアタッチされ、<see cref="FUnity.Runtime.Presenter.ActorPresenter"/>
+    /// 想定ライフサイクル: <see cref="FUnity.Runtime.Core.FUnityManager"/> が生成した UI GameObject にアタッチされ、<see cref="FUnity.Runtime.Presenter.ActorPresenter"/>
     ///     の初期化時に <see cref="Configure(FooniUIBridge, VisualElement)"/> で結線される。
     /// ビューは常に Presenter からの一方向更新のみを許容し、ユーザー入力は受け付けない。
     /// </remarks>

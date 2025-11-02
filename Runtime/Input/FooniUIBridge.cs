@@ -12,7 +12,7 @@ namespace FUnity.Runtime.Input
     /// </summary>
     /// <remarks>
     /// 依存関係: <see cref="UIDocument"/>（ルート取得）、<see cref="VisualElement"/> API
-    /// 想定ライフサイクル: <see cref="FUnity.Core.FUnityManager"/> が UI GameObject に追加し、<see cref="FUnity.Runtime.View.ActorView"/>
+    /// 想定ライフサイクル: <see cref="FUnity.Runtime.Core.FUnityManager"/> が UI GameObject に追加し、<see cref="FUnity.Runtime.View.ActorView"/>
     ///     や Visual Scripting から座標更新メソッドが呼び出される。
     /// 本クラスは View であり、Model/Presenter のロジックを保持しない。背景画像の設定には `StyleBackground(Texture2D)` を利用する。
     /// </remarks>

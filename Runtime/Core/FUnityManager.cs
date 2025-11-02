@@ -15,7 +15,7 @@ using UnityEditor;
 #endif
 using FUnity.Runtime.Authoring;
 
-namespace FUnity.Core
+namespace FUnity.Runtime.Core
 {
     /// <summary>
     /// FUnity ランタイム全体をオーケストレーションする Presenter 層の MonoBehaviour。

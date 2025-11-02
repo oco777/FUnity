@@ -9,7 +9,7 @@ namespace FUnity.Runtime.UI
     /// </summary>
     /// <remarks>
     /// 依存関係: Resources/UI/ActorElement (UXML/USS), Resources/UI/FooniElement (追加装飾), Resources/Characters/Fooni (Texture2D)
-    /// 想定ライフサイクル: UI ドキュメントの生成時にインスタンス化され、<see cref="FUnity.Core.FUnityManager"/> から俳優要素として利用される。
+    /// 想定ライフサイクル: UI ドキュメントの生成時にインスタンス化され、<see cref="FUnity.Runtime.Core.FUnityManager"/> から俳優要素として利用される。
     /// UI Toolkit の仕様上、<c>[UxmlElement]</c> を付与するクラスは <c>partial</c> 修飾子が必須である。
     /// 背景画像の割当には <see cref="StyleBackground"/> の `new StyleBackground(Texture2D)` コンストラクタを使用する。
     /// </remarks>

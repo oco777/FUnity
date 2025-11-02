@@ -3,7 +3,7 @@ using System.Diagnostics;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace FUnity.Core
+namespace FUnity.Runtime.Core
 {
     /// <summary>
     /// FUnity の初期化処理に関するログ出力を集約するユーティリティ。
