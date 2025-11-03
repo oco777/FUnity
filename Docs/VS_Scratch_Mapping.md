@@ -24,7 +24,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 |---|---|---|---|
 | Scratch/Forever | ずっと | 無限ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
 | Scratch/Repeat N | ◯ 回繰り返す | 指定回数ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
-| Scratch/Wait Seconds | ◯ 秒待つ | 指定秒だけ待機 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/WaitSecondsUnit.cs |
+| Scratch/Wait Seconds | ◯ 秒待つ | 指定秒だけ待機 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/WaitSecondsUnit.cs / 同期チェーンから呼ぶ場合は FUnity/Flow/To Coroutine を挟む |
 | Scratch/Control/Create Clone of Self | クローンを作る（自分） | 現在の俳優 Presenter を複製 | Actor 入力不要。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
 | Scratch/Control/Create Clone Of (DisplayName) | クローンを作る（DisplayName 指定） | DisplayName で指定した俳優 Presenter を複製 | Value 出力に CloneAdapter（ActorPresenterAdapter）を返す。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
 | Scratch/Control/When I Start as a Clone | クローンされたとき | クローン生成直後にトリガーを発火 | target=Self（Runner）のカスタムイベント。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
@@ -62,6 +62,7 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
 ---
 ### 補足
+- コルーチン専用ユニットを同期チェーンから呼び出す場合は `FUnity/Flow/To Coroutine` を事前に挟んでコルーチンパイプラインへ切り替えてください。
 - 対応表は Tools/generate_vs_scratch_mapping.py により自動生成されたログをもとにしています（自動生成日時: 2025-10-21 12:25:56）。
 - Scratch モードがアクティブな場合、移動系ユニットはステージ中央原点の論理座標で動作します。UI Toolkit 座標への変換はランタイムが自動で行います。
 - すべての位置系ユニットは画像中心座標（px）を受け渡しします。Presenter が内部でアンカー種別に応じて補正します。
