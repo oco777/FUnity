@@ -123,7 +123,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 Random.Range(-ScratchBounds.StageHalfW, ScratchBounds.StageHalfW),
                 Random.Range(-ScratchBounds.StageHalfH, ScratchBounds.StageHalfH));
             var seconds = flow.GetValue<float>(m_Seconds);
-            return ScratchUnitUtil.GlideActorTo(adapter, random, seconds, m_Exit);
+            yield return ScratchUnitUtil.GlideActorTo(adapter, random, seconds, m_Exit);
         }
     }
 
@@ -239,7 +239,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             var logical = ScratchUnitUtil.GetMouseLogicalPosition(adapter);
             var seconds = flow.GetValue<float>(m_Seconds);
-            return ScratchUnitUtil.GlideActorTo(adapter, logical, seconds, m_Exit);
+            yield return ScratchUnitUtil.GlideActorTo(adapter, logical, seconds, m_Exit);
         }
     }
 
@@ -406,7 +406,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             var logical = presenter.GetPosition();
             var seconds = flow.GetValue<float>(m_Seconds);
-            return ScratchUnitUtil.GlideActorTo(adapter, logical, seconds, m_Exit);
+            yield return ScratchUnitUtil.GlideActorTo(adapter, logical, seconds, m_Exit);
         }
     }
 
@@ -496,7 +496,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var delta = new Vector2(flow.GetValue<float>(m_DeltaX), flow.GetValue<float>(m_DeltaY));
             var target = start + delta;
             var seconds = flow.GetValue<float>(m_Seconds);
-            return ScratchUnitUtil.GlideActorTo(adapter, target, seconds, m_Exit);
+            yield return ScratchUnitUtil.GlideActorTo(adapter, target, seconds, m_Exit);
         }
     }
 
@@ -576,7 +576,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             var logical = new Vector2(flow.GetValue<float>(m_X), flow.GetValue<float>(m_Y));
             var seconds = flow.GetValue<float>(m_Seconds);
-            return ScratchUnitUtil.GlideActorTo(adapter, logical, seconds, m_Exit);
+            yield return ScratchUnitUtil.GlideActorTo(adapter, logical, seconds, m_Exit);
         }
     }
 }
