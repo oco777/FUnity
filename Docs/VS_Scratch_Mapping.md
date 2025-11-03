@@ -11,7 +11,15 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 |---|---|---|---|
 | Scratch/Change X By | x座標を ◯ ずつ変える | 中心 X 座標を相対移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
 | Scratch/Change Y By | y座標を ◯ ずつ変える | 中心 Y 座標を相対移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
+| Scratch/Go To Random Position | どこかの場所へ行く | ステージ範囲内のランダム座標へ瞬間移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
+| Scratch/Glide Seconds To Random Position | ◯ 秒でどこかの場所へ行く | 指定秒数でランダム座標へ滑らかに移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
 | Scratch/Go To X,Y | x:◯ y:◯ へ行く | 指定中心座標（px）に移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
+| Scratch/Glide Seconds To X,Y | ◯ 秒で x 座標を ◯ に、y 座標を ◯ にする | 指定座標へ指定秒数で移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
+| Scratch/Glide Seconds By XY Delta | ◯ 秒で x 座標を ◯ に、y 座標を ◯ に変える | 現在位置に差分 (x, y) を加算する目標へ滑らかに移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
+| Scratch/Go To Mouse Pointer | マウスのポインターへ行く | マウスポインターの論理座標へ瞬間移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
+| Scratch/Glide Seconds To Mouse Pointer | ◯ 秒でマウスのポインターへ行く | 指定秒数でマウスポインターへ移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
+| Scratch/Go To Actor By DisplayName | 他の Actor へ行く | DisplayName で指定した俳優の座標へ瞬間移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
+| Scratch/Glide Seconds To Actor By DisplayName | ◯ 秒で他の Actor へ行く | DisplayName で指定した俳優の座標へ滑らかに移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
 | Scratch/Move Steps | ◯歩動かす | 現在の向きに沿って移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MoveStepsUnit.cs |
 | Scratch/Point Direction | ◯度に向ける | 向きを絶対角度に設定 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TurnAndPointUnits.cs |
 | Scratch/Set X | x座標を ◯ にする | X 座標を代入 | 未実装: 対応する Unit が見つかりません |

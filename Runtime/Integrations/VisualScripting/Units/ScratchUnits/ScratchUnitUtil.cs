@@ -1,7 +1,9 @@
 // Updated: 2025-10-19
 using System;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
 using FUnity.Runtime.Presenter;
 
@@ -144,6 +146,219 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             LogResolutionFailureOnce();
             return null;
+        }
+
+        /// <summary>
+        /// 表示名から <see cref="ActorPresenterAdapter"/> を探索し、見つかった場合に返します。
+        /// </summary>
+        /// <param name="displayName">検索する表示名。</param>
+        /// <param name="adapter">見つかったアダプタ。見つからない場合は null。</param>
+        /// <returns>検索に成功した場合は <c>true</c>。</returns>
+        public static bool TryFindActorByDisplayName(string displayName, out ActorPresenterAdapter adapter)
+        {
+            adapter = null;
+            if (string.IsNullOrEmpty(displayName))
+            {
+                return false;
+            }
+
+            var normalized = displayName.Trim();
+            if (string.IsNullOrEmpty(normalized))
+            {
+                return false;
+            }
+
+            var adapters = Object.FindObjectsByType<ActorPresenterAdapter>(FindObjectsSortMode.None);
+            foreach (var candidate in adapters)
+            {
+                if (MatchesDisplayName(candidate, normalized))
+                {
+                    adapter = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Scratch ステージの論理座標における中心座標をクランプします。
+        /// </summary>
+        /// <param name="logical">クランプ対象の論理座標。</param>
+        /// <returns>ステージ範囲へ丸め込んだ論理座標。</returns>
+        public static Vector2 ClampToStageBounds(Vector2 logical)
+        {
+            try
+            {
+                var clampedX = Mathf.Clamp(logical.x, -ScratchBounds.StageHalfW, ScratchBounds.StageHalfW);
+                var clampedY = Mathf.Clamp(logical.y, -ScratchBounds.StageHalfH, ScratchBounds.StageHalfH);
+                return new Vector2(clampedX, clampedY);
+            }
+            catch
+            {
+                return logical;
+            }
+        }
+
+        /// <summary>
+        /// マウスポインターのスクリーン座標から Scratch 論理座標を推定します。
+        /// </summary>
+        /// <param name="referenceAdapter">ステージ座標変換に使用する参照アダプタ。</param>
+        /// <returns>推定した論理座標。失敗時はスクリーン座標から簡易変換した値。</returns>
+        public static Vector2 GetMouseLogicalPosition(ActorPresenterAdapter referenceAdapter)
+        {
+            var pointer = UnityEngine.Input.mousePosition;
+            if (referenceAdapter != null)
+            {
+                var presenter = referenceAdapter.Presenter;
+                var stageRoot = presenter != null ? presenter.StageRootElement : null;
+                if (stageRoot != null)
+                {
+                    var panel = stageRoot.panel;
+                    if (panel != null)
+                    {
+                        var panelPoint = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(pointer.x, pointer.y));
+                        var local = panelPoint - stageRoot.worldBound.position;
+                        var logical = referenceAdapter.ToLogicalPosition(local);
+                        return ClampToStageBounds(logical);
+                    }
+                }
+            }
+
+            var fallback = new Vector2(
+                pointer.x - (Screen.width * 0.5f),
+                (Screen.height * 0.5f) - pointer.y);
+            return ClampToStageBounds(fallback);
+        }
+
+        /// <summary>
+        /// 指定アクターを目標座標へ滑らかに移動させます。
+        /// </summary>
+        /// <param name="adapter">移動させるアダプタ。</param>
+        /// <param name="targetLogical">目標の論理座標。</param>
+        /// <param name="duration">移動にかける秒数。0 以下の場合は即時移動。</param>
+        /// <param name="exit">完了時に返す ControlOutput。</param>
+        /// <returns>移動処理を行う列挙子。</returns>
+        public static System.Collections.IEnumerator GlideActorTo(ActorPresenterAdapter adapter, Vector2 targetLogical, float duration, ControlOutput exit)
+        {
+            if (adapter == null)
+            {
+                Debug.LogWarning("[FUnity] Scratch/Glide: ActorPresenterAdapter が解決できませんでした。");
+                yield return exit;
+                yield break;
+            }
+
+            var presenter = adapter.Presenter;
+            if (presenter == null)
+            {
+                Debug.LogWarning("[FUnity] Scratch/Glide: ActorPresenter が未割り当てのため移動できません。");
+                yield return exit;
+                yield break;
+            }
+
+            var clampedTarget = ClampToStageBounds(targetLogical);
+            var startLogical = ClampToStageBounds(presenter.GetPosition());
+            var safeDuration = Mathf.Max(0f, duration);
+            if (safeDuration <= 0f)
+            {
+                var uiInstant = adapter.ToUiPosition(clampedTarget);
+                adapter.SetPositionPixels(uiInstant);
+                yield return exit;
+                yield break;
+            }
+
+            var elapsed = 0f;
+            while (elapsed < safeDuration)
+            {
+                elapsed += Time.deltaTime;
+                var ratio = Mathf.Clamp01(elapsed / safeDuration);
+                var logical = Vector2.Lerp(startLogical, clampedTarget, ratio);
+                var clampedStep = ClampToStageBounds(logical);
+                var uiStep = adapter.ToUiPosition(clampedStep);
+                adapter.SetPositionPixels(uiStep);
+                yield return null;
+            }
+
+            var uiTarget = adapter.ToUiPosition(clampedTarget);
+            adapter.SetPositionPixels(uiTarget);
+            yield return exit;
+        }
+
+        /// <summary>
+        /// ActorPresenterAdapter が保持する名称情報と Runner 名を確認し、DisplayName と一致するかを判定します。
+        /// </summary>
+        /// <param name="adapter">判定対象のアダプタ。</param>
+        /// <param name="normalizedDisplayName">比較に用いる正規化済み DisplayName。</param>
+        /// <returns>一致すると判断した場合は <c>true</c>。</returns>
+        private static bool MatchesDisplayName(ActorPresenterAdapter adapter, string normalizedDisplayName)
+        {
+            if (adapter == null)
+            {
+                return false;
+            }
+
+            if (NameMatches(adapter.gameObject != null ? adapter.gameObject.name : null, normalizedDisplayName))
+            {
+                return true;
+            }
+
+            if (NameMatches(adapter.name, normalizedDisplayName))
+            {
+                return true;
+            }
+
+            var presenter = adapter.Presenter;
+            if (presenter != null)
+            {
+                if (NameMatches(presenter.Runner != null ? presenter.Runner.name : null, normalizedDisplayName))
+                {
+                    return true;
+                }
+
+                var original = presenter.Original;
+                if (original != null && NameMatches(original.Runner != null ? original.Runner.name : null, normalizedDisplayName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 名前文字列が DisplayName に相当すると判断できるかを判定します。
+        /// </summary>
+        /// <param name="source">比較対象の名前。</param>
+        /// <param name="normalizedDisplayName">正規化済み DisplayName。</param>
+        /// <returns>DisplayName に一致すると判断できる場合は <c>true</c>。</returns>
+        private static bool NameMatches(string source, string normalizedDisplayName)
+        {
+            if (string.IsNullOrEmpty(source))
+            {
+                return false;
+            }
+
+            if (string.Equals(source, normalizedDisplayName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (source.StartsWith(normalizedDisplayName + " ", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (source.StartsWith(normalizedDisplayName + "(", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (source.EndsWith(" " + normalizedDisplayName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
