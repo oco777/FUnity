@@ -6,6 +6,7 @@ using Unity.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
 using FUnity.Runtime.Presenter;
+using Object = UnityEngine.Object;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
