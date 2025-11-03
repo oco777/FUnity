@@ -44,6 +44,9 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | VS ノード名 | Scratch 日本語 | 概要 | 備考 |
 |---|---|---|---|
 | Scratch/Sensing/Key Pressed? | 〇キーが押された？ | 指定キーが押されている間は true | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputPredicateUnits.cs / 押下中は true（イベントの OnKeyPressed は押下瞬間のみ） |
+| Scratch/Sensing/Touching Mouse Pointer? | マウスポインターに触れた？ | 俳優の矩形にマウス座標が含まれるか判定 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TouchPredicates.cs |
+| Scratch/Sensing/Touching Edge? | 端に触れた？ | ステージ境界へ接触しているか判定 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TouchPredicates.cs |
+| Scratch/Sensing/Touching Actor By DisplayName? | ◯◯に触れた？（DisplayName） | 指定 DisplayName の俳優と矩形が重なっているか判定 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TouchPredicates.cs |
 
 ## 表示・演出（Fooni 関連）
 

@@ -555,4 +555,92 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             m_HasLoggedResolutionFailure = true;
         }
     }
+
+    /// <summary>
+    /// Scratch 互換の当たり判定で利用する矩形・座標計算を提供する補助クラスです。
+    /// </summary>
+    internal static class ScratchHitTestUtil
+    {
+        /// <summary>Scratch ステージの既定サイズ（px）。座標取得に失敗した際のフォールバックとして利用します。</summary>
+        private static readonly Vector2 s_FallbackStageSize = new Vector2(480f, 360f);
+
+        /// <summary>
+        /// ActorPresenterAdapter から俳優要素の worldBound を取得し、矩形が有効かを判定します。
+        /// </summary>
+        /// <param name="adapter">対象となるアクターのアダプタ。</param>
+        /// <param name="rect">取得した worldBound。失敗時は default。</param>
+        /// <returns>矩形を取得できた場合は <c>true</c>。</returns>
+        public static bool TryGetActorWorldRect(ActorPresenterAdapter adapter, out Rect rect)
+        {
+            rect = default;
+            if (adapter == null)
+            {
+                return false;
+            }
+
+            var element = adapter.BoundElement;
+            if (element == null)
+            {
+                var presenter = adapter.Presenter;
+                var stageRoot = presenter != null ? presenter.StageRootElement : null;
+                element = stageRoot != null ? stageRoot.Q(className: "actor-root") : null;
+            }
+
+            if (element == null)
+            {
+                return false;
+            }
+
+            rect = element.worldBound;
+            return rect.width > 0f && rect.height > 0f;
+        }
+
+        /// <summary>
+        /// UI Toolkit の panel 座標系におけるマウスポインター位置を取得します。
+        /// </summary>
+        /// <param name="adapter">座標変換に利用するアクターのアダプタ。</param>
+        /// <returns>panel 基準の座標。変換に失敗した場合はスクリーン座標を返します。</returns>
+        public static Vector2 GetMousePanelPosition(ActorPresenterAdapter adapter)
+        {
+            var pointer = UnityEngine.Input.mousePosition;
+
+            var referenceElement = adapter != null ? adapter.BoundElement : null;
+            if (referenceElement == null && adapter != null && adapter.Presenter != null)
+            {
+                referenceElement = adapter.Presenter.StageRootElement;
+            }
+
+            if (referenceElement != null)
+            {
+                var panel = referenceElement.panel;
+                if (panel != null)
+                {
+                    return RuntimePanelUtils.ScreenToPanel(panel, new Vector2(pointer.x, pointer.y));
+                }
+            }
+
+            return new Vector2(pointer.x, pointer.y);
+        }
+
+        /// <summary>
+        /// ステージ要素の worldBound を取得し、Fallback を含めた矩形を返します。
+        /// </summary>
+        /// <param name="adapter">ステージ参照の基準となるアダプタ。</param>
+        /// <returns>ステージ領域の矩形。取得できない場合は (0,0,480,360) を返します。</returns>
+        public static Rect GetStageWorldRect(ActorPresenterAdapter adapter)
+        {
+            var presenter = adapter != null ? adapter.Presenter : null;
+            var stageRoot = presenter != null ? presenter.StageRootElement : null;
+            if (stageRoot != null)
+            {
+                var rect = stageRoot.worldBound;
+                if (rect.width > 0f && rect.height > 0f)
+                {
+                    return rect;
+                }
+            }
+
+            return new Rect(0f, 0f, s_FallbackStageSize.x, s_FallbackStageSize.y);
+        }
+    }
 }
