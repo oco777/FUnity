@@ -6,6 +6,7 @@ using Unity.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
 using FUnity.Runtime.Presenter;
+using FUnity.Runtime.View;
 using Object = UnityEngine.Object;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
@@ -565,11 +566,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private static readonly Vector2 s_FallbackStageSize = new Vector2(480f, 360f);
 
         /// <summary>
-        /// ActorPresenterAdapter から俳優要素の worldBound を取得し、矩形が有効かを判定します。
+        /// ActorPresenterAdapter から俳優要素の世界座標矩形を取得する。worldBound が無効な場合は子要素や中心座標から補完する。
         /// </summary>
         /// <param name="adapter">対象となるアクターのアダプタ。</param>
-        /// <param name="rect">取得した worldBound。失敗時は default。</param>
-        /// <returns>矩形を取得できた場合は <c>true</c>。</returns>
+        /// <param name="rect">推定した世界座標矩形。失敗時は default。</param>
+        /// <returns>矩形の推定に成功した場合は <c>true</c>。</returns>
         public static bool TryGetActorWorldRect(ActorPresenterAdapter adapter, out Rect rect)
         {
             rect = default;
@@ -578,14 +579,88 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return false;
             }
 
-            var element = adapter.BoundElement;
-            if (element == null)
+            var view = adapter.ActorView;
+            if (view != null && view.TryGetCachedWorldBound(out rect))
             {
-                var presenter = adapter.Presenter;
-                var stageRoot = presenter != null ? presenter.StageRootElement : null;
-                element = stageRoot != null ? stageRoot.Q(className: "actor-root") : null;
+                return true;
             }
 
+            var root = ResolveActorRoot(adapter, view);
+            var sprite = ResolveSpriteElement(root);
+            if (TryResolveWorldBound(sprite, out rect))
+            {
+                return true;
+            }
+
+            if (TryResolveWorldBound(root, out rect))
+            {
+                return true;
+            }
+
+            var fallbackElement = view != null ? view.BoundElement : adapter.BoundElement;
+            if (fallbackElement != null && fallbackElement != root && TryResolveWorldBound(fallbackElement, out rect))
+            {
+                return true;
+            }
+
+            var presenter = adapter.Presenter;
+            if (presenter != null && view != null)
+            {
+                var logical = presenter.GetPosition();
+                var center = presenter.ToUiPosition(logical);
+                var sizePx = view.GetRootScaledSizePx();
+                if (sizePx.x > 0f && sizePx.y > 0f)
+                {
+                    rect = new Rect(
+                        center.x - sizePx.x * 0.5f,
+                        center.y - sizePx.y * 0.5f,
+                        sizePx.x,
+                        sizePx.y);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>ActorView とアダプタから最も信頼できるルート要素を解決する。</summary>
+        /// <param name="adapter">参照するアダプタ。</param>
+        /// <param name="view">参照する ActorView。</param>
+        /// <returns>矩形計算の基準とする要素。</returns>
+        private static VisualElement ResolveActorRoot(ActorPresenterAdapter adapter, ActorView view)
+        {
+            if (view != null)
+            {
+                return view.ActorRoot ?? view.BoundElement;
+            }
+
+            return adapter != null ? adapter.BoundElement : null;
+        }
+
+        /// <summary>スプライトを描画している子要素を探索する。</summary>
+        /// <param name="root">探索の起点。</param>
+        /// <returns>スプライト描画要素。見つからない場合は null。</returns>
+        private static VisualElement ResolveSpriteElement(VisualElement root)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            return root.Q<VisualElement>("sprite")
+                ?? root.Q<VisualElement>(className: "sprite")
+                ?? root.Q<VisualElement>(className: "actor-sprite")
+                ?? root.Q<VisualElement>("portrait")
+                ?? root.Q<VisualElement>(className: "portrait");
+        }
+
+        /// <summary>VisualElement の worldBound を取得し、正の幅・高さを持つかを検査する。</summary>
+        /// <param name="element">検査対象の要素。</param>
+        /// <param name="rect">取得した矩形。</param>
+        /// <returns>幅・高さが正の場合は <c>true</c>。</returns>
+        private static bool TryResolveWorldBound(VisualElement element, out Rect rect)
+        {
+            rect = default;
             if (element == null)
             {
                 return false;

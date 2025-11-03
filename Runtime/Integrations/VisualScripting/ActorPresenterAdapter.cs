@@ -4,6 +4,7 @@ using Unity.VisualScripting;
 using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Presenter;
+using FUnity.Runtime.View;
 using UnityEngine.UIElements;
 
 namespace FUnity.Runtime.Integrations.VisualScripting
@@ -71,6 +72,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// Presenter が未設定の場合は null を返す。
         /// </summary>
         public ActorPresenter Presenter => m_ActorPresenter;
+
+        /// <summary>Presenter が保持する ActorView を公開する。Presenter 未接続時や ActorView 以外の実装では null。</summary>
+        public ActorView ActorView => m_ActorPresenter != null ? m_ActorPresenter.ActorViewComponent : null;
 
         /// <summary>現在の座標原点。Presenter 未設定時は TopLeft。</summary>
         public CoordinateOrigin CoordinateOrigin

@@ -125,6 +125,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>座標変換に利用するステージ要素。null の場合は中央原点変換を利用できません。</summary>
         public VisualElement StageRootElement => m_StageCoordinateRoot;
 
+        /// <summary>現在バインドされている View を ActorView 型として取得する。ActorView 以外の場合は null。</summary>
+        internal ActorView ActorViewComponent => m_View as ActorView;
+
         /// <summary>この Presenter がクローンかどうかを示します。</summary>
         public bool IsClone { get; internal set; }
 

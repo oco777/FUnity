@@ -1,5 +1,6 @@
 // Updated: 2025-03-03
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Input;
@@ -72,6 +73,15 @@ namespace FUnity.Runtime.View
 
         /// <summary>現在適用している等倍基準のスケール値。</summary>
         private float m_CurrentScale = 1f;
+
+        /// <summary>GeometryChangedEvent で観測した直近の worldBound。</summary>
+        private Rect m_WorldBoundCache = Rect.zero;
+
+        /// <summary>有効な worldBound をキャッシュできているかどうか。</summary>
+        private bool m_HasWorldBoundCache;
+
+        /// <summary>worldBound キャッシュ更新のために監視している要素群。</summary>
+        private readonly List<VisualElement> m_WorldBoundSources = new List<VisualElement>();
 
         /// <summary>transform-origin を中央 (50%/50%) へ固定するためのパーセント指定。</summary>
         private static readonly Length CenterPivotPercent = new Length(50f, LengthUnit.Percent);
@@ -156,6 +166,17 @@ namespace FUnity.Runtime.View
         public VisualElement ActorRoot => m_ActorRoot ?? m_BoundElement;
 
         /// <summary>
+        /// 直近のレイアウト確定時に観測した worldBound を返す。幅・高さが正の場合のみ有効とみなす。
+        /// </summary>
+        /// <param name="rect">キャッシュ済みの worldBound。</param>
+        /// <returns>有効なキャッシュが存在する場合は <c>true</c>。</returns>
+        public bool TryGetCachedWorldBound(out Rect rect)
+        {
+            rect = m_WorldBoundCache;
+            return m_HasWorldBoundCache && rect.width > 0f && rect.height > 0f;
+        }
+
+        /// <summary>
         /// UIDocument をキャッシュし、ドキュメント直下のルートを相対配置へ戻す。
         /// </summary>
         private void Awake()
@@ -217,6 +238,7 @@ namespace FUnity.Runtime.View
             }
 
             UnregisterGeometryCallbacks();
+            UnregisterWorldBoundCacheSources();
 
             m_ActorRoot = FindActorRoot(element);
             if (m_ActorRoot == null && element != null)
@@ -257,6 +279,8 @@ namespace FUnity.Runtime.View
             }
 
             HideSpeech();
+
+            RegisterWorldBoundCacheSources();
 
             m_PortraitElement = null;
             ResetPortraitScaleToIdentity();
@@ -549,11 +573,56 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
+        /// worldBound キャッシュの更新に利用する GeometryChangedEvent を登録する。
+        /// </summary>
+        private void RegisterWorldBoundCacheSources()
+        {
+            var root = GetRootElement();
+            TryRegisterWorldBoundSource(root);
+
+            if (m_ActorRoot != null && m_ActorRoot != root)
+            {
+                TryRegisterWorldBoundSource(m_ActorRoot);
+            }
+
+            if (m_BoundElement != null && m_BoundElement != root && m_BoundElement != m_ActorRoot)
+            {
+                TryRegisterWorldBoundSource(m_BoundElement);
+            }
+
+            var sprite = ResolveSpriteElement(root ?? m_ActorRoot ?? m_BoundElement);
+            TryRegisterWorldBoundSource(sprite);
+        }
+
+        /// <summary>
+        /// worldBound キャッシュ用の GeometryChangedEvent を解除し、不要な購読を除去する。
+        /// </summary>
+        private void UnregisterWorldBoundCacheSources()
+        {
+            if (m_WorldBoundSources.Count == 0)
+            {
+                m_WorldBoundCache = Rect.zero;
+                m_HasWorldBoundCache = false;
+                return;
+            }
+
+            foreach (var source in m_WorldBoundSources)
+            {
+                source?.UnregisterCallback<GeometryChangedEvent>(OnWorldBoundSourceGeometryChanged);
+            }
+
+            m_WorldBoundSources.Clear();
+            m_WorldBoundCache = Rect.zero;
+            m_HasWorldBoundCache = false;
+        }
+
+        /// <summary>
         /// MonoBehaviour の破棄時に GeometryChangedEvent の購読を解除する。
         /// </summary>
         private void OnDestroy()
         {
             UnregisterGeometryCallbacks();
+            UnregisterWorldBoundCacheSources();
         }
 
         /// <summary>
@@ -589,6 +658,11 @@ namespace FUnity.Runtime.View
         /// <param name="evt">UI Toolkit が発行する GeometryChangedEvent。</param>
         private void OnElementGeometryChanged(GeometryChangedEvent evt)
         {
+            if (evt?.target is VisualElement element)
+            {
+                UpdateWorldBoundCache(element.worldBound);
+            }
+
             ApplyAllTransforms();
         }
 
@@ -635,6 +709,79 @@ namespace FUnity.Runtime.View
                 m_PanelRoot.UnregisterCallback<GeometryChangedEvent>(OnPanelGeometryChanged);
                 m_PanelRoot = null;
             }
+        }
+
+        /// <summary>
+        /// worldBound キャッシュ対象の要素へ GeometryChangedEvent を登録する。
+        /// </summary>
+        /// <param name="element">監視対象の要素。</param>
+        private void TryRegisterWorldBoundSource(VisualElement element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            if (m_WorldBoundSources.Contains(element))
+            {
+                return;
+            }
+
+            element.RegisterCallback<GeometryChangedEvent>(OnWorldBoundSourceGeometryChanged, TrickleDown.TrickleDown);
+            m_WorldBoundSources.Add(element);
+            UpdateWorldBoundCache(element.worldBound);
+        }
+
+        /// <summary>
+        /// GeometryChangedEvent の通知を受け取り、worldBound キャッシュを更新する。
+        /// </summary>
+        /// <param name="evt">UI Toolkit から渡されるイベント。</param>
+        private void OnWorldBoundSourceGeometryChanged(GeometryChangedEvent evt)
+        {
+            if (evt?.target is not VisualElement element)
+            {
+                return;
+            }
+
+            UpdateWorldBoundCache(element.worldBound);
+        }
+
+        /// <summary>
+        /// スプライト要素を名前・クラス指定で探索し、見つかった場合に返す。
+        /// </summary>
+        /// <param name="root">探索を行う起点要素。</param>
+        /// <returns>スプライトを描画している要素。存在しない場合は null。</returns>
+        private static VisualElement ResolveSpriteElement(VisualElement root)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            return root.Q<VisualElement>("sprite")
+                ?? root.Q<VisualElement>(className: "sprite")
+                ?? root.Q<VisualElement>("portrait")
+                ?? root.Q<VisualElement>(className: "portrait");
+        }
+
+        /// <summary>
+        /// 新たに観測した worldBound を検証し、有効な場合はキャッシュを更新する。
+        /// </summary>
+        /// <param name="candidate">GeometryChangedEvent で取得した矩形。</param>
+        private void UpdateWorldBoundCache(Rect candidate)
+        {
+            if (candidate.width <= 0f || candidate.height <= 0f)
+            {
+                if (!m_HasWorldBoundCache)
+                {
+                    m_WorldBoundCache = candidate;
+                }
+
+                return;
+            }
+
+            m_WorldBoundCache = candidate;
+            m_HasWorldBoundCache = true;
         }
 
         /// <summary>
