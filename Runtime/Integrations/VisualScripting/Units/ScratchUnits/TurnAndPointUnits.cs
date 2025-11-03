@@ -1,4 +1,5 @@
 // Updated: 2025-10-19
+using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -40,7 +41,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_DeltaDegrees = ValueInput<float>("deltaDegrees", 15f);
 
@@ -51,8 +52,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// enter 受信時に <see cref="ActorPresenterAdapter"/> を自動解決し、現在角度へ増減を加えます。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>後続へ制御を渡す exit ポート。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>後続へ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var delta = flow.GetValue<float>(m_DeltaDegrees);
 
@@ -78,12 +79,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Turn Degrees: ActorPresenterAdapter が未解決のため向きを更新できません。VSPresenterBridge などでアダプタを供給してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var current = controller.GetDirection();
             controller.SetDirection(current + delta);
-            return m_Exit;
+            yield return m_Exit;
         }
 
     }
@@ -122,7 +124,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_Degrees = ValueInput<float>("degrees", 90f);
 
@@ -133,19 +135,20 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// enter を受信した際に <see cref="ActorPresenterAdapter"/> を自動解決し、角度を絶対値で設定します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>後続へ制御を渡す exit ポート。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>後続へ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Point Direction: ActorPresenterAdapter が未解決のため向きを設定できません。VSPresenterBridge などでアダプタを供給してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var degrees = flow.GetValue<float>(m_Degrees);
             controller.SetDirection(degrees);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 }

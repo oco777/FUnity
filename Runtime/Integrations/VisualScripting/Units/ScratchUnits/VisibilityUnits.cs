@@ -1,4 +1,5 @@
 // Updated: 2025-03-07
+using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -32,7 +33,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
 
             Succession(m_Enter, m_Exit);
@@ -42,15 +43,16 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// 入力フローを受け取り、Presenter を自動解決して俳優を表示状態にする。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>exit ポートを返し、後続へ制御を渡す。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>exit ポートへ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
             {
                 Debug.LogWarning(
                     "[FUnity] Scratch/Looks/Show: ActorPresenterAdapter を自動解決できません。ScriptMachine の Variables 設定を確認してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var presenter = adapter.Presenter;
@@ -58,11 +60,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             {
                 Debug.LogWarning(
                     "[FUnity] Scratch/Looks/Show: ActorPresenter が未接続のため表示状態を変更できません。Adapter と Presenter の紐付けを確認してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             presenter.SetVisible(true);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 
@@ -93,7 +96,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
 
             Succession(m_Enter, m_Exit);
@@ -103,15 +106,16 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// 入力フローを受け取り、Presenter を自動解決して俳優を非表示にする。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>exit ポートを返し、後続へ制御を渡す。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>exit ポートへ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
             {
                 Debug.LogWarning(
                     "[FUnity] Scratch/Looks/Hide: ActorPresenterAdapter を自動解決できません。ScriptMachine の Variables 設定を確認してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var presenter = adapter.Presenter;
@@ -119,11 +123,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             {
                 Debug.LogWarning(
                     "[FUnity] Scratch/Looks/Hide: ActorPresenter が未接続のため表示状態を変更できません。Adapter と Presenter の紐付けを確認してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             presenter.SetVisible(false);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 }

@@ -1,4 +1,5 @@
 // Updated: 2025-10-19
+using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -46,7 +47,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_X = ValueInput<float>("x", 0f);
             m_Y = ValueInput<float>("y", 0f);
@@ -58,21 +59,22 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// enter 受信時に <see cref="ActorPresenterAdapter"/> を自動解決して絶対座標を設定します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>後続へ制御を渡す exit ポート。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>後続へ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Go To X,Y: ActorPresenterAdapter が未解決のため座標を設定できません。VSPresenterBridge などでアダプタを供給してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var logical = new Vector2(flow.GetValue<float>(m_X), flow.GetValue<float>(m_Y));
             var uiPosition = controller.ToUiPosition(logical);
             // Scratch モードでは Presenter 側でスケール済みサイズを考慮したクランプが適用される。
             controller.SetPositionPixels(uiPosition);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 
@@ -110,7 +112,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_DeltaX = ValueInput<float>("dx", 10f);
 
@@ -121,21 +123,22 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// enter 受信時に <see cref="ActorPresenterAdapter"/> を自動解決し、X 座標へ差分を加算します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>後続へ制御を渡す exit ポート。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>後続へ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Change X By: ActorPresenterAdapter が未解決のため移動できません。VSPresenterBridge などでアダプタを供給してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var delta = flow.GetValue<float>(m_DeltaX);
             var uiDelta = controller.ToUiDelta(new Vector2(delta, 0f));
             // Scratch モードでは Presenter 側で中心座標をクランプするため、ここではそのまま転送する。
             controller.AddPositionPixels(uiDelta);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 
@@ -173,7 +176,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_DeltaY = ValueInput<float>("dy", 10f);
 
@@ -184,21 +187,22 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// enter 受信時に <see cref="ActorPresenterAdapter"/> を自動解決し、Y 座標へ差分を加算します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>後続へ制御を渡す exit ポート。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>後続へ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Change Y By: ActorPresenterAdapter が未解決のため移動できません。VSPresenterBridge などでアダプタを供給してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var delta = flow.GetValue<float>(m_DeltaY);
             var uiDelta = controller.ToUiDelta(new Vector2(0f, delta));
             // Scratch モードでは Presenter が移動後に中心座標をクランプする。
             controller.AddPositionPixels(uiDelta);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 }

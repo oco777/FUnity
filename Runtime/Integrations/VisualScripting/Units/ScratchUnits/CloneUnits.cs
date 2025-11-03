@@ -1,4 +1,5 @@
 // Updated: 2025-10-21
+using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -26,7 +27,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <summary>enter→exit の制御線を定義します。</summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             Succession(m_Enter, m_Exit);
         }
@@ -35,18 +36,19 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// アダプタから Presenter を取得し、FUnityManager にクローン生成を依頼します。
         /// </summary>
         /// <param name="flow">現在のフロー。</param>
-        /// <returns>常に exit ポートを返します。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>常に exit ポートへ遷移する列挙子を返します。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null || adapter.Presenter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Create Clone of Self: ActorPresenterAdapter を解決できないためクローンを生成できません。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             FUnityManager.CloneActor(adapter.Presenter);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 
@@ -78,7 +80,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <summary>enter→exit の制御線および入出力ポートを定義します。</summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
 
             m_TargetDisplayName = ValueInput<string>("TargetDisplayName", string.Empty);
@@ -92,15 +94,16 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// 実行中の Adapter と DisplayName を基にクローン生成を依頼します。
         /// </summary>
         /// <param name="flow">現在のフロー。</param>
-        /// <returns>常に exit ポートを返します。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>常に exit ポートへ遷移する列挙子を返します。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Create Clone Of (DisplayName): ActorPresenterAdapter を解決できないためクローンを生成できません。");
                 flow.SetValue(m_CloneAdapter, null);
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var bridge = VSPresenterBridge.Instance;
@@ -108,13 +111,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             {
                 Debug.LogWarning("[FUnity] Scratch/Create Clone Of (DisplayName): VSPresenterBridge が未初期化のためクローン生成を依頼できません。");
                 flow.SetValue(m_CloneAdapter, null);
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var displayName = flow.GetValue<string>(m_TargetDisplayName);
             var cloneAdapter = bridge.RequestCloneByDisplayName(adapter, displayName);
             flow.SetValue(m_CloneAdapter, cloneAdapter);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 
@@ -172,7 +176,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <summary>enter→exit の制御線を定義します。</summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             Succession(m_Enter, m_Exit);
         }
@@ -181,25 +185,27 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// クローンであれば FUnityManager に削除を依頼し、本体であれば警告のみを表示します。
         /// </summary>
         /// <param name="flow">現在のフロー。</param>
-        /// <returns>常に exit ポートを返します。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>常に exit ポートへ遷移する列挙子を返します。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             var presenter = adapter != null ? adapter.Presenter : null;
             if (presenter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Delete This Clone: ActorPresenter を解決できないため削除できません。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             if (!presenter.IsClone)
             {
                 Debug.LogWarning("[FUnity] Scratch/Delete This Clone: 本体は削除対象外のため処理をスキップします。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             FUnityManager.DeleteActorClone(presenter);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 }

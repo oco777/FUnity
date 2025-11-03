@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
@@ -43,7 +44,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Body = ControlOutput("body");
             m_Exit = ControlOutput("exit");
             m_Condition = ValueInput("condition", false);
@@ -57,16 +58,16 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// フローが入ってきた際に条件を評価し、真であれば Body を 1 回実行します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>常に Exit ポートを返します。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>条件に応じて body/exit を順に返す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var condition = flow.GetValue<bool>(m_Condition);
             if (condition)
             {
-                flow.Invoke(m_Body);
+                yield return m_Body;
             }
 
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 

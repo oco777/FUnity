@@ -1,4 +1,5 @@
 // Updated: 2025-10-21
+using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
 
@@ -38,7 +39,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_Percent = ValueInput<float>("percent", 100f);
 
@@ -49,8 +50,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// enter 受信時に Presenter とアダプタを解決し、拡大率を絶対値で適用します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>exit ポートを返し、後続へ制御を渡します。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>exit ポートへ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var percent = flow.GetValue<float>(m_Percent);
 
@@ -58,11 +59,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (adapter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Set Size %: ActorPresenterAdapter が未解決のため拡大率を Presenter に転送できません。VSPresenterBridge などでアダプタを供給してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             adapter.SetSizePercent(percent);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 
@@ -100,7 +102,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_DeltaPercent = ValueInput<float>("deltaPercent", 10f);
 
@@ -111,8 +113,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// enter を受信した際に Presenter とアダプタを解決し、現在の拡大率に差分を加算します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>exit ポートを返し、後続へ制御を渡します。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>exit ポートへ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var delta = flow.GetValue<float>(m_DeltaPercent);
 
@@ -120,11 +122,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (adapter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Change Size by %: ActorPresenterAdapter が未解決のため拡大率の差分を Presenter に転送できません。VSPresenterBridge などでアダプタを供給してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             adapter.ChangeSizeByPercent(delta);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 }
