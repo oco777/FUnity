@@ -1,4 +1,5 @@
 // Updated: 2025-10-19
+using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -39,7 +40,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_Steps = ValueInput<float>("steps", 10f);
 
@@ -50,20 +51,21 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// enter を受け取った際に <see cref="ActorPresenterAdapter"/> を自動解決し、指定歩数分の移動を実行します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>exit ポートを返し、後続へ制御を渡します。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>exit ポートへ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var controller = ScratchUnitUtil.ResolveAdapter(flow);
             if (controller == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Move Steps: ActorPresenterAdapter が見つからないため移動できません。VSPresenterBridge などからアダプタを登録してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var steps = flow.GetValue<float>(m_Steps);
             // Scratch モードでは Presenter 側で移動後の中心座標がクランプされる。
             controller.MoveSteps(steps);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 }

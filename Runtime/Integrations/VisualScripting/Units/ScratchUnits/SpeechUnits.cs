@@ -117,7 +117,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_Text = ValueInput<string>("text", string.Empty);
 
@@ -128,19 +128,20 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// 入力フローを受け取り、ActorPresenterAdapter を介して吹き出し表示を実行する。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>exit ポートを返し、後続ユニットへ制御を渡す。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>exit ポートへ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Say: ActorPresenterAdapter が見つからないため吹き出しを表示できません。VSPresenterBridge などでアダプタを登録してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var text = flow.GetValue<string>(m_Text) ?? string.Empty;
             adapter.ShowSpeech(text, 0f, false);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 
@@ -254,7 +255,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_Text = ValueInput<string>("text", string.Empty);
 
@@ -265,19 +266,20 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// 入力フローを受け取り、ActorPresenterAdapter を介して思考吹き出しを表示する。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <returns>exit ポートを返し、後続ユニットへ制御を渡す。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>exit ポートへ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Think: ActorPresenterAdapter が見つからないため吹き出しを表示できません。VSPresenterBridge などでアダプタを登録してください。");
-                return m_Exit;
+                yield return m_Exit;
+                yield break;
             }
 
             var text = flow.GetValue<string>(m_Text) ?? string.Empty;
             adapter.ShowSpeech(text, 0f, true);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 }

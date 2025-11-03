@@ -47,7 +47,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInput("enter", OnEnter);
+            m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_Message = ValueInput<string>("message", string.Empty);
 
@@ -59,8 +59,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// 入力フローを受け取り、EventBus 経由でメッセージを配信します。
         /// </summary>
         /// <param name="flow">現在のフロー。</param>
-        /// <returns>後続ノードへ進める ControlOutput。</returns>
-        private ControlOutput OnEnter(Flow flow)
+        /// <returns>後続ノードへ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
         {
             var message = flow.GetValue<string>(m_Message) ?? string.Empty;
             var args = new MessagingCommon.Args
@@ -69,7 +69,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             };
 
             EventBus.Trigger(new EventHook(MessagingCommon.EventName), args);
-            return m_Exit;
+            yield return m_Exit;
         }
     }
 
