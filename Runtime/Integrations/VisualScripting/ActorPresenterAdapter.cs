@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Core;
+using FUnity.Runtime.Model;
 using FUnity.Runtime.Presenter;
 using FUnity.Runtime.View;
 using UnityEngine.UIElements;
@@ -192,6 +193,21 @@ namespace FUnity.Runtime.Integrations.VisualScripting
             }
 
             m_ActorPresenter.SetDirection(degrees);
+        }
+
+        /// <summary>
+        /// Scratch 互換の回転スタイルを Presenter 経由で設定する。
+        /// </summary>
+        /// <param name="style">適用する回転スタイル。</param>
+        public void SetRotationStyle(RotationStyle style)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため SetRotationStyle を転送できません。");
+                return;
+            }
+
+            m_ActorPresenter.SetRotationStyle(style);
         }
 
         /// <summary>

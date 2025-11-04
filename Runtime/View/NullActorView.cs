@@ -59,6 +59,11 @@ namespace FUnity.Runtime.View
         }
 
         /// <inheritdoc />
+        public void SetHorizontalFlipSign(float sign)
+        {
+        }
+
+        /// <inheritdoc />
         public void SetVisible(bool visible)
         {
         }

@@ -69,6 +69,12 @@ namespace FUnity.Runtime.View
         void SetRotationDegrees(float degrees);
 
         /// <summary>
+        /// 左右反転の符号を指定し、見た目の向きを即時更新する。
+        /// </summary>
+        /// <param name="sign">+1 で通常、-1 で反転。0 近傍は +1 として扱う。</param>
+        void SetHorizontalFlipSign(float sign);
+
+        /// <summary>
         /// 俳優要素の表示/非表示を切り替える。style.display を利用し、アニメーションを伴わず即時に反映する。
         /// </summary>
         /// <param name="visible">true で表示、false で非表示。</param>

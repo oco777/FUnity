@@ -74,6 +74,9 @@ namespace FUnity.Runtime.View
         /// <summary>現在適用している等倍基準のスケール値。</summary>
         private float m_CurrentScale = 1f;
 
+        /// <summary>左右反転のためのスケール符号。+1 で通常、-1 で反転。</summary>
+        private float m_FlipSignX = 1f;
+
         /// <summary>GeometryChangedEvent で観測した直近の worldBound。</summary>
         private Rect m_WorldBoundCache = Rect.zero;
 
@@ -373,7 +376,9 @@ namespace FUnity.Runtime.View
 
 #if UNITY_2022_3_OR_NEWER
             var scaleValue = ResolveScaleXY(root, 1f);
-            return new Vector2(width * scaleValue.x, height * scaleValue.y);
+            var scaleX = Mathf.Abs(scaleValue.x);
+            var scaleY = Mathf.Abs(scaleValue.y);
+            return new Vector2(width * scaleX, height * scaleY);
 #else
             var scaledWidth = width * m_CurrentScale;
             var scaledHeight = height * m_CurrentScale;
@@ -482,6 +487,22 @@ namespace FUnity.Runtime.View
         {
             m_CurrentRotationDeg = NormalizeDegrees(degrees);
             ApplyRotationToRoot();
+        }
+
+        /// <summary>
+        /// 左右反転の符号を指定し、UI Toolkit の scale.x に即時反映する。
+        /// </summary>
+        /// <param name="sign">+1 で通常、-1 で反転。0 近傍は +1 として扱う。</param>
+        public void SetHorizontalFlipSign(float sign)
+        {
+            var normalized = Mathf.Approximately(sign, 0f) ? 1f : Mathf.Sign(sign);
+            if (Mathf.Approximately(normalized, m_FlipSignX))
+            {
+                return;
+            }
+
+            m_FlipSignX = normalized;
+            ApplyScaleToRoot();
         }
 
         /// <summary>
@@ -963,7 +984,8 @@ namespace FUnity.Runtime.View
 
             ApplyCenterPivot(root);
 #if UNITY_2022_3_OR_NEWER
-            ApplyScaleXY(root, m_CurrentScale, m_CurrentScale);
+            var scaleX = m_CurrentScale * m_FlipSignX;
+            ApplyScaleXY(root, scaleX, m_CurrentScale);
 #endif
         }
 

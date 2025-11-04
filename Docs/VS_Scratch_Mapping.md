@@ -25,6 +25,10 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | Scratch/Set X | x座標を ◯ にする | X 座標を代入 | 未実装: 対応する Unit が見つかりません |
 | Scratch/Set Y | y座標を ◯ にする | Y 座標を代入 | 未実装: 対応する Unit が見つかりません |
 | Scratch/Turn Degrees | ◯度回す | アクター画像を中心ピボットで相対回転 | ActorPresenter を Graph Variables("presenter") に自動登録し、自分の UI のみ回転。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TurnAndPointUnits.cs |
+| Scratch/Bounce If On Edge | もし端に着いたら、跳ね返る | 端に接触した際に進行方向を反射してステージ内へ押し戻す | 定義: Assets/FUnity/Runtime/Integrations/VisualScripting/Units/ScratchUnits/BounceAndRotationStyleUnits.cs |
+| Scratch/Set Rotation Style: Left-Right | 回転方向を左右のみにする | 見た目を左右反転のみで表現する回転スタイルへ切り替え | 定義: Assets/FUnity/Runtime/Integrations/VisualScripting/Units/ScratchUnits/BounceAndRotationStyleUnits.cs |
+| Scratch/Set Rotation Style: Don't Rotate | 回転方向を回転しないにする | 見た目を常に直立させる回転スタイルへ切り替え | 定義: Assets/FUnity/Runtime/Integrations/VisualScripting/Units/ScratchUnits/BounceAndRotationStyleUnits.cs |
+| Scratch/Set Rotation Style: All Around | 回転方向を自由に回転にする | 任意角度で回転できる既定スタイルへ戻す | 定義: Assets/FUnity/Runtime/Integrations/VisualScripting/Units/ScratchUnits/BounceAndRotationStyleUnits.cs |
 
 ## 制御（ループ／待機）
 
