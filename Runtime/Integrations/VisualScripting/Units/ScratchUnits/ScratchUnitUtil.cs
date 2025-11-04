@@ -14,7 +14,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch 系 Unit 共通の補助処理を提供し、Presenter アダプタの自動解決や方向ベクトル計算を行うユーティリティクラスです。
     /// </summary>
-    internal static class ScratchUnitUtil
+    internal static partial class ScratchUnitUtil
     {
         /// <summary>直近で解決したアダプタを保持する WeakReference です。破棄後は null になります。</summary>
         private static WeakReference<ActorPresenterAdapter> m_CachedAdapter;
@@ -181,6 +181,49 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 俳優の UI ルート要素から worldBound を取得します。レイアウトが未確定で有効サイズが得られない場合は false を返します。
+        /// </summary>
+        /// <param name="adapter">対象の <see cref="ActorPresenterAdapter"/>。null の場合は失敗します。</param>
+        /// <param name="worldRect">取得した worldBound。失敗時は <see cref="Rect.zero"/>。</param>
+        /// <returns>有効な worldBound を得られた場合は <c>true</c>。</returns>
+        public static bool TryGetActorWorldRect(ActorPresenterAdapter adapter, out Rect worldRect)
+        {
+            worldRect = default;
+            if (adapter == null)
+            {
+                return false;
+            }
+
+            var actorView = adapter.ActorView;
+            if (actorView != null && actorView.TryGetCachedWorldBound(out var cachedRect))
+            {
+                worldRect = cachedRect;
+                return true;
+            }
+
+            VisualElement rootElement = null;
+            if (actorView != null)
+            {
+                rootElement = actorView.ActorRoot;
+            }
+
+            rootElement ??= adapter.BoundElement;
+            if (rootElement == null)
+            {
+                return false;
+            }
+
+            var rect = rootElement.worldBound;
+            if (rect.width <= 0f || rect.height <= 0f)
+            {
+                return false;
+            }
+
+            worldRect = rect;
+            return true;
         }
 
         /// <summary>

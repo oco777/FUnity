@@ -15,7 +15,14 @@
   - **プロパティは PascalCase**（例：`DefaultSpeed`）
   - **メソッドは PascalCase**（例：`Initialize`, `Tick`）
   - **ローカル変数は camelCase**（例：`currentSpeed`）
-  - 不要な `using` を入れない／名前空間の衝突に注意（`UnityEngine.Input` は明示可）
+- 不要な `using` を入れない／名前空間の衝突に注意（`UnityEngine.Input` は明示可）
+
+## ランタイム配置規約（厳守）
+- ランタイム C# は **必ず** ルート直下の `Runtime/` に置く。`Assets/FUnity/Runtime/` に配置しない。
+- `Assets/FUnity/Runtime/` 配下に C# や asmdef/asmref を見つけたら移動し、空になったディレクトリも削除する。
+- Visual Scripting の Scratch 系ユニット／ユーティリティは `Runtime/Integrations/VisualScripting/...` に統一する。
+- `ScratchUnitUtil` にはレイアウト・座標系のヘルパーを集約し、`TryGetActorWorldRect` を含む共通処理を追加すること。
+- `Runtime/Integrations/VisualScripting` のコードを変更した場合は **必ず `Docs/VS_Scratch_Mapping.md` も更新** する。
 
 ## MVP の適用方針
 - **Model**
