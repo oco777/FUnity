@@ -53,6 +53,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>現在のスケール。等倍は 1。</summary>
         private float m_CurrentScale = 1f;
 
+        /// <summary>左右反転スタイル用に保持する最後の X 方向符号。+1 で右向き。</summary>
+        private float m_LastFacingSignX = 1f;
+
         /// <summary>現在保持している拡大率（%）。Presenter ごとに独立して管理する。</summary>
         private float m_SizePercent = 100f;
 
@@ -234,7 +237,7 @@ namespace FUnity.Runtime.Presenter
                     m_View.SetSize(m_BaseSize);
                 }
 
-                m_View.SetRotationDegrees(m_State.RotationDeg);
+                ApplyRotationStyleToView();
 
                 AttachViewEvents();
                 RefreshStageBoundsFromView();
@@ -315,7 +318,10 @@ namespace FUnity.Runtime.Presenter
                 m_State.DirectionDeg = source.m_State.DirectionDeg;
                 m_State.RotationDeg = source.m_State.RotationDeg;
                 m_State.SizePercent = source.m_State.SizePercent;
+                m_State.RotationStyle = source.m_State.RotationStyle;
             }
+
+            m_LastFacingSignX = source.m_LastFacingSignX;
 
             m_EnableFloatOffset = source.m_EnableFloatOffset;
             m_FloatOffset = source.m_FloatOffset;
@@ -324,6 +330,15 @@ namespace FUnity.Runtime.Presenter
             m_IsScratchMode = source.m_IsScratchMode;
             m_Anchor = source.m_Anchor;
             m_BaseSize = source.m_BaseSize;
+
+            if (source.m_State != null)
+            {
+                SetRotationStyle(source.m_State.RotationStyle);
+            }
+            else
+            {
+                ApplyRotationStyleToView();
+            }
 
             SetSizePercent(source.SizePercent);
             SetDirection(source.GetDirection());
@@ -614,6 +629,65 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 現在の回転スタイルに基づき、View の回転角と左右反転を適用する。
+        /// </summary>
+        private void ApplyRotationStyleToView()
+        {
+            if (m_State == null)
+            {
+                m_LastFacingSignX = 1f;
+                if (m_View != null)
+                {
+                    m_View.SetHorizontalFlipSign(1f);
+                    m_View.SetRotationDegrees(0f);
+                }
+
+                return;
+            }
+
+            var style = m_State.RotationStyle;
+
+            switch (style)
+            {
+                case RotationStyle.AllAround:
+                    m_LastFacingSignX = 1f;
+                    break;
+                case RotationStyle.LeftRight:
+                    var radians = m_State.DirectionDeg * Mathf.Deg2Rad;
+                    var dirX = Mathf.Cos(radians);
+                    if (Mathf.Abs(dirX) > 0.0001f)
+                    {
+                        m_LastFacingSignX = dirX >= 0f ? 1f : -1f;
+                    }
+                    break;
+                case RotationStyle.DontRotate:
+                    m_LastFacingSignX = 1f;
+                    break;
+            }
+
+            if (m_View == null)
+            {
+                return;
+            }
+
+            switch (style)
+            {
+                case RotationStyle.AllAround:
+                    m_View.SetHorizontalFlipSign(1f);
+                    m_View.SetRotationDegrees(m_State.RotationDeg);
+                    break;
+                case RotationStyle.LeftRight:
+                    m_View.SetHorizontalFlipSign(m_LastFacingSignX);
+                    m_View.SetRotationDegrees(0f);
+                    break;
+                case RotationStyle.DontRotate:
+                    m_View.SetHorizontalFlipSign(1f);
+                    m_View.SetRotationDegrees(0f);
+                    break;
+            }
+        }
+
+        /// <summary>
         /// 吹き出しの残り表示時間を更新し、時間切れの場合は自動で非表示にする。
         /// </summary>
         /// <param name="deltaTime">経過時間（秒）。負値が渡された場合は 0 として扱う。</param>
@@ -651,7 +725,7 @@ namespace FUnity.Runtime.Presenter
             var normalized = Normalize0To360(m_State.RotationDeg + deltaDeg);
             m_State.RotationDeg = normalized;
 
-            m_View?.SetRotationDegrees(normalized);
+            ApplyRotationStyleToView();
         }
 
         /// <summary>
@@ -677,7 +751,22 @@ namespace FUnity.Runtime.Presenter
             var normalized = Normalize0To360(degrees);
             m_State.RotationDeg = normalized;
 
-            m_View?.SetRotationDegrees(normalized);
+            ApplyRotationStyleToView();
+        }
+
+        /// <summary>
+        /// Scratch 互換の回転スタイルを設定し、見た目へ即時反映する。
+        /// </summary>
+        /// <param name="style">適用する回転スタイル。</param>
+        public void SetRotationStyle(RotationStyle style)
+        {
+            if (m_State == null)
+            {
+                return;
+            }
+
+            m_State.RotationStyle = style;
+            ApplyRotationStyleToView();
         }
 
         /// <summary>
@@ -862,6 +951,7 @@ namespace FUnity.Runtime.Presenter
             }
 
             m_State.DirectionDeg = Normalize0To360(degrees);
+            ApplyRotationStyleToView();
         }
 
         /// <summary>
@@ -1116,12 +1206,13 @@ namespace FUnity.Runtime.Presenter
             if (m_State != null)
             {
                 SetSizePercent(m_State.SizePercent);
-                m_View.SetRotationDegrees(m_State.RotationDeg);
+                ApplyRotationStyleToView();
             }
             else
             {
                 m_View.SetSizePercent(m_SizePercent);
                 m_View.SetRotationDegrees(0f);
+                m_View.SetHorizontalFlipSign(1f);
                 UpdateRenderedSizeFromView();
                 ClampStateToBounds();
             }

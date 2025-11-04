@@ -4,6 +4,21 @@ using UnityEngine;
 namespace FUnity.Runtime.Model
 {
     /// <summary>
+    /// Scratch 互換の回転スタイルを表現する列挙体です。
+    /// </summary>
+    public enum RotationStyle
+    {
+        /// <summary>全方向へ自由に回転します。</summary>
+        AllAround = 0,
+
+        /// <summary>左右反転のみで見た目の向きを表現します。</summary>
+        LeftRight = 1,
+
+        /// <summary>見た目を常に直立させ、回転を行いません。</summary>
+        DontRotate = 2
+    }
+
+    /// <summary>
     /// 俳優（キャラクター）のランタイム状態を保持する Model レイヤーの値オブジェクト。
     /// </summary>
     /// <remarks>
@@ -37,6 +52,11 @@ namespace FUnity.Runtime.Model
         /// 現在の拡大率（%）。100 を等倍とし、Presenter が 1～300 % の範囲へクランプして管理する。
         /// </summary>
         public float SizePercent = 100f;
+
+        /// <summary>
+        /// 見た目の回転挙動を指定する Scratch 互換の回転スタイルです。
+        /// </summary>
+        public RotationStyle RotationStyle = RotationStyle.AllAround;
 
         /// <summary>
         /// 外部から与えられた座標を指定された範囲内にクランプして保持する。

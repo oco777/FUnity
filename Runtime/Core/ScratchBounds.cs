@@ -15,6 +15,17 @@ namespace FUnity.Runtime.Core
         public const float StageHalfH = 180f;
 
         /// <summary>
+        /// Scratch ステージ全体の矩形を返します。左上原点で幅480px/高さ360pxとします。
+        /// </summary>
+        /// <returns>ステージ領域の矩形。</returns>
+        public static Rect GetStageRect()
+        {
+            var width = StageHalfW * 2f;
+            var height = StageHalfH * 2f;
+            return new Rect(0f, 0f, width, height);
+        }
+
+        /// <summary>
         /// 拡大率適用後のスプライトサイズを考慮し、中心座標を許容範囲へクランプします。
         /// 幅・高さの半分をステージ半径に足し引きした境界で判定し、回転は中心回転を前提とします。
         /// </summary>
