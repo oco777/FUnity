@@ -1,0 +1,27 @@
+name: Verify Runtime Layout
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  verify-runtime-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Ensure runtime scripts are under package Runtime/
+        run: |
+          if [ -d "Assets/FUnity/Runtime" ]; then
+            offending=$(find Assets/FUnity/Runtime -type f \( -name '*.cs' -o -name '*.asmdef' -o -name '*.asmref' \) -print -quit)
+            if [ -n "$offending" ]; then
+              echo "::error::Runtime code must live under 'Runtime/'. Found: $offending"
+              exit 1
+            fi
+          fi
+
+  unity-tests:
+    needs: verify-runtime-layout
+    uses: ./.github/workflows/unity-tests.yml

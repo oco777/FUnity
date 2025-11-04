@@ -55,8 +55,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             if (!ScratchUnitUtil.TryGetActorWorldRect(adapter, out var actorRect))
             {
-                yield return m_Exit;
-                yield break;
+                yield return null;
+
+                if (!ScratchUnitUtil.TryGetActorWorldRect(adapter, out actorRect))
+                {
+                    Debug.LogWarning("[FUnity] Scratch/Bounce If On Edge: worldBound が未確定のため、判定をスキップしました。");
+                    yield return m_Exit;
+                    yield break;
+                }
             }
 
             var stageRect = ScratchHitTestUtil.GetStageWorldRect(adapter);

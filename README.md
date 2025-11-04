@@ -4,6 +4,12 @@
 
 ![FUnity overview](Docs/images/readme-hero.png)
 
+## 📦 パッケージ構成と配置ルール
+- `Runtime/` — ランタイム C#。**すべての実装はここに置き、`Assets/FUnity/Runtime/` へは置かない。**
+- `Editor/` — エディタ拡張。ガードやメニュー、ウィザードなどを配置。
+- `Art/`・`Docs/`・`Samples~` — アセット、ドキュメント、サンプルを格納。
+- `Assets/FUnity/**` — プロジェクト同梱の検証用アセット。ランタイムコードは配置禁止で、混入すると Editor/CI ガードがエラーを報告します。
+
 ## ⚙ Modes
 - `FUnityProjectData` アセットの Inspector で Scratch モードと unityroom モードを切り替えられます。
 - 選択したモードに応じて `FUnityProjectData` 内の ModeConfig 参照がランタイム起動時に自動適用されます。

@@ -30,6 +30,12 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 
 > このルールは AGENTS.md にも記載されています。Pull Request 時は両方を参照してください。
 
+## ランタイム配置に関する必須ルール
+
+- ランタイム C# スクリプトは **すべて `Runtime/` 直下の Unity パッケージ側** に配置します。`Assets/FUnity/Runtime/` に C# を追加しないでください。
+- 既存の PR でランタイムコードを追加する場合は、レビュアーがファイルパスを確認し、`Runtime/` に統一されていることをチェックしてください。
+- `Assets/FUnity/Runtime/` に C# / asmdef / asmref が混入していた場合、Editor ガードと CI ジョブ（`verify-runtime-layout`）がエラーを出します。必ず修正してからマージしてください。
+
 ## 画像アセットの取り扱い
 
 - 画像ファイルは **必ず `Docs/images/`（先頭大文字）** に配置してください。`docs/images/` やその他のディレクトリに置くとビルドや CI で警告が表示されます。

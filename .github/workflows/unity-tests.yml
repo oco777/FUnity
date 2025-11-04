@@ -1,9 +1,7 @@
 name: Unity Tests
 
 on:
-  pull_request:
-  push:
-    branches: [ main ]
+  workflow_call:
 
 jobs:
   unity-tests:
