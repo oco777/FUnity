@@ -18,7 +18,7 @@ VSノード名 | Scratch日本語 | 実装クラス | 備考
 Scratch/Change X By | x座標を ◯ ずつ変える | ChangeXByUnit | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs
 Scratch/Change Y By | y座標を ◯ ずつ変える | ChangeYByUnit | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs
 Scratch/Go To X,Y | x:◯ y:◯ へ行く | GoToXYUnit | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs
-Scratch/Move Steps | ◯歩動かす | MoveStepsUnit | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MoveStepsUnit.cs
+Scratch/Move Steps | ◯歩動かす | MoveStepsUnit | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MoveStepsUnit.cs / 1歩=1px・境界で分割移動
 Scratch/Point Direction | ◯度に向ける | PointDirectionUnit | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TurnAndPointUnits.cs
 Scratch/Set X | x座標を ◯ にする | (未実装) | 未実装: 対応する Unit が見つかりません
 Scratch/Set Y | y座標を ◯ にする | (未実装) | 未実装: 対応する Unit が見つかりません

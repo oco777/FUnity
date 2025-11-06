@@ -36,6 +36,13 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 - 既存の PR でランタイムコードを追加する場合は、レビュアーがファイルパスを確認し、`Runtime/` に統一されていることをチェックしてください。
 - `Assets/FUnity/Runtime/` に C# / asmdef / asmref が混入していた場合、Editor ガードと CI ジョブ（`verify-runtime-layout`）がエラーを出します。必ず修正してからマージしてください。
 
+## Move/Bounce 実装ポリシー（必読）
+
+- Scratch モーションの Bounce 系処理は、反射後に**中心座標をステージ内へ押し戻す（クランプ＋ε）**ロジックを必須とします。
+- 端判定は常に俳優の見た目サイズ（halfSize）を基準に行い、矩形サイズが確定していない場合は `ScratchUnitUtil.TryGetActorWorldRect` を再試行してください。
+- `MoveStepsUnit` などの移動処理は、**境界まで進む → 反射 → 残り距離で再移動**の繰り返しで大きな移動量にも耐えるよう実装します。
+- 歩数の換算は「1 歩 = 1px」を既定とし、倍率は `MoveStepsUnit` の `StepToPixels` 定数だけで管理します（他所へコピーしない）。
+
 ## 画像アセットの取り扱い
 
 - 画像ファイルは **必ず `Docs/images/`（先頭大文字）** に配置してください。`docs/images/` やその他のディレクトリに置くとビルドや CI で警告が表示されます。
