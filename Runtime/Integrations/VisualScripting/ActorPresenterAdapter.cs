@@ -398,6 +398,50 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
+        /// 色の効果に差分を加算し、Presenter を通じて View へ適用する。
+        /// </summary>
+        /// <param name="delta">加算する効果量。</param>
+        public void ChangeColorEffect(float delta)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため ChangeColorEffect を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.ChangeColorEffect(delta);
+        }
+
+        /// <summary>
+        /// 色の効果を絶対値で設定し、Presenter を通じて View へ適用する。
+        /// </summary>
+        /// <param name="value">設定する効果量。</param>
+        public void SetColorEffect(float value)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため SetColorEffect を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.SetColorEffect(value);
+        }
+
+        /// <summary>
+        /// 画像効果をすべてリセットし、Tint を既定値へ戻す。
+        /// </summary>
+        public void ClearGraphicEffects()
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため ClearGraphicEffects を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.ClearGraphicEffects();
+        }
+
+        /// <summary>
         /// 吹き出しを表示し、必要に応じて表示時間とスタイルを指定する。
         /// </summary>
         /// <param name="message">表示する本文。</param>

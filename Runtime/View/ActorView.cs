@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Input;
+using FUnity.Runtime.Model;
 using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.View
@@ -282,6 +283,7 @@ namespace FUnity.Runtime.View
             }
 
             HideSpeech();
+            ResetEffects();
 
             RegisterWorldBoundCacheSources();
 
@@ -518,6 +520,32 @@ namespace FUnity.Runtime.View
             }
 
             target.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// モデルで保持している描画効果を UI Toolkit の背景 Tint へ変換して適用する。
+        /// </summary>
+        /// <param name="effects">適用する描画効果の状態。</param>
+        public void ApplyGraphicEffects(ActorState.GraphicEffectsState effects)
+        {
+            var normalized = Mathf.Repeat(effects.ColorEffect, 200f);
+            if (Mathf.Approximately(normalized, 0f))
+            {
+                ResetEffects();
+                return;
+            }
+
+            var hueDegrees = normalized * (360f / 200f);
+            var tintColor = ColorFromHue(hueDegrees);
+            SetTintColor(tintColor);
+        }
+
+        /// <summary>
+        /// 描画効果を初期状態に戻し、Tint を白へリセットする。
+        /// </summary>
+        public void ResetEffects()
+        {
+            SetTintColor(Color.white);
         }
 
         /// <summary>
@@ -913,6 +941,65 @@ namespace FUnity.Runtime.View
         private VisualElement GetRootElement()
         {
             return m_RootElement ?? m_ActorRoot ?? m_BoundElement;
+        }
+
+        /// <summary>
+        /// 指定した色を背景画像の Tint として適用する。
+        /// </summary>
+        /// <param name="color">乗算する色。</param>
+        public void SetTintColor(Color color)
+        {
+            var root = GetRootElement();
+            if (root == null)
+            {
+                return;
+            }
+
+            root.style.unityBackgroundImageTintColor = color;
+        }
+
+        /// <summary>
+        /// 色相を RGB へ変換する簡易ヘルパー。HSV (h,1,1) を基準とする。
+        /// </summary>
+        /// <param name="hueDegrees">0～360 度の色相。</param>
+        /// <returns>変換後の RGB 色。</returns>
+        private static Color ColorFromHue(float hueDegrees)
+        {
+            var wrappedHue = hueDegrees;
+            while (wrappedHue < 0f)
+            {
+                wrappedHue += 360f;
+            }
+
+            while (wrappedHue >= 360f)
+            {
+                wrappedHue -= 360f;
+            }
+
+            var h = wrappedHue / 360f;
+            const float s = 1f;
+            const float v = 1f;
+            var sector = (int)Mathf.Floor(h * 6f);
+            var fraction = h * 6f - sector;
+            var p = v * (1f - s);
+            var q = v * (1f - fraction * s);
+            var t = v * (1f - (1f - fraction) * s);
+
+            switch (sector % 6)
+            {
+                case 0:
+                    return new Color(v, t, p, 1f);
+                case 1:
+                    return new Color(q, v, p, 1f);
+                case 2:
+                    return new Color(p, v, t, 1f);
+                case 3:
+                    return new Color(p, q, v, 1f);
+                case 4:
+                    return new Color(t, p, v, 1f);
+                default:
+                    return new Color(v, p, q, 1f);
+            }
         }
 
         /// <summary>

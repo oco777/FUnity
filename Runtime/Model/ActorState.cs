@@ -29,6 +29,19 @@ namespace FUnity.Runtime.Model
     public sealed class ActorState
     {
         /// <summary>
+        /// 俳優に適用する見た目の効果量を保持する構造体です。
+        /// Scratch の Looks カテゴリに存在する「色の効果」などを数値で表現し、Presenter が View へ渡します。
+        /// </summary>
+        public struct GraphicEffectsState
+        {
+            /// <summary>
+            /// 色相回転量（Scratch の「色の効果」相当）。
+            /// 200 で一周とみなし、負値は 0～200 の範囲に正規化して扱います。
+            /// </summary>
+            public float ColorEffect;
+        }
+
+        /// <summary>
         /// 論理座標での現在位置（px）。原点や軸方向は <see cref="FUnityModeConfig"/> の設定に従い、Presenter が一方向に更新します。
         /// </summary>
         public Vector2 Position { get; private set; }
@@ -57,6 +70,12 @@ namespace FUnity.Runtime.Model
         /// 見た目の回転挙動を指定する Scratch 互換の回転スタイルです。
         /// </summary>
         public RotationStyle RotationStyle = RotationStyle.AllAround;
+
+        /// <summary>
+        /// 現在の描画効果（色相など）を保持します。
+        /// Presenter から View へ転送する際に参照され、UI Toolkit の Tint へ変換されます。
+        /// </summary>
+        public GraphicEffectsState Effects;
 
         /// <summary>
         /// 外部から与えられた座標を指定された範囲内にクランプして保持する。

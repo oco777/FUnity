@@ -1,6 +1,7 @@
 // Updated: 2025-03-03
 using System;
 using UnityEngine;
+using FUnity.Runtime.Model;
 using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.View
@@ -79,6 +80,17 @@ namespace FUnity.Runtime.View
         /// </summary>
         /// <param name="visible">true で表示、false で非表示。</param>
         void SetVisible(bool visible);
+
+        /// <summary>
+        /// モデルで保持している描画効果（色相など）を UI に適用する。
+        /// </summary>
+        /// <param name="effects">適用する描画効果の状態。</param>
+        void ApplyGraphicEffects(ActorState.GraphicEffectsState effects);
+
+        /// <summary>
+        /// 描画効果を初期状態に戻し、Tint を無効化する。
+        /// </summary>
+        void ResetEffects();
 
         /// <summary>
         /// 吹き出しを表示し、発言か思考かに応じてスタイルを切り替える。

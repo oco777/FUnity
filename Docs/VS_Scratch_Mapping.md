@@ -62,6 +62,9 @@ Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 | Scratch/Think | ◯ と考える | 思考吹き出しを無期限表示（新しい吹き出しで上書き） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs / 表示後ただちに exit へ進むノンブロッキング |
 | Scratch/Set Size % | 大きさを ◯ % にする | 拡大率を絶対指定で適用 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
 | Scratch/Change Size by % | 大きさを ◯ % ずつ変える | 拡大率を相対変更 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
+| Scratch/Change Color Effect by | 色の効果を ◯ ずつ変える | 色相効果を相対変更（Tint の HSV 擬似回転） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/EffectUnits.cs |
+| Scratch/Set Color Effect to | 色の効果を ◯ にする | 色相効果を絶対設定（Tint の HSV 擬似回転） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/EffectUnits.cs |
+| Scratch/Clear Graphic Effects | 画像効果をなくす | Tint を白へ戻して描画効果をリセット | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/EffectUnits.cs |
 | Show (Scratch/Looks) | 表示する | style.display を Flex に設定して俳優を表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/VisibilityUnits.cs / ActorPresenterAdapter は Unit 内で自動解決 |
 | Hide (Scratch/Looks) | 隠す | style.display を None に設定して俳優を非表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/VisibilityUnits.cs / ActorPresenterAdapter は Unit 内で自動解決 |
 
