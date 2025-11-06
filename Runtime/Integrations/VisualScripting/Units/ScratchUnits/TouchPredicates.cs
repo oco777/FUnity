@@ -1,5 +1,7 @@
+using System;
 using Unity.VisualScripting;
 using UnityEngine;
+using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -103,84 +105,153 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     }
 
     /// <summary>
-    /// Scratch の「◯◯に触れた？」ブロックを再現し、DisplayName で指定した俳優との矩形重なりを判定する Unit です。
+    /// Scratch の「◯◯に触れた？」ブロックを再現し、DisplayName で指定した俳優（本体＋クローン）のうち可視なものとの矩形重なりを判定する Unit です。
     /// </summary>
     [UnitTitle("Touching Actor By DisplayName?")]
     [UnitCategory("Scratch/Sensing")]
     public sealed class TouchingActorByDisplayNamePredicateUnit : Unit
     {
+        /// <summary>Self を表す俳優キーを受け取る ValueInput です。</summary>
+        [DoNotSerialize]
+        private ValueInput m_SelfActorKey;
+
         /// <summary>対象俳優の DisplayName を受け取る ValueInput です。</summary>
         [DoNotSerialize]
-        private ValueInput m_DisplayName;
+        private ValueInput m_TargetDisplayName;
 
         /// <summary>接触判定結果を出力する ValueOutput です。</summary>
         [DoNotSerialize]
         private ValueOutput m_Result;
 
-        /// <summary>DisplayName 入力ポートを公開します。</summary>
-        public ValueInput DisplayName => m_DisplayName;
-
         /// <summary>判定結果の出力ポートを公開します。</summary>
         public ValueOutput Result => m_Result;
 
         /// <summary>
-        /// 入出力ポートを構築し、DisplayName の取得を必須とする依存関係を登録します。
+        /// 入出力ポートを構築し、Self と DisplayName の取得を必須とする依存関係を登録します。
         /// </summary>
         protected override void Definition()
         {
-            m_DisplayName = ValueInput<string>(nameof(DisplayName), string.Empty);
-            m_Result = ValueOutput<bool>(nameof(Result), Evaluate);
+            m_SelfActorKey = ValueInput<string>("self", "Self");
+            m_TargetDisplayName = ValueInput<string>("displayName", string.Empty);
+            m_Result = ValueOutput<bool>("result", Evaluate);
 
-            Requirement(m_DisplayName, m_Result);
+            Requirement(m_SelfActorKey, m_Result);
+            Requirement(m_TargetDisplayName, m_Result);
         }
 
         /// <summary>
-        /// 指定された俳優と自身の俳優が矩形的に接触しているかを判定します。
+        /// 指定された俳優群と自分自身が矩形的に接触しているかを判定します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <returns>接触している場合は true。</returns>
         private bool Evaluate(Flow flow)
         {
-            var selfAdapter = ScratchUnitUtil.ResolveAdapter(flow);
-            if (selfAdapter == null)
-            {
-                Debug.LogWarning("[FUnity] Scratch/Touching Actor By DisplayName?: ActorPresenterAdapter が未解決のため判定できません。");
-                return false;
-            }
-
-            var displayName = flow.GetValue<string>(m_DisplayName);
-            if (string.IsNullOrEmpty(displayName))
+            var selfKeyRaw = flow.GetValue<string>(m_SelfActorKey);
+            if (!TryResolveActorKey(flow, selfKeyRaw, out var selfKey))
             {
                 return false;
             }
 
-            if (!ScratchHitTestUtil.TryGetActorWorldRect(selfAdapter, out var selfRect))
+            if (!ScratchHitTestUtil.TryGetVisibleRect(selfKey, out var selfRect))
             {
                 return false;
             }
 
-            if (!ScratchUnitUtil.TryFindActorByDisplayName(displayName, out var targetAdapter) || targetAdapter == null)
-            {
-                Debug.LogWarning($"[FUnity] Scratch/Touching Actor By DisplayName?: '{displayName}' に一致する俳優が見つかりません。");
-                return false;
-            }
-
-            if (!ScratchHitTestUtil.TryGetActorWorldRect(targetAdapter, out var targetRect))
+            var targetName = flow.GetValue<string>(m_TargetDisplayName);
+            if (string.IsNullOrWhiteSpace(targetName))
             {
                 return false;
             }
 
-            const float inflate = 0.001f;
-            selfRect.xMin -= inflate;
-            selfRect.yMin -= inflate;
-            selfRect.xMax += inflate;
-            selfRect.yMax += inflate;
-            targetRect.xMin -= inflate;
-            targetRect.yMin -= inflate;
-            targetRect.xMax += inflate;
-            targetRect.yMax += inflate;
+            foreach (var otherKey in ScratchHitTestUtil.EnumerateVisibleActorKeysByDisplayName(targetName))
+            {
+                if (string.Equals(otherKey, selfKey, StringComparison.Ordinal))
+                {
+                    continue;
+                }
 
-            return selfRect.Overlaps(targetRect, true);
+                if (!ScratchHitTestUtil.TryGetVisibleRect(otherKey, out var otherRect))
+                {
+                    continue;
+                }
+
+                if (ScratchHitTestUtil.OverlapsAABB(selfRect, otherRect))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Flow から俳優キーを解決します。Self 指定時は Runner の Object Variables やアダプタを参照します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="inputKey">ポートから受け取ったキー文字列。</param>
+        /// <param name="actorKey">解決した俳優キー。</param>
+        /// <returns>解決に成功した場合は <c>true</c>。</returns>
+        private static bool TryResolveActorKey(Flow flow, string inputKey, out string actorKey)
+        {
+            actorKey = null;
+            if (!string.IsNullOrWhiteSpace(inputKey))
+            {
+                var normalized = inputKey.Trim();
+                if (!string.Equals(normalized, "Self", StringComparison.OrdinalIgnoreCase))
+                {
+                    actorKey = normalized;
+                    return true;
+                }
+            }
+
+            var objectVariables = ScratchUnitUtil.GetObjectVars(flow);
+            if (objectVariables != null)
+            {
+                if (objectVariables.IsDefined("actorKey"))
+                {
+                    var value = objectVariables.Get("actorKey");
+                    if (value is string key && !string.IsNullOrEmpty(key))
+                    {
+                        actorKey = key;
+                        return true;
+                    }
+                }
+
+                if (objectVariables.IsDefined("selfActorKey"))
+                {
+                    var value = objectVariables.Get("selfActorKey");
+                    if (value is string key && !string.IsNullOrEmpty(key))
+                    {
+                        actorKey = key;
+                        return true;
+                    }
+                }
+
+                if (objectVariables.IsDefined("presenter") && objectVariables.Get("presenter") is ActorPresenter presenterFromVars && presenterFromVars != null)
+                {
+                    actorKey = presenterFromVars.ActorKey;
+                    return true;
+                }
+
+                if (objectVariables.IsDefined("selfPresenter") && objectVariables.Get("selfPresenter") is ActorPresenter selfPresenter && selfPresenter != null)
+                {
+                    actorKey = selfPresenter.ActorKey;
+                    return true;
+                }
+            }
+
+            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
+            if (adapter != null)
+            {
+                var presenter = adapter.Presenter;
+                if (presenter != null)
+                {
+                    actorKey = presenter.ActorKey;
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

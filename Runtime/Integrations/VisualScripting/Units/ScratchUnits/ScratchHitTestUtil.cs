@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
+using FUnity.Runtime.Presenter;
 using FUnity.Runtime.View;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
@@ -118,6 +120,50 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             return new Vector2(pointer.x, pointer.y);
+        }
+
+        /// <summary>
+        /// 矩形同士の軸平行交差判定を行い、重なっていれば true を返します。
+        /// </summary>
+        /// <param name="a">比較対象の矩形 A。</param>
+        /// <param name="b">比較対象の矩形 B。</param>
+        /// <returns>重なっている場合は <c>true</c>。</returns>
+        public static bool OverlapsAABB(Rect a, Rect b)
+        {
+            return a.xMin < b.xMax && a.xMax > b.xMin &&
+                   a.yMin < b.yMax && a.yMax > b.yMin;
+        }
+
+        /// <summary>
+        /// DisplayName で一致する俳優のうち可視なインスタンスを列挙します。
+        /// </summary>
+        /// <param name="displayName">検索する DisplayName。</param>
+        /// <returns>一致した俳優キーの列挙。</returns>
+        public static IEnumerable<string> EnumerateVisibleActorKeysByDisplayName(string displayName)
+        {
+            return VSPresenterBridge.EnumerateActorKeysByDisplayName(displayName, true);
+        }
+
+        /// <summary>
+        /// 俳優キーから可視状態を確認し、可視であれば worldBound を取得します。
+        /// </summary>
+        /// <param name="actorKey">対象の俳優キー。</param>
+        /// <param name="rect">取得した矩形。</param>
+        /// <returns>可視かつ矩形を取得できた場合は <c>true</c>。</returns>
+        public static bool TryGetVisibleRect(string actorKey, out Rect rect)
+        {
+            rect = default;
+            if (string.IsNullOrEmpty(actorKey))
+            {
+                return false;
+            }
+
+            if (!VSPresenterBridge.IsVisible(actorKey))
+            {
+                return false;
+            }
+
+            return VSPresenterBridge.TryGetWorldRect(actorKey, out rect);
         }
 
         /// <summary>
