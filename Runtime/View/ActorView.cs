@@ -6,6 +6,7 @@ using UnityEngine.UIElements;
 using FUnity.Runtime.Input;
 using FUnity.Runtime.Model;
 using FUnity.Runtime.Presenter;
+using FUnity.Runtime.Rendering;
 
 namespace FUnity.Runtime.View
 {
@@ -53,6 +54,15 @@ namespace FUnity.Runtime.View
 
         /// <summary>回転および背景差し替えに利用するポートレート要素。</summary>
         private VisualElement m_PortraitElement;
+
+        /// <summary>色相回転を適用する際に使用するレンダリングパイプライン。</summary>
+        private HueShiftPipeline m_HuePipeline;
+
+        /// <summary>描画効果をかける前の元テクスチャ。Image.image や backgroundImage から取得してキャッシュする。</summary>
+        private Texture m_SourceTexture;
+
+        /// <summary>元テクスチャをすでに取得できているかどうかのフラグ。</summary>
+        private bool m_SourceCaptured;
 
         /// <summary>現在の回転角度（度）。中心ピボットを基準に UI へ適用する。</summary>
         private float m_CurrentRotationDeg;
@@ -302,6 +312,7 @@ namespace FUnity.Runtime.View
                 m_SpeechLabel = null;
             }
 
+            InvalidateSourceTexture();
             HideSpeech();
             ResetEffects();
 
@@ -442,6 +453,7 @@ namespace FUnity.Runtime.View
             if (portrait != null)
             {
                 portrait.style.backgroundImage = new StyleBackground(sprite);
+                InvalidateSourceTexture();
             }
         }
 
@@ -557,9 +569,42 @@ namespace FUnity.Runtime.View
                 return;
             }
 
+            var sourceTexture = GetSourceTexture();
+            if (sourceTexture == null)
+            {
+                Debug.LogWarning("[FUnity.ActorView] 色相回転の元テクスチャを取得できなかったため、描画効果をスキップします。");
+                return;
+            }
+
+            m_HuePipeline ??= new HueShiftPipeline();
+            if (m_HuePipeline == null)
+            {
+                return;
+            }
+
             var hueDegrees = normalized * (360f / 200f);
-            var tintColor = ColorFromHue(hueDegrees);
-            SetTintColor(tintColor);
+            var renderTexture = m_HuePipeline.Render(sourceTexture, hueDegrees);
+            if (renderTexture == null)
+            {
+                return;
+            }
+
+            var drawable = GetDrawableElement();
+            if (drawable == null)
+            {
+                return;
+            }
+
+            if (drawable is Image imageElement)
+            {
+                imageElement.image = renderTexture;
+                imageElement.tintColor = Color.white;
+            }
+            else
+            {
+                drawable.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(renderTexture));
+                drawable.style.unityBackgroundImageTintColor = Color.white;
+            }
         }
 
         /// <summary>
@@ -567,7 +612,44 @@ namespace FUnity.Runtime.View
         /// </summary>
         public void ResetEffects()
         {
-            SetTintColor(Color.white);
+            var drawable = GetDrawableElement();
+            var sourceTexture = GetSourceTexture();
+
+            if (drawable is Image imageElement)
+            {
+                if (sourceTexture != null)
+                {
+                    imageElement.image = sourceTexture;
+                }
+
+                imageElement.tintColor = Color.white;
+                return;
+            }
+
+            if (drawable != null)
+            {
+                if (sourceTexture is RenderTexture renderTexture)
+                {
+                    drawable.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(renderTexture));
+                }
+                else if (sourceTexture is Texture2D texture2D)
+                {
+                    drawable.style.backgroundImage = new StyleBackground(texture2D);
+                }
+                else if (sourceTexture != null)
+                {
+                    Debug.LogWarning("[FUnity.ActorView] 未対応のテクスチャ種別のため、背景復元をスキップします。");
+                }
+
+                drawable.style.unityBackgroundImageTintColor = Color.white;
+                return;
+            }
+
+            var root = GetRootElement();
+            if (root != null)
+            {
+                root.style.unityBackgroundImageTintColor = Color.white;
+            }
         }
 
         /// <summary>
@@ -694,6 +776,11 @@ namespace FUnity.Runtime.View
         {
             UnregisterGeometryCallbacks();
             UnregisterWorldBoundCacheSources();
+            if (m_HuePipeline != null)
+            {
+                m_HuePipeline.Dispose();
+                m_HuePipeline = null;
+            }
         }
 
         /// <summary>
@@ -879,6 +966,105 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
+        /// 描画効果の基準となる元テクスチャを再取得できるよう、キャッシュを無効化する。
+        /// </summary>
+        private void InvalidateSourceTexture()
+        {
+            m_SourceCaptured = false;
+            m_SourceTexture = null;
+        }
+
+        /// <summary>
+        /// 色相回転や背景差し替えを適用する対象となる描画用要素を解決する。
+        /// </summary>
+        /// <returns>ポートレート要素またはスプライト要素。見つからない場合は null。</returns>
+        private VisualElement GetDrawableElement()
+        {
+            var portrait = ResolvePortraitElement();
+            if (portrait != null)
+            {
+                return portrait;
+            }
+
+            var root = GetRootElement();
+            var sprite = ResolveSpriteElement(root ?? m_ActorRoot ?? m_BoundElement);
+            if (sprite != null)
+            {
+                return sprite;
+            }
+
+            return root ?? m_BoundElement;
+        }
+
+        /// <summary>
+        /// 描画効果を適用する前の元テクスチャを取得し、必要に応じてキャッシュする。
+        /// </summary>
+        /// <returns>取得できた元テクスチャ。VectorImage 等で未対応の場合は null。</returns>
+        private Texture GetSourceTexture()
+        {
+            if (m_SourceCaptured && m_SourceTexture != null)
+            {
+                return m_SourceTexture;
+            }
+
+            if (m_SourceCaptured && m_SourceTexture == null)
+            {
+                return null;
+            }
+
+            var drawable = GetDrawableElement();
+            if (drawable == null)
+            {
+                m_SourceCaptured = false;
+                return null;
+            }
+
+            Texture captured = null;
+            if (drawable is Image imageElement)
+            {
+                if (imageElement.image != null)
+                {
+                    captured = imageElement.image;
+                }
+                else if (imageElement.sprite != null)
+                {
+                    captured = imageElement.sprite.texture;
+                }
+                else if (imageElement.vectorImage != null)
+                {
+                    Debug.LogWarning("[FUnity.ActorView] VectorImage からの色相回転には未対応です。テクスチャへ変換してください。");
+                }
+            }
+
+            if (captured == null)
+            {
+                var background = drawable.resolvedStyle.backgroundImage;
+                if (background.texture != null)
+                {
+                    captured = background.texture;
+                }
+                else if (background.renderTexture != null)
+                {
+                    captured = background.renderTexture;
+                }
+                else if (background.sprite != null)
+                {
+                    captured = background.sprite.texture;
+                }
+            }
+
+            if (captured == null)
+            {
+                m_SourceCaptured = false;
+                return null;
+            }
+
+            m_SourceTexture = captured;
+            m_SourceCaptured = true;
+            return m_SourceTexture;
+        }
+
+        /// <summary>
         /// UXML 内の俳優コンテナを名前優先で探索し、なければクラスで解決する。
         /// </summary>
         /// <param name="element">探索の起点となる VisualElement。</param>
@@ -971,56 +1157,23 @@ namespace FUnity.Runtime.View
         /// <param name="color">乗算する色。</param>
         public void SetTintColor(Color color)
         {
-            var root = GetRootElement();
-            if (root == null)
+            var drawable = GetDrawableElement();
+            if (drawable is Image imageElement)
             {
+                imageElement.tintColor = color;
                 return;
             }
 
-            root.style.unityBackgroundImageTintColor = color;
-        }
-
-        /// <summary>
-        /// 色相を RGB へ変換する簡易ヘルパー。HSV (h,1,1) を基準とする。
-        /// </summary>
-        /// <param name="hueDegrees">0～360 度の色相。</param>
-        /// <returns>変換後の RGB 色。</returns>
-        private static Color ColorFromHue(float hueDegrees)
-        {
-            var wrappedHue = hueDegrees;
-            while (wrappedHue < 0f)
+            if (drawable != null)
             {
-                wrappedHue += 360f;
+                drawable.style.unityBackgroundImageTintColor = color;
+                return;
             }
 
-            while (wrappedHue >= 360f)
+            var root = GetRootElement();
+            if (root != null)
             {
-                wrappedHue -= 360f;
-            }
-
-            var h = wrappedHue / 360f;
-            const float s = 1f;
-            const float v = 1f;
-            var sector = (int)Mathf.Floor(h * 6f);
-            var fraction = h * 6f - sector;
-            var p = v * (1f - s);
-            var q = v * (1f - fraction * s);
-            var t = v * (1f - (1f - fraction) * s);
-
-            switch (sector % 6)
-            {
-                case 0:
-                    return new Color(v, t, p, 1f);
-                case 1:
-                    return new Color(q, v, p, 1f);
-                case 2:
-                    return new Color(p, v, t, 1f);
-                case 3:
-                    return new Color(p, q, v, 1f);
-                case 4:
-                    return new Color(t, p, v, 1f);
-                default:
-                    return new Color(v, p, q, 1f);
+                root.style.unityBackgroundImageTintColor = color;
             }
         }
 
