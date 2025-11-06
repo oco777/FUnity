@@ -218,6 +218,72 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// Flow/Graph から自分自身の俳優キーを推定し、存在しなければ空文字列を返します。
+        /// Runner の Object Variables や Presenter 参照、ActorPresenterAdapter を順に確認します。
+        /// </summary>
+        /// <param name="flow">現在評価中のフロー情報。</param>
+        /// <returns>解決した俳優キー。未解決の場合は空文字列。</returns>
+        public static string GetSelfActorKey(Flow flow)
+        {
+            if (flow?.stack == null)
+            {
+                return string.Empty;
+            }
+
+            var runner = flow.stack.gameObject;
+            if (runner != null)
+            {
+                var objectVariables = Variables.Object(runner);
+                if (objectVariables != null)
+                {
+                    if (objectVariables.IsDefined("actorKey") && objectVariables.Get("actorKey") is string actorKey && !string.IsNullOrEmpty(actorKey))
+                    {
+                        return actorKey;
+                    }
+
+                    if (objectVariables.IsDefined("selfActorKey") && objectVariables.Get("selfActorKey") is string selfActorKey && !string.IsNullOrEmpty(selfActorKey))
+                    {
+                        return selfActorKey;
+                    }
+
+                    if (objectVariables.IsDefined("presenter") && objectVariables.Get("presenter") is ActorPresenter presenterFromVars && presenterFromVars != null)
+                    {
+                        var presenterKey = presenterFromVars.ActorKey;
+                        if (!string.IsNullOrEmpty(presenterKey))
+                        {
+                            return presenterKey;
+                        }
+                    }
+
+                    if (objectVariables.IsDefined("selfPresenter") && objectVariables.Get("selfPresenter") is ActorPresenter selfPresenter && selfPresenter != null)
+                    {
+                        var presenterKey = selfPresenter.ActorKey;
+                        if (!string.IsNullOrEmpty(presenterKey))
+                        {
+                            return presenterKey;
+                        }
+                    }
+                }
+
+                var adapter = runner.GetComponent<ActorPresenterAdapter>();
+                if (adapter != null && adapter.Presenter != null && !string.IsNullOrEmpty(adapter.Presenter.ActorKey))
+                {
+                    return adapter.Presenter.ActorKey;
+                }
+            }
+
+            if (flow.stack.graph is FlowGraph graph && graph.variables != null)
+            {
+                if (graph.variables.IsDefined("selfActorKey") && graph.variables.Get("selfActorKey") is string graphSelfKey && !string.IsNullOrEmpty(graphSelfKey))
+                {
+                    return graphSelfKey;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
         /// 俳優を絶対座標（中心）へ移動させる。Custom Event "Actor/SetPosition" を想定。
         /// </summary>
         /// <param name="x">中心の X 座標（px）。</param>
