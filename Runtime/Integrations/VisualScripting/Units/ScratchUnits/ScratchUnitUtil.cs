@@ -760,5 +760,206 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             return new Rect(0f, 0f, s_FallbackStageSize.x, s_FallbackStageSize.y);
         }
+
+        /// <summary>
+        /// ステージ矩形と俳優の半サイズから、中心座標が取り得る最小値・最大値を算出します。
+        /// ステージより俳優が大きい場合は、ステージ中心へ収束させる安全値を返します。
+        /// </summary>
+        /// <param name="stageRect">判定に利用するステージの矩形（worldBound）。</param>
+        /// <param name="halfSize">俳優の見た目半サイズ（px）。</param>
+        /// <param name="minX">中心座標の許容最小値（world）。</param>
+        /// <param name="maxX">中心座標の許容最大値（world）。</param>
+        /// <param name="minY">中心座標の許容最小値（world）。</param>
+        /// <param name="maxY">中心座標の許容最大値（world）。</param>
+        private static void ResolveStageExtents(Rect stageRect, Vector2 halfSize, out float minX, out float maxX, out float minY, out float maxY)
+        {
+            var safeHalf = new Vector2(Mathf.Max(0f, halfSize.x), Mathf.Max(0f, halfSize.y));
+
+            minX = stageRect.xMin + safeHalf.x;
+            maxX = stageRect.xMax - safeHalf.x;
+            minY = stageRect.yMin + safeHalf.y;
+            maxY = stageRect.yMax - safeHalf.y;
+
+            if (maxX < minX)
+            {
+                var mid = (stageRect.xMin + stageRect.xMax) * 0.5f;
+                minX = mid;
+                maxX = mid;
+            }
+
+            if (maxY < minY)
+            {
+                var mid = (stageRect.yMin + stageRect.yMax) * 0.5f;
+                minY = mid;
+                maxY = mid;
+            }
+        }
+
+        /// <summary>
+        /// 指定した中心座標がステージ範囲内に収まっているかを判定します。
+        /// </summary>
+        /// <param name="centerWorld">俳優中心座標（world）。</param>
+        /// <param name="stageRect">ステージ矩形（worldBound）。</param>
+        /// <param name="halfSize">俳優の見た目半サイズ（px）。</param>
+        /// <returns>ステージ内に収まっている場合は <c>true</c>。</returns>
+        public static bool IsCenterInsideStage(Vector2 centerWorld, Rect stageRect, Vector2 halfSize)
+        {
+            ResolveStageExtents(stageRect, halfSize, out var minX, out var maxX, out var minY, out var maxY);
+            return centerWorld.x >= minX && centerWorld.x <= maxX && centerWorld.y >= minY && centerWorld.y <= maxY;
+        }
+
+        /// <summary>
+        /// 中心座標が境界へ接触または越境しているかを判定します。
+        /// </summary>
+        /// <param name="centerWorld">俳優中心座標（world）。</param>
+        /// <param name="stageRect">ステージ矩形（worldBound）。</param>
+        /// <param name="halfSize">俳優の見た目半サイズ（px）。</param>
+        /// <param name="epsilon">接触許容誤差（px）。</param>
+        /// <returns>接触または越境している場合は <c>true</c>。</returns>
+        public static bool IsTouchingStageEdge(Vector2 centerWorld, Rect stageRect, Vector2 halfSize, float epsilon)
+        {
+            ResolveStageExtents(stageRect, halfSize, out var minX, out var maxX, out var minY, out var maxY);
+
+            if (centerWorld.x < minX || centerWorld.x > maxX || centerWorld.y < minY || centerWorld.y > maxY)
+            {
+                return true;
+            }
+
+            var safeEps = Mathf.Max(0f, epsilon);
+            return (centerWorld.x - minX) <= safeEps
+                || (maxX - centerWorld.x) <= safeEps
+                || (centerWorld.y - minY) <= safeEps
+                || (maxY - centerWorld.y) <= safeEps;
+        }
+
+        /// <summary>
+        /// 現在位置から最初に到達する境界までの移動距離を算出します。
+        /// </summary>
+        /// <param name="centerWorld">俳優中心座標（world）。</param>
+        /// <param name="directionUi">移動方向ベクトル（UI 座標系, 正規化済み想定）。</param>
+        /// <param name="stageRect">ステージ矩形（worldBound）。</param>
+        /// <param name="halfSize">俳優の見た目半サイズ（px）。</param>
+        /// <returns>境界に衝突するまでの距離（px）。移動方向がゼロの場合は 0。</returns>
+        public static float ComputeTravelToStageEdge(Vector2 centerWorld, Vector2 directionUi, Rect stageRect, Vector2 halfSize)
+        {
+            ResolveStageExtents(stageRect, halfSize, out var minX, out var maxX, out var minY, out var maxY);
+
+            var travel = float.PositiveInfinity;
+            var dirX = directionUi.x;
+            var dirY = directionUi.y;
+
+            if (Mathf.Abs(dirX) > Mathf.Epsilon)
+            {
+                var boundaryX = dirX > 0f ? maxX : minX;
+                var distance = (boundaryX - centerWorld.x) / dirX;
+                if (distance >= 0f)
+                {
+                    travel = Mathf.Min(travel, distance);
+                }
+            }
+
+            if (Mathf.Abs(dirY) > Mathf.Epsilon)
+            {
+                var boundaryY = dirY > 0f ? maxY : minY;
+                var distance = (boundaryY - centerWorld.y) / dirY;
+                if (distance >= 0f)
+                {
+                    travel = Mathf.Min(travel, distance);
+                }
+            }
+
+            if (float.IsPositiveInfinity(travel) || travel < 0f)
+            {
+                return 0f;
+            }
+
+            return Mathf.Max(0f, travel);
+        }
+
+        /// <summary>
+        /// 境界へ衝突した際に進行方向を反射させ、ステージ内へ押し戻します。
+        /// </summary>
+        /// <param name="centerWorld">俳優中心座標（world）。結果は更新されます。</param>
+        /// <param name="directionUi">移動方向ベクトル（UI 座標系）。結果は反射後の方向で上書きします。</param>
+        /// <param name="stageRect">ステージ矩形（worldBound）。</param>
+        /// <param name="halfSize">俳優の見た目半サイズ（px）。</param>
+        /// <param name="epsilon">押し戻しに利用する余白（px）。</param>
+        /// <returns>反射を行った場合は <c>true</c>。</returns>
+        public static bool BounceDirectionAndClamp(ref Vector2 centerWorld, ref Vector2 directionUi, Rect stageRect, Vector2 halfSize, float epsilon)
+        {
+            ResolveStageExtents(stageRect, halfSize, out var minX, out var maxX, out var minY, out var maxY);
+
+            var bounced = false;
+            var push = Mathf.Max(0f, epsilon);
+
+            if (centerWorld.x <= minX)
+            {
+                var adjusted = minX + push;
+                centerWorld.x = maxX >= minX ? Mathf.Min(adjusted, maxX) : minX;
+                directionUi.x = -directionUi.x;
+                bounced = true;
+            }
+            else if (centerWorld.x >= maxX)
+            {
+                var adjusted = maxX - push;
+                centerWorld.x = maxX >= minX ? Mathf.Max(adjusted, minX) : maxX;
+                directionUi.x = -directionUi.x;
+                bounced = true;
+            }
+
+            if (centerWorld.y <= minY)
+            {
+                var adjusted = minY + push;
+                centerWorld.y = maxY >= minY ? Mathf.Min(adjusted, maxY) : minY;
+                directionUi.y = -directionUi.y;
+                bounced = true;
+            }
+            else if (centerWorld.y >= maxY)
+            {
+                var adjusted = maxY - push;
+                centerWorld.y = maxY >= minY ? Mathf.Max(adjusted, minY) : maxY;
+                directionUi.y = -directionUi.y;
+                bounced = true;
+            }
+
+            if (!bounced)
+            {
+                return false;
+            }
+
+            if (directionUi.sqrMagnitude <= Mathf.Epsilon)
+            {
+                directionUi = Vector2.right;
+            }
+            else
+            {
+                directionUi.Normalize();
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// UI 座標系の方向ベクトルから Scratch 方位の角度を求めます。
+        /// </summary>
+        /// <param name="uiDirection">UI 座標系の方向ベクトル。</param>
+        /// <returns>Scratch 方位の角度（度）。</returns>
+        public static float DegreesFromUiDirection(Vector2 uiDirection)
+        {
+            if (uiDirection.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return 90f;
+            }
+
+            var normalized = uiDirection.normalized;
+            var radians = Mathf.Atan2(-normalized.y, normalized.x);
+            var degrees = radians * Mathf.Rad2Deg;
+            if (degrees < 0f)
+            {
+                degrees += 360f;
+            }
+
+            return degrees;
+        }
     }
 }

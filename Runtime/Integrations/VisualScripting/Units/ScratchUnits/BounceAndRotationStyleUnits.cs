@@ -14,6 +14,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitCategory("FUnity/Scratch/Motion")]
     public sealed class BounceIfOnEdgeUnit : Unit
     {
+        /// <summary>反射後に中心座標を押し戻す余白（px）です。</summary>
+        private const float BounceEpsilon = 0.5f;
+
         /// <summary>enter ポートを受け取る制御入力です。</summary>
         [DoNotSerialize]
         private ControlInput m_Enter;
@@ -68,73 +71,40 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var stageRect = ScratchHitTestUtil.GetStageWorldRect(adapter);
             if (stageRect.width <= 0f || stageRect.height <= 0f)
             {
-                stageRect = ScratchBounds.GetStageRect();
+                var fallback = ScratchBounds.GetStageRect();
+                stageRect = new Rect(stageRect.position, fallback.size);
             }
 
-            const float epsilon = 0.001f;
-            var hitLeft = actorRect.xMin <= stageRect.xMin + epsilon;
-            var hitRight = actorRect.xMax >= stageRect.xMax - epsilon;
-            var hitTop = actorRect.yMin <= stageRect.yMin + epsilon;
-            var hitBottom = actorRect.yMax >= stageRect.yMax - epsilon;
-
-            if (!hitLeft && !hitRight && !hitTop && !hitBottom)
+            var halfSize = new Vector2(Mathf.Max(0f, actorRect.width * 0.5f), Mathf.Max(0f, actorRect.height * 0.5f));
+            var centerWorld = actorRect.center;
+            if (!ScratchUnitUtil.IsTouchingStageEdge(centerWorld, stageRect, halfSize, BounceEpsilon))
             {
                 yield return m_Exit;
                 yield break;
             }
 
-            var currentDirectionDeg = adapter.GetDirection();
-            var radians = currentDirectionDeg * Mathf.Deg2Rad;
-            var scratchDir = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
-            var uiDir = new Vector2(scratchDir.x, -scratchDir.y);
-
-            if (uiDir.sqrMagnitude <= Mathf.Epsilon)
+            var uiDirection = ScratchUnitUtil.DirFromDegrees(adapter.GetDirection());
+            if (uiDirection.sqrMagnitude <= Mathf.Epsilon)
             {
-                uiDir = Vector2.right;
+                uiDirection = Vector2.right;
+            }
+            else
+            {
+                uiDirection.Normalize();
             }
 
-            if (hitLeft || hitRight)
+            if (!ScratchUnitUtil.BounceDirectionAndClamp(ref centerWorld, ref uiDirection, stageRect, halfSize, BounceEpsilon))
             {
-                uiDir.x = -uiDir.x;
+                yield return m_Exit;
+                yield break;
             }
 
-            if (hitTop || hitBottom)
-            {
-                uiDir.y = -uiDir.y;
-            }
+            var reflectedDeg = ScratchUnitUtil.DegreesFromUiDirection(uiDirection);
+            var stageOrigin = stageRect.position;
+            var finalLocal = centerWorld - stageOrigin;
 
-            var reflectedScratch = new Vector2(uiDir.x, -uiDir.y);
-            if (reflectedScratch.sqrMagnitude <= Mathf.Epsilon)
-            {
-                reflectedScratch = Vector2.right;
-            }
-
-            var reflectedDeg = Mathf.Atan2(reflectedScratch.y, reflectedScratch.x) * Mathf.Rad2Deg;
             adapter.SetDirection(reflectedDeg);
-
-            var center = adapter.GetPositionPixels();
-            const float padding = 2f;
-            var minX = stageRect.xMin + padding;
-            var maxX = stageRect.xMax - padding;
-            if (maxX < minX)
-            {
-                var midX = (stageRect.xMin + stageRect.xMax) * 0.5f;
-                minX = midX;
-                maxX = midX;
-            }
-
-            var minY = stageRect.yMin + padding;
-            var maxY = stageRect.yMax - padding;
-            if (maxY < minY)
-            {
-                var midY = (stageRect.yMin + stageRect.yMax) * 0.5f;
-                minY = midY;
-                maxY = midY;
-            }
-
-            center.x = Mathf.Clamp(center.x, minX, maxX);
-            center.y = Mathf.Clamp(center.y, minY, maxY);
-            adapter.SetPositionPixels(center);
+            adapter.SetPositionPixels(finalLocal);
 
             yield return m_Exit;
         }

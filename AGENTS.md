@@ -24,6 +24,12 @@
 - `ScratchUnitUtil` にはレイアウト・座標系のヘルパーを集約し、`TryGetActorWorldRect` を含む共通処理を追加すること。
 - `Runtime/Integrations/VisualScripting` のコードを変更した場合は **必ず `Docs/VS_Scratch_Mapping.md` も更新** する。
 
+## Move/Bounce 実装ポリシー（恒久ルール）
+- 「もし端に着いたら跳ね返る」を含む Bounce 系の実装は、**反射後に中心座標をステージ内へ押し戻す（クランプ＋ε）処理を必須**とする。
+- 端判定は俳優の見た目サイズを基準とし、**半幅・半高（halfSize）を必ず考慮**すること。
+- `MoveStepsUnit` を含む移動ユニットは、大きな移動量で境界を飛び越えないように**境界まで進む → 反射 → 残り距離を再移動**のループを実装する。
+- Scratch の「1 歩」は **常に 1px** とし、倍率は `MoveStepsUnit` の `StepToPixels` 定数で一元管理する。調整が必要な場合は同定数のみ変更する。
+
 ## MVP の適用方針
 - **Model**
   - ScriptableObject 群（`FUnityProjectData`, `FUnityActorData`, `FUnityStageData`）＝**静的設定**
