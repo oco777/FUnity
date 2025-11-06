@@ -2,7 +2,6 @@
 using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
-using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
@@ -15,14 +14,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitCategory("FUnity/Scratch/Motion")]
     public sealed class MoveStepsUnit : Unit
     {
-        /// <summary>Scratch の 1 歩を UI ピクセルへ変換する倍率です。</summary>
-        private const float StepToPixels = 1f;
-
         /// <summary>同一フレームで反射を再試行する最大回数です。</summary>
         private const int MaxBounceIterations = 4;
-
-        /// <summary>反射後にステージ内へ押し戻す余白（px）です。</summary>
-        private const float BounceEpsilon = 0.5f;
 
         /// <summary>フローの開始を受け取る ControlInput です。</summary>
         [DoNotSerialize]
@@ -79,41 +72,23 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 yield break;
             }
 
-            if (!ScratchUnitUtil.TryGetActorWorldRect(controller, out var actorRect))
-            {
-                yield return null;
-
-                if (!ScratchUnitUtil.TryGetActorWorldRect(controller, out actorRect))
-                {
-                    Debug.LogWarning("[FUnity] Scratch/Move Steps: worldBound が未確定のため移動をスキップしました。");
-                    yield return m_Exit;
-                    yield break;
-                }
-            }
-
-            var stageRect = ScratchHitTestUtil.GetStageWorldRect(controller);
-            if (stageRect.width <= 0f || stageRect.height <= 0f)
-            {
-                var fallbackStage = ScratchBounds.GetStageRect();
-                stageRect = new Rect(stageRect.position, fallbackStage.size);
-            }
-
             var steps = flow.GetValue<float>(m_Steps);
-            var movePixels = steps * StepToPixels;
+            var movePixels = ScratchUnitUtil.StepsToPixels(steps);
             if (Mathf.Approximately(movePixels, 0f))
             {
                 yield return m_Exit;
                 yield break;
             }
 
-            var halfSize = new Vector2(Mathf.Max(0f, actorRect.width * 0.5f), Mathf.Max(0f, actorRect.height * 0.5f));
-            var stageOrigin = stageRect.position;
-            var currentCenter = actorRect.center;
+            var presenter = controller.Presenter;
+            var view = controller.ActorView;
+            var rootScaledSize = view != null ? view.GetRootScaledSizePx() : Vector2.zero;
+            var currentCenter = presenter.GetPosition();
             var directionDeg = controller.GetDirection();
             var uiDirection = ScratchUnitUtil.DirFromDegrees(directionDeg);
             if (uiDirection.sqrMagnitude <= Mathf.Epsilon)
             {
-                uiDirection = Vector2.right;
+                uiDirection = new Vector2(0f, -1f);
             }
 
             uiDirection.Normalize();
@@ -126,30 +101,39 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var remaining = movePixels;
             var hasBounced = false;
             var nextDirectionDeg = directionDeg;
+            var logicalDirection = new Vector2(uiDirection.x, -uiDirection.y);
+            logicalDirection.Normalize();
 
             for (var i = 0; i < MaxBounceIterations && remaining > Mathf.Epsilon; i++)
             {
-                var targetCenter = currentCenter + uiDirection * remaining;
-                if (ScratchUnitUtil.IsCenterInsideStage(targetCenter, stageRect, halfSize))
+                var targetCenter = currentCenter + logicalDirection * remaining;
+                if (ScratchHitTestUtil.IsCenterInsideStage(targetCenter))
                 {
                     currentCenter = targetCenter;
                     remaining = 0f;
                     break;
                 }
 
-                var travel = ScratchUnitUtil.ComputeTravelToStageEdge(currentCenter, uiDirection, stageRect, halfSize);
-                if (travel <= 0f)
+                var travelLogical = ScratchUnitUtil.ComputeTravelToStageEdge(currentCenter, uiDirection * remaining, rootScaledSize, out _);
+                if (travelLogical.sqrMagnitude <= Mathf.Epsilon)
                 {
                     break;
                 }
 
-                travel = Mathf.Min(travel, remaining);
-                currentCenter += uiDirection * travel;
-                remaining -= travel;
+                var traveled = travelLogical.magnitude;
+                currentCenter += travelLogical;
+                remaining = Mathf.Max(0f, remaining - traveled);
 
-                if (ScratchUnitUtil.BounceDirectionAndClamp(ref currentCenter, ref uiDirection, stageRect, halfSize, BounceEpsilon))
+                var bouncedDirection = ScratchUnitUtil.BounceDirectionAndClamp(currentCenter, uiDirection, rootScaledSize, out var clampedCenter);
+                var directionChanged = (bouncedDirection - uiDirection).sqrMagnitude > 1e-4f;
+                currentCenter = clampedCenter;
+
+                if (directionChanged)
                 {
                     hasBounced = true;
+                    uiDirection = bouncedDirection;
+                    logicalDirection = new Vector2(uiDirection.x, -uiDirection.y);
+                    logicalDirection.Normalize();
                     nextDirectionDeg = ScratchUnitUtil.DegreesFromUiDirection(uiDirection);
                     continue;
                 }
@@ -157,8 +141,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 break;
             }
 
-            var finalLocal = currentCenter - stageOrigin;
-            controller.SetPositionPixels(finalLocal);
+            var finalUi = controller.ToUiPosition(currentCenter);
+            controller.SetPositionPixels(finalUi);
 
             if (hasBounced)
             {

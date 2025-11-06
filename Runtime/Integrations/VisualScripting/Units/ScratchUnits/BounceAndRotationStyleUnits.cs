@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
-using FUnity.Runtime.Core;
 using FUnity.Runtime.Model;
 using FUnity.Runtime.Integrations.VisualScripting;
 
@@ -14,9 +13,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitCategory("FUnity/Scratch/Motion")]
     public sealed class BounceIfOnEdgeUnit : Unit
     {
-        /// <summary>反射後に中心座標を押し戻す余白（px）です。</summary>
-        private const float BounceEpsilon = 0.5f;
-
         /// <summary>enter ポートを受け取る制御入力です。</summary>
         [DoNotSerialize]
         private ControlInput m_Enter;
@@ -56,28 +52,18 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 yield break;
             }
 
-            if (!ScratchUnitUtil.TryGetActorWorldRect(adapter, out var actorRect))
+            var presenter = adapter.Presenter;
+            if (presenter == null)
             {
-                yield return null;
-
-                if (!ScratchUnitUtil.TryGetActorWorldRect(adapter, out actorRect))
-                {
-                    Debug.LogWarning("[FUnity] Scratch/Bounce If On Edge: worldBound が未確定のため、判定をスキップしました。");
-                    yield return m_Exit;
-                    yield break;
-                }
+                Debug.LogWarning("[FUnity] Scratch/Bounce If On Edge: ActorPresenter が未設定のため反射できません。");
+                yield return m_Exit;
+                yield break;
             }
 
-            var stageRect = ScratchHitTestUtil.GetStageWorldRect(adapter);
-            if (stageRect.width <= 0f || stageRect.height <= 0f)
-            {
-                var fallback = ScratchBounds.GetStageRect();
-                stageRect = new Rect(stageRect.position, fallback.size);
-            }
-
-            var halfSize = new Vector2(Mathf.Max(0f, actorRect.width * 0.5f), Mathf.Max(0f, actorRect.height * 0.5f));
-            var centerWorld = actorRect.center;
-            if (!ScratchUnitUtil.IsTouchingStageEdge(centerWorld, stageRect, halfSize, BounceEpsilon))
+            var view = adapter.ActorView;
+            var rootScaledSize = view != null ? view.GetRootScaledSizePx() : Vector2.zero;
+            var centerLogical = presenter.GetPosition();
+            if (!ScratchHitTestUtil.IsTouchingStageEdge(centerLogical, rootScaledSize, out var hitNormal))
             {
                 yield return m_Exit;
                 yield break;
@@ -86,25 +72,26 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var uiDirection = ScratchUnitUtil.DirFromDegrees(adapter.GetDirection());
             if (uiDirection.sqrMagnitude <= Mathf.Epsilon)
             {
-                uiDirection = Vector2.right;
+                uiDirection = new Vector2(0f, -1f);
             }
             else
             {
                 uiDirection.Normalize();
             }
 
-            if (!ScratchUnitUtil.BounceDirectionAndClamp(ref centerWorld, ref uiDirection, stageRect, halfSize, BounceEpsilon))
+            var bouncedDirection = ScratchUnitUtil.BounceDirectionAndClamp(centerLogical, uiDirection, rootScaledSize, out var clampedCenter);
+            var directionChanged = (bouncedDirection - uiDirection).sqrMagnitude > 1e-4f;
+            if (!directionChanged && hitNormal.sqrMagnitude <= Mathf.Epsilon)
             {
                 yield return m_Exit;
                 yield break;
             }
 
-            var reflectedDeg = ScratchUnitUtil.DegreesFromUiDirection(uiDirection);
-            var stageOrigin = stageRect.position;
-            var finalLocal = centerWorld - stageOrigin;
+            var reflectedDeg = ScratchUnitUtil.DegreesFromUiDirection(bouncedDirection);
+            var finalUi = adapter.ToUiPosition(clampedCenter);
 
             adapter.SetDirection(reflectedDeg);
-            adapter.SetPositionPixels(finalLocal);
+            adapter.SetPositionPixels(finalUi);
 
             yield return m_Exit;
         }
