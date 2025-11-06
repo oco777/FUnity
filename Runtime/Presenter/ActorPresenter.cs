@@ -1,4 +1,5 @@
 // Updated: 2025-03-03
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
@@ -20,6 +21,9 @@ namespace FUnity.Runtime.Presenter
     /// </remarks>
     public sealed class ActorPresenter
     {
+        /// <summary>VS から俳優を一意に識別するための連番です。</summary>
+        private static int s_ActorKeySequence;
+
         /// <summary>Scratch 互換の「1 歩」をピクセル換算する係数（px/歩）。</summary>
         private const float StepToPixels = 10f;
 
@@ -119,6 +123,15 @@ namespace FUnity.Runtime.Presenter
         /// <summary>吹き出しの表示時間をカウントダウンするかどうか。</summary>
         private bool m_SpeechUsesTimer;
 
+        /// <summary>VS から参照されるユニークな俳優キー。</summary>
+        private readonly string m_ActorKey;
+
+        /// <summary>現在の表示名。DisplayName が空の場合は空文字を保持します。</summary>
+        private string m_DisplayName = string.Empty;
+
+        /// <summary>最新の可視状態。View へ伝播した値をキャッシュします。</summary>
+        private bool m_IsVisible = true;
+
         /// <summary>ステージのピクセル境界（左上原点）。</summary>
         public Rect StageBoundsPx => m_StageBoundsUi;
 
@@ -145,6 +158,34 @@ namespace FUnity.Runtime.Presenter
         {
             get => m_Runner;
             internal set => m_Runner = value;
+        }
+
+        /// <summary>
+        /// VS グラフから俳優を一意に参照するためのキーを返します。
+        /// 生成時に採番され、ライフタイムを通じて不変です。
+        /// </summary>
+        public string ActorKey => m_ActorKey;
+
+        /// <summary>
+        /// 現在の DisplayName を返します。未設定の場合は空文字列です。
+        /// クローンも元の DisplayName を共有します。
+        /// </summary>
+        public string DisplayName => m_DisplayName;
+
+        /// <summary>
+        /// 現在 View に適用されている可視状態を返します。
+        /// Presenter から SetVisible を呼ぶたびに更新されます。
+        /// </summary>
+        public bool IsVisible => m_IsVisible;
+
+        /// <summary>
+        /// インスタンス生成時に俳優キーを採番し、VS ブリッジへ登録します。
+        /// </summary>
+        public ActorPresenter()
+        {
+            var sequence = Interlocked.Increment(ref s_ActorKeySequence);
+            m_ActorKey = $"actor-{sequence:D6}";
+            VSPresenterBridge.RegisterActor(this);
         }
 
         /// <summary>
@@ -178,6 +219,16 @@ namespace FUnity.Runtime.Presenter
             m_ModeStagePixelsFallback = ResolveModeStagePixels(modeConfig);
             m_EnableFloatOffset = ResolveFloatOffsetEnabled(modeConfig);
             AttachStageGeometryCallback(stageRoot);
+
+            m_DisplayName = data != null ? data.DisplayName ?? string.Empty : string.Empty;
+            if (m_View is ActorView actorViewInstance)
+            {
+                m_IsVisible = actorViewInstance.IsVisible;
+            }
+            else
+            {
+                m_IsVisible = true;
+            }
 
             if (m_State != null)
             {
@@ -297,6 +348,9 @@ namespace FUnity.Runtime.Presenter
                     objectVariables.Set("view", m_View);
                     objectVariables.Set("selfView", m_View);
                 }
+
+                objectVariables.Set("actorKey", ActorKey);
+                objectVariables.Set("selfActorKey", ActorKey);
             }
             else
             {
@@ -315,6 +369,8 @@ namespace FUnity.Runtime.Presenter
                 Debug.LogWarning("[FUnity] ActorPresenter: CopyRuntimeStateFrom に null が渡されたためクローン状態を複製できません。");
                 return;
             }
+
+            m_DisplayName = source.m_DisplayName;
 
             if (m_State != null && source.m_State != null)
             {
@@ -581,7 +637,44 @@ namespace FUnity.Runtime.Presenter
         /// <param name="visible">true で表示、false で非表示。</param>
         public void SetVisible(bool visible)
         {
+            m_IsVisible = visible;
             m_View?.SetVisible(visible);
+        }
+
+        /// <summary>
+        /// 現在の俳優を表す世界座標矩形を取得します。矩形が無効な場合は false を返します。
+        /// </summary>
+        /// <param name="rect">有効な worldBound。取得に失敗した場合は <see cref="Rect.zero"/>。</param>
+        /// <returns>矩形を取得できた場合は <c>true</c>。</returns>
+        public bool TryGetWorldRect(out Rect rect)
+        {
+            rect = default;
+
+            var actorView = ActorViewComponent;
+            if (actorView == null)
+            {
+                return false;
+            }
+
+            if (actorView.TryGetCachedWorldBound(out rect))
+            {
+                return rect.width > 0f && rect.height > 0f;
+            }
+
+            var root = actorView.ActorRoot;
+            if (root == null)
+            {
+                return false;
+            }
+
+            var worldBound = root.worldBound;
+            if (worldBound.width <= 0f || worldBound.height <= 0f)
+            {
+                return false;
+            }
+
+            rect = worldBound;
+            return true;
         }
 
         /// <summary>

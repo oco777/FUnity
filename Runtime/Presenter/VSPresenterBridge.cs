@@ -1,5 +1,6 @@
 // Updated: 2025-03-03
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
@@ -26,6 +27,12 @@ namespace FUnity.Runtime.Presenter
 
         /// <summary>シーン内で最後に有効化されたブリッジのシングルトン参照。</summary>
         public static VSPresenterBridge Instance { get; private set; }
+
+        /// <summary>VS から俳優 Presenter を解決するための弱参照キャッシュ。</summary>
+        private static readonly Dictionary<string, WeakReference<ActorPresenter>> s_ActorLookup = new Dictionary<string, WeakReference<ActorPresenter>>();
+
+        /// <summary>弱参照が切れたキーを再利用せず整理するための一時バッファ。</summary>
+        private static readonly List<string> s_PruningBuffer = new List<string>(8);
 
         /// <summary>
         /// MonoBehaviour 初期化時にグローバル参照を登録し、重複時は警告を出す。
@@ -84,6 +91,130 @@ namespace FUnity.Runtime.Presenter
             {
                 Debug.LogWarning("[FUnity] VSPresenterBridge: ITimerService が未設定です。");
             }
+        }
+
+        /// <summary>
+        /// VS グラフで利用する俳優キーを登録し、弱参照キャッシュへ記録します。
+        /// </summary>
+        /// <param name="presenter">登録対象の Presenter。</param>
+        internal static void RegisterActor(ActorPresenter presenter)
+        {
+            if (presenter == null)
+            {
+                return;
+            }
+
+            lock (s_ActorLookup)
+            {
+                s_ActorLookup[presenter.ActorKey] = new WeakReference<ActorPresenter>(presenter);
+            }
+        }
+
+        /// <summary>
+        /// 弱参照キャッシュから俳優を除外します。Presenter が破棄された際の明示的な解除用です。
+        /// </summary>
+        /// <param name="presenter">解除対象の Presenter。</param>
+        internal static void UnregisterActor(ActorPresenter presenter)
+        {
+            if (presenter == null)
+            {
+                return;
+            }
+
+            lock (s_ActorLookup)
+            {
+                s_ActorLookup.Remove(presenter.ActorKey);
+            }
+        }
+
+        /// <summary>
+        /// DisplayName で一致する俳優（本体＋クローン）を列挙し、可視状態に応じてフィルタリングします。
+        /// </summary>
+        /// <param name="displayName">検索する DisplayName。空白のみの場合は結果を返しません。</param>
+        /// <param name="onlyVisible">true の場合は可視なインスタンスのみ返します。</param>
+        /// <returns>条件に一致した俳優キーの列挙。</returns>
+        public static IEnumerable<string> EnumerateActorKeysByDisplayName(string displayName, bool onlyVisible)
+        {
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                yield break;
+            }
+
+            var normalized = displayName.Trim();
+            var results = new List<string>();
+
+            lock (s_ActorLookup)
+            {
+                s_PruningBuffer.Clear();
+
+                foreach (var pair in s_ActorLookup)
+                {
+                    if (!pair.Value.TryGetTarget(out var presenter) || presenter == null)
+                    {
+                        s_PruningBuffer.Add(pair.Key);
+                        continue;
+                    }
+
+                    if (!string.Equals(presenter.DisplayName, normalized, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    if (onlyVisible && !presenter.IsVisible)
+                    {
+                        continue;
+                    }
+
+                    results.Add(pair.Key);
+                }
+
+                if (s_PruningBuffer.Count > 0)
+                {
+                    for (var i = 0; i < s_PruningBuffer.Count; i++)
+                    {
+                        s_ActorLookup.Remove(s_PruningBuffer[i]);
+                    }
+
+                    s_PruningBuffer.Clear();
+                }
+            }
+
+            for (var i = 0; i < results.Count; i++)
+            {
+                yield return results[i];
+            }
+        }
+
+        /// <summary>
+        /// 俳優キーから可視状態を取得します。未登録の場合は false を返します。
+        /// </summary>
+        /// <param name="actorKey">判定対象の俳優キー。</param>
+        /// <returns>可視であれば true。</returns>
+        public static bool IsVisible(string actorKey)
+        {
+            if (!TryResolvePresenter(actorKey, out var presenter))
+            {
+                return false;
+            }
+
+            return presenter.IsVisible;
+        }
+
+        /// <summary>
+        /// 俳優キーから worldBound を取得します。矩形を取得できない場合は false を返します。
+        /// </summary>
+        /// <param name="actorKey">対象の俳優キー。</param>
+        /// <param name="rect">取得した世界座標矩形。</param>
+        /// <returns>矩形を取得できた場合は <c>true</c>。</returns>
+        public static bool TryGetWorldRect(string actorKey, out Rect rect)
+        {
+            rect = default;
+            if (!TryResolvePresenter(actorKey, out var presenter))
+            {
+                return false;
+            }
+
+            return presenter.TryGetWorldRect(out rect);
         }
 
         /// <summary>
@@ -418,6 +549,38 @@ namespace FUnity.Runtime.Presenter
 
             var adapter = runner.GetComponent<ActorPresenterAdapter>();
             return adapter != null ? adapter.Presenter : null;
+        }
+
+        /// <summary>
+        /// 弱参照キャッシュから俳優 Presenter を解決します。見つからない場合は false を返します。
+        /// </summary>
+        /// <param name="actorKey">検索する俳優キー。</param>
+        /// <param name="presenter">解決した Presenter。</param>
+        /// <returns>解決に成功した場合は <c>true</c>。</returns>
+        private static bool TryResolvePresenter(string actorKey, out ActorPresenter presenter)
+        {
+            presenter = null;
+            if (string.IsNullOrEmpty(actorKey))
+            {
+                return false;
+            }
+
+            lock (s_ActorLookup)
+            {
+                if (!s_ActorLookup.TryGetValue(actorKey, out var weak) || weak == null)
+                {
+                    return false;
+                }
+
+                if (!weak.TryGetTarget(out presenter) || presenter == null)
+                {
+                    s_ActorLookup.Remove(actorKey);
+                    presenter = null;
+                    return false;
+                }
+
+                return true;
+            }
         }
     }
 }

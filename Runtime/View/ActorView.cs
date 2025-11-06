@@ -87,6 +87,9 @@ namespace FUnity.Runtime.View
         /// <summary>worldBound キャッシュ更新のために監視している要素群。</summary>
         private readonly List<VisualElement> m_WorldBoundSources = new List<VisualElement>();
 
+        /// <summary>直近の可視状態。style.display から評価できない場合のフォールバックに利用します。</summary>
+        private bool m_IsVisible = true;
+
         /// <summary>transform-origin を中央 (50%/50%) へ固定するためのパーセント指定。</summary>
         private static readonly Length CenterPivotPercent = new Length(50f, LengthUnit.Percent);
 
@@ -168,6 +171,23 @@ namespace FUnity.Runtime.View
         /// 俳優コンテナのルート要素。未解決の場合は <see cref="BoundElement"/> を返す。
         /// </summary>
         public VisualElement ActorRoot => m_ActorRoot ?? m_BoundElement;
+
+        /// <summary>
+        /// 現在の可視状態を返します。style.display が None の場合は false を返します。
+        /// </summary>
+        public bool IsVisible
+        {
+            get
+            {
+                var target = m_RootElement ?? m_BoundElement;
+                if (target == null)
+                {
+                    return m_IsVisible;
+                }
+
+                return target.resolvedStyle.display != DisplayStyle.None;
+            }
+        }
 
         /// <summary>
         /// 直近のレイアウト確定時に観測した worldBound を返す。幅・高さが正の場合のみ有効とみなす。
@@ -516,10 +536,12 @@ namespace FUnity.Runtime.View
             var target = m_RootElement ?? m_BoundElement;
             if (target == null)
             {
+                m_IsVisible = visible;
                 return;
             }
 
             target.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            m_IsVisible = visible;
         }
 
         /// <summary>
