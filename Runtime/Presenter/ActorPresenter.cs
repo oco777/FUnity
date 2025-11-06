@@ -32,6 +32,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>拡大率として許容する最大値（%）。これより大きい値は 300% に丸め込む。</summary>
         private const float MaxSizePercent = 300f;
 
+        /// <summary>Scratch の「色の効果」の一周を表す値。200 で 360 度に相当します。</summary>
+        private const float ColorEffectCycle = 200f;
+
         /// <summary>ランタイム状態を保持する Model。</summary>
         private ActorState m_State;
 
@@ -247,6 +250,7 @@ namespace FUnity.Runtime.Presenter
             UpdatePositionBoundsInternal();
             ClampStateToBounds();
             UpdateViewPosition();
+            ApplyGraphicEffectsFromState();
             HideSpeech();
         }
 
@@ -319,6 +323,7 @@ namespace FUnity.Runtime.Presenter
                 m_State.RotationDeg = source.m_State.RotationDeg;
                 m_State.SizePercent = source.m_State.SizePercent;
                 m_State.RotationStyle = source.m_State.RotationStyle;
+                m_State.Effects = source.m_State.Effects;
             }
 
             m_LastFacingSignX = source.m_LastFacingSignX;
@@ -348,6 +353,7 @@ namespace FUnity.Runtime.Presenter
             var sourceLogical = source.GetPosition();
             var sourceUi = source.ToUiPosition(sourceLogical);
             SetPositionPixels(sourceUi);
+            ApplyGraphicEffectsFromState();
 
             var sourceElement = source.ResolveActorVisualElement();
             if (sourceElement != null)
@@ -576,6 +582,107 @@ namespace FUnity.Runtime.Presenter
         public void SetVisible(bool visible)
         {
             m_View?.SetVisible(visible);
+        }
+
+        /// <summary>
+        /// 色の効果（Scratch の color）を絶対値で設定し、View へ反映する。
+        /// </summary>
+        /// <param name="value">設定する効果量。200 で 1 周とする。</param>
+        public void SetColorEffect(float value)
+        {
+            var normalized = NormalizeColorEffect(value);
+            var effects = m_State != null ? m_State.Effects : default;
+            effects.ColorEffect = normalized;
+            ApplyGraphicEffects(effects);
+        }
+
+        /// <summary>
+        /// 色の効果に差分を加算し、正規化して View へ反映する。
+        /// </summary>
+        /// <param name="delta">加算する差分値。正で色相を進め、負で戻す。</param>
+        public void ChangeColorEffect(float delta)
+        {
+            var current = m_State != null ? m_State.Effects.ColorEffect : 0f;
+            SetColorEffect(current + delta);
+        }
+
+        /// <summary>
+        /// すべての描画効果をリセットし、Tint を初期状態（白）へ戻す。
+        /// </summary>
+        public void ClearGraphicEffects()
+        {
+            ApplyGraphicEffects(default);
+        }
+
+        /// <summary>
+        /// 指定された描画効果を状態に保存し、View へ適用する。
+        /// </summary>
+        /// <param name="effects">適用する描画効果。</param>
+        public void ApplyGraphicEffects(ActorState.GraphicEffectsState effects)
+        {
+            if (m_State != null)
+            {
+                m_State.Effects = effects;
+            }
+
+            if (m_View == null)
+            {
+                return;
+            }
+
+            if (Mathf.Approximately(effects.ColorEffect, 0f))
+            {
+                m_View.ResetEffects();
+                return;
+            }
+
+            m_View.ApplyGraphicEffects(effects);
+        }
+
+        /// <summary>
+        /// 現在保持している描画効果を View へ再適用する。
+        /// </summary>
+        private void ApplyGraphicEffectsFromState()
+        {
+            if (m_View == null)
+            {
+                return;
+            }
+
+            if (m_State == null)
+            {
+                m_View.ResetEffects();
+                return;
+            }
+
+            ApplyGraphicEffects(m_State.Effects);
+        }
+
+        /// <summary>
+        /// 渡された色効果値を 0～200 の範囲に正規化する。
+        /// </summary>
+        /// <param name="value">正規化する値。</param>
+        /// <returns>0～200 の範囲へ丸め込んだ値。</returns>
+        private static float NormalizeColorEffect(float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                return 0f;
+            }
+
+            var cycle = ColorEffectCycle;
+            if (cycle <= 0f)
+            {
+                return 0f;
+            }
+
+            var normalized = value % cycle;
+            if (normalized < 0f)
+            {
+                normalized += cycle;
+            }
+
+            return normalized;
         }
 
         /// <summary>

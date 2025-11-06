@@ -1,6 +1,7 @@
 // Updated: 2025-03-15
 using System;
 using UnityEngine;
+using FUnity.Runtime.Model;
 using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.View
@@ -65,6 +66,16 @@ namespace FUnity.Runtime.View
 
         /// <inheritdoc />
         public void SetVisible(bool visible)
+        {
+        }
+
+        /// <inheritdoc />
+        public void ApplyGraphicEffects(ActorState.GraphicEffectsState effects)
+        {
+        }
+
+        /// <inheritdoc />
+        public void ResetEffects()
         {
         }
 
