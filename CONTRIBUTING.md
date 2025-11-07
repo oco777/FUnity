@@ -36,6 +36,7 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
   - `[UnitTitle]` は Scratch 日本語ブロック表記に合わせる（対応ブロックが無い場合は Scratch 風の短い日本語名にする）。
   - `[UnitCategory]` は `FUnity/Scratch/◯◯` 形式（カテゴリ名は日本語）で記述し、Scratch 非対応の拡張は `FUnity/Scratch/拡張` を使う。
   - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を必ず付与し、FUnity Scratch 系ユニット共通のアイコンを利用する。
+  - ノード検索性を高めるため、利用可能な場合は `[UnitSubtitle]`（または同等のキーワード属性）に `funity scratch`・カテゴリ名・日本語/英語の関連語を半角スペース区切りで登録する（例：`funity scratch イベント green flag`）。
   - 追加・変更に合わせて `Docs/VS_Scratch_Mapping.md` を更新し、表内の `UnitTitle` / `UnitCategory` をコードと一致させる。
 
 ## ランタイム配置に関する必須ルール

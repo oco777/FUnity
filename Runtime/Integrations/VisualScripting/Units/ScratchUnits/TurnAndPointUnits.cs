@@ -13,6 +13,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○度回す")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き turn rotate degrees 回す 向き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TurnDegreesUnit : Unit
     {
@@ -97,6 +98,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○度に向ける")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き point direction degrees 向ける 向き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class PointDirectionUnit : Unit
     {

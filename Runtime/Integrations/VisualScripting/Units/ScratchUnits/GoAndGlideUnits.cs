@@ -11,6 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("ランダムな場所へ行く")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き go random position ランダム")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GoToRandomPositionUnit : Unit
     {
@@ -69,6 +70,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○秒でランダムな場所へ行く")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き glide random seconds ランダム")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsToRandomPositionUnit : Unit
     {
@@ -134,6 +136,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("マウスポインターへ行く")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き go mouse pointer マウス")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GoToMousePointerUnit : Unit
     {
@@ -189,6 +192,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○秒でマウスポインターへ行く")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き glide mouse pointer seconds マウス")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsToMousePointerUnit : Unit
     {
@@ -252,6 +256,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○へ行く")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き go actor display name 俳優")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GoToActorByDisplayNameUnit : Unit
     {
@@ -333,6 +338,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○秒で○へ行く")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き glide actor display name seconds 俳優")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsToActorByDisplayNameUnit : Unit
     {
@@ -421,6 +427,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○秒で x を○、y を○ずつ変える")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き glide delta x y change 秒")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsByXYDeltaUnit : Unit
     {
@@ -512,6 +519,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○秒で x 座標を○に、y 座標を○にする")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き glide position x y set 秒")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsToXYUnit : Unit
     {

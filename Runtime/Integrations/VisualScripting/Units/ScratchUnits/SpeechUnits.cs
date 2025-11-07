@@ -12,6 +12,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○と○秒言う")]
     [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitSubtitle("funity scratch 見た目 say speech 吹き出し 秒 言う")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SayForSecondsUnit : Unit
     {
@@ -90,6 +91,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○と言う")]
     [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitSubtitle("funity scratch 見た目 say speech 吹き出し 言う")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SayUnit : Unit
     {
@@ -152,6 +154,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○と○秒考える")]
     [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitSubtitle("funity scratch 見た目 think thought 吹き出し 秒 考える")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ThinkForSecondsUnit : Unit
     {
@@ -230,6 +233,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○と考える")]
     [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitSubtitle("funity scratch 見た目 think thought 吹き出し 考える")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ThinkUnit : Unit
     {

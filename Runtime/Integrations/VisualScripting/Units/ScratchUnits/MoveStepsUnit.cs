@@ -12,6 +12,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○歩動かす")]
     [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き move steps 歩 進む")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class MoveStepsUnit : Unit
     {

@@ -11,6 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.Common
     [UnitTitle("コルーチンに切り替える")]
     [UnitShortTitle("コルーチン")]
     [UnitCategory("FUnity/Scratch/拡張")]
+    [UnitSubtitle("funity scratch 拡張 coroutine コルーチン bridge 切り替え")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ToCoroutineUnit : Unit
     {

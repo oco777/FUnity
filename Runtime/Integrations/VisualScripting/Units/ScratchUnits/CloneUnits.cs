@@ -14,6 +14,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("自分のクローンを作る")]
     [UnitCategory("FUnity/Scratch/制御")]
+    [UnitSubtitle("funity scratch 制御 clone create self クローン")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class CreateCloneOfSelfUnit : Unit
     {
@@ -59,6 +60,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○のクローンを作る")]
     [UnitCategory("FUnity/Scratch/制御")]
+    [UnitSubtitle("funity scratch 制御 clone create 指定 クローン display name")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class CreateCloneOfDisplayNameUnit : Unit
     {
@@ -128,6 +130,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("クローンされたとき")]
     [UnitCategory("FUnity/Scratch/制御")]
+    [UnitSubtitle("funity scratch 制御 clone event when クローン")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIStartAsCloneUnit : EventUnit<CloneEventArgs>
     {
@@ -165,6 +168,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("このクローンを削除する")]
     [UnitCategory("FUnity/Scratch/制御")]
+    [UnitSubtitle("funity scratch 制御 clone delete remove クローン")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class DeleteThisCloneUnit : Unit
     {

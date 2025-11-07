@@ -6,6 +6,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - `[UnitTitle]` は Scratch 日本語ブロック名に合わせるか、Scratch 流儀の短い日本語で命名する。
 - `[UnitCategory]` は `FUnity/Scratch/◯◯` 形式（カテゴリ名は日本語）で統一する。拡張ユニットは `FUnity/Scratch/拡張` を使用する。
 - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を全ユニットへ付与し、FUnity Scratch 系ユニットであることを明示する。
+- ノード検索性向上のため、利用可能な場合は `[UnitSubtitle]`（または同等の検索キーワード属性）に `funity scratch` とカテゴリ名・日本語/英語の関連語を半角スペース区切りで登録する（例：`funity scratch 見た目 say speech`）。
 - コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
 
 ## 動き

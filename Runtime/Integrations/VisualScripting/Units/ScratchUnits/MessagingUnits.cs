@@ -29,6 +29,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("メッセージを送る")]
     [UnitCategory("FUnity/Scratch/イベント")]
+    [UnitSubtitle("funity scratch イベント broadcast message send メッセージ")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class BroadcastMessageUnit : Unit
     {
@@ -80,6 +81,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("メッセージを送って待つ")]
     [UnitCategory("FUnity/Scratch/イベント")]
+    [UnitSubtitle("funity scratch イベント broadcast wait message メッセージ")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class BroadcastAndWaitUnit : Unit
     {
@@ -132,6 +134,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("メッセージを受け取ったとき")]
     [UnitCategory("FUnity/Scratch/イベント")]
+    [UnitSubtitle("funity scratch イベント receive message broadcast 受信")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIReceiveMessageUnit : EventUnit<MessagingCommon.Args>
     {
