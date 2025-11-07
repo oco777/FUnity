@@ -2,14 +2,16 @@
 using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
     /// Scratch の「〇回繰り返す」ブロックを再現し、指定回数だけ本体ポートを実行するカスタム Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Repeat N")]
-    [UnitCategory("FUnity/Scratch/Control")]
+    [UnitTitle("○回繰り返す")]
+    [UnitCategory("FUnity/Scratch/制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class RepeatNUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -73,8 +75,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「ずっと」ブロックを再現し、常に本体ポートを繰り返すカスタム Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Forever")]
-    [UnitCategory("FUnity/Scratch/Control")]
+    [UnitTitle("ずっと")]
+    [UnitCategory("FUnity/Scratch/制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ForeverUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>

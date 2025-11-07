@@ -1,5 +1,6 @@
 using System.Collections;
 using Unity.VisualScripting;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.Common
 {
@@ -7,9 +8,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.Common
     /// 同期フローを Visual Scripting のコルーチン実行へ橋渡しするユニットです。
     /// 同期チェーンのままコルーチン専用ポートへ接続すると例外になるため、事前にこのユニットを挟みます。
     /// </summary>
-    [UnitTitle("To Coroutine")]
-    [UnitShortTitle("To Coroutine")]
-    [UnitCategory("FUnity/Flow")]
+    [UnitTitle("コルーチンに切り替える")]
+    [UnitShortTitle("コルーチン")]
+    [UnitCategory("FUnity/Scratch/拡張")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ToCoroutineUnit : Unit
     {
         /// <summary>同期フローを受け取る ControlInput です。</summary>

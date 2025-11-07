@@ -9,8 +9,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「どこかの場所へ行く」ブロックを再現し、ランダムな論理座標へ瞬間移動させる Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Go To Random Position")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("ランダムな場所へ行く")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GoToRandomPositionUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -66,8 +67,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「〇秒でどこかの場所へ行く」ブロックを再現し、指定秒数でランダム座標へ移動する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Glide Seconds To Random Position")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("○秒でランダムな場所へ行く")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsToRandomPositionUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -130,8 +132,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「マウスのポインターへ行く」ブロックを再現し、カーソル位置へ瞬間移動する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Go To Mouse Pointer")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("マウスポインターへ行く")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GoToMousePointerUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -184,8 +187,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「〇秒でマウスのポインターへ行く」ブロックを再現し、指定時間でカーソルへ移動する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Glide Seconds To Mouse Pointer")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("○秒でマウスポインターへ行く")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsToMousePointerUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -246,8 +250,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「他のActorへ行く」ブロックを再現し、DisplayName で指定した俳優へ瞬間移動する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Go To Actor By DisplayName")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("○へ行く")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GoToActorByDisplayNameUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -326,8 +331,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「〇秒で他のActorへ行く」ブロックを再現し、指定俳優へ滑らかに移動する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Glide Seconds To Actor By DisplayName")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("○秒で○へ行く")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsToActorByDisplayNameUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -413,8 +419,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「〇秒で x 座標を〇に、y 座標を〇に変える」ブロックを再現し、差分移動を時間指定で行う Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Glide Seconds By XY Delta")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("○秒で x を○、y を○ずつ変える")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsByXYDeltaUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -503,8 +510,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「〇秒で x 座標を〇、y 座標を〇にする」ブロックを再現し、絶対座標へ時間指定で移動する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Glide Seconds To X,Y")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("○秒で x 座標を○に、y 座標を○にする")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GlideSecondsToXYUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>

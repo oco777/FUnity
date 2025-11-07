@@ -12,8 +12,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「〇〇のクローンを作る」に対応し、現在の俳優 Presenter を複製してランタイムに登録する Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により自動解決されます。
     /// </summary>
-    [UnitTitle("Scratch/Control/Create Clone of Self")]
-    [UnitCategory("Scratch/Control")]
+    [UnitTitle("自分のクローンを作る")]
+    [UnitCategory("FUnity/Scratch/制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class CreateCloneOfSelfUnit : Unit
     {
         /// <summary>制御フローの入口。</summary>
@@ -56,9 +57,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「(名前)のクローンを作る」に対応し、DisplayName で指定した俳優 Presenter を複製する Unit です。
     /// 実行中のグラフから <see cref="ActorPresenterAdapter"/> を解決し、<see cref="VSPresenterBridge"/> 経由でクローン生成を依頼します。
     /// </summary>
-    [UnitTitle("Create Clone Of (DisplayName)")]
-    [UnitCategory("Scratch/Control")]
-    [TypeIcon(typeof(ControlOutput))]
+    [UnitTitle("○のクローンを作る")]
+    [UnitCategory("FUnity/Scratch/制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class CreateCloneOfDisplayNameUnit : Unit
     {
         /// <summary>制御フローの入口。</summary>
@@ -125,8 +126,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「クローンされたとき」イベントを表現し、新しく生成されたクローンごとにトリガーを発火します。
     /// </summary>
-    [UnitTitle("Scratch/Control/When I Start as a Clone")]
-    [UnitCategory("Scratch/Control")]
+    [UnitTitle("クローンされたとき")]
+    [UnitCategory("FUnity/Scratch/制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIStartAsCloneUnit : EventUnit<CloneEventArgs>
     {
         /// <summary>EventBus に登録するかどうか。</summary>
@@ -161,8 +163,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「このクローンを削除する」に対応し、現在の Presenter がクローンであれば安全に破棄します。
     /// </summary>
-    [UnitTitle("Scratch/Control/Delete This Clone")]
-    [UnitCategory("Scratch/Control")]
+    [UnitTitle("このクローンを削除する")]
+    [UnitCategory("FUnity/Scratch/制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class DeleteThisCloneUnit : Unit
     {
         /// <summary>制御フローの入口。</summary>

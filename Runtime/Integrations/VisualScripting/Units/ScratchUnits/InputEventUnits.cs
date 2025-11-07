@@ -1,5 +1,6 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using FUnity.Runtime.Integrations.VisualScripting;
 using UInput = UnityEngine.Input;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
@@ -7,9 +8,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「〇〇キーが押されたとき」ブロックを再現し、押下瞬間にフローを発火する Unit です。
     /// </summary>
-    [UnitTitle("On Key Pressed")]
-    [UnitShortTitle("Key Pressed")]
-    [UnitCategory("Scratch/Events")]
+    [UnitTitle("○キーが押されたとき")]
+    [UnitShortTitle("○キー")]
+    [UnitCategory("FUnity/Scratch/イベント")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class OnKeyPressedUnit : EventUnit<EmptyEventArgs>, IGraphElementWithData
     {
         /// <summary>監視対象のキーを指定する ValueInput です。</summary>

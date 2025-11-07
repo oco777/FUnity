@@ -11,8 +11,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「〇度回す」ブロックを再現し、方向を相対的に更新するとともに Presenter 経由で UI 回転を適用するカスタム Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
-    [UnitTitle("Scratch/Turn Degrees")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("○度回す")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TurnDegreesUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -94,8 +95,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「〇度に向ける」ブロックを再現し、絶対角度を設定するカスタム Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
-    [UnitTitle("Scratch/Point Direction")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("○度に向ける")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class PointDirectionUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>

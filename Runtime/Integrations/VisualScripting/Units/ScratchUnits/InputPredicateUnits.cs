@@ -1,5 +1,6 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using FUnity.Runtime.Integrations.VisualScripting;
 using UInput = UnityEngine.Input;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
@@ -7,9 +8,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「〇〇キーが押された？」ブロックを再現し、指定キーが押されている間は true を返す Unit です。
     /// </summary>
-    [UnitTitle("Key Pressed?")]
-    [UnitShortTitle("Key?")]
-    [UnitCategory("Scratch/Sensing")]
+    [UnitTitle("○キーが押された？")]
+    [UnitShortTitle("○キー？")]
+    [UnitCategory("FUnity/Scratch/調べる")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class KeyIsPressedUnit : Unit
     {
         /// <summary>押下状態を監視するキーを指定する ValueInput です。</summary>

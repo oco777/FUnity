@@ -1,15 +1,17 @@
 using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
     /// Scratch の「◯ 秒待つ」ブロックを再現し、指定秒数経過後に後続フローへ進めるユニットです。
     /// </summary>
-    [UnitTitle("Scratch/Wait Seconds")]
-    [UnitShortTitle("Wait Seconds")]
-    [UnitCategory("Scratch/Control")]
+    [UnitTitle("○秒待つ")]
+    [UnitShortTitle("○秒待つ")]
+    [UnitCategory("FUnity/Scratch/制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WaitSecondsUnit : Unit
     {
         /// <summary>フロー入力を受け取る ControlInput です。</summary>

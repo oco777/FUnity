@@ -1,14 +1,16 @@
 using System.Collections;
 using Unity.VisualScripting;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
     /// Scratch の「もし〇〇なら」ブロックを再現し、条件が真のときに内部フローを 1 回だけ実行する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Control/If Then")]
-    [UnitShortTitle("If Then")]
-    [UnitCategory("Scratch/Control/IfThen")]
+    [UnitTitle("もし○なら")]
+    [UnitShortTitle("もし○なら")]
+    [UnitCategory("FUnity/Scratch/制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class IfThenUnit : Unit
     {
         /// <summary>フロー入力を受け付ける ControlInput です。</summary>

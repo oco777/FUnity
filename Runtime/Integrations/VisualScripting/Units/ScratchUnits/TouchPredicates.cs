@@ -1,13 +1,15 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
     /// Scratch の「マウスポインターに触れた？」ブロックを再現し、俳優矩形にマウス座標が含まれるかを返す Unit です。
     /// </summary>
-    [UnitTitle("Touching Mouse Pointer?")]
-    [UnitCategory("Scratch/Sensing")]
+    [UnitTitle("マウスポインターに触れた？")]
+    [UnitCategory("FUnity/Scratch/調べる")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TouchingMousePointerPredicateUnit : Unit
     {
         /// <summary>判定結果を出力する ValueOutput です。</summary>
@@ -52,8 +54,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「端に触れた？」ブロックを再現し、俳優矩形がステージ境界へ接触しているかを返す Unit です。
     /// </summary>
-    [UnitTitle("Touching Edge?")]
-    [UnitCategory("Scratch/Sensing")]
+    [UnitTitle("端に触れた？")]
+    [UnitCategory("FUnity/Scratch/調べる")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TouchingEdgePredicateUnit : Unit
     {
         /// <summary>判定結果を出力する ValueOutput です。</summary>

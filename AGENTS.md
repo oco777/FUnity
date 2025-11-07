@@ -100,7 +100,7 @@ public sealed class ActorState
 
 ## Docs: VS Scratch Mapping の更新ポリシー
 
-**対象:** Visual Scripting の Scratch 互換ユニットおよび関連 API の変更  
+**対象:** Visual Scripting の Scratch 互換ユニットおよび関連 API の変更
 （例）`Runtime/Integrations/VisualScripting/Units/**`, `ActorPresenterAdapter`, `VSPresenterBridge` のメソッド名/引数/UnitTitle 変更 など
 
 **原則:** これらに変更が入った場合は、**`Docs/VS_Scratch_Mapping.md` を同一 PR 内で更新**してください。
@@ -126,5 +126,12 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 ```
 
 > 備考: 上記ルールは `Docs/README.md` や `CONTRIBUTING.md` にも転載して構いません。
+
+## Visual Scripting Unit 共通ルール（恒久）
+- FUnity の Visual Scripting 用 Unit を追加・変更するときは必ず以下を満たしてください。
+  - `[UnitTitle]` は Scratch 日本語ブロック表記に合わせる（Scratch 非対応の拡張は短い日本語名を付ける）。
+  - `[UnitCategory]` は `FUnity/Scratch/◯◯` 形式（カテゴリ名は日本語）で記述する。拡張系は `FUnity/Scratch/拡張` を利用する。
+  - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を付与し、Scratch 系ユニット共通アイコンを使用する。
+  - コード差分がある場合は `Docs/VS_Scratch_Mapping.md` を同期させ、タイトルとカテゴリの差異を残さない。
 
 ---

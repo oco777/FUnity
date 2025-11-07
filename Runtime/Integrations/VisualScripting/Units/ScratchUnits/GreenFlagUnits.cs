@@ -1,14 +1,16 @@
 using Unity.VisualScripting;
 using FUnity.Runtime.Core;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
     /// Scratch の「イベント/緑の旗が押されたとき」を Visual Scripting 上で再現する EventUnit です。
     /// </summary>
-    [UnitTitle("Scratch/Events/When Green Flag Clicked")]
-    [UnitShortTitle("Green Flag")]
-    [UnitCategory("Scratch/Events")]
+    [UnitTitle("緑の旗が押されたとき")]
+    [UnitShortTitle("緑の旗")]
+    [UnitCategory("FUnity/Scratch/イベント")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenGreenFlagClickedUnit : EventUnit<EmptyEventArgs>
     {
         /// <summary>Visual Scripting 側でイベント登録を行うかどうかを制御します。</summary>

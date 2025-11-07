@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -9,8 +10,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「大きさを ◯ % にする」ブロックに対応し、Presenter 経由で俳優の拡大率を絶対値で適用するカスタム Unit です。
     /// Presenter 側で #root 要素へスケールを反映するため、左上座標がスケール変更時も維持されます。
     /// </summary>
-    [UnitTitle("Scratch/Set Size %")]
-    [UnitCategory("FUnity/Scratch/Looks")]
+    [UnitTitle("大きさを○%にする")]
+    [UnitCategory("FUnity/Scratch/見た目")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetSizePercentUnit : Unit
     {
         /// <summary>フローの開始を受け取る ControlInput です。</summary>
@@ -72,8 +74,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「大きさを ◯ % ずつ変える」ブロックに対応し、Presenter 経由で拡大率を相対変更するカスタム Unit です。
     /// 拡縮対象は Presenter から View へ伝搬され、#root 要素が左上原点のまま拡縮されます。
     /// </summary>
-    [UnitTitle("Scratch/Change Size by %")]
-    [UnitCategory("FUnity/Scratch/Looks")]
+    [UnitTitle("大きさを○%ずつ変える")]
+    [UnitCategory("FUnity/Scratch/見た目")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeSizeByPercentUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>

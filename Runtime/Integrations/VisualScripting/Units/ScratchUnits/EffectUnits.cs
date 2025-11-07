@@ -10,12 +10,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「色の効果を ◯ ずつ変える」に対応し、Presenter 経由で色相回転を相対適用するカスタム Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Change Color Effect by")]
-    [UnitCategory("FUnity/Scratch/Looks")]
+    [UnitTitle("色の効果を○ずつ変える")]
+    [UnitCategory("FUnity/Scratch/見た目")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeColorEffectByUnit : Unit
     {
         /// <summary>ログ出力時に利用するユニット名です。</summary>
-        private const string UnitName = "Scratch/Change Color Effect by";
+        private const string UnitName = "色の効果を○ずつ変える";
 
         /// <summary>フロー入力ポートです。</summary>
         [DoNotSerialize]
@@ -87,12 +88,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「色の効果を ◯ にする」に対応し、指定値を絶対適用するカスタム Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Set Color Effect to")]
-    [UnitCategory("FUnity/Scratch/Looks")]
+    [UnitTitle("色の効果を○にする")]
+    [UnitCategory("FUnity/Scratch/見た目")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetColorEffectToUnit : Unit
     {
         /// <summary>ログ出力に使用するユニット名です。</summary>
-        private const string UnitName = "Scratch/Set Color Effect to";
+        private const string UnitName = "色の効果を○にする";
 
         /// <summary>フロー入力ポートです。</summary>
         [DoNotSerialize]
@@ -164,12 +166,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「画像効果をなくす」に対応し、Tint を初期状態へ戻すカスタム Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Clear Graphic Effects")]
-    [UnitCategory("FUnity/Scratch/Looks")]
+    [UnitTitle("画像効果をなくす")]
+    [UnitCategory("FUnity/Scratch/見た目")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ClearGraphicEffectsUnit : Unit
     {
         /// <summary>ログ出力に使用するユニット名です。</summary>
-        private const string UnitName = "Scratch/Clear Graphic Effects";
+        private const string UnitName = "画像効果をなくす";
 
         /// <summary>フロー入力ポートです。</summary>
         [DoNotSerialize]

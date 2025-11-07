@@ -10,8 +10,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「〇歩動かす」ブロックに対応し、現在の向きに沿ってピクセル移動を指示するカスタム Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
-    [UnitTitle("Scratch/Move Steps")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("○歩動かす")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class MoveStepsUnit : Unit
     {
         /// <summary>同一フレームで反射を再試行する最大回数です。</summary>
