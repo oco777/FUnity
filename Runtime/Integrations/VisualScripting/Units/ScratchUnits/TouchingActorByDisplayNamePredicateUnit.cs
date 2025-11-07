@@ -11,6 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○○に触れた？")]
     [UnitCategory("FUnity/Scratch/調べる")]
+    [UnitSubtitle("funity scratch 調べる touch actor クローン display name 触れた")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TouchingActorByDisplayNamePredicateUnit : Unit
     {

@@ -10,6 +10,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitTitle("もし○なら")]
     [UnitShortTitle("もし○なら")]
     [UnitCategory("FUnity/Scratch/制御")]
+    [UnitSubtitle("funity scratch 制御 if 条件 then もし")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class IfThenUnit : Unit
     {

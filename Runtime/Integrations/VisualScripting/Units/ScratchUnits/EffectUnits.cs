@@ -12,6 +12,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("色の効果を○ずつ変える")]
     [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitSubtitle("funity scratch 見た目 color effect change 画像")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeColorEffectByUnit : Unit
     {
@@ -90,6 +91,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("色の効果を○にする")]
     [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitSubtitle("funity scratch 見た目 color effect set 画像")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetColorEffectToUnit : Unit
     {
@@ -168,6 +170,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("画像効果をなくす")]
     [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitSubtitle("funity scratch 見た目 clear graphic effect 画像")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ClearGraphicEffectsUnit : Unit
     {

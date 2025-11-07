@@ -12,6 +12,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("表示する")]
     [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitSubtitle("funity scratch 見た目 show visible 表示")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ShowActorUnit : Unit
     {
@@ -76,6 +77,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("隠す")]
     [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitSubtitle("funity scratch 見た目 hide invisible 隠す")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class HideActorUnit : Unit
     {
