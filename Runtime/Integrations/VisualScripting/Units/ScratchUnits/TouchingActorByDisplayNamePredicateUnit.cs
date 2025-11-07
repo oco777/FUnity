@@ -2,14 +2,16 @@ using System;
 using Unity.VisualScripting;
 using UnityEngine;
 using FUnity.Runtime.Presenter;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
     /// Scratch の「◯◯に触れた？」ブロックを再現し、Graph のコンテキストから取得した自分自身と、指定 DisplayName の可視俳優（本体＋クローン）との接触を判定する Unit です。
     /// </summary>
-    [UnitTitle("Touching Actor By DisplayName?")]
-    [UnitCategory("Scratch/Sensing")]
+    [UnitTitle("○○に触れた？")]
+    [UnitCategory("FUnity/Scratch/調べる")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TouchingActorByDisplayNamePredicateUnit : Unit
     {
         /// <summary>当たり判定対象となる俳優 DisplayName を受け取る入力ポートです。</summary>

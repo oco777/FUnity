@@ -9,8 +9,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「もし端に着いたら、跳ね返る」を再現し、端接触時に進行方向を反射させる制御ユニットです。
     /// </summary>
-    [UnitTitle("Scratch/Bounce If On Edge")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("もし端に着いたら、跳ね返る")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class BounceIfOnEdgeUnit : Unit
     {
         /// <summary>enter ポートを受け取る制御入力です。</summary>
@@ -100,8 +101,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「回転方向を左右のみにする」を再現し、Presenter の回転スタイルを左右反転限定へ切り替える設定ユニットです。
     /// </summary>
-    [UnitTitle("Scratch/Set Rotation Style: Left-Right")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("回転方法を左右のみにする")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetRotationStyleLeftRightUnit : Unit
     {
         /// <summary>enter ポートを受け取る制御入力です。</summary>
@@ -150,8 +152,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「回転方向を回転しないにする」を再現し、俳優を常に直立表示へ切り替える設定ユニットです。
     /// </summary>
-    [UnitTitle("Scratch/Set Rotation Style: Don't Rotate")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("回転方法を回転しないにする")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetRotationStyleDontRotateUnit : Unit
     {
         /// <summary>enter ポートを受け取る制御入力です。</summary>
@@ -200,8 +203,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「回転方向を自由に回転にする」を再現し、俳優が任意の角度で回転できる状態へ戻す設定ユニットです。
     /// </summary>
-    [UnitTitle("Scratch/Set Rotation Style: All Around")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("回転方法を自由に回転するにする")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetRotationStyleAllAroundUnit : Unit
     {
         /// <summary>enter ポートを受け取る制御入力です。</summary>

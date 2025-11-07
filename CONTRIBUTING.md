@@ -30,6 +30,14 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 
 > このルールは AGENTS.md にも記載されています。Pull Request 時は両方を参照してください。
 
+## Visual Scripting Unit 命名・カテゴリ規約（恒久）
+
+- Visual Scripting 用の独自 Unit を作成・変更するときは、以下の規約を厳守してください。
+  - `[UnitTitle]` は Scratch 日本語ブロック表記に合わせる（対応ブロックが無い場合は Scratch 風の短い日本語名にする）。
+  - `[UnitCategory]` は `FUnity/Scratch/◯◯` 形式（カテゴリ名は日本語）で記述し、Scratch 非対応の拡張は `FUnity/Scratch/拡張` を使う。
+  - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を必ず付与し、FUnity Scratch 系ユニット共通のアイコンを利用する。
+  - 追加・変更に合わせて `Docs/VS_Scratch_Mapping.md` を更新し、表内の `UnitTitle` / `UnitCategory` をコードと一致させる。
+
 ## ランタイム配置に関する必須ルール
 
 - ランタイム C# スクリプトは **すべて `Runtime/` 直下の Unity パッケージ側** に配置します。`Assets/FUnity/Runtime/` に C# を追加しないでください。

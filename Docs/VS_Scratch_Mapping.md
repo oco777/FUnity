@@ -1,95 +1,87 @@
 # 🧩 FUnity Visual Scripting 対応表
-Scratch ブロック ↔ Visual Scripting ノード 対応一覧
 
-> ノードは Visual Scripting の検索で `Scratch/` または `Fooni/` に分類されます。
+Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係です。すべての Unit は日本語タイトル・カテゴリ・共通アイコン規約に従っており、新規追加や変更時には本表を必ず更新してください。
 
-## 基本操作（移動／向き）
+## 運用ルール
+- `[UnitTitle]` は Scratch 日本語ブロック名に合わせるか、Scratch 流儀の短い日本語で命名する。
+- `[UnitCategory]` は `FUnity/Scratch/◯◯` 形式（カテゴリ名は日本語）で統一する。拡張ユニットは `FUnity/Scratch/拡張` を使用する。
+- `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を全ユニットへ付与し、FUnity Scratch 系ユニットであることを明示する。
+- コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
 
-> **Adapter ポートは廃止:** 2025-10-19 更新より、Scratch ユニットは ActorPresenterAdapter を内部で自動解決します。優先度は「ScriptGraphAsset の Variables["adapter"] → Graph Variables → Object Variables → Self（グラフの GameObject）→ 静的キャッシュ → シーン検索」の順です。Editor メニューで生成されたマクロは、ScriptGraphAsset の Variables["adapter"] に ActorPresenterAdapter を自動登録します。
+## 動き
+| Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
+| --- | --- | --- | --- | --- |
+| ○歩動かす | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.MoveStepsUnit | ○歩動かす | FUnity/Scratch/動き | 境界反射と残距離再移動に対応。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MoveStepsUnit.cs |
+| もし端に着いたら、跳ね返る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BounceIfOnEdgeUnit | もし端に着いたら、跳ね返る | FUnity/Scratch/動き | 反射後に中心座標をステージ内へ押し戻す。定義: Runtime/.../BounceAndRotationStyleUnits.cs |
+| 回転方法を左右のみにする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetRotationStyleLeftRightUnit | 回転方法を左右のみにする | FUnity/Scratch/動き | 左右反転のみ許可。定義: Runtime/.../BounceAndRotationStyleUnits.cs |
+| 回転方法を回転しないにする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetRotationStyleDontRotateUnit | 回転方法を回転しないにする | FUnity/Scratch/動き | 見た目を常に直立へ固定。定義: Runtime/.../BounceAndRotationStyleUnits.cs |
+| 回転方法を自由に回転するにする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetRotationStyleAllAroundUnit | 回転方法を自由に回転するにする | FUnity/Scratch/動き | 既定の自由回転へ戻す。定義: Runtime/.../BounceAndRotationStyleUnits.cs |
+| ランダムな場所へ行く | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GoToRandomPositionUnit | ランダムな場所へ行く | FUnity/Scratch/動き | 論理座標でランダム移動。定義: Runtime/.../GoAndGlideUnits.cs |
+| ○秒でランダムな場所へ行く | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GlideSecondsToRandomPositionUnit | ○秒でランダムな場所へ行く | FUnity/Scratch/動き | コルーチンで滑らかに移動。定義: Runtime/.../GoAndGlideUnits.cs |
+| マウスポインターへ行く | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GoToMousePointerUnit | マウスポインターへ行く | FUnity/Scratch/動き | 推定マウス座標へ瞬間移動。定義: Runtime/.../GoAndGlideUnits.cs |
+| ○秒でマウスポインターへ行く | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GlideSecondsToMousePointerUnit | ○秒でマウスポインターへ行く | FUnity/Scratch/動き | 指定秒数でマウスへ移動。定義: Runtime/.../GoAndGlideUnits.cs |
+| ○へ行く | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GoToActorByDisplayNameUnit | ○へ行く | FUnity/Scratch/動き | DisplayName 指定で別俳優へ瞬間移動。定義: Runtime/.../GoAndGlideUnits.cs |
+| ○秒で○へ行く | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GlideSecondsToActorByDisplayNameUnit | ○秒で○へ行く | FUnity/Scratch/動き | DisplayName 指定で滑らかに移動。定義: Runtime/.../GoAndGlideUnits.cs |
+| ○秒で x を○、y を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GlideSecondsByXYDeltaUnit | ○秒で x を○、y を○ずつ変える | FUnity/Scratch/動き | 差分移動を時間指定。定義: Runtime/.../GoAndGlideUnits.cs |
+| ○秒で x 座標を○に、y 座標を○にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GlideSecondsToXYUnit | ○秒で x 座標を○に、y 座標を○にする | FUnity/Scratch/動き | 絶対座標へ時間指定で移動。定義: Runtime/.../GoAndGlideUnits.cs |
+| x:○ y:○ へ行く | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GoToXYUnit | x:○ y:○ へ行く | FUnity/Scratch/動き | 絶対座標へ瞬間移動。定義: Runtime/.../PositionUnits.cs |
+| x座標を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeXByUnit | x座標を○ずつ変える | FUnity/Scratch/動き | X 座標を相対移動。定義: Runtime/.../PositionUnits.cs |
+| y座標を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeYByUnit | y座標を○ずつ変える | FUnity/Scratch/動き | Y 座標を相対移動。定義: Runtime/.../PositionUnits.cs |
+| ○度回す | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TurnDegreesUnit | ○度回す | FUnity/Scratch/動き | 向きを相対回転。定義: Runtime/.../TurnAndPointUnits.cs |
+| ○度に向ける | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.PointDirectionUnit | ○度に向ける | FUnity/Scratch/動き | 向きを絶対設定。定義: Runtime/.../TurnAndPointUnits.cs |
 
-| VS ノード名 | Scratch 日本語 | 概要 | 備考 |
-|---|---|---|---|
-| Scratch/Change X By | x座標を ◯ ずつ変える | 中心 X 座標を相対移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
-| Scratch/Change Y By | y座標を ◯ ずつ変える | 中心 Y 座標を相対移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
-| Scratch/Go To Random Position | どこかの場所へ行く | ステージ範囲内のランダム座標へ瞬間移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
-| Scratch/Glide Seconds To Random Position | ◯ 秒でどこかの場所へ行く | 指定秒数でランダム座標へ滑らかに移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
-| Scratch/Go To X,Y | x:◯ y:◯ へ行く | 指定中心座標（px）に移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/PositionUnits.cs |
-| Scratch/Glide Seconds To X,Y | ◯ 秒で x 座標を ◯ に、y 座標を ◯ にする | 指定座標へ指定秒数で移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
-| Scratch/Glide Seconds By XY Delta | ◯ 秒で x 座標を ◯ に、y 座標を ◯ に変える | 現在位置に差分 (x, y) を加算する目標へ滑らかに移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
-| Scratch/Go To Mouse Pointer | マウスのポインターへ行く | マウスポインターの論理座標へ瞬間移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
-| Scratch/Glide Seconds To Mouse Pointer | ◯ 秒でマウスのポインターへ行く | 指定秒数でマウスポインターへ移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
-| Scratch/Go To Actor By DisplayName | 他の Actor へ行く | DisplayName で指定した俳優の座標へ瞬間移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
-| Scratch/Glide Seconds To Actor By DisplayName | ◯ 秒で他の Actor へ行く | DisplayName で指定した俳優の座標へ滑らかに移動 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GoAndGlideUnits.cs |
-| Scratch/Move Steps | ◯歩動かす | 現在の向きに沿って移動（1歩=1px、境界で分割移動＆反射継続） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MoveStepsUnit.cs / ScratchHitTestUtil と ScratchUnitUtil で論理座標境界を判定 |
-| Scratch/Point Direction | ◯度に向ける | 向きを絶対角度に設定 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TurnAndPointUnits.cs |
-| Scratch/Set X | x座標を ◯ にする | X 座標を代入 | 未実装: 対応する Unit が見つかりません |
-| Scratch/Set Y | y座標を ◯ にする | Y 座標を代入 | 未実装: 対応する Unit が見つかりません |
-| Scratch/Turn Degrees | ◯度回す | アクター画像を中心ピボットで相対回転 | ActorPresenter を Graph Variables("presenter") に自動登録し、自分の UI のみ回転。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TurnAndPointUnits.cs |
-| Scratch/Bounce If On Edge | もし端に着いたら、跳ね返る | 端接触時に方向を反射し、#root サイズを考慮して内側へ押し戻す | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/BounceAndRotationStyleUnits.cs / ScratchHitTestUtil.IsTouchingStageEdge と BounceDirectionAndClamp を使用 |
-| Scratch/Set Rotation Style: Left-Right | 回転方向を左右のみにする | 見た目を左右反転のみで表現する回転スタイルへ切り替え | 定義: Assets/FUnity/Runtime/Integrations/VisualScripting/Units/ScratchUnits/BounceAndRotationStyleUnits.cs |
-| Scratch/Set Rotation Style: Don't Rotate | 回転方向を回転しないにする | 見た目を常に直立させる回転スタイルへ切り替え | 定義: Assets/FUnity/Runtime/Integrations/VisualScripting/Units/ScratchUnits/BounceAndRotationStyleUnits.cs |
-| Scratch/Set Rotation Style: All Around | 回転方向を自由に回転にする | 任意角度で回転できる既定スタイルへ戻す | 定義: Assets/FUnity/Runtime/Integrations/VisualScripting/Units/ScratchUnits/BounceAndRotationStyleUnits.cs |
+## 見た目
+| Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
+| --- | --- | --- | --- | --- |
+| 大きさを○%にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetSizePercentUnit | 大きさを○%にする | FUnity/Scratch/見た目 | 拡大率を絶対設定。定義: Runtime/.../SizeUnits.cs |
+| 大きさを○%ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeSizeByPercentUnit | 大きさを○%ずつ変える | FUnity/Scratch/見た目 | 拡大率を相対変更。定義: Runtime/.../SizeUnits.cs |
+| ○と○秒言う | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SayForSecondsUnit | ○と○秒言う | FUnity/Scratch/見た目 | 指定秒数で吹き出し表示。定義: Runtime/.../SpeechUnits.cs |
+| ○と言う | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SayUnit | ○と言う | FUnity/Scratch/見た目 | 無期限の発言吹き出し。定義: Runtime/.../SpeechUnits.cs |
+| ○と○秒考える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ThinkForSecondsUnit | ○と○秒考える | FUnity/Scratch/見た目 | 指定秒数で思考吹き出し。定義: Runtime/.../SpeechUnits.cs |
+| ○と考える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ThinkUnit | ○と考える | FUnity/Scratch/見た目 | 無期限の思考吹き出し。定義: Runtime/.../SpeechUnits.cs |
+| 色の効果を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeColorEffectByUnit | 色の効果を○ずつ変える | FUnity/Scratch/見た目 | 色効果を相対変更。定義: Runtime/.../EffectUnits.cs |
+| 色の効果を○にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetColorEffectToUnit | 色の効果を○にする | FUnity/Scratch/見た目 | 色効果を絶対設定。定義: Runtime/.../EffectUnits.cs |
+| 画像効果をなくす | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ClearGraphicEffectsUnit | 画像効果をなくす | FUnity/Scratch/見た目 | Tint をリセット。定義: Runtime/.../EffectUnits.cs |
+| 表示する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ShowActorUnit | 表示する | FUnity/Scratch/見た目 | 俳優を表示状態へ。定義: Runtime/.../VisibilityUnits.cs |
+| 隠す | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.HideActorUnit | 隠す | FUnity/Scratch/見た目 | 俳優を非表示へ。定義: Runtime/.../VisibilityUnits.cs |
 
-## 制御（ループ／待機）
-
-| VS ノード名 | Scratch 日本語 | 概要 | 備考 |
-|---|---|---|---|
-| Scratch/Forever | ずっと | 無限ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
-| Scratch/Repeat N | ◯ 回繰り返す | 指定回数ループ | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/LoopUnits.cs |
-| Scratch/Wait Seconds | ◯ 秒待つ | 指定秒だけ待機 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/WaitSecondsUnit.cs / 同期チェーンから呼ぶ場合は FUnity/Flow/To Coroutine を挟む |
-| Scratch/Control/Create Clone of Self | クローンを作る（自分） | 現在の俳優 Presenter を複製 | Actor 入力不要。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
-| Scratch/Control/Create Clone Of (DisplayName) | クローンを作る（DisplayName 指定） | DisplayName で指定した俳優 Presenter を複製 | Value 出力に CloneAdapter（ActorPresenterAdapter）を返す。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
-| Scratch/Control/When I Start as a Clone | クローンされたとき | クローン生成直後にトリガーを発火 | target=Self（Runner）のカスタムイベント。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
-| Scratch/Control/Delete This Clone | このクローンを削除する | クローンのみ破棄（本体は警告） | Actor 入力不要。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/CloneUnits.cs |
-| Scratch/Control/If Then | もし <条件> なら | 条件が true のとき Body を 1 回実行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ConditionUnits.cs / Body 実行後は同フレームで exit ポートに戻る |
-
-## 調べる（入力判定）
-
-| VS ノード名 | Scratch 日本語 | 概要 | 備考 |
-|---|---|---|---|
-| Scratch/Sensing/Key Pressed? | 〇キーが押された？ | 指定キーが押されている間は true | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputPredicateUnits.cs / 押下中は true（イベントの OnKeyPressed は押下瞬間のみ） |
-| Scratch/Sensing/Touching Mouse Pointer? | マウスポインターに触れた？ | 俳優の矩形にマウス座標が含まれるか判定 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TouchPredicates.cs |
-| Scratch/Sensing/Touching Edge? | 端に触れた？ | ステージ境界へ接触しているか判定 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TouchPredicates.cs |
-| Scratch/Sensing/Touching Actor By DisplayName? | ◯◯に触れた？（DisplayName） | 指定 DisplayName の可視俳優（本体＋クローン）と矩形が重なるか判定。自身は Graph から自動取得し除外 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/TouchingActorByDisplayNamePredicateUnit.cs |
-
-## 表示・演出（Fooni 関連）
-
-| VS ノード名 | Scratch 日本語 | 概要 | 備考 |
-|---|---|---|---|
-| Scratch/Say For Seconds | ◯ と◯秒言う | 指定秒数だけ発言吹き出しを表示し自動で非表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs / コルーチンで待機し、待機完了後に HideSpeech → exit |
-| Scratch/Say | ◯ と言う | 発言吹き出しを無期限表示（新しい発言で上書き） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs / 表示後ただちに exit へ進むノンブロッキング |
-| Scratch/Think For Seconds | ◯ と◯秒考える | 指定秒数だけ思考吹き出しを表示し自動で非表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs / コルーチンで待機し、待機完了後に HideSpeech → exit |
-| Scratch/Think | ◯ と考える | 思考吹き出しを無期限表示（新しい吹き出しで上書き） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SpeechUnits.cs / 表示後ただちに exit へ進むノンブロッキング |
-| Scratch/Set Size % | 大きさを ◯ % にする | 拡大率を絶対指定で適用 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
-| Scratch/Change Size by % | 大きさを ◯ % ずつ変える | 拡大率を相対変更 (中心ピボットで拡縮) | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SizeUnits.cs |
-| Scratch/Change Color Effect by | 色の効果を ◯ ずつ変える | 色相効果を相対変更（Tint の HSV 擬似回転） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/EffectUnits.cs |
-| Scratch/Set Color Effect to | 色の効果を ◯ にする | 色相効果を絶対設定（Tint の HSV 擬似回転） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/EffectUnits.cs |
-| Scratch/Clear Graphic Effects | 画像効果をなくす | Tint を白へ戻して描画効果をリセット | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/EffectUnits.cs |
-| Show (Scratch/Looks) | 表示する | style.display を Flex に設定して俳優を表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/VisibilityUnits.cs / ActorPresenterAdapter は Unit 内で自動解決 |
-| Hide (Scratch/Looks) | 隠す | style.display を None に設定して俳優を非表示 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/VisibilityUnits.cs / ActorPresenterAdapter は Unit 内で自動解決 |
+## 制御
+| Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
+| --- | --- | --- | --- | --- |
+| ○回繰り返す | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.RepeatNUnit | ○回繰り返す | FUnity/Scratch/制御 | 指定回数ループ。定義: Runtime/.../LoopUnits.cs |
+| ずっと | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ForeverUnit | ずっと | FUnity/Scratch/制御 | 永続ループ。定義: Runtime/.../LoopUnits.cs |
+| ○秒待つ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WaitSecondsUnit | ○秒待つ | FUnity/Scratch/制御 | 指定時間待機。定義: Runtime/.../WaitSecondsUnit.cs |
+| 自分のクローンを作る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CreateCloneOfSelfUnit | 自分のクローンを作る | FUnity/Scratch/制御 | 自身を複製。定義: Runtime/.../CloneUnits.cs |
+| ○のクローンを作る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CreateCloneOfDisplayNameUnit | ○のクローンを作る | FUnity/Scratch/制御 | 指定俳優を複製。定義: Runtime/.../CloneUnits.cs |
+| クローンされたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIStartAsCloneUnit | クローンされたとき | FUnity/Scratch/制御 | クローン生成時イベント。定義: Runtime/.../CloneUnits.cs |
+| このクローンを削除する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.DeleteThisCloneUnit | このクローンを削除する | FUnity/Scratch/制御 | クローンを破棄。定義: Runtime/.../CloneUnits.cs |
+| もし○なら | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.IfThenUnit | もし○なら | FUnity/Scratch/制御 | 条件成立時のみ本体を実行。定義: Runtime/.../ConditionUnits.cs |
 
 ## イベント
+| Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
+| --- | --- | --- | --- | --- |
+| 緑の旗が押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenGreenFlagClickedUnit | 緑の旗が押されたとき | FUnity/Scratch/イベント | Runner 対象の緑の旗イベント。定義: Runtime/.../GreenFlagUnits.cs |
+| ○キーが押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.OnKeyPressedUnit | ○キーが押されたとき | FUnity/Scratch/イベント | 押下エッジで発火。定義: Runtime/.../InputEventUnits.cs |
+| メッセージを送る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BroadcastMessageUnit | メッセージを送る | FUnity/Scratch/イベント | 即時配信。定義: Runtime/.../MessagingUnits.cs |
+| メッセージを送って待つ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BroadcastAndWaitUnit | メッセージを送って待つ | FUnity/Scratch/イベント | 同期配信後に継続。定義: Runtime/.../MessagingUnits.cs |
+| メッセージを受け取ったとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIReceiveMessageUnit | メッセージを受け取ったとき | FUnity/Scratch/イベント | フィルタ一致時に発火。定義: Runtime/.../MessagingUnits.cs |
 
-| VS ノード名 | Scratch 日本語 | 概要 | 備考 |
-|---|---|---|---|
-| Scratch/Events/When Green Flag Clicked | 緑の旗が押されたとき | 本体俳優に対して緑の旗イベントを発火 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/GreenFlagUnits.cs / FUnityManager.TriggerGreenFlag() で Runner 単位に配信（クローンは除外） |
-| Scratch/Events/On Key Pressed | 〇キーが押されたとき | 指定キーの押下瞬間にトリガーを発火 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/InputEventUnits.cs / ScratchKey で監視キーを選択 / 押しっぱなしでは再発火しない |
-| Scratch/Broadcast Message | メッセージを送る | 指定メッセージ名を全リスナーへ配信 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / メッセージ名のみを送信（payload/sender ポート廃止） |
-| Scratch/Broadcast And Wait | メッセージを送って待つ | EventBus.Trigger で同期的に配信し、処理完了後に続行 | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / メッセージ名のみを送信（payload/sender ポート廃止） |
-| Scratch/When I Receive | メッセージを受け取ったとき | 指定メッセージ受信時にフロー発火（message 出力のみ） | 定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MessagingUnits.cs / filter 空欄でワイルドカード受信 |
+## 調べる
+| Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
+| --- | --- | --- | --- | --- |
+| ○キーが押された？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.KeyIsPressedUnit | ○キーが押された？ | FUnity/Scratch/調べる | 押下中は true。定義: Runtime/.../InputPredicateUnits.cs |
+| マウスポインターに触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingMousePointerPredicateUnit | マウスポインターに触れた？ | FUnity/Scratch/調べる | 俳優矩形とマウス座標を判定。定義: Runtime/.../TouchPredicates.cs |
+| 端に触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingEdgePredicateUnit | 端に触れた？ | FUnity/Scratch/調べる | ステージ境界との接触判定。定義: Runtime/.../TouchPredicates.cs |
+| ○○に触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingActorByDisplayNamePredicateUnit | ○○に触れた？ | FUnity/Scratch/調べる | DisplayName 指定で矩形重なりを判定。定義: Runtime/.../TouchingActorByDisplayNamePredicateUnit.cs |
 
----
-### 補足
-- コルーチン専用ユニットを同期チェーンから呼び出す場合は `FUnity/Flow/To Coroutine` を事前に挟んでコルーチンパイプラインへ切り替えてください。
-- 対応表は Tools/generate_vs_scratch_mapping.py により自動生成されたログをもとにしています（自動生成日時: 2025-10-21 12:25:56）。
-- Scratch モードがアクティブな場合、移動系ユニットはステージ中央原点の論理座標で動作します。UI Toolkit 座標への変換はランタイムが自動で行います。
-- すべての位置系ユニットは画像中心座標（px）を受け渡しします。Presenter が内部でアンカー種別に応じて補正します。
-- `FUnityActorData.Anchor` を TopLeft に設定した場合でも、Visual Scripting から扱う座標は画像中心です（境界計算のみ左上基準で処理されます）。
-- Scratch モードでは `ActorPresenter` が `ScratchBounds.ClampCenter` を通じて中心座標を `[-240 - width_afterScale, 240 + width_afterScale]` / `[-180 - height_afterScale, 180 + height_afterScale]` にクランプします。ユニット側での追加クランプは不要です。
-- メッセージ関連ユニットはメッセージ名のみを送受信し、payload/sender ポートや出力は廃止されています。
+## 拡張
+| Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
+| --- | --- | --- | --- | --- |
+| コルーチンに切り替える | FUnity.Runtime.Integrations.VisualScripting.Units.Common.ToCoroutineUnit | コルーチンに切り替える | FUnity/Scratch/拡張 | 同期フローをコルーチンパイプラインへ橋渡し。定義: Runtime/Integrations/VisualScripting/Units/Common/FlowBridgeUnits.cs |
 
-### 使い方メモ
-- Runner（ScriptMachine）にグラフを割り当て、`Scratch/` / `Fooni/` からノードを配置
-- Scratch ユニットは `ActorPresenterAdapter` をポート経由で受け取りません。ScriptGraphAsset Variables → Graph Variables → Object Variables → Self → 静的キャッシュ → シーン検索の順で自動解決します。ScriptGraphAsset の Variables["adapter"] が最優先で参照され、Editor メニューで生成したランナーはこの値を自動で設定します。
-- エディターの `FUnity/VS/Create Fooni Macros & Runner` は、生成された ScriptGraphAsset の Variables["adapter"] と Runner の Object Variables に ActorPresenterAdapter を自動で書き込みます。
-- キャラクター操作は `ActorPresenterAdapter → ActorPresenter → View` で更新されます
+> **メモ:** `Runtime/...` は `Runtime/Integrations/VisualScripting/Units/` 以下の具体的なパスを示しています。`ScratchUnitUtil` や `ScratchHitTestUtil` の補助メソッドを利用するユニットは、移動・当たり判定の共通処理を共有しています。
+
+## 今後のメンテナンス
+- 新しいユニットを追加した場合は、本表のカテゴリに追記し、タイトル・カテゴリが規約通りであることを確認してください。
+- 既存ユニットのタイトルやカテゴリを変更した場合は、該当行の `UnitTitle` と `UnitCategory` を同じ値へ更新してください。
+- TypeIcon を変更した場合は、本ドキュメントにその理由を記載し、プロジェクト全体で統一できるか検討してください。

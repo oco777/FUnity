@@ -10,8 +10,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「表示する」ブロックに対応し、俳優の可視状態を Presenter 経由で有効化する Visual Scripting Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> を用いて自動的に解決します。
     /// </summary>
-    [UnitTitle("Show")]
-    [UnitCategory("Scratch/Looks")]
+    [UnitTitle("表示する")]
+    [UnitCategory("FUnity/Scratch/見た目")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ShowActorUnit : Unit
     {
         /// <summary>制御フローの入力ポート。</summary>
@@ -73,8 +74,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「隠す」ブロックに対応し、俳優の可視状態を Presenter 経由で無効化する Visual Scripting Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> を用いて自動的に解決します。
     /// </summary>
-    [UnitTitle("Hide")]
-    [UnitCategory("Scratch/Looks")]
+    [UnitTitle("隠す")]
+    [UnitCategory("FUnity/Scratch/見た目")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class HideActorUnit : Unit
     {
         /// <summary>制御フローの入力ポート。</summary>

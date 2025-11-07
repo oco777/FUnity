@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using Unity.VisualScripting;
+using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -26,8 +27,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「メッセージを送る」に相当し、指定メッセージを即時配信する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Broadcast Message")]
-    [UnitCategory("Scratch/Events")]
+    [UnitTitle("メッセージを送る")]
+    [UnitCategory("FUnity/Scratch/イベント")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class BroadcastMessageUnit : Unit
     {
         /// <summary>入力フロー。呼び出し時にメッセージを配信します。</summary>
@@ -76,8 +78,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「メッセージを送って待つ」に相当し、受信側の処理が終わるまで同フレームで待機する Unit です。
     /// </summary>
-    [UnitTitle("Scratch/Broadcast And Wait")]
-    [UnitCategory("Scratch/Events")]
+    [UnitTitle("メッセージを送って待つ")]
+    [UnitCategory("FUnity/Scratch/イベント")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class BroadcastAndWaitUnit : Unit
     {
         /// <summary>入力フロー。コルーチンで待機処理を行います。</summary>
@@ -127,8 +130,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// <summary>
     /// Scratch の「メッセージを受け取ったとき」に相当し、指定メッセージ受信でフローを発火する EventUnit です。
     /// </summary>
-    [UnitTitle("Scratch/When I Receive")]
-    [UnitCategory("Scratch/Events")]
+    [UnitTitle("メッセージを受け取ったとき")]
+    [UnitCategory("FUnity/Scratch/イベント")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIReceiveMessageUnit : EventUnit<MessagingCommon.Args>
     {
         /// <summary>EventUnit の自動登録を有効にします。</summary>

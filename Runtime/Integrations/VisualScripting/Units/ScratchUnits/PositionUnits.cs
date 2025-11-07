@@ -10,8 +10,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「x座標を～に、y座標を～にする」ブロックを再現し、絶対座標を設定するカスタム Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
-    [UnitTitle("Scratch/Go To X,Y")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("x:○ y:○ へ行く")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GoToXYUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -82,8 +83,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「x座標を〇ずつ変える」ブロックを再現し、X 座標へ差分を加算するカスタム Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
-    [UnitTitle("Scratch/Change X By")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("x座標を○ずつ変える")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeXByUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
@@ -146,8 +148,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「y座標を〇ずつ変える」ブロックを再現し、Y 座標へ差分を加算するカスタム Unit です。
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
-    [UnitTitle("Scratch/Change Y By")]
-    [UnitCategory("FUnity/Scratch/Motion")]
+    [UnitTitle("y座標を○ずつ変える")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeYByUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
