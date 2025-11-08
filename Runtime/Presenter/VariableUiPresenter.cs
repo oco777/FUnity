@@ -195,6 +195,7 @@ namespace FUnity.Runtime.Presenter
                 };
                 label.AddToClassList(EntryClassName);
                 label.style.marginBottom = 4f;
+                label.style.color = Color.white;
                 m_LabelMap[state] = label;
                 m_Container?.Add(label);
             }
