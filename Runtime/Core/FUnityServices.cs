@@ -1,5 +1,7 @@
 // Updated: 2025-03-18
 
+using FUnity.Runtime.Variables;
+
 namespace FUnity.Runtime.Core
 {
     /// <summary>
