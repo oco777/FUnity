@@ -341,10 +341,10 @@ namespace FUnity.Runtime.Presenter
             m_ScriptMachine = machine;
             m_Runner = machine.gameObject;
 
-            var objectVariables = Variables.Object(machine);
+            var objectVariables = Unity.VisualScripting.Variables.Object(machine);
             if (objectVariables == null)
             {
-                objectVariables = Variables.Object(machine.gameObject);
+                objectVariables = Unity.VisualScripting.Variables.Object(machine.gameObject);
             }
             if (objectVariables != null)
             {

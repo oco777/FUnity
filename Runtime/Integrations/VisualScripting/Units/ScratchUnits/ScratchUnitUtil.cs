@@ -43,7 +43,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return null;
             }
 
-            return Variables.Object(host);
+            return Unity.VisualScripting.Variables.Object(host);
         }
 
         /// <summary>

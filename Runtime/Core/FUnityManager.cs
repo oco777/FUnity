@@ -1500,13 +1500,13 @@ namespace FUnity.Runtime.Core
                         continue;
                     }
 
-                    Variables.Object(go).Set(variable.key, variable.value);
+                    Unity.VisualScripting.Variables.Object(go).Set(variable.key, variable.value);
                 }
             }
 
-            if (!Variables.Object(go).IsDefined("FUnityUI") && m_FUnityUI != null)
+            if (!Unity.VisualScripting.Variables.Object(go).IsDefined("FUnityUI") && m_FUnityUI != null)
             {
-                Variables.Object(go).Set("FUnityUI", m_FUnityUI);
+                Unity.VisualScripting.Variables.Object(go).Set("FUnityUI", m_FUnityUI);
             }
 
             if (m_VsBridge == null)
@@ -1514,9 +1514,9 @@ namespace FUnity.Runtime.Core
                 EnsurePresenterBridge();
             }
 
-            if (!Variables.Object(go).IsDefined("VSPresenterBridge") && m_VsBridge != null)
+            if (!Unity.VisualScripting.Variables.Object(go).IsDefined("VSPresenterBridge") && m_VsBridge != null)
             {
-                Variables.Object(go).Set("VSPresenterBridge", m_VsBridge);
+                Unity.VisualScripting.Variables.Object(go).Set("VSPresenterBridge", m_VsBridge);
             }
         }
 
@@ -1660,7 +1660,7 @@ namespace FUnity.Runtime.Core
                 ConfigureScriptMachine(actor, runner, actor.ScriptGraph);
                 ConfigureActorPresenterAdapter(runner, actor);
 
-                var objectVariables = Variables.Object(runner);
+                var objectVariables = Unity.VisualScripting.Variables.Object(runner);
                 if (m_FUnityUI != null && !objectVariables.IsDefined("FUnityUI"))
                 {
                     objectVariables.Set("FUnityUI", m_FUnityUI);
@@ -2008,7 +2008,7 @@ namespace FUnity.Runtime.Core
 
             if (cloneRunner != null)
             {
-                var runnerVariables = Variables.Object(cloneRunner);
+                var runnerVariables = Unity.VisualScripting.Variables.Object(cloneRunner);
                 if (runnerVariables != null)
                 {
                     runnerVariables.Set("presenter", presenter);

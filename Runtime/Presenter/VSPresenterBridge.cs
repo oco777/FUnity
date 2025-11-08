@@ -233,7 +233,7 @@ namespace FUnity.Runtime.Presenter
             var runner = flow.stack.gameObject;
             if (runner != null)
             {
-                var objectVariables = Variables.Object(runner);
+                var objectVariables = Unity.VisualScripting.Variables.Object(runner);
                 if (objectVariables != null)
                 {
                     if (objectVariables.IsDefined("actorKey") && objectVariables.Get("actorKey") is string actorKey && !string.IsNullOrEmpty(actorKey))
@@ -599,7 +599,7 @@ namespace FUnity.Runtime.Presenter
                 return null;
             }
 
-            var variables = Variables.Object(runner);
+            var variables = Unity.VisualScripting.Variables.Object(runner);
             if (variables != null)
             {
                 if (variables.IsDefined("presenter") && variables.Get("presenter") is ActorPresenter presenter && presenter != null)
