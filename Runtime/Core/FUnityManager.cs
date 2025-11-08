@@ -9,6 +9,7 @@ using FUnity.Runtime.View;
 using FUnity.Runtime.Presenter;
 using FUnity.Runtime.Input;
 using FUnity.Runtime.UI;
+using FUnity.Runtime.Variables;
 using Unity.VisualScripting;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -95,6 +96,12 @@ namespace FUnity.Runtime.Core
 
         /// <summary>ステージ背景適用を担当するサービス。</summary>
         private readonly StageBackgroundService m_StageBackgroundService = new StageBackgroundService();
+
+        /// <summary>Scratch 互換変数を管理するサービス。</summary>
+        private readonly FUnityVariableService m_VariableService = new FUnityVariableService();
+
+        /// <summary>変数モニターの UI 表示を担当する Presenter。</summary>
+        private VariableUiPresenter m_VariableUiPresenter;
 
         /// <summary>背景レイヤーを初期化済みかどうかを示すフラグ。</summary>
         private bool m_BackgroundInitialized;
@@ -184,6 +191,8 @@ namespace FUnity.Runtime.Core
 
             Instance = this;
 
+            FUnityServices.Variables = m_VariableService;
+
             if (m_Project == null)
             {
                 m_Project = Resources.Load<FUnityProjectData>("FUnityProjectData");
@@ -227,6 +236,9 @@ namespace FUnity.Runtime.Core
             {
                 Instance = null;
             }
+
+            m_VariableService.SetUiPresenter(null);
+            FUnityServices.ResetAll();
         }
 
         /// <summary>
@@ -259,6 +271,7 @@ namespace FUnity.Runtime.Core
             }
 
             var stageElement = EnsureStageElement(root);
+            EnsureVariableUiPresenter(stageElement);
             ApplyScratchStageSizing(stageElement);
             var backgroundRoot = stageElement != null ? stageElement.StageViewport : root;
 
@@ -410,6 +423,33 @@ namespace FUnity.Runtime.Core
         }
 
         /// <summary>
+        /// 変数モニター Presenter を生成し、Stage のオーバーレイへコンテナを接続する。
+        /// </summary>
+        /// <param name="stageElement">対象の StageElement。null の場合は処理を行わない。</param>
+        private void EnsureVariableUiPresenter(StageElement stageElement)
+        {
+            if (stageElement == null)
+            {
+                return;
+            }
+
+            var overlay = stageElement.OverlayContainer;
+            if (overlay == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager: StageElement にオーバーレイコンテナが存在しないため変数モニターを配置できません。");
+                return;
+            }
+
+            if (m_VariableUiPresenter == null)
+            {
+                m_VariableUiPresenter = new VariableUiPresenter();
+            }
+
+            m_VariableUiPresenter.SetRoot(overlay);
+            m_VariableService.SetUiPresenter(m_VariableUiPresenter);
+        }
+
+        /// <summary>
         /// 背景サービスの対象ルートを保証し、初回は既定背景を読み込む。2 回目以降は現在の状態を再適用する。
         /// </summary>
         /// <param name="stageRoot">背景レイヤーを挿入する対象要素。</param>
@@ -467,6 +507,8 @@ namespace FUnity.Runtime.Core
             {
                 m_VsBridge.Target = null;
             }
+
+            m_VariableService.Initialize(m_Project, null);
         }
 
         /// <summary>
@@ -715,6 +757,8 @@ namespace FUnity.Runtime.Core
                 visual.ViewHost = (view as Component)?.gameObject;
                 m_ActorVisuals[i] = visual;
             }
+
+            m_VariableService.Initialize(m_Project, m_ActorPresenters);
 
             if (m_VsBridge != null)
             {
@@ -2000,6 +2044,8 @@ namespace FUnity.Runtime.Core
             m_RuntimeActorClones.Add(cloneInfo);
             m_ActorPresenters.Add(presenter);
 
+            m_VariableService.RegisterActor(presenter, original);
+
             if (!suppressCloneStartEvent)
             {
                 RaiseVsEvent_WhenStartAsClone(cloneAdapter, presenter);
@@ -2217,6 +2263,7 @@ namespace FUnity.Runtime.Core
 
             var info = m_RuntimeActorClones[index];
             m_RuntimeActorClones.RemoveAt(index);
+            m_VariableService.UnregisterActor(presenter);
             m_ActorPresenters.Remove(presenter);
 
             if (info.Element != null)

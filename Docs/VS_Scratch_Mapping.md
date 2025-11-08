@@ -75,6 +75,14 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | 端に触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingEdgePredicateUnit | 端に触れた？ | FUnity/Scratch/調べる | ステージ境界との接触判定。定義: Runtime/.../TouchPredicates.cs |
 | ○○に触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingActorByDisplayNamePredicateUnit | ○○に触れた？ | FUnity/Scratch/調べる | DisplayName 指定で矩形重なりを判定。定義: Runtime/.../TouchingActorByDisplayNamePredicateUnit.cs |
 
+## 変数
+| Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
+| --- | --- | --- | --- | --- |
+| （変数）を○にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetVariableUnit | （変数）を○にする | FUnity/Scratch/変数 | 変数サービス経由で絶対値を設定。定義: Runtime/.../ScratchVariables/SetVariableUnit.cs |
+| （変数）を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeVariableUnit | （変数）を○ずつ変える | FUnity/Scratch/変数 | 変数サービス経由で加算。定義: Runtime/.../ScratchVariables/ChangeVariableUnit.cs |
+| 変数（変数）を表示する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ShowVariableUnit | 変数（変数）を表示する | FUnity/Scratch/変数 | 変数モニターを表示。定義: Runtime/.../ScratchVariables/ShowVariableUnit.cs |
+| 変数（変数）を隠す | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.HideVariableUnit | 変数（変数）を隠す | FUnity/Scratch/変数 | 変数モニターを非表示。定義: Runtime/.../ScratchVariables/HideVariableUnit.cs |
+
 ## 拡張
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |

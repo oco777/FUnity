@@ -52,6 +52,13 @@ namespace FUnity.Runtime.Core
         /// </summary>
         public List<RunnerEntry> runners = new List<RunnerEntry>();
 
+        [Header("Variables")]
+        /// <summary>
+        /// プロジェクト全体で共有するグローバル変数の定義リストです。ランタイム起動時に
+        /// <see cref="IFUnityVariableService"/> が初期値と表示状態を構築します。
+        /// </summary>
+        public List<FUnityVariableDefinition> GlobalVariables = new List<FUnityVariableDefinition>();
+
         [Header("Stage & Actors")]
         /// <summary>利用するステージデータ。null の場合は背景設定がスキップされる。</summary>
         [SerializeField] private FUnityStageData m_stage;

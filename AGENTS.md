@@ -137,4 +137,10 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
   - ノード検索性向上のため、利用可能な場合は `[UnitSubtitle]`（または同等の検索キーワード属性）に `funity scratch` とカテゴリ名・関連日本語・英語キーワードを半角スペース区切りで設定する（例：`funity scratch 動き move steps`）。
   - コード差分がある場合は `Docs/VS_Scratch_Mapping.md` を同期させ、タイトルとカテゴリの差異を残さない。
 
+## 変数機能に関する恒久ルール
+- Scratch 互換の変数は必ず `IFUnityVariableService` / `FUnityVariableService` を経由して操作すること。Presenter や VS からの直接参照は禁止です。
+- Visual Scripting の変数系ユニットはサービスへ直接アクセスせず、共通アクセサ（`ScratchVariableUnitUtility` など）を介して呼び出すこと。
+- `.cs` ファイルを追加・削除した場合は対応する `.meta` も必ず同時に管理する（再掲）。
+- 新しいユニットを追加・改名した場合は `Docs/VS_Scratch_Mapping.md` を必ず更新し、対応表を最新に保つこと。
+
 ---

@@ -52,6 +52,13 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 - `.cs` と `.meta` のペアが欠けている不整合を見つけた場合は、その場で修正するか、少なくとも PR 説明で不足しているファイルを明示してください。
 - このルールは FUnity リポジトリ全体（`Runtime/`, `Editor/`, `Packages/`, `Assets/FUnity/` など）で恒久的に適用します。
 
+## 変数サービス運用ルール
+
+- Scratch 互換の変数機能は `IFUnityVariableService` / `FUnityVariableService` を経由して操作してください。Presenter や VS からの直接アクセスは禁止です。
+- Visual Scripting の変数系ユニットはサービスへ直接アクセスせず、共通アクセサ（例: `ScratchVariableUnitUtility`）を経由して呼び出します。
+- 変数系ユニットを含む新しい VS Unit を追加した場合は、`Docs/VS_Scratch_Mapping.md` を更新し、対応表へ必ず追記してください。
+- `.cs` ファイルの追加・削除時には対応する `.meta` を忘れずに管理してください（上記ルールの再掲）。
+
 ## Move/Bounce 実装ポリシー（必読）
 
 - Scratch モーションの Bounce 系処理は、反射後に**中心座標をステージ内へ押し戻す（クランプ＋ε）**ロジックを必須とします。

@@ -1,4 +1,5 @@
 // Updated: 2025-02-14
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
@@ -66,6 +67,12 @@ namespace FUnity.Runtime.Core
         /// <summary>俳優個別の Visual Scripting グラフ。<see cref="ScriptMachine"/> へ割り当てられる。</summary>
         [SerializeField] private ScriptGraphAsset m_scriptGraph;
 
+        [Header("Variables")]
+        /// <summary>
+        /// この俳優専用の変数定義リスト。クローンを含む各インスタンスが独立した値を保持します。
+        /// </summary>
+        [SerializeField] private List<FUnityVariableDefinition> m_actorVariables = new List<FUnityVariableDefinition>();
+
         /// <summary>表示名。</summary>
         public string DisplayName => m_displayName;
 
@@ -92,6 +99,9 @@ namespace FUnity.Runtime.Core
 
         /// <summary>俳優専用の Visual Scripting グラフ。</summary>
         public ScriptGraphAsset ScriptGraph => m_scriptGraph;
+
+        /// <summary>この俳優に紐付くローカル変数の定義一覧。</summary>
+        public List<FUnityVariableDefinition> ActorVariables => m_actorVariables;
 
         /// <summary>俳優座標が指すアンカー位置。</summary>
         public ActorAnchor Anchor => m_anchor;
