@@ -11,6 +11,19 @@ using FUnity.Runtime.View;
 namespace FUnity.Runtime.Presenter
 {
     /// <summary>
+    /// Visual Scripting から俳優を識別する際に使用する Presenter の共通インターフェースです。
+    /// 変数サービスなどが俳優キーや静的設定へアクセスするために参照します。
+    /// </summary>
+    public interface IActorPresenter
+    {
+        /// <summary>Visual Scripting から一意に識別される俳優キー。</summary>
+        string ActorKey { get; }
+
+        /// <summary>紐付いている俳優設定。null の場合はフォールバック構成を意味します。</summary>
+        FUnityActorData ActorData { get; }
+    }
+
+    /// <summary>
     /// 俳優の状態（Model）と UI 表示（View）を調停する Presenter。
     /// 入力から得た移動ベクトルを <see cref="ActorState"/> に反映し、View に一方向で通知する。
     /// </summary>
@@ -19,7 +32,7 @@ namespace FUnity.Runtime.Presenter
     /// 想定ライフサイクル: <see cref="FUnity.Runtime.Core.FUnityManager"/> が俳優生成時に <see cref="Initialize"/> を呼び出し、
     ///     以降は <see cref="Tick"/> をフレーム毎に実行する。Presenter 自体はステートレスであり、Model/View 間の同期のみを担当。
     /// </remarks>
-    public sealed class ActorPresenter
+    public sealed class ActorPresenter : IActorPresenter
     {
         /// <summary>VS から俳優を一意に識別するための連番です。</summary>
         private static int s_ActorKeySequence;
@@ -129,6 +142,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>現在の表示名。DisplayName が空の場合は空文字を保持します。</summary>
         private string m_DisplayName = string.Empty;
 
+        /// <summary>現在参照している俳優設定。null の場合はフォールバック構成を意味します。</summary>
+        private FUnityActorData m_ActorData;
+
         /// <summary>最新の可視状態。View へ伝播した値をキャッシュします。</summary>
         private bool m_IsVisible = true;
 
@@ -171,6 +187,9 @@ namespace FUnity.Runtime.Presenter
         /// クローンも元の DisplayName を共有します。
         /// </summary>
         public string DisplayName => m_DisplayName;
+
+        /// <summary>紐付いている俳優設定。null の場合はフォールバック構成を意味します。</summary>
+        public FUnityActorData ActorData => m_ActorData;
 
         /// <summary>
         /// 現在 View に適用されている可視状態を返します。
@@ -220,6 +239,7 @@ namespace FUnity.Runtime.Presenter
             m_EnableFloatOffset = ResolveFloatOffsetEnabled(modeConfig);
             AttachStageGeometryCallback(stageRoot);
 
+            m_ActorData = data;
             m_DisplayName = data != null ? data.DisplayName ?? string.Empty : string.Empty;
             if (m_View is ActorView actorViewInstance)
             {
