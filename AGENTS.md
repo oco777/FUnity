@@ -97,7 +97,7 @@ public sealed class ActorState
 - [ ] 例外ではなく警告ログ＋早期 return で安全にハンドル
 - [ ] 既存の挙動（背景＋フーニー表示、VS 連携）が壊れていない
 - [ ] サンプルシーンで移動が確認できる
-- [ ] `.cs` ファイルを追加した場合は必ず対応する `.meta` を同時に追加し、片方のみになっていない
+- [ ] `.cs` ファイルを追加した場合は必ず対応する `.meta` を Unity エディタで生成したものとペアで管理し、片方のみになっていない（AI が GUID を捏造しない）
 - [ ] `.cs` ファイルを削除・リネームした場合は、対応する `.meta` も同時に削除・リネームして不整合を残さない
 
 ## Docs: VS Scratch Mapping の更新ポリシー
@@ -140,7 +140,7 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 ## 変数機能に関する恒久ルール
 - Scratch 互換の変数は必ず `IFUnityVariableService` / `FUnityVariableService` を経由して操作すること。Presenter や VS からの直接参照は禁止です。
 - Visual Scripting の変数系ユニットはサービスへ直接アクセスせず、共通アクセサ（`ScratchVariableUnitUtility` など）を介して呼び出すこと。
-- `.cs` ファイルを追加・削除した場合は対応する `.meta` も必ず同時に管理する（再掲）。
+- `.cs` ファイルを追加・削除した場合は対応する `.meta` も必ず同時に管理し、`.meta` の生成は必ず Unity エディタに任せる（再掲）。
 - 新しいユニットを追加・改名した場合は `Docs/VS_Scratch_Mapping.md` を必ず更新し、対応表を最新に保つこと。
 
 ---
