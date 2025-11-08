@@ -43,7 +43,7 @@ namespace FUnity.Runtime.Variables
     /// Scratch 互換の変数を一元管理するサービス実装です。グローバルおよび俳優ローカル変数を
     /// 辞書で保持し、UI Presenter へ値と可視状態の更新を通知します。
     /// </summary>
-    internal class FUnityVariableService : IFUnityVariableService
+    public class FUnityVariableService : IFUnityVariableService
     {
         /// <summary>グローバル変数を名前で引く辞書。</summary>
         private readonly Dictionary<string, VariableState> m_GlobalVariables = new Dictionary<string, VariableState>();
@@ -307,7 +307,7 @@ namespace FUnity.Runtime.Variables
         /// <summary>
         /// サービスが管理する変数状態を表す内部クラスです。UI Presenter への通知にも利用されます。
         /// </summary>
-        internal class VariableState
+        public class VariableState
         {
             /// <summary>変数名。</summary>
             public string Name;
