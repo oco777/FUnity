@@ -155,7 +155,6 @@ namespace FUnity.Runtime.Presenter
             m_Container.style.borderTopLeftRadius = 6f;
             m_Container.style.borderTopRightRadius = 6f;
             m_Container.style.flexDirection = FlexDirection.Column;
-            m_Container.style.gap = 4f;
             m_Container.style.minWidth = 160f;
 
             AttachContainer();
@@ -195,6 +194,7 @@ namespace FUnity.Runtime.Presenter
                     pickingMode = PickingMode.Ignore
                 };
                 label.AddToClassList(EntryClassName);
+                label.style.marginBottom = 4f;
                 m_LabelMap[state] = label;
                 m_Container?.Add(label);
             }
