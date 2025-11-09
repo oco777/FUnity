@@ -39,8 +39,9 @@ namespace FUnity.EditorTools
         private const string GeneratedGraphsFolderPath = GeneratedRootFolderPath + "/Graphs";
         private const string GeneratedFooniTextureAssetPath = GeneratedTextureFolderPath + "/Fooni.png";
         private const string GeneratedFooniGraphAssetPath = GeneratedGraphsFolderPath + "/Fooni_FloatSetup.asset";
-        private const string ScratchModeConfigAssetPath = "Assets/FUnity/Configs/Authoring/FUnityModeConfig_Scratch.asset";
-        private const string UnityroomModeConfigAssetPath = "Assets/FUnity/Configs/Authoring/FUnityModeConfig_Unityroom.asset";
+        private const string PackageRootPath = "Packages/com.papacoder.funity";
+        private const string ScratchModeConfigFileName = "FUnityModeConfig_Scratch.asset";
+        private const string UnityroomModeConfigFileName = "FUnityModeConfig_Unityroom.asset";
 
         /// <summary>Unity バージョンごとに異なる PanelSettings のテーマプロパティ候補名。</summary>
         private static readonly string[] PanelThemePropertyCandidates =
@@ -918,24 +919,24 @@ namespace FUnity.EditorTools
             var serializedProject = new SerializedObject(project);
             var changed = false;
 
-            var scratchConfig = AssetDatabase.LoadAssetAtPath<FUnityModeConfig>(ScratchModeConfigAssetPath);
+            var scratchConfig = LoadModeConfigAsset<FUnityModeConfig>(ScratchModeConfigFileName);
             if (scratchConfig != null)
             {
                 changed |= SetObject(serializedProject, "m_ScratchModeConfig", scratchConfig);
             }
             else
             {
-                Debug.LogWarning($"[FUnity] ModeConfig が見つかりませんでした: {ScratchModeConfigAssetPath} (m_ScratchModeConfig)");
+                Debug.LogWarning("[FUnity] ScratchModeConfig 用の ModeConfig アセットが Assets または Packages 配下で見つかりませんでした。");
             }
 
-            var unityroomConfig = AssetDatabase.LoadAssetAtPath<FUnityModeConfig>(UnityroomModeConfigAssetPath);
+            var unityroomConfig = LoadModeConfigAsset<FUnityModeConfig>(UnityroomModeConfigFileName);
             if (unityroomConfig != null)
             {
                 changed |= SetObject(serializedProject, "m_UnityroomModeConfig", unityroomConfig);
             }
             else
             {
-                Debug.LogWarning($"[FUnity] ModeConfig が見つかりませんでした: {UnityroomModeConfigAssetPath} (m_UnityroomModeConfig)");
+                Debug.LogWarning("[FUnity] UnityroomModeConfig 用の ModeConfig アセットが Assets または Packages 配下で見つかりませんでした。");
             }
 
             if (!changed)
@@ -946,6 +947,61 @@ namespace FUnity.EditorTools
             serializedProject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(project);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// 指定ファイル名の ModeConfig アセットを Assets 直下と FUnity パッケージ配下から順に検索する。
+        /// </summary>
+        /// <typeparam name="T">検索対象となる ScriptableObject 型。</typeparam>
+        /// <param name="fileName">一致させたいアセットファイル名。</param>
+        /// <returns>見つかったアセット。存在しない場合は null。</returns>
+        private static T LoadModeConfigAsset<T>(string fileName) where T : ScriptableObject
+        {
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return null;
+            }
+
+            var assetFromAssets = FindAssetByName<T>(fileName, "Assets");
+            if (assetFromAssets != null)
+            {
+                return assetFromAssets;
+            }
+
+            var assetFromPackage = FindAssetByName<T>(fileName, PackageRootPath);
+            if (assetFromPackage != null)
+            {
+                return assetFromPackage;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 指定フォルダ配下のアセットからファイル名一致するものを検索し、最初に見つかったものを返す。
+        /// </summary>
+        /// <typeparam name="T">読み込むアセットの型。</typeparam>
+        /// <param name="fileName">判定に利用するファイル名。</param>
+        /// <param name="searchRoot">検索を行うルートフォルダ。</param>
+        /// <returns>条件を満たすアセット。見つからない場合は null。</returns>
+        private static T FindAssetByName<T>(string fileName, string searchRoot) where T : UnityEngine.Object
+        {
+            if (string.IsNullOrEmpty(fileName) || string.IsNullOrEmpty(searchRoot))
+            {
+                return null;
+            }
+
+            var guids = AssetDatabase.FindAssets($"t:{typeof(T).Name}", new[] { searchRoot });
+            foreach (var guid in guids)
+            {
+                var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                if (assetPath.EndsWith("/" + fileName, System.StringComparison.Ordinal))
+                {
+                    return AssetDatabase.LoadAssetAtPath<T>(assetPath);
+                }
+            }
+
+            return null;
         }
     }
 }
