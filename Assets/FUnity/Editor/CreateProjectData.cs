@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
 using Unity.VisualScripting;
+using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Core;
 using FUnity.UI;
 
@@ -40,6 +41,8 @@ namespace FUnity.EditorTools
         private const string GeneratedGraphsFolderPath = GeneratedRootFolderPath + "/Graphs";
         private const string GeneratedFooniTextureAssetPath = GeneratedTextureFolderPath + "/Fooni.png";
         private const string GeneratedFooniGraphAssetPath = GeneratedGraphsFolderPath + "/Fooni_FloatSetup.asset";
+        private const string ScratchModeConfigAssetPath = "Assets/FUnity/Configs/Authoring/FUnityModeConfig_Scratch.asset";
+        private const string UnityroomModeConfigAssetPath = "Assets/FUnity/Configs/Authoring/FUnityModeConfig_Unityroom.asset";
 
         /// <summary>Unity バージョンごとに異なる PanelSettings のテーマプロパティ候補名。</summary>
         private static readonly string[] PanelThemePropertyCandidates =
@@ -140,6 +143,7 @@ namespace FUnity.EditorTools
             var actor = ConfigureFooniActorData();
             RemoveDuplicateActorResource();
             LinkProjectData(project, stage, actor);
+            AssignDefaultModeConfigs(project);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -164,6 +168,7 @@ namespace FUnity.EditorTools
 
             AssignStageBackground(stage);
             LinkProjectData(project, stage, actor);
+            AssignDefaultModeConfigs(project);
             ConfigureScratchRunner(project);
 
             AssetDatabase.SaveAssets();
@@ -998,6 +1003,51 @@ namespace FUnity.EditorTools
                         changed = true;
                     }
                 }
+            }
+
+            if (!changed)
+            {
+                return;
+            }
+
+            serializedProject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(project);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// ProjectData に Scratch / unityroom 用 ModeConfig を自動設定し、生成直後でも実行モードを切り替えられるようにする。
+        /// 指定アセットが存在しない場合は警告を表示し、該当フィールドは null のまま保持する。
+        /// </summary>
+        private static void AssignDefaultModeConfigs(FUnityProjectData project)
+        {
+            if (project == null)
+            {
+                // Project が無い場合は SerializedObject を作成できないため、割り当て処理をスキップする。
+                return;
+            }
+
+            var serializedProject = new SerializedObject(project);
+            var changed = false;
+
+            var scratchConfig = AssetDatabase.LoadAssetAtPath<FUnityModeConfig>(ScratchModeConfigAssetPath);
+            if (scratchConfig != null)
+            {
+                changed |= SetObject(serializedProject, "m_ScratchModeConfig", scratchConfig);
+            }
+            else
+            {
+                Debug.LogWarning($"[FUnity] ModeConfig が見つかりませんでした: {ScratchModeConfigAssetPath} (m_ScratchModeConfig)");
+            }
+
+            var unityroomConfig = AssetDatabase.LoadAssetAtPath<FUnityModeConfig>(UnityroomModeConfigAssetPath);
+            if (unityroomConfig != null)
+            {
+                changed |= SetObject(serializedProject, "m_UnityroomModeConfig", unityroomConfig);
+            }
+            else
+            {
+                Debug.LogWarning($"[FUnity] ModeConfig が見つかりませんでした: {UnityroomModeConfigAssetPath} (m_UnityroomModeConfig)");
             }
 
             if (!changed)
