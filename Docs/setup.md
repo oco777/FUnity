@@ -27,7 +27,7 @@ FUnity を既存プロジェクトへ追加し、サンプルの背景とフー�
 4. サンプルでは `FUnity Actor Adapter` GameObject に `ActorPresenterAdapter` を明示的に配置し、`FUnityManager` の **Default Actor Presenter Adapter** フィールドへ割り当てています。自身のシーンでも任意の GameObject に同コンポーネントを追加し、Visual Scripting からは `VSPresenterBridge` 経由で参照してください。
 
 ## Default Project Data の生成
-1. メニュー **FUnity > Create > Default Project Data** を実行します。
+1. メニュー **FUnity > Create > FUnityProjectData** を実行します。
 2. 以下が自動生成されます。
    - `Resources/FUnityProjectData.asset` / `Resources/FUnityStageData.asset`
    - `Assets/FUnity/UI/FUnityPanelSettings.asset`（既存 Theme を優先して割り当て）

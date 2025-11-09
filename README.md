@@ -17,7 +17,7 @@
 
 ## 現状機能サマリ
 - UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.1.0`）によるバージョン固定にも対応。
-- Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/Default Project Data**）で初期データを生成。
+- Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/FUnityProjectData**）で初期データを生成。
 - `Runtime/Resources/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
 - `FUnityManager` がシーン起動時に “FUnity UI” GameObject と `UIDocument` を構築し、UI ブリッジや Runner 参照をセットアップ。
 - Unity Visual Scripting を **必須依存**とし、Macro が無い場合でも `Fooni_FloatSetup.asset` を自動生成して割り当てる。
@@ -61,7 +61,7 @@
 
 ## クイックスタート
 1. Package Manager を開き、**Samples → BasicScene** の **Import** を押して `Samples~/BasicScene/FUnitySample.unity` を開きます。
-2. メニュー **FUnity > Create > Default Project Data** を実行し、プロジェクト既定データを生成します。
+2. メニュー **FUnity > Create > FUnityProjectData** を実行し、プロジェクト既定データを生成します。
 3. シーンを再生すると背景画像（`Background_01.png`）とフーニーの俳優 UI が表示され、サンプル Macro による移動が動作します。
 
 ## Scratch本で最初に試すレシピ（5分）

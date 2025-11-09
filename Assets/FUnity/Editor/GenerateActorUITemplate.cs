@@ -35,7 +35,7 @@ namespace FUnity.EditorTools
         // なぜ: 初回ウィンドウ表示で一度だけ初期化したい。何を: 初期化済みフラグ。どうする: OnEnableで設定を行うかどうか判定する。
         private bool m_IsInitialized;
 
-        [MenuItem("FUnity/Authoring/Generate Actor UI Template...")]
+        [MenuItem("FUnity/Create/FUnityActorData")]
         public static void Open()
         {
             // なぜ: 著者に最小テンプレ生成を提供したい。何を: FUnity向けUXML/USSを作る専用ウィンドウ。どうする: EditorWindowを開く。
