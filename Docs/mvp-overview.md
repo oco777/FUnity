@@ -10,7 +10,7 @@ FUnity のランタイム層は Model–View–Presenter (MVP) に基づいて�
 - [Visual Scripting からの呼び出し](#visual-scripting-からの呼び出し)
 
 ## Model 層
-- **ScriptableObject 設定**: `FUnityProjectData`, `FUnityStageData`, `FUnityActorData` が静的設定を提供します。Default Project Data 実行時に背景画像や Macro が割り当てられます。
+- **ScriptableObject 設定**: `FUnityProjectData`, `FUnityStageData`, `FUnityActorData` が静的設定を提供します。**FUnity/Create/FUnityProjectData** 実行時に背景画像や Macro が割り当てられます。
 - **ランタイム状態**: `Runtime/Model/ActorState.cs` がアクターの座標や移動速度、UI 回転角 (`RotationDeg`)、拡大率 (`SizePercent`: 100=等倍, 1～300% にクランプ) など実行中に変化する値を保持します。Presenter が更新し、View からは直接変更しません。
 
 ## View 層
@@ -30,6 +30,6 @@ FUnity のランタイム層は Model–View–Presenter (MVP) に基づいて�
 4. Visual Scripting Runner に配置した `ActorPresenterAdapter` と `ActorPresenter` を結び付け、`VSPresenterBridge` からの命令を Presenter へ委譲できるようにします。
 
 ## Visual Scripting からの呼び出し
-- Default Project Data が `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` を用意し、`FUnityActorData_Fooni` の ScriptGraph に設定します。
+- **FUnity/Create/FUnityProjectData** が `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` を用意し、`FUnityActorData_Fooni` の ScriptGraph に設定します。
 - Macro からは `Variables.Object("VSPresenterBridge")` を取得し、`Actor/MoveBy` などの Custom Event を介して Presenter を呼び出します。必要に応じて `ActorPresenterAdapter` を取得し、`MoveSteps` や `SetPositionPixels` といった API を直接呼び出すこともできます。
 - Presenter 層を経由することで、Visual Scripting と C# 双方から同じロジックを再利用でき、MVP の責務分離を維持できます。`Scratch/Turn Degrees` は `VSPresenterBridge.TurnDegrees` を通じて Presenter の `RotateBy` に委譲され、UI Toolkit のポートレートが中心ピボットで回転します。`Scratch/Set Size %` / `Scratch/Change Size by %` は `VSPresenterBridge.SetActorScale` / `ChangeActorSizeByPercent` を介して `ActorPresenter.SetScale` / `ChangeSizeByPercent` を実行し、UITK の #root が中心基準のまま拡縮されます。

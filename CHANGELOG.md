@@ -12,7 +12,7 @@
 - feat(vs): Units read ActorPresenterAdapter from ScriptGraphAsset variables; editor assigns via ConfigureScriptMachine.
 - feat(core): move clamping to state mutation; deprecate FooniUIBridge.ClampToPanel().
 - PanelSettingsInitializer.EnsurePanelSettings() による Theme 自動割当（Editor 実行時）。
-- feat(vs): scratch-ready bridge & macros（Custom Event 標準化、StageBackgroundService、Scratch Starter メニュー、マクロ雛形）。
+- feat(vs): scratch-ready bridge & macros（Custom Event 標準化、StageBackgroundService、FUnityActorData メニュー、マクロ雛形）。
 - feat(vs): Scratch Units auto-resolve & cache ActorPresenterAdapter（ポート未接続でも動作）。
 - feat(vs/ui): Scratch/Turn Degrees で Presenter 経由の `style.rotate` を適用し、UI 上の俳優画像を回転。
 

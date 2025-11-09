@@ -9,7 +9,7 @@
 ## 要点
 - Theme と PanelSettings の配置、俳優データの編集方法をまとめる。
 - FUnity 配下にアセットを集約し、Legacy を廃止する方針を共有する。
-- サンプルシーンと Default Project Data を活用して挙動を確認する。
+- サンプルシーンと **FUnity/Create/FUnityProjectData** を活用して挙動を確認する。
 
 ## 手順
 ### Q1. Theme ファイルはどこに置くべきか？
@@ -21,8 +21,8 @@
 - `FUnityActorData_Fooni` の Portrait 参照を書き換える。
 - 必要に応じて UXML/USS もテンプレートを複製し調整する。
 
-### Q3. Default Project Data を再生成しても大丈夫か？
-- 既存アセットは上書きされず、重複した場合は手動で整理する。
+### Q3. FUnityProjectData を再生成しても大丈夫か？
+- メニュー **FUnity/Create/FUnityProjectData** を再実行しても既存アセットは上書きされず、重複した場合は手動で整理する。
 - バージョン管理で不要なアセットが残らないよう確認する。
 
 ### Q4. Package Manager で更新が検出されない場合は？
