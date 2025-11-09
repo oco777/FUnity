@@ -1,61 +1,44 @@
 # Changelog
 
 ## [Unreleased]
+
+_No entries yet._
+
+## [v0.2.0] - 2025-11-09
+
 ### Added
-- feat(vs/events): add Scratch green flag EventUnit and manager-driven trigger for non-clone actors.
-- feat(vs/control): add Scratch clone units (create clone of self / when I start as a clone / delete this clone) with manager-driven spawn and VS event.
-- feat(vs): add Scratch speech Units (say/think, with duration).
-- feat(vs): speech units now block for seconds variants.
-- feat(vs): add Scratch messaging Units (broadcast / broadcast & wait / when I receive).
-- feat(vs/ui): Scratch の大きさ操作（Set Size %, Change Size by %）を追加し、Presenter が 1～300% にクランプした `style.scale` を適用。
-- feat(vs/ui): Scratch/Looks Show & Hide ユニットを追加し、Presenter 経由で style.display による可視制御を実装。
-- feat(vs): Units read ActorPresenterAdapter from ScriptGraphAsset variables; editor assigns via ConfigureScriptMachine.
-- feat(core): move clamping to state mutation; deprecate FooniUIBridge.ClampToPanel().
-- PanelSettingsInitializer.EnsurePanelSettings() による Theme 自動割当（Editor 実行時）。
-- feat(vs): scratch-ready bridge & macros（Custom Event 標準化、StageBackgroundService、FUnityActorData メニュー、マクロ雛形）。
-- feat(vs): Scratch Units auto-resolve & cache ActorPresenterAdapter（ポート未接続でも動作）。
-- feat(vs/ui): Scratch/Turn Degrees で Presenter 経由の `style.rotate` を適用し、UI 上の俳優画像を回転。
+- **FUnity/Create/FUnityProjectData** メニューを追加し、初期アセット生成と ModeConfig の自動割当（Scratch / Unityroom 用）をワンコマンド化しました。
+- **FUnity/Create/FUnityActorData** メニューから Actor 用 UXML・USS・FUnityActorData・ScriptGraph を一括生成するテンプレートフローを整備しました。
+- Scratch 互換の Visual Scripting ユニットを大幅拡充（緑の旗イベント、クローン管理、メッセージ送受信、セリフ／考える吹き出し、角度・サイズ・表示制御）し、Presenter 連携で UI を即時更新します。
+- ScriptGraphAsset 上の ActorPresenterAdapter 解決や StageBackgroundService など、Scratch ワークフローに必要なマクロ／ブリッジ類を同梱しました。
+- PanelSettingsInitializer.EnsurePanelSettings() により、エディタ実行時でもテーマと PanelSettings を自動生成・割当する仕組みを導入しました。
 
 ### Changed
-- refactor(vs): remove payload/sender ports from messaging units.
-- refactor(vs): remove ActorPresenterAdapter input ports from Scratch Units and rely on internal auto-resolution.
-- refactor(vs/looks): remove ActorPresenterAdapter input ports from Looks/Show & Looks/Hide; auto-resolve via ScratchUnitUtil.ResolveAdapter.
-- refactor(vs): fix Variables.Object overload and qualify UnityEngine.Object usage in Scratch units.
-- refactor(vs): stop auto-attaching ScriptMachine to 'FUnity UI'; require explicit placement
-- Theme の正規パスを `Assets/FUnity/UI/USS/` に統一し、UI Builder 既定テーマを優先する運用に更新。
-- Visual Scripting を必須依存に変更し、ランタイムから `UNITY_VISUAL_SCRIPTING` ガードと反射ベースの初期化を撤廃。
-- ActorPresenter でステージ境界を保持し、ActorState 更新時に座標をクランプするよう統合。UI 側の `FooniUIBridge.ClampToPanel` は非推奨化。
-- refactor(editor): stop auto-attaching ActorPresenterAdapter to 'FUnity UI' and expose explicit assignment in FUnityManager.
+- Actor テンプレート生成時の出力先を `Assets/FUnity/Actors/<ActorName>/` に統一し、関連ファイルがまとまるよう整理しました。
+- Primary Color の既定値を `RGBA(0,0,0,0)` に変更し、テンプレート生成直後のデザインをニュートラルな状態から調整できるようにしました。
+- Visual Scripting 依存を明示して `UNITY_VISUAL_SCRIPTING` ガードや自動 ScriptMachine 付与を撤廃し、FUnityManager から明示的に管理する構成へ移行しました。
+- ActorPresenter がステージ境界クランプを担うよう再設計し、UI 側の `FooniUIBridge.ClampToPanel()` を非推奨化しました。
+- メニュー体系を見直し、Authoring/Diagnostics に分散していた機能を Create 配下へ集約することで学習コストを削減しました。
 
 ### Fixed
-- fix(vs): implement EventHook for WhenIReceiveMessageUnit and unify messaging bus.
-- fix(vs): messaging units no longer throw when payload is unset.
-- fix(setup): PanelSettings テーマ割当と Fooni_FloatSetup の不足検知を堅牢化し、セットアップ時の警告を解消。
-- fix(setup): filter invalid asset search folders and auto-generate Fooni placeholders to silence setup warnings.
-- fix(vs): replace Flow.TryGetValue/HasValue with Flow.GetValue and initialize local adapter references.
-- fix(input): add System namespace or qualify [System.Obsolete].
-- 壊れた USS や重複アセットを再生成・整理する手順を整備。
-- fix(editor): avoid assigning FlowGraph.variables directly; initialize macro variables via SerializedObject managed reference.
-- fix(vs): guard ScriptGraphAsset variable resolution against null FlowGraph.variables entries.
+- Visual Scripting のメッセージングと緑の旗イベントを共通 EventHook で処理し、ペイロード未設定時でも例外が発生しないよう防止しました。
+- ScriptGraphAsset 変数の null 参照や FlowGraph 直接操作による初期化不備を解消し、マクロ生成時の安定性を向上しました。
+- セットアップ手順で PanelSettings テーマ／Fooni プレースホルダーの不足を自動検出・補完し、初回起動時の警告を削減しました。
+- 破損した USS や重複アセットを再生成するユーティリティとトラブルシュート手順を整備し、環境差異による崩れを解消しました。
 
 ### Removed
-- Core: 旧ランタイム管理 MonoBehaviour を削除し、`FUnityManager` に一本化。
-- VS: 旧 Visual Scripting ブリッジ MonoBehaviour を削除し、`VSPresenterBridge` / `ActorPresenterAdapter` に統一。
-- chore(editor): Visual Scripting 用のマクロ自動生成メニュー（`CreateFooniFloatMacro`, `CreateFooniMacros`, `CreateScratchStarterMacros`, `VisualScriptingScratchTools`）を撤去。
-- VS: Fooni float units removed (`Fooni_EnableFloatUnit`, `Fooni_SetFloatAmplitudeUnit`, `Fooni_SetFloatPeriodUnit`). Feature is deprecated and no longer supported.
+- 旧来のランタイム管理 MonoBehaviour と Visual Scripting ブリッジを削除し、`FUnityManager` / `VSPresenterBridge` / `ActorPresenterAdapter` に統一しました。
+- 使用されていなかった Editor メニュー（`FUnity/Tools/Fix Runtime Layout` など）と `GenerateActorUITemplateWindow` / `StageBackgroundDiagnosticsMenu` などの補助クラスを整理しました。
+- Scratch Float 機能を正式に廃止し、`Fooni_EnableFloatUnit` など関連ユニットと自動生成メニューを撤去しました。
 
 ### Docs
-- docs(vs): document Scratch green flag event mapping and trigger behaviour.
-- docs(vs): document Scratch clone units and note actor自動解決 in VS mapping.
-- docs(vs): VS Scratch 対応表に大きさユニットと Presenter 連携の解説を追加。
-- docs(vs): note Scratch Unit adapter auto-resolution and removal of Adapter ports in VS mapping.
-- docs: update Runtime XML comments to clarify MVP responsibilities and UI Toolkit constraints.
-- docs: update README and Docs to reflect current initialization flow, theme resolution, and VS macro auto-creation.
-- README と Docs/ 配下を最新の実装と運用に合わせて全面更新。
-- コーディング規約とトラブルシュートを明文化。
-- Visual Scripting が前提となった手順とクイックスタートを追記。
-- docs: update setup/troubleshooting guidance to remove hard dependency on 'FUnity UI' hosting ActorPresenterAdapter.
-- docs: update setup/troubleshooting to remove hard dependency on 'FUnity UI' hosting ScriptMachine.
+- README と Docs 配下を刷新し、Visual Scripting 前提の初期化手順・メニュー構成・テーマ解決フローを最新実装に合わせました。
+- VS Scratch 対応表に新規ユニット（緑の旗、クローン、メッセージ、サイズ／表示／回転）と Presenter 連携の挙動を追記しました。
+- トラブルシューティングやコーディング規約を整理し、Actor テンプレート生成や ModeConfig 自動設定の注意点を明文化しました。
+
+### Internal
+- UPM パッケージ利用を想定し、ModeConfig 検出ロジックやアセット探索のパス解決を再実装して複数配置（`Assets/` / `Packages/com.papacoder.funity`）をサポートしました。
+- ドキュメントと実装のメニュー表記を統一し、セットアップウィザードや各種警告ログの文言を最新版に揃えました。
 
 ## [0.1.0] - 2024-05-04
 ### Added
