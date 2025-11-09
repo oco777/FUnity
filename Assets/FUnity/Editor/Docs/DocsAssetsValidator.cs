@@ -40,15 +40,6 @@ namespace FUnity.Editor.Docs
         }
 
         /// <summary>
-        /// Unity メニューから手動でバリデーションを実行するためのエントリです。
-        /// </summary>
-        [MenuItem("FUnity/Diagnostics/Validate Docs Assets")]
-        public static void ValidateFromMenu()
-        {
-            ExecuteValidation();
-        }
-
-        /// <summary>
         /// EditorApplication.delayCall に登録された一度きりのバリデーション実行です。
         /// </summary>
         private static void RunValidationOnce()

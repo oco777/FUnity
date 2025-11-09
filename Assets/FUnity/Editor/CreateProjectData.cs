@@ -33,9 +33,7 @@ namespace FUnity.EditorTools
         private const string ActorRootFolderPath = "Assets/FUnity/Data";
         private const string ActorDataFolderPath = ActorRootFolderPath + "/Actors";
         private const string ActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Fooni.asset";
-        private const string ScratchActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Starter.asset";
         private const string FooniScriptGraphSearchFilter = "t:ScriptGraphAsset Fooni_FloatSetup";
-        private const string ScratchRunnerMacroSearchFilter = "t:ScriptGraphAsset MoveWithArrow";
         private const string GeneratedRootFolderPath = FUnityFolderPath + "/Generated";
         private const string GeneratedTextureFolderPath = GeneratedRootFolderPath + "/Textures";
         private const string GeneratedGraphsFolderPath = GeneratedRootFolderPath + "/Graphs";
@@ -100,13 +98,6 @@ namespace FUnity.EditorTools
             "Packages/com.papacoder.funity/VisualScripting/Macros/Fooni_FloatSetup.asset",
             "Packages/com.papacoder.funity/Runtime/VisualScripting/Macros/Fooni_FloatSetup.asset"
         };
-        private static readonly string[] ScratchRunnerMacroCandidates =
-        {
-            "Assets/FUnity/VisualScripting/Macros/MoveWithArrow.asset",
-            "Packages/com.papacoder.funity/VisualScripting/Macros/MoveWithArrow.asset",
-            "Packages/com.papacoder.funity/Runtime/VisualScripting/Macros/MoveWithArrow.asset"
-        };
-
         private const string BackgroundSearchFilter = "t:Texture2D Background_01";
         private const string FooniPortraitSearchFilter = "t:Texture2D Fooni";
         private const string FooniElementUxmlSearchFilter = "t:VisualTreeAsset FooniElement";
@@ -153,35 +144,6 @@ namespace FUnity.EditorTools
             Debug.Log("[FUnity] Created default project data assets and linked the Fooni actor.");
         }
 
-        [MenuItem("FUnity/Create/Scratch Starter (Actor+Stage+VS)")]
-        /// <summary>
-        /// Scratch 本の練習に必要な Project/Stage/Actor/Runner を一括生成する。
-        /// 既存アセットは尊重しつつ、Starter 用 ActorData と VS Runner を最低限構成する。
-        /// </summary>
-        public static void CreateScratchStarter()
-        {
-            CreateDefault();
-
-            var project = AssetDatabase.LoadAssetAtPath<FUnityProjectData>(ProjectAssetPath);
-            var stage = AssetDatabase.LoadAssetAtPath<FUnityStageData>(StageAssetPath);
-            var actor = ConfigureScratchActorData();
-
-            AssignStageBackground(stage);
-            LinkProjectData(project, stage, actor);
-            AssignDefaultModeConfigs(project);
-            ConfigureScratchRunner(project);
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            if (project != null)
-            {
-                Selection.activeObject = project;
-            }
-
-            Debug.Log("[FUnity] Created Scratch starter assets (Project / Stage / Actor / Runner).");
-        }
-
         /// <summary>
         /// Fooni ActorData を確保し、候補パスと GUID 検索で集めた Portrait/UXML/USS を割り当てる。テンプレート構造は root/portrait 要素を前提。
         /// 旧 Resources 版が残る場合でも生成を優先し、削除は RemoveDuplicateActorResource に委ねる。
@@ -219,80 +181,6 @@ namespace FUnity.EditorTools
             }
 
             return actorObj;
-        }
-
-        /// <summary>
-        /// Scratch Starter 向けの ActorData を確保し、初期位置・サイズを標準化する。
-        /// Portrait/UXML/USS は Fooni と同じ候補を流用し、浮遊アニメーションは無効化する。
-        /// </summary>
-        private static FUnityActorData ConfigureScratchActorData()
-        {
-            EnsureFolder(FUnityFolderPath);
-            EnsureFolder(ActorRootFolderPath);
-            EnsureFolder(ActorDataFolderPath);
-
-            var actorObj = AssetDatabase.LoadAssetAtPath<FUnityActorData>(ScratchActorAssetPath);
-            if (actorObj == null)
-            {
-                actorObj = ScriptableObject.CreateInstance<FUnityActorData>();
-                AssetDatabase.CreateAsset(actorObj, ScratchActorAssetPath);
-            }
-
-            var serializedActor = new SerializedObject(actorObj);
-            var changed = false;
-
-            changed |= SetString(serializedActor, "m_displayName", "Scratch Starter");
-            var portraitTexture = EnsureFooniPortraitTexture();
-            changed |= SetObject(serializedActor, "m_portrait", portraitTexture);
-            changed |= SetObject(serializedActor, "m_ElementUxml", LoadFirst<VisualTreeAsset>(FooniElementUxmlCandidates, FooniElementUxmlSearchFilter));
-            changed |= SetObject(serializedActor, "m_ElementStyle", LoadFirst<StyleSheet>(FooniElementStyleCandidates, FooniElementStyleSearchFilter));
-            changed |= SetVector2(serializedActor, "m_initialPosition", new Vector2(240f, 200f));
-            changed |= SetVector2(serializedActor, "m_size", new Vector2(180f, 180f));
-            changed |= SetFloat(serializedActor, "m_moveSpeed", 240f);
-            changed |= SetBool(serializedActor, "m_floatAnimation", false);
-
-            if (changed)
-            {
-                serializedActor.ApplyModifiedPropertiesWithoutUndo();
-                EditorUtility.SetDirty(actorObj);
-                AssetDatabase.SaveAssets();
-            }
-
-            return actorObj;
-        }
-
-        /// <summary>
-        /// Scratch Starter 用の Visual Scripting Runner 定義を <see cref="FUnityProjectData"/> に書き込む。
-        /// 既存リストは 1 件に揃え、MoveWithArrow マクロを割り当てる。
-        /// </summary>
-        private static void ConfigureScratchRunner(FUnityProjectData project)
-        {
-            if (project == null)
-            {
-                return;
-            }
-
-            if (project.runners == null)
-            {
-                project.runners = new List<FUnityProjectData.RunnerEntry>();
-            }
-
-            if (project.runners.Count == 0)
-            {
-                project.runners.Add(new FUnityProjectData.RunnerEntry());
-            }
-
-            var entry = project.runners[0];
-            entry.name = "Scratch VS Runner";
-            var macro = LoadFirst<ScriptGraphAsset>(ScratchRunnerMacroCandidates, ScratchRunnerMacroSearchFilter, "MoveWithArrow");
-            entry.macro = macro;
-
-            if (entry.objectVariables == null)
-            {
-                entry.objectVariables = new List<FUnityProjectData.RunnerEntry.ObjectVar>();
-            }
-
-            EditorUtility.SetDirty(project);
         }
 
         /// <summary>
