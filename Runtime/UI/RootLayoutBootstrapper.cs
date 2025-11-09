@@ -270,11 +270,16 @@ namespace FUnity.Runtime.UI
                     m_ActiveModeConfig = config;
                     return m_ActiveModeConfig;
                 }
-            }
 
-            if (!m_LoggedMissingModeConfig)
+                if (!m_LoggedMissingModeConfig)
+                {
+                    Debug.LogWarning("[FUnity.Root] FUnityProjectData に ModeConfig が割り当てられていません。メニュー FUnity/Create/FUnityProjectData を再実行するか、Inspector で ModeConfig を設定してください。Scratch 表示スケールの自動調整をスキップします。", this);
+                    m_LoggedMissingModeConfig = true;
+                }
+            }
+            else if (!m_LoggedMissingModeConfig)
             {
-                Debug.LogWarning("[FUnity.Root] FUnityProjectData から有効な ModeConfig を取得できませんでした。Scratch 表示スケールを省略します。", this);
+                Debug.LogWarning("[FUnity.Root] FUnityProjectData が未設定です。メニュー FUnity/Create/FUnityProjectData を実行して ProjectData を生成してください。Scratch 表示スケールの自動調整をスキップします。", this);
                 m_LoggedMissingModeConfig = true;
             }
 
