@@ -21,7 +21,7 @@ Default Project Data 実行後やサンプルシーン再生時に発生しや�
   1. `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss` が存在するか。
   2. `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` が生成されているか。
   3. `Assets/FUnity/UI/FUnityPanelSettings.asset` の `themeStyleSheets` に上記いずれかが登録されているか。
-- 対処: メニュー **FUnity > Create > Default Project Data** を再実行すると、優先度 1 → 2 の順に Theme が自動割り当てされます。
+- 対処: メニュー **FUnity > Create > FUnityProjectData** を再実行すると、優先度 1 → 2 の順に Theme が自動割り当てされます。
 
 ## 俳優 UI が表示されない
 - 症状: 背景は表示されるが、フーニーが見えない / `FooniUIBridge` が要素を見つけられない。

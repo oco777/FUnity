@@ -1,6 +1,6 @@
 # 既定データの構成
 
-**FUnity/Create/Default Project Data** が生成・更新するアセットと、その配置パスを整理します。
+**FUnity/Create/FUnityProjectData** が生成・更新するアセットと、その配置パスを整理します。
 
 ## 目次
 - [生成されるアセット一覧](#生成されるアセット一覧)

@@ -103,8 +103,8 @@ namespace FUnity.EditorTools
         private const string FooniElementUxmlSearchFilter = "t:VisualTreeAsset FooniElement";
         private const string FooniElementStyleSearchFilter = "t:StyleSheet FooniElement";
 
-        // FUnity → Create → Default Project Data。ProjectData/StageData/ActorData/PanelSettings を生成し相互リンクする。
-        [MenuItem("FUnity/Create/Default Project Data")]
+        // FUnity → Create → FUnityProjectData。ProjectData/StageData/ActorData/PanelSettings を生成し相互リンクする。
+        [MenuItem("FUnity/Create/FUnityProjectData")]
         /// <summary>
         /// - Resources/Assets/FUnity 配下を作成し、Project/Stage/Actor の ScriptableObject を用意する。
         /// - UI Theme は正規/旧配置から探索し、PanelSettings を確保して SerializedObject 経由で割り当てる。
