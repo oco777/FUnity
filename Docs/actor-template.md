@@ -11,6 +11,8 @@
 - `CreateActorElement()` が `root` サイズと `portrait` 画像を自動調整する。
 - USS は Theme から参照し、FUnity 配下で一元管理する。
 - ActorData の **ScriptGraph** に Macro を設定しておくと、実行時に `ActorRunner - <Actor名>` GameObject が `FUnity UI` 配下に生成され、割り当てたグラフが ScriptMachine で動作する。
+- メニュー **FUnity/Create/FUnityActorData** は `Assets/FUnity/Actors/<ActorName>/` に `<ActorName>.uxml` / `<ActorName>.uss` / `<ActorName>_Actor.asset` / `<ActorName>_ScriptGraph.asset`（任意）を生成し、相互リンクまで自動で行う。
+- 生成ウィンドウの Primary Color 既定値は `rgba(0, 0, 0, 0)`（完全透過）であり、背景色を固定したい場合のみ変更する。
 
 ## 手順
 ### 1. UXML テンプレートの構成
@@ -41,6 +43,7 @@
 ```
 - USS は `Assets/FUnity/USS/` に配置し、Theme へインポートする。
 - 背景サイズを `contain` に設定し、画像の縦横比を維持する。
+- 公式メニューから生成した場合は `Assets/FUnity/Actors/<ActorName>/<ActorName>.uss` として配置される。
 
 ### 3. 画像の準備
 - Portrait 用 PNG は `Assets/FUnity/Art/Characters/` に配置する。

@@ -291,7 +291,7 @@ namespace FUnity.Runtime.Core
 
             if (m_Project == null)
             {
-                Debug.LogWarning("[FUnity] FUnityProjectData not found. Skipping Project-driven UI setup.");
+                Debug.LogWarning("[FUnity] FUnityProjectData not found. メニュー FUnity/Create/FUnityProjectData を実行して初期アセットを生成してください。");
                 return;
             }
 
@@ -1336,25 +1336,23 @@ namespace FUnity.Runtime.Core
                     m_LoggedMissingModeConfig = false;
                     return m_ActiveModeConfig;
                 }
+
+                if (!m_LoggedMissingModeConfig)
+                {
+                    Debug.LogWarning("[FUnity] FUnityProjectData に ModeConfig が割り当てられていません。メニュー FUnity/Create/FUnityProjectData を再実行するか、Inspector で ModeConfig を設定してください。暫定的に FUnityManager の ActiveModeConfig を利用します。");
+                    m_LoggedMissingModeConfig = true;
+                }
+            }
+            else if (!m_LoggedMissingModeConfig)
+            {
+                Debug.LogWarning("[FUnity] FUnityProjectData が未設定のため ModeConfig を決定できません。メニュー FUnity/Create/FUnityProjectData を実行して ProjectData を作成してください。");
+                m_LoggedMissingModeConfig = true;
             }
 
             if (m_ActiveModeConfig != null)
             {
                 m_ActiveModeConfig.EnsureScratchStageDefaults();
-
-                if (!m_LoggedMissingModeConfig)
-                {
-                    Debug.LogWarning("[FUnity] ProjectData に ModeConfig が未設定のため、FUnityManager の ActiveModeConfig をフォールバック利用します。");
-                    m_LoggedMissingModeConfig = true;
-                }
-
                 return m_ActiveModeConfig;
-            }
-
-            if (!m_LoggedMissingModeConfig)
-            {
-                Debug.LogWarning("[FUnity] ProjectData から ModeConfig を取得できなかったため、Scratch 固有設定を適用できません。");
-                m_LoggedMissingModeConfig = true;
             }
 
             return null;
@@ -1628,7 +1626,7 @@ namespace FUnity.Runtime.Core
 
             if (m_Project == null)
             {
-                Debug.LogWarning("[FUnity] FUnityProjectData not found. Skip runner spawn.");
+                Debug.LogWarning("[FUnity] FUnityProjectData not found. メニュー FUnity/Create/FUnityProjectData を実行した後に Runner を再生成してください。");
                 return;
             }
 
