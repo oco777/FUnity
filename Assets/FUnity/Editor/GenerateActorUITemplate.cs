@@ -28,12 +28,8 @@ namespace FUnity.EditorTools
         private int m_Height = 128;
         // なぜ: ブランドカラーをテンプレで共有したい。何を: 背景に使うPrimaryColor。どうする: USSにrgbaで埋め込む。
         private Color m_PrimaryColor = new Color(0.15f, 0.6f, 1f, 1f);
-        // なぜ: 生成直後にアクター定義へ適用したい。何を: 選択中FUnityActorDataとのリンク要否。どうする: trueならSelection経由で適用。
-        private bool m_LinkToSelectedActor = true;
-        // なぜ: ActorData未選択時にも統一フォルダで生成したい。何を: ActorData自動生成の有効/無効。どうする: trueなら不足時に新規作成。
-        private bool m_CreateActorDataIfNone = true;
-        // なぜ: 俳優ごとの Visual Scripting を同梱したい。何を: ScriptGraphAssetの自動生成可否。どうする: trueなら不足時に新規作成。
-        private bool m_CreateScriptGraphIfNone = true;
+        // なぜ: 選択中情報からテンプレ名称を補完したい。何を: 直近サジェスト名を保持。どうする: Selectionからの提案があれば初期値に使う。
+        private string m_LastSuggestedName = string.Empty;
         // なぜ: サジェストしたフォルダ名とユーザー入力を区別したい。何を: 直近サジェストを保持する変数。どうする: Template変更時の自動更新に利用。
         private string m_LastSuggestedFolder = string.Empty;
         // なぜ: 初回ウィンドウ表示で一度だけ初期化したい。何を: 初期化済みフラグ。どうする: OnEnableで設定を行うかどうか判定する。
@@ -50,21 +46,20 @@ namespace FUnity.EditorTools
 
         private void OnEnable()
         {
-            // なぜ: ウィンドウ生成時に初期フォルダ候補を整えたい。何を: サジェストフォルダとトグル初期値。どうする: 一度だけ初期化し、再表示時の入力を保持する。
+            // なぜ: ウィンドウ生成時に初期フォルダ候補を整えたい。何を: 選択内容から名前とパスをサジェストする。どうする: 一度だけ初期化し、再表示時の入力を保持する。
             if (m_IsInitialized)
             {
                 return;
             }
 
             m_IsInitialized = true;
-            m_CreateActorDataIfNone = true;
-            m_CreateScriptGraphIfNone = true;
+            ApplySelectionHints();
             SuggestOutputFolder(true);
         }
 
         private void OnGUI()
         {
-            // なぜ: テンプレ構成要素を一括設定したい。何を: 名前/出力先/portraitスロット/サイズ/色/リンク有無の入力群。
+            // なぜ: テンプレ構成要素を一括設定したい。何を: 名前/出力先/portraitスロット/サイズ/色の入力群。
             // どうする: EditorGUILayoutでフォームを描画し、生成ボタンでUXML/USS/ActorData/ScriptGraph出力とリンクを実行する。
             EditorGUILayout.LabelField("FUnity Actor UI Template", EditorStyles.boldLabel);
             EditorGUILayout.Space();
@@ -100,10 +95,6 @@ namespace FUnity.EditorTools
             m_Width = EditorGUILayout.IntField("Width (px)", m_Width);
             m_Height = EditorGUILayout.IntField("Height (px)", m_Height);
             m_PrimaryColor = EditorGUILayout.ColorField("Primary Color", m_PrimaryColor);
-            m_LinkToSelectedActor = EditorGUILayout.Toggle("Link to selected FUnityActorData", m_LinkToSelectedActor);
-            m_CreateActorDataIfNone = EditorGUILayout.Toggle("Create ActorData if none", m_CreateActorDataIfNone);
-            m_CreateScriptGraphIfNone = EditorGUILayout.Toggle("Create ScriptGraph if none", m_CreateScriptGraphIfNone);
-
             var actorName = GetActorName();
             var hasValidActorName = !string.IsNullOrEmpty(actorName);
             var folderValid = IsFolderInAssets(m_Folder);
@@ -117,12 +108,6 @@ namespace FUnity.EditorTools
             {
                 EditorGUILayout.HelpBox("Output Folder は Assets 配下に指定してください。", MessageType.Error);
             }
-
-            if (!m_LinkToSelectedActor && !m_CreateActorDataIfNone)
-            {
-                EditorGUILayout.HelpBox("ActorData を選択するか、Create ActorData if none を有効にしてください。", MessageType.Warning);
-            }
-
             EditorGUILayout.Space();
             using (new EditorGUI.DisabledScope(!hasValidActorName || !folderValid))
             {
@@ -137,8 +122,8 @@ namespace FUnity.EditorTools
         /// <list type="bullet">
         /// <item><description>出力フォルダを用意する。</description></item>
         /// <item><description>UXML/USSを生成し保存する。</description></item>
-        /// <item><description>必要であれば ActorData と ScriptGraph を生成・取得する。</description></item>
-        /// <item><description>対象 ActorData に UXML/USS/ScriptGraph をリンクする。</description></item>
+        /// <item><description>新規 ActorData と ScriptGraph を生成する。</description></item>
+        /// <item><description>新規 ActorData に UXML/USS/ScriptGraph をリンクする。</description></item>
         /// <item><description>アセット保存と選択を更新する。</description></item>
         /// </list>
         /// </summary>
@@ -198,42 +183,19 @@ namespace FUnity.EditorTools
             AssetDatabase.ImportAsset(ussPath);
             AssetDatabase.ImportAsset(uxmlPath);
 
-            FUnityActorData targetActor = null;
-            if (m_LinkToSelectedActor && Selection.activeObject is FUnityActorData selectedActor)
-            {
-                targetActor = selectedActor;
-            }
-            else if (m_CreateActorDataIfNone)
-            {
-                targetActor = ScriptableObject.CreateInstance<FUnityActorData>();
-                var actorAssetPath = AssetDatabase.GenerateUniqueAssetPath(CombinePath(outputFolder, $"{actorName}_Actor.asset"));
-                AssetDatabase.CreateAsset(targetActor, actorAssetPath);
-                AssetDatabase.ImportAsset(actorAssetPath);
-            }
-            else
-            {
-                EditorUtility.DisplayDialog("Error", "ActorData を選択するか、新規作成を有効にしてください。", "OK");
-                return;
-            }
+            var targetActor = ScriptableObject.CreateInstance<FUnityActorData>();
+            var actorAssetPath = AssetDatabase.GenerateUniqueAssetPath(CombinePath(outputFolder, $"{actorName}_Actor.asset"));
+            AssetDatabase.CreateAsset(targetActor, actorAssetPath);
+            AssetDatabase.ImportAsset(actorAssetPath);
 
             var uxmlAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(uxmlPath);
             var ussAsset = AssetDatabase.LoadAssetAtPath<StyleSheet>(ussPath);
-            ScriptGraphAsset scriptGraphAsset = targetActor != null ? targetActor.ScriptGraph : null;
-
-            if (targetActor == null)
+            var scriptGraphPath = AssetDatabase.GenerateUniqueAssetPath(CombinePath(outputFolder, $"{actorName}_ScriptGraph.asset"));
+            var scriptGraphAsset = CreateScriptGraphAsset(scriptGraphPath);
+            var scriptGraphAssetPath = scriptGraphAsset != null ? AssetDatabase.GetAssetPath(scriptGraphAsset) : string.Empty;
+            if (scriptGraphAsset == null)
             {
-                Debug.LogError("[FUnity] Failed to resolve or create FUnityActorData target.");
-                return;
-            }
-
-            if (m_CreateScriptGraphIfNone && scriptGraphAsset == null)
-            {
-                var scriptGraphPath = AssetDatabase.GenerateUniqueAssetPath(CombinePath(outputFolder, $"{actorName}_ScriptGraph.asset"));
-                scriptGraphAsset = CreateScriptGraphAsset(scriptGraphPath);
-            }
-            else if (!m_CreateScriptGraphIfNone && scriptGraphAsset == null)
-            {
-                Debug.LogWarning($"[FUnity] ScriptGraph is not assigned for {targetActor.name}. You can assign it manually later.");
+                Debug.LogWarning($"[FUnity] Failed to create ScriptGraphAsset at {scriptGraphPath}. ActorData will be created without a ScriptGraph.");
             }
 
             var serializedActor = new SerializedObject(targetActor);
@@ -275,15 +237,74 @@ namespace FUnity.EditorTools
             messageBuilder.AppendLine("Created:");
             messageBuilder.AppendLine(uxmlPath);
             messageBuilder.AppendLine(ussPath);
+            messageBuilder.AppendLine(actorAssetPath);
             if (scriptGraphAsset != null)
             {
-                messageBuilder.AppendLine(AssetDatabase.GetAssetPath(scriptGraphAsset));
+                messageBuilder.AppendLine(scriptGraphAssetPath);
             }
             messageBuilder.AppendLine();
-            messageBuilder.AppendLine($"Linked to: {targetActor.name}");
+            messageBuilder.AppendLine($"Linked to new ActorData: {targetActor.name}");
 
             EditorUtility.DisplayDialog("Success", messageBuilder.ToString(), "OK");
-            Debug.Log($"[FUnity] Generated assets for {actorName} in {outputFolder}, linked to {targetActor.name}.");
+            var logScriptGraph = string.IsNullOrEmpty(scriptGraphAssetPath) ? "(not created)" : scriptGraphAssetPath;
+            Debug.Log($"[FUnity] Generated assets for {actorName} in {outputFolder}. ActorData: {actorAssetPath}. ScriptGraph: {logScriptGraph}.");
+        }
+
+        /// <summary>
+        /// 現在選択されているアセットからテンプレ名や出力フォルダの初期値を補完する。
+        /// </summary>
+        private void ApplySelectionHints()
+        {
+            var activeObject = Selection.activeObject;
+            if (activeObject == null)
+            {
+                return;
+            }
+
+            if (activeObject is FUnityActorData actorData)
+            {
+                if (string.IsNullOrEmpty(m_TemplateName) || m_TemplateName == "MyActor" || m_TemplateName == m_LastSuggestedName)
+                {
+                    m_TemplateName = actorData.name + "_New";
+                    m_LastSuggestedName = m_TemplateName;
+                }
+
+                var actorPath = AssetDatabase.GetAssetPath(actorData);
+                var actorFolder = Path.GetDirectoryName(actorPath);
+                if (!string.IsNullOrEmpty(actorFolder) && IsFolderInAssets(actorFolder))
+                {
+                    m_Folder = NormalizeFolderPath(actorFolder);
+                }
+
+                return;
+            }
+
+            if (activeObject is Sprite || activeObject is Texture2D)
+            {
+                if (string.IsNullOrEmpty(m_TemplateName) || m_TemplateName == "MyActor" || m_TemplateName == m_LastSuggestedName)
+                {
+                    m_TemplateName = activeObject.name + "Actor";
+                    m_LastSuggestedName = m_TemplateName;
+                }
+
+                var texturePath = AssetDatabase.GetAssetPath(activeObject);
+                var textureFolder = Path.GetDirectoryName(texturePath);
+                if (!string.IsNullOrEmpty(textureFolder) && IsFolderInAssets(textureFolder))
+                {
+                    m_Folder = NormalizeFolderPath(textureFolder);
+                }
+
+                return;
+            }
+
+            if (activeObject is DefaultAsset defaultAsset)
+            {
+                var folderPath = AssetDatabase.GetAssetPath(defaultAsset);
+                if (AssetDatabase.IsValidFolder(folderPath) && IsFolderInAssets(folderPath))
+                {
+                    m_Folder = NormalizeFolderPath(folderPath);
+                }
+            }
         }
 
         /// <summary>
@@ -326,7 +347,14 @@ namespace FUnity.EditorTools
             }
 
             var suggested = $"Assets/FUnity/Actors/{actorName}";
-            if (force || string.IsNullOrEmpty(m_Folder) || m_Folder == m_LastSuggestedFolder)
+            if (force)
+            {
+                if (string.IsNullOrEmpty(m_Folder))
+                {
+                    m_Folder = suggested;
+                }
+            }
+            else if (string.IsNullOrEmpty(m_Folder) || m_Folder == m_LastSuggestedFolder)
             {
                 m_Folder = suggested;
             }
