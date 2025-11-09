@@ -27,7 +27,7 @@
 - [システム要件](#システム要件)
 - [インストール（UPM/Git）](#インストールupmgit)
 - [クイックスタート](#クイックスタート)
-- [Default Project Data が行うこと](#default-project-data-が行うこと)
+- [FUnityProjectData が行うこと](#funityprojectdata-が行うこと)
 - [ランタイム構築フロー](#ランタイム構築フロー)
 - [⚙ Modes](#-modes)
 - [Visual Scripting での移動例](#visual-scripting-での移動例)
@@ -61,17 +61,17 @@
 
 ## クイックスタート
 1. Package Manager を開き、**Samples → BasicScene** の **Import** を押して `Samples~/BasicScene/FUnitySample.unity` を開きます。
-2. メニュー **FUnity > Create > FUnityProjectData** を実行し、プロジェクト既定データを生成します。
+2. メニュー **FUnity/Create/FUnityProjectData** を実行し、プロジェクト既定データを生成します。
 3. シーンを再生すると背景画像（`Background_01.png`）とフーニーの俳優 UI が表示され、サンプル Macro による移動が動作します。
 
 ## Scratch本で最初に試すレシピ（5分）
-- **FUnity > Create > Scratch Starter (Actor+Stage+VS)** を実行すると、Stage/Actor/Runner が Scratch 本の定番構成で一括生成されます。
-  - `FUnityActorData_Starter` には `ActorElement.uxml/uss` と吹き出し用ラベルが割り当て済みで、`StageBackgroundService` が UI Toolkit の背景に適用されます。
-  - Runner は `ScriptMachine` に空のマクロを割り当てて生成されるため、Visual Scripting グラフをすぐに編集できます。
+- **FUnity/Create/FUnityActorData** を実行すると、ActorData と関連テンプレートが規定のフォルダに生成され、Stage や Runner を既存プロジェクトへ手早く追加できます。
+  - 生成した `FUnityActorData` には `ActorElement.uxml/uss` と吹き出し用ラベルが割り当て済みで、`StageBackgroundService` と組み合わせて背景を適用できます。
+  - Runner は必要に応じて既存のテンプレートを複製し、`ScriptMachine` に Macro を割り当てて Visual Scripting グラフを編集してください。
 - Visual Scripting のグラフは Runner の `ScriptMachine` から新規 Macro を作成し、`VSPresenterBridge` の Custom Event を結線すると Scratch ブロック相当の操作が行えます。
 
-## Default Project Data が行うこと
-`Assets/FUnity/Editor/CreateProjectData.cs` の **Create Default Project Data** は、既存リソースを尊重しつつ以下を保証します。
+## FUnityProjectData が行うこと
+メニュー **FUnity/Create/FUnityProjectData**（`Assets/FUnity/Editor/CreateProjectData.cs` 内）を実行すると、既存リソースを尊重しつつ以下が保証されます。
 - `Resources/FUnityProjectData.asset` と `Resources/FUnityStageData.asset` を生成し、ステージ背景に `Runtime/Resources/Backgrounds/Background_01.png` を設定。
 - `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss` が存在する場合はそれを `FUnityPanelSettings.asset`（`Assets/FUnity/UI/`）の ThemeStyleSheet に割り当て。存在しなければ `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` を生成し、同アセットに設定。
 - `Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset` を作成し、既存の重複リソース（`Assets/Resources/FUnityActorData_Fooni.asset` など）を検出して削除。Portrait/UXML/USS を既定テンプレートに割り当てます。
@@ -89,7 +89,7 @@
 
 ## トラブルシューティング早見表
 - `CS0234`（`Input.GetAxisRaw` が見つからない）: `UnityEngine.Input.GetAxisRaw` と完全修飾するか、`using UInput = UnityEngine.Input;` を追加します。
-- テーマが null のまま: `Assets/UI Toolkit/UnityThemes/` を確認し、存在しない場合は Default Project Data を再実行して `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` が生成されることを確認します。
+- テーマが null のまま: `Assets/UI Toolkit/UnityThemes/` を確認し、存在しない場合は **FUnity/Create/FUnityProjectData** を再実行して `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` が生成されることを確認します。
 - 俳優 UI が表示されない: `FooniElement.uxml` で `name="root"` と `name="actor-root"` が設定されているか確認し、`FooniUIBridge` が要素を取得できるようにします。
 
 ## ドキュメント

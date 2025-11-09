@@ -1,6 +1,6 @@
 # UI テーマ適用戦略
 
-Default Project Data による PanelSettings/Theme の解決ロジックをまとめます。
+**FUnity/Create/FUnityProjectData** による PanelSettings/Theme の解決ロジックをまとめます。
 
 ## 目次
 - [テーマ探索の優先度](#テーマ探索の優先度)
@@ -21,9 +21,9 @@ Default Project Data による PanelSettings/Theme の解決ロジックをま�
 - Runtime では `FUnityManager` がこの PanelSettings を `UIDocument` に設定し、再生時に “FUnity UI” が Theme 付きで表示されます。
 
 ## 運用上のヒント
-- Theme が null と表示される場合は `Assets/UI Toolkit/UnityThemes/` を確認し、存在しない場合は Default Project Data を再実行してフォールバック Theme を生成します。
+- Theme が null と表示される場合は `Assets/UI Toolkit/UnityThemes/` を確認し、存在しない場合は **FUnity/Create/FUnityProjectData** を再実行してフォールバック Theme を生成します。
 - Unity の Legacy Theme を利用する場合でも、`Assets/FUnity/UI/FUnityPanelSettings.asset` はリポジトリに保持してください。ビルド環境で Theme を再生成する必要がなくなります。
-- PanelSettings を手動で削除した場合、次回 Default Project Data 実行時に再生成されます。差分が大きい場合は Git で不要なアセットが残っていないか確認します。
+- PanelSettings を手動で削除した場合、次回 **FUnity/Create/FUnityProjectData** 実行時に再生成されます。差分が大きい場合は Git で不要なアセットが残っていないか確認します。
 
 ## 関連ドキュメント
 - [導入手順](setup.md)
