@@ -133,7 +133,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「メッセージを受け取ったとき」に相当し、指定メッセージ受信でフローを発火する EventUnit です。
     /// </summary>
     [UnitTitle("メッセージを受け取ったとき")]
-    [UnitCategory("FUnity/Scratch/イベント")]
+    [UnitCategory("Events/FUnity/Scratch/イベント")]
     [UnitSubtitle("funity scratch イベント receive message broadcast 受信")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIReceiveMessageUnit : EventUnit<MessagingCommon.Args>

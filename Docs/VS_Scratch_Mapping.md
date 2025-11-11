@@ -4,7 +4,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 
 ## 運用ルール
 - `[UnitTitle]` は Scratch 日本語ブロック名に合わせるか、Scratch 流儀の短い日本語で命名する。
-- `[UnitCategory]` は `FUnity/Scratch/◯◯` 形式（カテゴリ名は日本語）で統一する。拡張ユニットは `FUnity/Scratch/拡張` を使用する。
+- `[UnitCategory]` は Scratch 系ユニットの場合、イベント系は `Events/FUnity/Scratch/◯◯`、その他は `FUnity/Scratch/◯◯` 形式（カテゴリ名は日本語）で統一する。拡張ユニットは `FUnity/Scratch/拡張` を使用する。
 - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を全ユニットへ付与し、FUnity Scratch 系ユニットであることを明示する。
 - ノード検索性向上のため、利用可能な場合は `[UnitSubtitle]`（または同等の検索キーワード属性）に `funity scratch` とカテゴリ名・日本語/英語の関連語を半角スペース区切りで登録する（例：`funity scratch 見た目 say speech`）。
 - コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
@@ -54,18 +54,18 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | ○秒待つ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WaitSecondsUnit | ○秒待つ | FUnity/Scratch/制御 | 指定時間待機。定義: Runtime/.../WaitSecondsUnit.cs |
 | 自分のクローンを作る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CreateCloneOfSelfUnit | 自分のクローンを作る | FUnity/Scratch/制御 | 自身を複製。定義: Runtime/.../CloneUnits.cs |
 | ○のクローンを作る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CreateCloneOfDisplayNameUnit | ○のクローンを作る | FUnity/Scratch/制御 | 指定俳優を複製。定義: Runtime/.../CloneUnits.cs |
-| クローンされたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIStartAsCloneUnit | クローンされたとき | FUnity/Scratch/制御 | クローン生成時イベント。定義: Runtime/.../CloneUnits.cs |
+| クローンされたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIStartAsCloneUnit | クローンされたとき | Events/FUnity/Scratch/制御 | クローン生成時イベント。定義: Runtime/.../CloneUnits.cs |
 | このクローンを削除する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.DeleteThisCloneUnit | このクローンを削除する | FUnity/Scratch/制御 | クローンを破棄。定義: Runtime/.../CloneUnits.cs |
 | もし○なら | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.IfThenUnit | もし○なら | FUnity/Scratch/制御 | 条件成立時のみ本体を実行。定義: Runtime/.../ConditionUnits.cs |
 
 ## イベント
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
-| 緑の旗が押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenGreenFlagClickedUnit | 緑の旗が押されたとき | FUnity/Scratch/イベント | Runner 対象の緑の旗イベント。定義: Runtime/.../GreenFlagUnits.cs |
-| ○キーが押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.OnKeyPressedUnit | ○キーが押されたとき | FUnity/Scratch/イベント | 押下エッジで発火。定義: Runtime/.../InputEventUnits.cs |
+| 緑の旗が押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenGreenFlagClickedUnit | 緑の旗が押されたとき | Events/FUnity/Scratch/イベント | Runner 対象の緑の旗イベント。定義: Runtime/.../GreenFlagUnits.cs |
+| ○キーが押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.OnKeyPressedUnit | ○キーが押されたとき | Events/FUnity/Scratch/イベント | 押下エッジで発火。定義: Runtime/.../InputEventUnits.cs |
 | メッセージを送る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BroadcastMessageUnit | メッセージを送る | FUnity/Scratch/イベント | 即時配信。定義: Runtime/.../MessagingUnits.cs |
 | メッセージを送って待つ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BroadcastAndWaitUnit | メッセージを送って待つ | FUnity/Scratch/イベント | 同期配信後に継続。定義: Runtime/.../MessagingUnits.cs |
-| メッセージを受け取ったとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIReceiveMessageUnit | メッセージを受け取ったとき | FUnity/Scratch/イベント | フィルタ一致時に発火。定義: Runtime/.../MessagingUnits.cs |
+| メッセージを受け取ったとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIReceiveMessageUnit | メッセージを受け取ったとき | Events/FUnity/Scratch/イベント | フィルタ一致時に発火。定義: Runtime/.../MessagingUnits.cs |
 
 ## 調べる
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
