@@ -126,11 +126,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     }
 
     /// <summary>
-    /// Scratch の「クローンされたとき」イベントを表現し、新しく生成されたクローンごとにトリガーを発火します。
+    /// Scratch の「イベント/クローンされたとき」を表現し、新規クローン生成時にトリガーを発火します。
     /// </summary>
     [UnitTitle("クローンされたとき")]
-    [UnitCategory("FUnity/Scratch/制御")]
-    [UnitSubtitle("funity scratch 制御 clone event when クローン")]
+    [UnitShortTitle("クローンされたとき")]
+    [UnitCategory("FUnity/Scratch/イベント")]
+    [UnitSubtitle("funity scratch イベント clone クローン 生成 された when")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIStartAsCloneUnit : EventUnit<CloneEventArgs>
     {
