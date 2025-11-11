@@ -9,6 +9,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
     /// Scratch の「色の効果を ◯ ずつ変える」に対応し、Presenter 経由で色相回転を相対適用するカスタム Unit です。
+    /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により自動解決します。
     /// </summary>
     [UnitTitle("色の効果を○ずつ変える")]
     [UnitCategory("FUnity/Scratch/見た目")]
@@ -31,10 +32,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ValueInput m_Delta;
 
-        /// <summary>対象俳優を識別する DisplayName または Self を受け取るポートです。</summary>
-        [DoNotSerialize]
-        private ValueInput m_ActorKey;
-
         /// <summary>enter ポートへの参照を公開します。</summary>
         public ControlInput Enter => m_Enter;
 
@@ -44,18 +41,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <summary>delta ポートへの参照を公開します。</summary>
         public ValueInput Delta => m_Delta;
 
-        /// <summary>actor ポートへの参照を公開します。</summary>
-        public ValueInput Actor => m_ActorKey;
-
         /// <summary>
-        /// ポートを定義し、enter→exit の制御線と delta/actor の値入力を登録します。
+        /// ポートを定義し、enter→exit の制御線と delta の値入力を登録します。
         /// </summary>
         protected override void Definition()
         {
             m_Enter = ControlInputCoroutine("enter", Run);
             m_Exit = ControlOutput("exit");
             m_Delta = ValueInput<float>("delta", 10f);
-            m_ActorKey = ValueInput<string>("actor", "Self");
 
             Succession(m_Enter, m_Exit);
         }
@@ -68,15 +61,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private IEnumerator Run(Flow flow)
         {
             var delta = flow.GetValue<float>(m_Delta);
-            var actorKey = flow.GetValue<string>(m_ActorKey);
-            var adapter = GraphicEffectUnitUtil.ResolveAdapter(flow, actorKey, UnitName, out var usedSelf);
+            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
             {
-                if (usedSelf)
-                {
-                    Debug.LogWarning("[FUnity] Scratch/Change Color Effect by: ActorPresenterAdapter が未解決のため色の効果を変更できません。VSPresenterBridge などでアダプタを登録してください。");
-                }
-
+                Debug.LogWarning("[FUnity] Scratch/Change Color Effect by: ActorPresenterAdapter が未解決のため色の効果を変更できません。VSPresenterBridge などでアダプタを登録してください。");
                 yield return m_Exit;
                 yield break;
             }
