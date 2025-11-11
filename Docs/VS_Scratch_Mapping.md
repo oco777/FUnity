@@ -40,7 +40,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | ○と言う | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SayUnit | ○と言う | FUnity/Scratch/見た目 | 無期限の発言吹き出し。定義: Runtime/.../SpeechUnits.cs |
 | ○と○秒考える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ThinkForSecondsUnit | ○と○秒考える | FUnity/Scratch/見た目 | 指定秒数で思考吹き出し。定義: Runtime/.../SpeechUnits.cs |
 | ○と考える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ThinkUnit | ○と考える | FUnity/Scratch/見た目 | 無期限の思考吹き出し。定義: Runtime/.../SpeechUnits.cs |
-| 色の効果を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeColorEffectByUnit | 色の効果を○ずつ変える | FUnity/Scratch/見た目 | 色効果を相対変更。Actor はコンテキストから自動解決。定義: Runtime/.../EffectUnits.cs |
+| 色の効果を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeColorEffectByUnit | 色の効果を○ずつ変える | FUnity/Scratch/見た目 | 色効果を相対変更。定義: Runtime/.../EffectUnits.cs |
 | 色の効果を○にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetColorEffectToUnit | 色の効果を○にする | FUnity/Scratch/見た目 | 色効果を絶対設定。定義: Runtime/.../EffectUnits.cs |
 | 画像効果をなくす | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ClearGraphicEffectsUnit | 画像効果をなくす | FUnity/Scratch/見た目 | Tint をリセット。定義: Runtime/.../EffectUnits.cs |
 | 表示する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ShowActorUnit | 表示する | FUnity/Scratch/見た目 | 俳優を表示状態へ。定義: Runtime/.../VisibilityUnits.cs |
@@ -54,6 +54,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | ○秒待つ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WaitSecondsUnit | ○秒待つ | FUnity/Scratch/制御 | 指定時間待機。定義: Runtime/.../WaitSecondsUnit.cs |
 | 自分のクローンを作る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CreateCloneOfSelfUnit | 自分のクローンを作る | FUnity/Scratch/制御 | 自身を複製。定義: Runtime/.../CloneUnits.cs |
 | ○のクローンを作る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CreateCloneOfDisplayNameUnit | ○のクローンを作る | FUnity/Scratch/制御 | 指定俳優を複製。定義: Runtime/.../CloneUnits.cs |
+| クローンされたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIStartAsCloneUnit | クローンされたとき | FUnity/Scratch/制御 | クローン生成時イベント。定義: Runtime/.../CloneUnits.cs |
 | このクローンを削除する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.DeleteThisCloneUnit | このクローンを削除する | FUnity/Scratch/制御 | クローンを破棄。定義: Runtime/.../CloneUnits.cs |
 | もし○なら | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.IfThenUnit | もし○なら | FUnity/Scratch/制御 | 条件成立時のみ本体を実行。定義: Runtime/.../ConditionUnits.cs |
 
@@ -61,7 +62,6 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
 | 緑の旗が押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenGreenFlagClickedUnit | 緑の旗が押されたとき | FUnity/Scratch/イベント | Runner 対象の緑の旗イベント。定義: Runtime/.../GreenFlagUnits.cs |
-| クローンされたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIStartAsCloneUnit | クローンされたとき | FUnity/Scratch/イベント | クローン生成時イベント。定義: Runtime/.../CloneUnits.cs |
 | ○キーが押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.OnKeyPressedUnit | ○キーが押されたとき | FUnity/Scratch/イベント | 押下エッジで発火。定義: Runtime/.../InputEventUnits.cs |
 | メッセージを送る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BroadcastMessageUnit | メッセージを送る | FUnity/Scratch/イベント | 即時配信。定義: Runtime/.../MessagingUnits.cs |
 | メッセージを送って待つ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BroadcastAndWaitUnit | メッセージを送って待つ | FUnity/Scratch/イベント | 同期配信後に継続。定義: Runtime/.../MessagingUnits.cs |
