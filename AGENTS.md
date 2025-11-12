@@ -137,6 +137,13 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
   - ノード検索性向上のため、利用可能な場合は `[UnitSubtitle]`（または同等の検索キーワード属性）に `funity scratch` とカテゴリ名・関連日本語・英語キーワードを半角スペース区切りで設定する（例：`funity scratch 動き move steps`）。
   - コード差分がある場合は `Docs/VS_Scratch_Mapping.md` を同期させ、タイトルとカテゴリの差異を残さない。
 
+## Scratch マウス座標ユニット規約（2025-03-20 追加）
+- UI Toolkit で取得したローカル座標は必ず Scratch 座標系へ変換する。式: `x = local.x - (width * 0.5f)`, `y = (height * 0.5f) - local.y`。
+- ステージ論理サイズは UIScaleService などから取得し、幅・高さいずれかが 0 以下の場合は 480x360 へフォールバックする。
+- `MousePositionService` などのマウス座標サービスはデフォルトでステージ矩形内へクランプし、`m_ClampToStage` で切り替え可能にする。
+- マウス座標ユニットは Value Unit（Flow 不要）とし、カテゴリは必ず `FUnity/Scratch/調べる` を使用する。EventUnit として実装しないこと。
+- 整数版ユニットを追加する場合は `Round/Floor/Ceil` を選択できる `IntRounding` enum を用い、`Mathf.RoundToInt` / `Mathf.FloorToInt` / `Mathf.CeilToInt` をそれぞれ呼び出す。
+
 ## 変数機能に関する恒久ルール
 - Scratch 互換の変数は必ず `IFUnityVariableService` / `FUnityVariableService` を経由して操作すること。Presenter や VS からの直接参照は禁止です。
 - Visual Scripting の変数系ユニットはサービスへ直接アクセスせず、共通アクセサ（`ScratchVariableUnitUtility` など）を介して呼び出すこと。

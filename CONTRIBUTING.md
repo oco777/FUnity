@@ -38,6 +38,7 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
   - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を必ず付与し、FUnity Scratch 系ユニット共通のアイコンを利用する。
   - ノード検索性を高めるため、利用可能な場合は `[UnitSubtitle]`（または同等のキーワード属性）に `funity scratch`・カテゴリ名・日本語/英語の関連語を半角スペース区切りで登録する（例：`funity scratch イベント green flag`）。
   - 追加・変更に合わせて `Docs/VS_Scratch_Mapping.md` を更新し、表内の `UnitTitle` / `UnitCategory` をコードと一致させる。
+  - 新しい VS ユニットを追加する際はカテゴリパス（`FUnity/Scratch/...`）と日本語タイトルを確定させ、同じ表記で `Docs/VS_Scratch_Mapping.md` に追記する。
 
 ## ランタイム配置に関する必須ルール
 

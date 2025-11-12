@@ -36,6 +36,9 @@ namespace FUnity.Runtime.Core
         /// <summary>シーン内で最後に有効化された FUnityManager への参照。</summary>
         public static FUnityManager Instance { get; private set; }
 
+        /// <summary>現在利用可能なマウス座標プロバイダ。未初期化時は null。</summary>
+        public static IMousePositionProvider MouseProvider { get; private set; }
+
         /// <summary>
         /// 制御対象の <see cref="UIDocument"/>。Inspector で未設定の場合は Awake/Start で探索する。
         /// </summary>
@@ -99,6 +102,9 @@ namespace FUnity.Runtime.Core
 
         /// <summary>Scratch 互換変数を管理するサービス。</summary>
         private readonly FUnityVariableService m_VariableService = new FUnityVariableService();
+
+        /// <summary>マウス座標を監視し、Scratch 座標系へ変換するサービス。</summary>
+        private MousePositionService m_MousePositionService;
 
         /// <summary>変数モニターの UI 表示を担当する Presenter。</summary>
         private VariableUiPresenter m_VariableUiPresenter;
@@ -191,6 +197,8 @@ namespace FUnity.Runtime.Core
 
             Instance = this;
 
+            MouseProvider = null;
+            FUnityServices.MousePosition = null;
             FUnityServices.Variables = m_VariableService;
 
             if (m_Project == null)
@@ -237,6 +245,7 @@ namespace FUnity.Runtime.Core
                 Instance = null;
             }
 
+            DisposeMousePositionService();
             m_VariableService.SetUiPresenter(null);
             FUnityServices.ResetAll();
         }
@@ -276,6 +285,7 @@ namespace FUnity.Runtime.Core
             var backgroundRoot = stageElement != null ? stageElement.StageViewport : root;
 
             EnsureStageBackgroundRoot(backgroundRoot);
+            InitializeMousePositionService(backgroundRoot);
 
             if (m_VsBridge != null)
             {
@@ -473,6 +483,66 @@ namespace FUnity.Runtime.Core
             }
 
             m_StageBackgroundService.Configure(stageRoot);
+        }
+
+        /// <summary>
+        /// ステージビューポートを対象にマウス座標サービスを初期化し、Visual Scripting から参照できるようにします。
+        /// </summary>
+        /// <param name="stageRoot">ステージのローカル座標系を持つ要素。</param>
+        private void InitializeMousePositionService(VisualElement stageRoot)
+        {
+            DisposeMousePositionService();
+
+            if (stageRoot == null)
+            {
+                return;
+            }
+
+            Vector2 ResolveSize() => ResolveMouseStageSize();
+
+            m_MousePositionService = new MousePositionService(stageRoot, ResolveSize, true);
+            MouseProvider = m_MousePositionService;
+            FUnityServices.MousePosition = m_MousePositionService;
+        }
+
+        /// <summary>
+        /// マウス座標サービスを破棄し、静的アクセサを安全な状態へ戻します。
+        /// </summary>
+        private void DisposeMousePositionService()
+        {
+            if (m_MousePositionService != null)
+            {
+                m_MousePositionService.Dispose();
+                m_MousePositionService = null;
+            }
+
+            MouseProvider = null;
+            FUnityServices.MousePosition = null;
+        }
+
+        /// <summary>
+        /// 現在のステージサイズを取得し、マウス座標サービスへ提供する値に変換します。
+        /// </summary>
+        /// <returns>ステージの論理幅と高さ（px）。</returns>
+        private Vector2 ResolveMouseStageSize()
+        {
+            if (m_StageElement != null)
+            {
+                var stageSize = m_StageElement.StageSize;
+                if (stageSize.x > 0 && stageSize.y > 0)
+                {
+                    return new Vector2(stageSize.x, stageSize.y);
+                }
+            }
+
+            if (m_ActiveModeConfig != null && m_ActiveModeConfig.Mode == FUnityAuthoringMode.Scratch)
+            {
+                var width = Mathf.Max(1, m_ActiveModeConfig.ScratchStageWidth);
+                var height = Mathf.Max(1, m_ActiveModeConfig.ScratchStageHeight);
+                return new Vector2(width, height);
+            }
+
+            return new Vector2(FUnityStageData.DefaultStageWidth, FUnityStageData.DefaultStageHeight);
         }
 
         /// <summary>
