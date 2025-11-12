@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
-using FUnity.Runtime.Data;
+using FUnity.Runtime.Core;
 
 namespace FUnity.Runtime.Input
 {
