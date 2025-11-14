@@ -30,6 +30,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | y座標を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeYByUnit | y座標を○ずつ変える | FUnity/Scratch/動き | Y 座標を相対移動。定義: Runtime/.../PositionUnits.cs |
 | ○度回す | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TurnDegreesUnit | ○度回す | FUnity/Scratch/動き | 向きを相対回転。定義: Runtime/.../TurnAndPointUnits.cs |
 | ○度に向ける | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.PointDirectionUnit | ○度に向ける | FUnity/Scratch/動き | 向きを絶対設定。定義: Runtime/.../TurnAndPointUnits.cs |
+| マウスポインターへ向ける | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.PointTowardsMousePointerUnit | マウスポインターへ向ける | FUnity/Scratch/動き | カーソル方向へ即時旋回。定義: Runtime/.../TurnAndPointUnits.cs |
 
 ## 見た目
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
@@ -74,6 +75,8 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | マウスのx座標 | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe.MouseXUnit | マウスのx座標 | FUnity/Scratch/調べる | ステージ中心原点でのマウス x 座標。定義: Runtime/.../Probe/MouseXUnit.cs |
 | マウスのy座標 | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe.MouseYUnit | マウスのy座標 | FUnity/Scratch/調べる | ステージ中心原点でのマウス y 座標。定義: Runtime/.../Probe/MouseYUnit.cs |
 | マウスポインターに触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingMousePointerPredicateUnit | マウスポインターに触れた？ | FUnity/Scratch/調べる | 俳優矩形とマウス座標を判定。定義: Runtime/.../TouchPredicates.cs |
+| マウスポインターまでの距離 | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe.DistanceToMousePointerUnit | マウスポインターまでの距離 | FUnity/Scratch/調べる | 自身中心とカーソル距離。定義: Runtime/.../Probe/DistanceToMousePointerUnit.cs |
+| マウスが押された | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe.MouseDownPredicateUnit | マウスが押された | FUnity/Scratch/調べる | 左ボタン押下状態を返す。定義: Runtime/.../Probe/MouseDownPredicateUnit.cs |
 | 端に触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingEdgePredicateUnit | 端に触れた？ | FUnity/Scratch/調べる | ステージ境界との接触判定。定義: Runtime/.../TouchPredicates.cs |
 | ○○に触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingActorByDisplayNamePredicateUnit | ○○に触れた？ | FUnity/Scratch/調べる | DisplayName 指定で矩形重なりを判定。定義: Runtime/.../TouchingActorByDisplayNamePredicateUnit.cs |
 

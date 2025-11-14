@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
+using FUnity.Runtime.Input;
 using FUnity.Runtime.Presenter;
 using FUnity.Runtime.View;
 using Object = UnityEngine.Object;
@@ -249,12 +250,33 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
+        /// 現在有効なマウス座標プロバイダを解決します。FUnityManager 優先で、未設定時はサービスロケータを参照します。
+        /// </summary>
+        /// <returns>利用可能な <see cref="IMousePositionProvider"/>。無ければ null。</returns>
+        public static IMousePositionProvider ResolveMouseProvider()
+        {
+            var provider = FUnityManager.MouseProvider;
+            if (provider != null)
+            {
+                return provider;
+            }
+
+            return FUnityServices.MousePosition;
+        }
+
+        /// <summary>
         /// マウスポインターのスクリーン座標から Scratch 論理座標を推定します。
         /// </summary>
         /// <param name="referenceAdapter">ステージ座標変換に使用する参照アダプタ。</param>
         /// <returns>推定した論理座標。失敗時はスクリーン座標から簡易変換した値。</returns>
         public static Vector2 GetMouseLogicalPosition(ActorPresenterAdapter referenceAdapter)
         {
+            var provider = ResolveMouseProvider();
+            if (provider != null)
+            {
+                return ClampToStageBounds(provider.StagePosition);
+            }
+
             var pointer = UnityEngine.Input.mousePosition;
             if (referenceAdapter != null)
             {
@@ -277,6 +299,39 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 pointer.x - (Screen.width * 0.5f),
                 (Screen.height * 0.5f) - pointer.y);
             return ClampToStageBounds(fallback);
+        }
+
+        /// <summary>
+        /// 俳優の #root サイズをもとに、Scratch 論理座標系での半幅・半高を推定します。
+        /// </summary>
+        /// <param name="adapter">対象のアダプタ。</param>
+        /// <param name="halfSize">取得した半幅・半高。失敗時は <see cref="Vector2.zero"/>。</param>
+        /// <returns>推定に成功した場合は <c>true</c>。</returns>
+        public static bool TryGetActorHalfSizeLogical(ActorPresenterAdapter adapter, out Vector2 halfSize)
+        {
+            halfSize = Vector2.zero;
+            if (adapter == null)
+            {
+                return false;
+            }
+
+            var presenter = adapter.Presenter;
+            var view = adapter.ActorView;
+            if (presenter == null || view == null)
+            {
+                return false;
+            }
+
+            var rootSize = view.GetRootScaledSizePx();
+            if (rootSize.x <= 0f || rootSize.y <= 0f)
+            {
+                return false;
+            }
+
+            var halfUi = rootSize * 0.5f;
+            var logicalHalf = presenter.ToLogicalDelta(halfUi);
+            halfSize = new Vector2(Mathf.Abs(logicalHalf.x), Mathf.Abs(logicalHalf.y));
+            return halfSize.x > 0f && halfSize.y > 0f;
         }
 
         /// <summary>

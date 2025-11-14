@@ -5,9 +5,13 @@
 ### Added
 - `MousePositionService` を追加し、UI Toolkit の PointerMoveEvent を Scratch 座標系へ変換するマウス座標サービスを提供しました。
 - Visual Scripting 値ユニット「マウスのx座標」「マウスのy座標」を `FUnity/Scratch/調べる` カテゴリに追加しました。
+- `MousePositionService` に左ボタン押下状態を公開する `IsPressed` プロパティと PointerDown/PointerUp の購読を実装しました。
+- Visual Scripting 動きユニット「マウスポインターへ向ける」を `FUnity/Scratch/動き` カテゴリに追加しました。
+- Visual Scripting 調べるユニット「マウスポインターまでの距離」「マウスが押された」を `FUnity/Scratch/調べる` に追加しました。
 
 ### Docs
 - `VS_Scratch_Mapping.md` にマウス座標ユニットを追記し、`AGENTS.md` と `CONTRIBUTING.md` に座標変換・カテゴリ規約の運用ルールを追加しました。
+- マウスポインター関連ユニットの追加に合わせて `VS_Scratch_Mapping.md` / `AGENTS.md` / `CONTRIBUTING.md` を更新し、マウス押下追跡やグライド挙動の指針を明文化しました。
 
 ## [v0.2.0] - 2025-11-09
 

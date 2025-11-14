@@ -22,6 +22,9 @@ namespace FUnity.Runtime.Input
 
         /// <summary>マウスポインターがステージ矩形内に存在する場合は true を返します。</summary>
         bool IsInsideStage { get; }
+
+        /// <summary>現在左ボタンが押下されている場合は true を返します。</summary>
+        bool IsPressed { get; }
     }
 
     /// <summary>
@@ -44,6 +47,9 @@ namespace FUnity.Runtime.Input
         /// <summary>ステージ領域へ座標をクランプするかどうか。</summary>
         private bool m_ClampToStage;
 
+        /// <summary>左ボタンが押下されているかどうか。</summary>
+        private bool m_IsPressed;
+
         /// <summary>Dispose 済みかどうかを示すフラグ。</summary>
         private bool m_Disposed;
 
@@ -60,6 +66,7 @@ namespace FUnity.Runtime.Input
             m_ClampToStage = clampToStage;
             m_LastPosition = Vector2.zero;
             m_IsInsideStage = false;
+            m_IsPressed = false;
 
             if (m_Root == null)
             {
@@ -69,6 +76,8 @@ namespace FUnity.Runtime.Input
 
             m_Root.RegisterCallback<PointerMoveEvent>(OnPointerMove, TrickleDown.NoTrickleDown);
             m_Root.RegisterCallback<PointerLeaveEvent>(OnPointerLeave, TrickleDown.NoTrickleDown);
+            m_Root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.NoTrickleDown);
+            m_Root.RegisterCallback<PointerUpEvent>(OnPointerUp, TrickleDown.NoTrickleDown);
         }
 
         /// <summary>現在のクランプ設定を参照または更新します。</summary>
@@ -89,6 +98,9 @@ namespace FUnity.Runtime.Input
 
         /// <summary>マウスポインターがステージ内に存在する場合は true を返します。</summary>
         public bool IsInsideStage => m_IsInsideStage;
+
+        /// <summary>現在左ボタンが押下されているかどうかを返します。</summary>
+        public bool IsPressed => m_IsPressed;
 
         /// <summary>
         /// PointerMoveEvent を受け取り、Scratch 座標系（中心原点・上向き +Y）へ変換します。
@@ -130,6 +142,40 @@ namespace FUnity.Runtime.Input
         }
 
         /// <summary>
+        /// PointerDownEvent を受け取り、左ボタンの押下状態を保持します。
+        /// </summary>
+        /// <param name="evt">UI Toolkit から通知されたポインター押下イベント。</param>
+        private void OnPointerDown(PointerDownEvent evt)
+        {
+            if (evt == null)
+            {
+                return;
+            }
+
+            if (evt.button == (int)MouseButton.LeftMouse)
+            {
+                m_IsPressed = true;
+            }
+        }
+
+        /// <summary>
+        /// PointerUpEvent を受け取り、左ボタンの押下状態を解除します。
+        /// </summary>
+        /// <param name="evt">UI Toolkit から通知されたポインター解放イベント。</param>
+        private void OnPointerUp(PointerUpEvent evt)
+        {
+            if (evt == null)
+            {
+                return;
+            }
+
+            if (evt.button == (int)MouseButton.LeftMouse)
+            {
+                m_IsPressed = false;
+            }
+        }
+
+        /// <summary>
         /// ステージサイズを取得し、無効な値であれば Scratch 既定サイズへフォールバックします。
         /// </summary>
         /// <returns>有効なステージサイズ。</returns>
@@ -163,6 +209,8 @@ namespace FUnity.Runtime.Input
             {
                 m_Root.UnregisterCallback<PointerMoveEvent>(OnPointerMove, TrickleDown.NoTrickleDown);
                 m_Root.UnregisterCallback<PointerLeaveEvent>(OnPointerLeave, TrickleDown.NoTrickleDown);
+                m_Root.UnregisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.NoTrickleDown);
+                m_Root.UnregisterCallback<PointerUpEvent>(OnPointerUp, TrickleDown.NoTrickleDown);
             }
         }
     }
