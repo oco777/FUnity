@@ -143,6 +143,8 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 - `MousePositionService` などのマウス座標サービスはデフォルトでステージ矩形内へクランプし、`m_ClampToStage` で切り替え可能にする。
 - マウス座標ユニットは Value Unit（Flow 不要）とし、カテゴリは必ず `FUnity/Scratch/調べる` を使用する。EventUnit として実装しないこと。
 - 整数版ユニットを追加する場合は `Round/Floor/Ceil` を選択できる `IntRounding` enum を用い、`Mathf.RoundToInt` / `Mathf.FloorToInt` / `Mathf.CeilToInt` をそれぞれ呼び出す。
+- `MousePositionService` は左ボタン押下状態を `IsPressed` で公開し、PointerDown/PointerUp を確実に購読する。
+- 「○秒でマウスポインターへ行く」を含むグライド系ユニットは開始時にマウス座標をサンプリングし、移動中にマウスが動いても追従しない。
 
 ## 変数機能に関する恒久ルール
 - Scratch 互換の変数は必ず `IFUnityVariableService` / `FUnityVariableService` を経由して操作すること。Presenter や VS からの直接参照は禁止です。

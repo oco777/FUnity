@@ -35,6 +35,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>接触している場合は true。</returns>
         private bool Evaluate(Flow flow)
         {
+            var provider = ScratchUnitUtil.ResolveMouseProvider();
+            if (provider == null)
+            {
+                return false;
+            }
+
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
             if (adapter == null)
             {
@@ -42,13 +48,23 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return false;
             }
 
-            if (!ScratchHitTestUtil.TryGetActorWorldRect(adapter, out var actorRect))
+            var presenter = adapter.Presenter;
+            if (presenter == null || !presenter.IsVisible)
             {
                 return false;
             }
 
-            var pointer = ScratchHitTestUtil.GetMousePanelPosition(adapter);
-            return actorRect.Contains(pointer);
+            if (!ScratchUnitUtil.TryGetActorHalfSizeLogical(adapter, out var halfSize))
+            {
+                return false;
+            }
+
+            var center = ScratchUnitUtil.ClampToStageBounds(presenter.GetPosition());
+            var mouse = ScratchUnitUtil.ClampToStageBounds(provider.StagePosition);
+            var min = center - halfSize;
+            var max = center + halfSize;
+
+            return mouse.x >= min.x && mouse.x <= max.x && mouse.y >= min.y && mouse.y <= max.y;
         }
     }
 

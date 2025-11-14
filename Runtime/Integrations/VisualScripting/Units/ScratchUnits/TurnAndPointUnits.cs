@@ -155,4 +155,82 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             yield return m_Exit;
         }
     }
+
+    /// <summary>
+    /// Scratch の「マウスポインターへ向ける」ブロックを再現し、俳優の向きをカーソル方向へ更新する Unit です。
+    /// </summary>
+    [UnitTitle("マウスポインターへ向ける")]
+    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitSubtitle("funity scratch 動き point towards mouse pointer 向ける マウス")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
+    public sealed class PointTowardsMousePointerUnit : Unit
+    {
+        /// <summary>フロー開始を受け取る ControlInput です。</summary>
+        [DoNotSerialize]
+        private ControlInput m_Enter;
+
+        /// <summary>後続へ制御を渡す ControlOutput です。</summary>
+        [DoNotSerialize]
+        private ControlOutput m_Exit;
+
+        /// <summary>enter ポートへの参照を公開します。</summary>
+        public ControlInput Enter => m_Enter;
+
+        /// <summary>exit ポートへの参照を公開します。</summary>
+        public ControlOutput Exit => m_Exit;
+
+        /// <summary>
+        /// ポート定義を行い、enter→exit の制御線を登録します。
+        /// </summary>
+        protected override void Definition()
+        {
+            m_Enter = ControlInputCoroutine("enter", Run);
+            m_Exit = ControlOutput("exit");
+
+            Succession(m_Enter, m_Exit);
+        }
+
+        /// <summary>
+        /// マウス位置と現在位置の差分から角度を算出し、俳優の向きを更新します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>後続へ制御を渡す列挙子。</returns>
+        private IEnumerator Run(Flow flow)
+        {
+            var provider = ScratchUnitUtil.ResolveMouseProvider();
+            if (provider == null)
+            {
+                yield return m_Exit;
+                yield break;
+            }
+
+            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
+            if (adapter == null)
+            {
+                Debug.LogWarning("[FUnity] Scratch/Point Towards Mouse Pointer: ActorPresenterAdapter が未解決のため向きを更新できません。");
+                yield return m_Exit;
+                yield break;
+            }
+
+            var presenter = adapter.Presenter;
+            if (presenter == null)
+            {
+                yield return m_Exit;
+                yield break;
+            }
+
+            var center = ScratchUnitUtil.ClampToStageBounds(presenter.GetPosition());
+            var mouse = ScratchUnitUtil.ClampToStageBounds(provider.StagePosition);
+            var delta = mouse - center;
+            if (delta.sqrMagnitude <= Mathf.Epsilon)
+            {
+                yield return m_Exit;
+                yield break;
+            }
+
+            var degrees = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+            adapter.SetDirection(degrees);
+            yield return m_Exit;
+        }
+    }
 }
