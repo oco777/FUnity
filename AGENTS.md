@@ -162,3 +162,34 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 - 新しいユニットを追加・改名した場合は `Docs/VS_Scratch_Mapping.md` を必ず更新し、対応表を最新に保つこと。
 
 ---
+## Authoring モードに関する方針 / 将来計画
+
+- FUnity には以下の Authoring モードを用意する。
+  - Scratch モード
+    - 解像度 480x360（Scratch 互換）
+  - Unityroom モード
+    - Unityroom 用の推奨解像度に合わせる
+  - YouTube モード（将来追加予定）
+    - 目的:
+      - Visual Scripting でアニメーション作品を作り、
+        YouTube にアップロードできる動画ファイルとして書き出すためのモード。
+    - 解像度:
+      - 基本は 1920x1080（フルHD, 16:9）
+      - 負荷を考慮して 1280x720 も選択肢として検討
+    - FPS:
+      - 30fps または 60fps（FUnityProjectData で設定可能にする）
+    - 演出テンプレート:
+      - 定型の演出構成をあらかじめ Visual Scripting のグラフとして用意しておく。
+        - 例: 「タイトル → 本編 → エンディング」の 3 構成
+        - 子どもはテキストやキャラクターを差し替えるだけで、
+          YouTube 用の動画構成が手軽に作れるようにする。
+    - 録画方法:
+      - 実装方針としては Unity Recorder を利用する。
+      - Editor 拡張メニュー（例: `FUnity/Authoring/Record YouTube Video…`）から
+        再生中の Game ビューもしくは Camera 出力を動画ファイルとして保存する。
+      - 必要に応じて `Time.captureFramerate` の利用などを検討し、
+        コマ落ちしない一定 FPS の動画を書き出せるようにする。
+    - ステータス:
+      - 現時点では「構想段階」。すぐには実装しないが、
+        将来の拡張として常に意識しておく。
+
