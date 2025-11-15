@@ -1032,7 +1032,8 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 俳優ルート要素へ UI Toolkit Image を確実に配置し、backgroundImage の直接使用を避ける。
+        /// 俳優ルート直下に `Image#portrait-image` を 1 つだけ生成・挿入し、ポートレート描画を安定させる。
+        /// 背景スタイルへ依存せず Sprite を表示できるようにするため、ルート側の背景指定も初期化する。
         /// </summary>
         private void EnsurePortraitImage()
         {
@@ -1058,7 +1059,10 @@ namespace FUnity.Runtime.View
                 m_RootElement.Insert(0, m_Image);
             }
 
+            // ポートレート要素として Image を採用し、UI Toolkit Debugger でも安定して確認できるようにする。
             m_PortraitElement = m_Image;
+
+            // ルート要素の背景指定をクリアし、Image 要素での描画に一本化する。
             m_RootElement.style.backgroundImage = new StyleBackground();
             m_RootElement.style.backgroundColor = StyleKeyword.Null;
         }
