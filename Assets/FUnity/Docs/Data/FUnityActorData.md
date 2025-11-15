@@ -13,3 +13,8 @@
 - `Size` を指定すると、アンカー補正は指定サイズに基づいて計算されます。拡大率（`SizePercent`）変更後も最新の解決済みサイズを使用します。
 - `InitialPosition` はアンカー適用後の UI 座標（left/top）として解釈されます。Center 指定時は画像中心が座標に一致します。
 - `ScriptGraphAsset` 等その他のプロパティは従来通りで、アンカー設定による副作用はありません。
+
+## Sprites（コスチューム）
+- `Sprites` リストは Scratch の「コスチューム」に相当します。要素 0 が Scratch コスチューム番号 1、要素 1 が番号 2 というように 1 始まりの表示番号へマッピングされます。
+- Scratch モードの Visual Scripting ユニット（`コスチュームを〇にする` / `次のコスチュームにする` / `コスチュームの番号`）は `ActorState.CostumeIndex` を更新し、`ActorPresenter.ApplyCostumeFromState()` → `ActorView.SetSprite(Sprite)` の順で見た目を切り替えます。
+- コスチュームを持たない（`Sprites` が空または null）俳優では番号 0 を返し、安全に no-op となります。例外は発生しません。

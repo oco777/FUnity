@@ -72,6 +72,22 @@ namespace FUnity.Runtime.Model
         public int SpriteIndex;
 
         /// <summary>
+        /// 現在のコスチュームを内部 0 始まりインデックスで保持するフィールドです。
+        /// Scratch の UI に表示される「コスチューム番号」が 1 始まりであるのに対し、内部では 0 始まりで統一管理します。
+        /// </summary>
+        private int m_CostumeIndex;
+
+        /// <summary>
+        /// 現在のコスチュームを 0 始まりインデックスで表す値。
+        /// Scratch の「コスチューム番号」が 1 始まりであるのに対して、内部では 0 始まりのインデックスとして統一管理する。
+        /// </summary>
+        public int CostumeIndex
+        {
+            get => m_CostumeIndex;
+            set => m_CostumeIndex = value;
+        }
+
+        /// <summary>
         /// 見た目の回転挙動を指定する Scratch 互換の回転スタイルです。
         /// </summary>
         public RotationStyle RotationStyle = RotationStyle.AllAround;
@@ -81,6 +97,44 @@ namespace FUnity.Runtime.Model
         /// Presenter から View へ転送する際に参照され、UI Toolkit の Tint へ変換されます。
         /// </summary>
         public GraphicEffectsState Effects;
+
+        /// <summary>
+        /// コスチューム数に応じてインデックスを 0..(count-1) の範囲にクランプ/ラップする。
+        /// count が 0 以下のときは 0 に固定する。
+        /// </summary>
+        /// <param name="count">利用可能なコスチューム数。</param>
+        public void NormalizeCostumeIndex(int count)
+        {
+            if (count <= 0)
+            {
+                m_CostumeIndex = 0;
+                return;
+            }
+
+            var mod = m_CostumeIndex % count;
+            if (mod < 0)
+            {
+                mod += count;
+            }
+
+            m_CostumeIndex = mod;
+        }
+
+        /// <summary>
+        /// 次のコスチュームに進めるヘルパー。
+        /// count が 0 の場合は何もしない。
+        /// </summary>
+        /// <param name="count">利用可能なコスチューム数。</param>
+        public void AdvanceCostume(int count)
+        {
+            if (count <= 0)
+            {
+                return;
+            }
+
+            m_CostumeIndex++;
+            NormalizeCostumeIndex(count);
+        }
 
         /// <summary>
         /// 外部から与えられた座標を指定された範囲内にクランプして保持する。

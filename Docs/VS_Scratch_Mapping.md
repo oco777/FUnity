@@ -37,9 +37,9 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 ## 見た目
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
-| コスチュームを○にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetCostumeNumberUnit | コスチュームを○にする | FUnity/Scratch/見た目 | コスチューム番号を絶対設定。定義: Runtime/.../CostumeUnits.cs |
-| 次のコスチュームにする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.NextCostumeUnit | 次のコスチュームにする | FUnity/Scratch/見た目 | コスチュームを循環切替。定義: Runtime/.../CostumeUnits.cs |
-| コスチュームの番号 | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GetCostumeNumberUnit | コスチュームの番号 | FUnity/Scratch/見た目 | 現在の番号を取得。定義: Runtime/.../CostumeUnits.cs |
+| コスチュームを ( ) にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetCostumeNumberUnit | Scratch/コスチュームを〇にする | FUnity/Scratch/見た目 | ActorState.CostumeIndex と FUnityActorData.Sprites を利用。定義: Runtime/.../CostumeUnits.cs |
+| 次のコスチュームにする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.NextCostumeUnit | Scratch/次のコスチュームにする | FUnity/Scratch/見た目 | コスチュームを 1 → 2 → … → N → 1 と循環。定義: Runtime/.../CostumeUnits.cs |
+| コスチュームの番号 | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CostumeNumberUnit | Scratch/コスチュームの番号 | FUnity/Scratch/見た目 | 1 始まりの Scratch コスチューム番号を返す。定義: Runtime/.../CostumeUnits.cs |
 | 大きさを○%にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetSizePercentUnit | 大きさを○%にする | FUnity/Scratch/見た目 | 拡大率を絶対設定。定義: Runtime/.../SizeUnits.cs |
 | 大きさを○%ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeSizeByPercentUnit | 大きさを○%ずつ変える | FUnity/Scratch/見た目 | 拡大率を相対変更。定義: Runtime/.../SizeUnits.cs |
 | ○と○秒言う | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SayForSecondsUnit | ○と○秒言う | FUnity/Scratch/見た目 | 指定秒数で吹き出し表示。定義: Runtime/.../SpeechUnits.cs |
@@ -106,3 +106,4 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - TypeIcon を変更した場合は、本ドキュメントにその理由を記載し、プロジェクト全体で統一できるか検討してください。
 - Sprite 差し替え系ユニットを追加する場合は、`ActorPresenterAdapter.SetSpriteIndex` と `ActorPresenter.SetSpriteIndex` を呼び出し、`SpriteIndex` / `SpriteCount` のプロパティを活用して枚数管理を行ってください。
 - 歩行など SpriteList を利用するアニメーションは `NextSpriteUnit` / `SetSpriteIndexUnit` で操作し、Presenter API を直接呼び出す際も同名メソッドを経由します。
+- コスチューム関連の処理では `ActorState.CostumeIndex` と `ActorPresenter.ApplyCostumeFromState()` を基点にし、必ず `ActorView.SetSprite(Sprite)` を介して見た目を更新してください。

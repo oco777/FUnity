@@ -155,6 +155,43 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
+        /// GameObject 入力または既存の解決ロジックから <see cref="ActorPresenterAdapter"/> を取得します。
+        /// GameObject が指定されていない場合は <see cref="ResolveAdapter(Flow)"/> を利用します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="actorInput">GameObject を受け取る ValueInput。null の場合は Runner から自動解決します。</param>
+        /// <param name="adapter">解決に成功したアダプタ。失敗時は null。</param>
+        /// <returns>解決に成功した場合は <c>true</c>。</returns>
+        public static bool TryGetActorAdapter(Flow flow, ValueInput actorInput, out ActorPresenterAdapter adapter)
+        {
+            adapter = null;
+
+            GameObject actorObject = null;
+            if (actorInput != null && flow != null)
+            {
+                actorObject = flow.GetValue<GameObject>(actorInput);
+            }
+
+            if (actorObject != null)
+            {
+                adapter = actorObject.GetComponent<ActorPresenterAdapter>();
+                if (adapter == null)
+                {
+                    adapter = actorObject.GetComponentInChildren<ActorPresenterAdapter>(true);
+                }
+
+                if (adapter != null)
+                {
+                    CacheAdapter(adapter);
+                    return true;
+                }
+            }
+
+            adapter = ResolveAdapter(flow);
+            return adapter != null;
+        }
+
+        /// <summary>
         /// 表示名から <see cref="ActorPresenterAdapter"/> を探索し、見つかった場合に返します。
         /// </summary>
         /// <param name="displayName">検索する表示名。</param>

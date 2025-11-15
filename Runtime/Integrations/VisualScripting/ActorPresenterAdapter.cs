@@ -413,6 +413,50 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
+        /// Scratch の「コスチュームを (n) にする」に相当し、1 始まりのコスチューム番号を Presenter へ転送します。
+        /// </summary>
+        /// <param name="costumeNumber">1 始まりで指定する Scratch コスチューム番号。</param>
+        public void SetCostumeNumber(int costumeNumber)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため SetCostumeNumber を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.SetCostumeNumber(costumeNumber);
+        }
+
+        /// <summary>
+        /// Scratch の「次のコスチュームにする」に相当し、Presenter 経由でコスチュームを 1 枚進めます。
+        /// </summary>
+        public void NextCostume()
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため NextCostume を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.NextCostume();
+        }
+
+        /// <summary>
+        /// Scratch の「コスチュームの番号」に相当する値を取得し、1 始まりのコスチューム番号を返します。
+        /// </summary>
+        /// <returns>1 始まりの Scratch コスチューム番号。利用可能な Sprite が無い場合は 0。</returns>
+        public int GetCostumeNumber()
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため GetCostumeNumber は 0 を返します。");
+                return 0;
+            }
+
+            return m_ActorPresenter.GetCostumeNumber();
+        }
+
+        /// <summary>
         /// 色の効果に差分を加算し、Presenter を通じて View へ適用する。
         /// </summary>
         /// <param name="delta">加算する効果量。</param>
