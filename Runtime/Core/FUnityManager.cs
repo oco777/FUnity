@@ -1117,7 +1117,7 @@ namespace FUnity.Runtime.Core
         }
 
         /// <summary>
-        /// 俳優に紐付く Sprite を UI 要素へ適用し、未設定時は単色背景へフォールバックする。
+        /// 俳優に紐付く Sprite を UI 要素へ適用し、#portrait コンテナ内の Image を再構築する。
         /// </summary>
         /// <param name="element">検索対象の UI 要素。</param>
         /// <param name="data">俳優設定。</param>
@@ -1128,7 +1128,7 @@ namespace FUnity.Runtime.Core
                 return;
             }
 
-            var rootImage = element.Q<VisualElement>("portrait-image");
+            var rootImage = element.Q<Image>("portrait-image");
             if (rootImage != null && rootImage.parent == element)
             {
                 element.Remove(rootImage);
@@ -1148,6 +1148,7 @@ namespace FUnity.Runtime.Core
                 scaleMode = ScaleMode.ScaleToFit,
                 pickingMode = PickingMode.Ignore
             };
+            img.style.flexGrow = 1f;
             portrait.Add(img);
 
             var sprites = data.Sprites;
@@ -1156,6 +1157,7 @@ namespace FUnity.Runtime.Core
             img.sprite = resolved;
             img.image = null;
             portrait.style.backgroundImage = default;
+            portrait.style.backgroundColor = StyleKeyword.Null;
         }
 
         /// <summary>

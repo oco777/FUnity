@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement name="actor-container" class="actor-container">
         <ui:VisualElement name="root" class="actor-root">
-            <ui:Image name="portrait" class="actor-portrait fooni-image" />
+            <ui:VisualElement name="portrait" class="actor-portrait fooni-image" />
             <ui:Label name="speech" class="actor-speech" text="" />
         </ui:VisualElement>
     </ui:VisualElement>
