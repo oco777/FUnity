@@ -81,8 +81,14 @@ public sealed class ActorState
 - `ScriptMachine` の付与・グラフ割当などは **Presenter から直接ではなく**、ブリッジや初期化コードで行う
 - ツールや初期化コードでシーンルート（例: "FUnity UI"）に `ScriptMachine` をサイレント追加しない。Runner や対象 GameObject に明示配置する。
 - プリプロセッサ `#if UNITY_VISUAL_SCRIPTING` は原則 **不要**（必須依存のため）
-- 名前空間の衝突に注意（例：`FUnity.Runtime.Input` と `UnityEngine.Input`）  
+- 名前空間の衝突に注意（例：`FUnity.Runtime.Input` と `UnityEngine.Input`）
   → **`UnityEngine.Input` を明示**または `using UInput = UnityEngine.Input;` エイリアスを使用
+
+## 俳優 Sprite 運用ルール（2025-03-16 追加）
+- `FUnityActorData` の見た目は `PortraitSprite` / `Sprites` を優先し、`Texture2D m_portrait` は互換目的のフォールバックとする。
+- Presenter や View からポートレートを設定する際は必ず `SetPortrait(sprite, texture)` 形式のメソッドを経由し、Sprite → Texture2D → 無地の順で扱う。
+- SpriteList を利用する API（`ActorPresenter.SetSpriteIndex` / `ActorPresenterAdapter.SetSpriteIndex`）を経由して差分表示を切り替える。直接 `style.backgroundImage` へ Texture を設定しない。
+- 新規キャラクターアセットでは Sprite Editor でスライスした Sprite を `PortraitSprite` と `Sprites` に登録する。Texture2D のみを追加する実装は非推奨。
 
 ## 例外・エラー処理の方針
 - **早期 return** と **わかりやすい `Debug.LogWarning/Error`** を徹底

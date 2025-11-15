@@ -398,6 +398,21 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
+        /// SpriteList のインデックスを Presenter 経由で設定し、差分表示を切り替える。
+        /// </summary>
+        /// <param name="index">表示する Sprite のインデックス。</param>
+        public void SetSpriteIndex(int index)
+        {
+            if (m_ActorPresenter == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenterAdapter: ActorPresenter が未設定のため SetSpriteIndex を実行できません。");
+                return;
+            }
+
+            m_ActorPresenter.SetSpriteIndex(index);
+        }
+
+        /// <summary>
         /// 色の効果に差分を加算し、Presenter を通じて View へ適用する。
         /// </summary>
         /// <param name="delta">加算する効果量。</param>

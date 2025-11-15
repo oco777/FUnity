@@ -429,32 +429,64 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 俳優のポートレート画像を UI Toolkit の `portrait` 要素へ設定する。
+        /// 俳優のポートレート画像を UI Toolkit の `portrait` 要素へ設定する。Sprite を優先し、未指定時は Texture2D を利用する。
         /// </summary>
-        /// <param name="sprite">`Sprite.Create` 等で生成済みのスプライト。</param>
-        /// <remarks>
-        /// `portrait` 要素には UI Toolkit の仕様上 <see cref="StyleBackground"/> を `new StyleBackground(Texture2D)` で渡す必要がある。
-        /// `StyleBackground.none` は使用できないため、null 時は既存の背景を保持する。
-        /// </remarks>
-        /// <example>
-        /// <code>
-        /// var portraitSprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f));
-        /// m_ActorView.SetPortrait(portraitSprite);
-        /// </code>
-        /// </example>
-        public void SetPortrait(Sprite sprite)
+        /// <param name="sprite">表示する Sprite。null の場合は Texture2D を利用する。</param>
+        /// <param name="fallbackTexture">Sprite 未設定時のフォールバックとして利用する Texture2D。</param>
+        public void SetPortrait(Sprite sprite, Texture2D fallbackTexture)
         {
-            if (sprite == null)
+            var portrait = ResolvePortraitElement();
+            if (portrait == null)
             {
-                return;
+                var root = GetRootElement();
+                portrait = ResolveSpriteElement(root ?? m_ActorRoot ?? m_BoundElement);
+                if (portrait == null)
+                {
+                    return;
+                }
             }
 
-            var portrait = ResolvePortraitElement();
-            if (portrait != null)
+            if (portrait is Image imageElement)
             {
-                portrait.style.backgroundImage = new StyleBackground(sprite);
-                InvalidateSourceTexture();
+                portrait.style.backgroundImage = StyleBackground.none;
+                portrait.style.backgroundColor = StyleKeyword.Null;
+
+                if (sprite != null)
+                {
+                    imageElement.sprite = sprite;
+                    imageElement.image = null;
+                }
+                else if (fallbackTexture != null)
+                {
+                    imageElement.sprite = null;
+                    imageElement.image = fallbackTexture;
+                }
+                else
+                {
+                    imageElement.sprite = null;
+                    imageElement.image = null;
+                }
             }
+            else
+            {
+                if (sprite != null)
+                {
+                    portrait.style.backgroundImage = new StyleBackground(sprite);
+                    portrait.style.backgroundColor = StyleKeyword.Null;
+                }
+                else if (fallbackTexture != null)
+                {
+                    portrait.style.backgroundImage = new StyleBackground(fallbackTexture);
+                    portrait.style.backgroundColor = StyleKeyword.Null;
+                }
+                else
+                {
+                    portrait.style.backgroundImage = StyleBackground.none;
+                    portrait.style.backgroundColor = StyleKeyword.Null;
+                }
+            }
+
+            InvalidateSourceTexture();
         }
 
         /// <summary>

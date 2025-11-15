@@ -35,7 +35,7 @@ namespace FUnity.Runtime.View
         }
 
         /// <inheritdoc />
-        public void SetPortrait(Sprite sprite)
+        public void SetPortrait(Sprite sprite, Texture2D fallbackTexture)
         {
         }
 
