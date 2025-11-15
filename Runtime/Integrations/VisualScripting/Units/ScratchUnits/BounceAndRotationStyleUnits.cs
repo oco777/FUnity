@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
+using FUnity.Runtime.Core;
 using FUnity.Runtime.Model;
 using FUnity.Runtime.Integrations.VisualScripting;
 
@@ -71,7 +72,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 yield break;
             }
 
-            var uiDirection = ScratchUnitUtil.DirFromDegrees(adapter.GetDirection());
+            var currentInternal = adapter.GetDirection();
+            var currentForMode = FUnityModeUtil.IsScratchMode
+                ? ScratchAngleUtil.InternalToScratch(currentInternal)
+                : currentInternal;
+            var uiDirection = ScratchUnitUtil.DirFromDegrees(currentForMode);
             if (uiDirection.sqrMagnitude <= Mathf.Epsilon)
             {
                 uiDirection = new Vector2(0f, -1f);
@@ -89,10 +94,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 yield break;
             }
 
-            var reflectedDeg = ScratchUnitUtil.DegreesFromUiDirection(bouncedDirection);
+            var reflectedForMode = ScratchUnitUtil.DegreesFromUiDirection(bouncedDirection);
+            var reflectedInternal = FUnityModeUtil.IsScratchMode
+                ? ScratchAngleUtil.ScratchToInternal(reflectedForMode)
+                : reflectedForMode;
             var finalUi = adapter.ToUiPosition(clampedCenter);
 
-            adapter.SetDirection(reflectedDeg);
+            adapter.SetDirection(reflectedInternal);
             adapter.SetPositionPixels(finalUi);
 
             yield return m_Exit;

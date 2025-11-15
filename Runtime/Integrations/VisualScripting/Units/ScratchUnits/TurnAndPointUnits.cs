@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
+using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
 using FUnity.Runtime.Presenter;
 
@@ -57,19 +58,19 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>後続へ制御を渡す列挙子。</returns>
         private IEnumerator Run(Flow flow)
         {
-            var delta = flow.GetValue<float>(m_DeltaDegrees);
+            var deltaScratchDeg = flow.GetValue<float>(m_DeltaDegrees);
 
             var presenterObj = ScratchUnitUtil.GetPresenter(flow);
             if (presenterObj != null)
             {
-                VSPresenterBridge.TurnSelf(presenterObj, delta);
+                VSPresenterBridge.TurnSelf(presenterObj, deltaScratchDeg);
             }
             else
             {
                 var bridge = VSPresenterBridge.Instance;
                 if (bridge != null)
                 {
-                    bridge.TurnDegrees(delta);
+                    bridge.TurnDegrees(deltaScratchDeg);
                 }
                 else
                 {
@@ -85,8 +86,15 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 yield break;
             }
 
-            var current = controller.GetDirection();
-            controller.SetDirection(current + delta);
+            var currentInternal = controller.GetDirection();
+            var currentForMode = FUnityModeUtil.IsScratchMode
+                ? ScratchAngleUtil.InternalToScratch(currentInternal)
+                : currentInternal;
+            var nextForMode = currentForMode + deltaScratchDeg;
+            var nextInternal = FUnityModeUtil.IsScratchMode
+                ? ScratchAngleUtil.ScratchToInternal(nextForMode)
+                : nextForMode;
+            controller.SetDirection(nextInternal);
             yield return m_Exit;
         }
 
@@ -150,8 +158,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 yield break;
             }
 
-            var degrees = flow.GetValue<float>(m_Degrees);
-            controller.SetDirection(degrees);
+            var scratchDeg = flow.GetValue<float>(m_Degrees);
+            var internalDeg = FUnityModeUtil.IsScratchMode
+                ? ScratchAngleUtil.ScratchToInternal(scratchDeg)
+                : scratchDeg;
+            controller.SetDirection(internalDeg);
             yield return m_Exit;
         }
     }
@@ -228,8 +239,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 yield break;
             }
 
-            var degrees = ScratchUnitUtil.GetDirectionDegreesForCurrentMode(delta);
-            adapter.SetDirection(degrees);
+            var directionForMode = ScratchUnitUtil.GetDirectionDegreesForCurrentMode(delta);
+            var internalDeg = FUnityModeUtil.IsScratchMode
+                ? ScratchAngleUtil.ScratchToInternal(directionForMode)
+                : directionForMode;
+            adapter.SetDirection(internalDeg);
             yield return m_Exit;
         }
     }
