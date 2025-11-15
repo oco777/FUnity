@@ -34,15 +34,16 @@ namespace FUnity.Runtime.View
         void SetCenterPosition(Vector2 center);
 
         /// <summary>
-        /// 俳優のポートレート画像を View に設定する。
+        /// 俳優のポートレート画像を View に設定する。Sprite 優先で描画し、未設定時は Texture2D をフォールバックとして利用する。
         /// </summary>
-        /// <param name="sprite">UI に表示するスプライト。null の場合は呼び出し側で未設定扱い。</param>
+        /// <param name="sprite">UI に表示するスプライト。null の場合は Texture2D へフォールバックする。</param>
+        /// <param name="fallbackTexture">Sprite 未設定時に使用する従来の Texture2D。</param>
         /// <example>
         /// <code>
-        /// actorView.SetPortrait(portraitSprite);
+        /// actorView.SetPortrait(sprite, portraitTexture);
         /// </code>
         /// </example>
-        void SetPortrait(Sprite sprite);
+        void SetPortrait(Sprite sprite, Texture2D fallbackTexture);
 
         /// <summary>
         /// 幅と高さを指定し、俳優要素のサイズを更新する。

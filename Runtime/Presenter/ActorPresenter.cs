@@ -21,6 +21,16 @@ namespace FUnity.Runtime.Presenter
 
         /// <summary>紐付いている俳優設定。null の場合はフォールバック構成を意味します。</summary>
         FUnityActorData ActorData { get; }
+
+        /// <summary>現在使用している SpriteList のインデックス。Sprite 未使用時は 0。</summary>
+        int SpriteIndex { get; }
+
+        /// <summary>ActorData に登録された Sprite 枚数。未設定時は 0。</summary>
+        int SpriteCount { get; }
+
+        /// <summary>SpriteList の表示インデックスを設定し、可能なら見た目を切り替える。</summary>
+        /// <param name="index">使用したい Sprite のインデックス。</param>
+        void SetSpriteIndex(int index);
     }
 
     /// <summary>
@@ -60,6 +70,15 @@ namespace FUnity.Runtime.Presenter
 
         /// <summary>ポートレート表示用に生成したランタイムスプライト。</summary>
         private Sprite m_RuntimePortrait;
+
+        /// <summary>上記ランタイムスプライトを生成した元テクスチャ。再生成の無駄を避けるために保持する。</summary>
+        private Texture2D m_RuntimePortraitSource;
+
+        /// <summary>SpriteList 切り替え時に利用する現在のインデックス。</summary>
+        private int m_SpriteIndex;
+
+        /// <summary>SpriteList のインデックス指定を優先するかどうか。</summary>
+        private bool m_UseSpriteIndexOverride;
 
         /// <summary>この俳優専用にバインドされた Visual Scripting の ScriptMachine。</summary>
         private ScriptMachine m_ScriptMachine;
@@ -153,6 +172,12 @@ namespace FUnity.Runtime.Presenter
 
         /// <summary>使用中の座標原点。外部から参照する際はこのプロパティを利用します。</summary>
         public CoordinateOrigin CoordinateOrigin => m_CoordinateOrigin;
+
+        /// <summary>現在使用している SpriteList のインデックス。Sprite 未使用時は 0 を返す。</summary>
+        public int SpriteIndex => m_SpriteIndex;
+
+        /// <summary>ActorData に登録されている Sprite 枚数。SpriteList 未設定時は 0。</summary>
+        public int SpriteCount => m_ActorData?.Sprites?.Count ?? 0;
 
         /// <summary>現在の拡大率（%）。View へ適用されている値を返す。</summary>
         public float SizePercent => m_SizePercent;
@@ -277,6 +302,7 @@ namespace FUnity.Runtime.Presenter
             var logicalInitial = ConvertUiToLogical(anchorInitialUi);
             m_State.SetPositionUnchecked(logicalInitial);
             m_State.Speed = Mathf.Max(0f, data != null ? GetConfiguredSpeed(data) : 300f);
+            m_State.SpriteIndex = 0;
             if (shouldInitializeDirection)
             {
                 m_State.DirectionDeg = DefaultDirectionDeg;
@@ -291,20 +317,14 @@ namespace FUnity.Runtime.Presenter
             m_PositionBoundsLogical = new Rect(0f, 0f, 0f, 0f);
             m_HasPositionBounds = false;
 
+            m_RuntimePortrait = null;
+            m_RuntimePortraitSource = null;
+            m_SpriteIndex = 0;
+            m_UseSpriteIndexOverride = false;
+
             if (m_View != null)
             {
-                if (m_RuntimePortrait == null && data?.Portrait != null)
-                {
-                    m_RuntimePortrait = Sprite.Create(
-                        data.Portrait,
-                        new Rect(0f, 0f, data.Portrait.width, data.Portrait.height),
-                        new Vector2(0.5f, 0.5f));
-                }
-
-                if (m_RuntimePortrait != null)
-                {
-                    m_View.SetPortrait(m_RuntimePortrait);
-                }
+                ApplyCurrentSpriteToView();
 
                 if (m_BaseSize.x > 0f || m_BaseSize.y > 0f)
                 {
@@ -799,6 +819,155 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
+        /// 現在の設定に基づき、表示すべき Sprite を決定して View へ反映する。
+        /// View 未接続時でも内部状態（SpriteIndex）は更新する。
+        /// </summary>
+        private void ApplyCurrentSpriteToView()
+        {
+            var sprite = ResolveCurrentSprite();
+
+            if (m_View == null)
+            {
+                return;
+            }
+
+            var fallbackTexture = m_ActorData != null ? m_ActorData.Portrait : null;
+            m_View.SetPortrait(sprite, fallbackTexture);
+        }
+
+        /// <summary>
+        /// SpriteList や PortraitSprite、旧 Texture を考慮して現在使用する Sprite を解決する。
+        /// </summary>
+        /// <returns>表示に利用する Sprite。利用可能な Sprite が無ければ null。</returns>
+        private Sprite ResolveCurrentSprite()
+        {
+            if (m_ActorData == null)
+            {
+                m_SpriteIndex = 0;
+                if (m_State != null)
+                {
+                    m_State.SpriteIndex = 0;
+                }
+
+                return null;
+            }
+
+            Sprite resolved = null;
+
+            if (m_UseSpriteIndexOverride)
+            {
+                resolved = ResolveSpriteFromList(m_SpriteIndex, out var overrideIndex);
+                m_SpriteIndex = overrideIndex;
+
+                if (m_State != null)
+                {
+                    m_State.SpriteIndex = overrideIndex;
+                }
+
+                if (resolved != null)
+                {
+                    return resolved;
+                }
+            }
+
+            if (m_ActorData.PortraitSprite != null)
+            {
+                if (m_State != null)
+                {
+                    m_State.SpriteIndex = 0;
+                }
+
+                return m_ActorData.PortraitSprite;
+            }
+
+            resolved = ResolveSpriteFromList(m_SpriteIndex, out var listIndex);
+            m_SpriteIndex = listIndex;
+            if (m_State != null)
+            {
+                m_State.SpriteIndex = listIndex;
+            }
+
+            if (resolved != null)
+            {
+                return resolved;
+            }
+
+            var fallback = EnsureRuntimePortraitSprite(m_ActorData.Portrait);
+
+            if (m_State != null)
+            {
+                m_State.SpriteIndex = SpriteCount > 0 ? Mathf.Clamp(m_SpriteIndex, 0, SpriteCount - 1) : 0;
+            }
+
+            return fallback;
+        }
+
+        /// <summary>
+        /// SpriteList から指定インデックスの Sprite を取得し、null の場合は先頭から順に探索する。
+        /// </summary>
+        /// <param name="index">利用したいインデックス。</param>
+        /// <param name="resolvedIndex">最終的に採用されたインデックス。Sprite が見つからなければ安全に丸められた値。</param>
+        /// <returns>取得できた Sprite。全て null の場合は null。</returns>
+        private Sprite ResolveSpriteFromList(int index, out int resolvedIndex)
+        {
+            resolvedIndex = 0;
+
+            var sprites = m_ActorData?.Sprites;
+            if (sprites == null || sprites.Count == 0)
+            {
+                return null;
+            }
+
+            var count = sprites.Count;
+            var safeIndex = Mathf.Clamp(index, 0, count - 1);
+            var candidate = sprites[safeIndex];
+            if (candidate != null)
+            {
+                resolvedIndex = safeIndex;
+                return candidate;
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var fallback = sprites[i];
+                if (fallback != null)
+                {
+                    resolvedIndex = i;
+                    return fallback;
+                }
+            }
+
+            resolvedIndex = safeIndex;
+            return null;
+        }
+
+        /// <summary>
+        /// Texture2D ベースの旧ポートレートからランタイム Sprite を生成または再利用する。
+        /// </summary>
+        /// <param name="texture">Sprite 化したいテクスチャ。</param>
+        /// <returns>生成・再利用した Sprite。テクスチャ未設定時は null。</returns>
+        private Sprite EnsureRuntimePortraitSprite(Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return null;
+            }
+
+            if (m_RuntimePortrait != null && m_RuntimePortraitSource == texture)
+            {
+                return m_RuntimePortrait;
+            }
+
+            m_RuntimePortraitSource = texture;
+            m_RuntimePortrait = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f));
+
+            return m_RuntimePortrait;
+        }
+
+        /// <summary>
         /// 等倍基準のスケール値を直接設定し、内部的には拡大率（%）へ変換して統一ロジックに委譲する。
         /// </summary>
         /// <param name="scale">等倍=1 を基準としたスケール値。</param>
@@ -846,6 +1015,23 @@ namespace FUnity.Runtime.Presenter
         {
             var currentPercent = m_SizePercent;
             SetSizePercent(currentPercent + deltaPercent);
+        }
+
+        /// <summary>
+        /// SpriteList のインデックスを設定し、利用可能な Sprite があれば即座に View へ反映する。
+        /// </summary>
+        /// <param name="index">使用したい Sprite のインデックス。範囲外の場合は自動的に丸め込まれる。</param>
+        public void SetSpriteIndex(int index)
+        {
+            m_SpriteIndex = index;
+            m_UseSpriteIndexOverride = true;
+
+            if (m_State != null)
+            {
+                m_State.SpriteIndex = m_SpriteIndex;
+            }
+
+            ApplyCurrentSpriteToView();
         }
 
         /// <summary>

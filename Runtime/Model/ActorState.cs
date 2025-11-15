@@ -67,6 +67,11 @@ namespace FUnity.Runtime.Model
         public float SizePercent = 100f;
 
         /// <summary>
+        /// 現在参照している SpriteList のインデックス。Sprite 未使用時は 0 を保持する。
+        /// </summary>
+        public int SpriteIndex;
+
+        /// <summary>
         /// 見た目の回転挙動を指定する Scratch 互換の回転スタイルです。
         /// </summary>
         public RotationStyle RotationStyle = RotationStyle.AllAround;

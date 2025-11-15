@@ -75,3 +75,9 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 - 画像ファイルは **必ず `Docs/images/`（先頭大文字）** に配置してください。`docs/images/` やその他のディレクトリに置くとビルドや CI で警告が表示されます。
 - README のヒーロー画像は `Docs/images/readme-hero.png` への参照に統一し、実ファイルのサイズが 0 バイトでないことを確認してください。
 - PNG を更新した場合は、関連するドキュメント（`README.md` や `Docs/*.md`）のリンクが `Docs/images/` を参照しているかを再確認してください。
+
+## Actor Sprite の管理指針
+
+- 俳優アセット（`FUnityActorData`）の見た目は `PortraitSprite` と `Sprites` を使用し、旧来の `Texture2D` は互換目的のフォールバックに留めてください。
+- Sprite の差し替えは Presenter API（`ActorPresenter.SetSpriteIndex`）およびアダプタ API（`ActorPresenterAdapter.SetSpriteIndex`）経由で行い、直接 `style.backgroundImage` に Texture を設定しないようにします。
+- Unity の Sprite Editor でスライスした Sprite をインポートし、Inspector 上で `PortraitSprite` および `Sprites` に登録してから PR を提出してください。

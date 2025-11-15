@@ -32,8 +32,20 @@ namespace FUnity.Runtime.Core
         /// <summary>UI 上に表示する名前。空の場合は要素名のみ設定される。</summary>
         [SerializeField] private string m_displayName = "Fooni";
 
-        /// <summary>ポートレート画像。UI Toolkit の `StyleBackground(Texture2D)` で使用する。</summary>
+        /// <summary>
+        /// 旧実装で利用していたポートレート画像。互換目的で保持し、新規アセットでは Sprite 利用を推奨する。
+        /// </summary>
         [SerializeField] private Texture2D m_portrait;          // UI表示用など
+
+        /// <summary>
+        /// 俳優の見た目として最優先で表示するメイン Sprite。Sprite Editor で切り出した画像を直接指定する。
+        /// </summary>
+        [SerializeField] private Sprite m_portraitSprite;
+
+        /// <summary>
+        /// アニメーションや差分表示に利用する追加 Sprite 一覧。Inspector 上で任意枚数を登録できる。
+        /// </summary>
+        [SerializeField] private List<Sprite> m_sprites = new List<Sprite>();
 
         /// <summary>初期座標（px）。Presenter が <see cref="FUnity.Runtime.Model.ActorState.Position"/> へ反映する。</summary>
         [SerializeField] private Vector2 m_initialPosition = new Vector2(0, 0);
@@ -76,8 +88,14 @@ namespace FUnity.Runtime.Core
         /// <summary>表示名。</summary>
         public string DisplayName => m_displayName;
 
-        /// <summary>UI 表示に使用するポートレート。</summary>
+        /// <summary>UI 表示に使用するポートレート（Texture2D）。Sprite 未使用時のフォールバックに限定する。</summary>
         public Texture2D Portrait => m_portrait;
+
+        /// <summary>UI 表示に利用するメイン Sprite。null の場合は <see cref="Portrait"/> や <see cref="Sprites"/> が利用される。</summary>
+        public Sprite PortraitSprite => m_portraitSprite;
+
+        /// <summary>追加 Sprite の一覧。読み取り専用で公開し、Presenter から差分切り替えに利用する。</summary>
+        public IReadOnlyList<Sprite> Sprites => m_sprites;
 
         /// <summary>初期座標（px）。</summary>
         public Vector2 InitialPosition => m_initialPosition;

@@ -1139,18 +1139,75 @@ namespace FUnity.Runtime.Core
                 return;
             }
 
-            var texture = data?.Portrait;
-            if (texture != null)
+            Sprite resolvedSprite = null;
+            if (data != null)
             {
-                portrait.style.backgroundImage = new StyleBackground(texture);
-                portrait.style.backgroundSize = StyleKeyword.Null;
-                return;
+                if (data.PortraitSprite != null)
+                {
+                    resolvedSprite = data.PortraitSprite;
+                }
+                else if (data.Sprites != null)
+                {
+                    var spriteList = data.Sprites;
+                    for (var i = 0; i < spriteList.Count; i++)
+                    {
+                        var candidate = spriteList[i];
+                        if (candidate != null)
+                        {
+                            resolvedSprite = candidate;
+                            break;
+                        }
+                    }
+                }
             }
 
-            portrait.style.backgroundImage = new StyleBackground();
+            var texture = data?.Portrait;
+
+            if (portrait is Image imageElement)
+            {
+                portrait.style.backgroundImage = StyleBackground.none;
+                portrait.style.backgroundColor = StyleKeyword.Null;
+
+                if (resolvedSprite != null)
+                {
+                    imageElement.sprite = resolvedSprite;
+                    imageElement.image = null;
+                    return;
+                }
+
+                if (texture != null)
+                {
+                    imageElement.sprite = null;
+                    imageElement.image = texture;
+                    return;
+                }
+
+                imageElement.sprite = null;
+                imageElement.image = null;
+            }
+            else
+            {
+                if (resolvedSprite != null)
+                {
+                    portrait.style.backgroundImage = new StyleBackground(resolvedSprite);
+                    portrait.style.backgroundSize = StyleKeyword.Null;
+                    portrait.style.backgroundColor = StyleKeyword.Null;
+                    return;
+                }
+
+                if (texture != null)
+                {
+                    portrait.style.backgroundImage = new StyleBackground(texture);
+                    portrait.style.backgroundSize = StyleKeyword.Null;
+                    portrait.style.backgroundColor = StyleKeyword.Null;
+                    return;
+                }
+            }
+
+            portrait.style.backgroundImage = StyleBackground.none;
             portrait.style.backgroundSize = StyleKeyword.Null;
             portrait.style.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 0.9f);
-            FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' のポートレートが設定されていないため単色背景を使用します。");
+            FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' のポートレート Sprite/Texture が設定されていないため単色背景を使用します。");
         }
 
         /// <summary>
@@ -1482,15 +1539,7 @@ namespace FUnity.Runtime.Core
 
             var actorRoot = ResolveActorRootElement(container);
 
-            var portrait = actorRoot?.Q<VisualElement>(PortraitElementName)
-                ?? actorRoot?.Q<VisualElement>(className: PortraitElementName)
-                ?? container.Q<VisualElement>(PortraitElementName)
-                ?? container.Q<VisualElement>(className: PortraitElementName);
-
-            if (portrait != null && actor.Portrait != null)
-            {
-                portrait.style.backgroundImage = Background.FromTexture2D(actor.Portrait);
-            }
+            ApplyActorPortrait(actorRoot ?? container, actor);
 
             if (actorRoot != null)
             {
