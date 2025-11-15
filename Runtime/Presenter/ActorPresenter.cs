@@ -832,7 +832,7 @@ namespace FUnity.Runtime.Presenter
             }
 
             var fallbackTexture = m_ActorData != null ? m_ActorData.Portrait : null;
-            m_View.SetPortrait(sprite, fallbackTexture);
+            m_View.SetSprite(sprite, fallbackTexture);
         }
 
         /// <summary>
@@ -1023,15 +1023,34 @@ namespace FUnity.Runtime.Presenter
         /// <param name="index">使用したい Sprite のインデックス。範囲外の場合は自動的に丸め込まれる。</param>
         public void SetSpriteIndex(int index)
         {
-            m_SpriteIndex = index;
-            m_UseSpriteIndexOverride = true;
-
-            if (m_State != null)
+            if (m_ActorData == null)
             {
-                m_State.SpriteIndex = m_SpriteIndex;
+                return;
             }
 
-            ApplyCurrentSpriteToView();
+            var sprites = m_ActorData.Sprites;
+            if (sprites != null && sprites.Count > 0)
+            {
+                m_SpriteIndex = Mathf.Clamp(index, 0, sprites.Count - 1);
+                m_UseSpriteIndexOverride = true;
+
+                if (m_State != null)
+                {
+                    m_State.SpriteIndex = m_SpriteIndex;
+                }
+
+                m_View?.SetSprite(sprites[m_SpriteIndex], m_ActorData.Portrait);
+                return;
+            }
+
+            m_UseSpriteIndexOverride = false;
+            m_SpriteIndex = 0;
+            if (m_State != null)
+            {
+                m_State.SpriteIndex = 0;
+            }
+
+            m_View?.SetSprite(m_ActorData.PortraitSprite, m_ActorData.Portrait);
         }
 
         /// <summary>

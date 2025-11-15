@@ -943,6 +943,7 @@ namespace FUnity.Runtime.Core
             }
 
             actorView.Configure(bridge, visual.Element);
+            actorView.ApplyActorData(visual.Data);
             return actorView;
         }
 
@@ -1163,49 +1164,55 @@ namespace FUnity.Runtime.Core
 
             var texture = data?.Portrait;
 
-            if (portrait is Image imageElement)
+            Image imageElement;
+            if (portrait is Image existingImage)
             {
-                portrait.style.backgroundImage = StyleBackground.none;
-                portrait.style.backgroundColor = StyleKeyword.Null;
-
-                if (resolvedSprite != null)
-                {
-                    imageElement.sprite = resolvedSprite;
-                    imageElement.image = null;
-                    return;
-                }
-
-                if (texture != null)
-                {
-                    imageElement.sprite = null;
-                    imageElement.image = texture;
-                    return;
-                }
-
-                imageElement.sprite = null;
-                imageElement.image = null;
+                imageElement = existingImage;
             }
             else
             {
-                if (resolvedSprite != null)
+                imageElement = portrait.Q<Image>("portrait-image") ?? portrait.Q<Image>(className: "portrait-image");
+                if (imageElement == null)
                 {
-                    portrait.style.backgroundImage = new StyleBackground(resolvedSprite);
-                    portrait.style.backgroundSize = StyleKeyword.Null;
-                    portrait.style.backgroundColor = StyleKeyword.Null;
-                    return;
+                    imageElement = new Image
+                    {
+                        name = "portrait-image",
+                        scaleMode = ScaleMode.ScaleToFit,
+                        pickingMode = PickingMode.Ignore,
+                    };
+                    imageElement.style.flexGrow = 1f;
                 }
 
-                if (texture != null)
+                if (imageElement.parent != portrait)
                 {
-                    portrait.style.backgroundImage = new StyleBackground(texture);
-                    portrait.style.backgroundSize = StyleKeyword.Null;
-                    portrait.style.backgroundColor = StyleKeyword.Null;
-                    return;
+                    imageElement.RemoveFromHierarchy();
+                    portrait.Insert(0, imageElement);
                 }
             }
 
-            portrait.style.backgroundImage = StyleBackground.none;
+            portrait.style.backgroundImage = new StyleBackground();
             portrait.style.backgroundSize = StyleKeyword.Null;
+            portrait.style.backgroundColor = StyleKeyword.Null;
+            imageElement.scaleMode = ScaleMode.ScaleToFit;
+            imageElement.pickingMode = PickingMode.Ignore;
+            imageElement.style.flexGrow = 1f;
+
+            if (resolvedSprite != null)
+            {
+                imageElement.sprite = resolvedSprite;
+                imageElement.image = null;
+                return;
+            }
+
+            if (texture != null)
+            {
+                imageElement.sprite = null;
+                imageElement.image = texture;
+                return;
+            }
+
+            imageElement.sprite = null;
+            imageElement.image = null;
             portrait.style.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 0.9f);
             FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' のポートレート Sprite/Texture が設定されていないため単色背景を使用します。");
         }

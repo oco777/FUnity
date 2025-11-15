@@ -46,6 +46,13 @@ namespace FUnity.Runtime.View
         void SetPortrait(Sprite sprite, Texture2D fallbackTexture);
 
         /// <summary>
+        /// Sprite または Texture2D を UI Toolkit Image へ設定し、背景画像を使用せず安全に描画する。
+        /// </summary>
+        /// <param name="sprite">表示する Sprite。null の場合は Texture2D フォールバックを利用する。</param>
+        /// <param name="fallbackTexture">Sprite 未設定時に使用する Texture2D。</param>
+        void SetSprite(Sprite sprite, Texture2D fallbackTexture);
+
+        /// <summary>
         /// 幅と高さを指定し、俳優要素のサイズを更新する。
         /// </summary>
         /// <param name="size">幅・高さ（px）。負値は 0 として扱う。</param>
