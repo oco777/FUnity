@@ -91,4 +91,106 @@ namespace FUnity.Editor
             return normalizedFull.Substring(normalizedRoot.Length + 1);
         }
     }
+
+    /// <summary>
+    /// 旧フィールド (Portrait / PortraitSprite) を Sprites へ移行するための簡易マイグレーションウィンドウ。
+    /// 既存アセットを一括変換し、新しい Sprite ベースの運用へ移行しやすくする。
+    /// </summary>
+    public sealed class FUnityActorDataMigrationWindow : EditorWindow
+    {
+        /// <summary>ウィンドウタイトルに表示する文字列。</summary>
+        private const string WindowTitle = "FUnity ActorData Migration";
+
+        /// <summary>メニューに表示するコマンドパス。</summary>
+        private const string MenuPath = "FUnity/Tools/Migrate ActorData Portrait -> Sprites";
+
+        /// <summary>Sprites フィールドのシリアライズド名。</summary>
+        private const string SpritesPropertyName = "m_sprites";
+
+        /// <summary>旧 PortraitSprite フィールドのシリアライズド名。</summary>
+        private const string PortraitSpritePropertyName = "m_portraitSprite";
+
+        /// <summary>旧 Portrait(Texture2D) フィールドのシリアライズド名。</summary>
+        private const string PortraitTexturePropertyName = "m_portrait";
+
+        /// <summary>
+        /// メニューコマンドからウィンドウを開くエントリーポイント。
+        /// </summary>
+        [MenuItem(MenuPath)]
+        private static void Open()
+        {
+            GetWindow<FUnityActorDataMigrationWindow>(WindowTitle);
+        }
+
+        /// <summary>
+        /// エディタウィンドウの GUI を描画し、マイグレーション処理を実行するボタンを提供する。
+        /// </summary>
+        private void OnGUI()
+        {
+            EditorGUILayout.HelpBox("Portrait / PortraitSprite に保存された Sprite を Sprites[0] へ移行します。", MessageType.Info);
+
+            if (GUILayout.Button("Scan and Migrate All FUnityActorData"))
+            {
+                MigrateAll();
+            }
+        }
+
+        /// <summary>
+        /// プロジェクト内の FUnityActorData アセットを走査し、旧フィールドから Sprites へデータを移行する。
+        /// </summary>
+        private static void MigrateAll()
+        {
+            var guids = AssetDatabase.FindAssets("t:FUnityActorData");
+            var migratedCount = 0;
+
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var data = AssetDatabase.LoadAssetAtPath<FUnity.Runtime.Core.FUnityActorData>(path);
+                if (data == null)
+                {
+                    continue;
+                }
+
+                Undo.RecordObject(data, "Migrate FUnityActorData");
+
+                var serializedObject = new SerializedObject(data);
+                var spritesProperty = serializedObject.FindProperty(SpritesPropertyName);
+                var portraitSpriteProperty = serializedObject.FindProperty(PortraitSpritePropertyName);
+                var portraitTextureProperty = serializedObject.FindProperty(PortraitTexturePropertyName);
+
+                if (spritesProperty == null)
+                {
+                    Debug.LogWarning($"[FUnity] '{path}' の Sprites フィールドを取得できませんでした。スクリプト定義を確認してください。");
+                    continue;
+                }
+
+                var hasSprites = spritesProperty.arraySize > 0;
+                var hasPortraitSprite = portraitSpriteProperty != null && portraitSpriteProperty.objectReferenceValue != null;
+                var hasPortraitTexture = portraitTextureProperty != null && portraitTextureProperty.objectReferenceValue != null;
+
+                if (hasSprites || !hasPortraitSprite)
+                {
+                    if (hasPortraitTexture && !hasSprites)
+                    {
+                        Debug.LogWarning($"[FUnity] '{path}' は Texture2D Portrait のみ設定されています。Sprite に変換して Sprites に登録してください。");
+                    }
+
+                    continue;
+                }
+
+                spritesProperty.arraySize = 0;
+                spritesProperty.InsertArrayElementAtIndex(0);
+                spritesProperty.GetArrayElementAtIndex(0).objectReferenceValue = portraitSpriteProperty.objectReferenceValue;
+
+                portraitSpriteProperty.objectReferenceValue = null;
+                serializedObject.ApplyModifiedProperties();
+                EditorUtility.SetDirty(data);
+                migratedCount++;
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[FUnity] Migrated {migratedCount} FUnityActorData asset(s).");
+        }
+    }
 }

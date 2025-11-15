@@ -1,4 +1,5 @@
-// Updated: 2025-02-14
+// Updated: 2025-04-04
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -35,15 +36,15 @@ namespace FUnity.Runtime.Core
         /// <summary>
         /// 旧実装で利用していたポートレート画像。互換目的で保持し、新規アセットでは Sprite 利用を推奨する。
         /// </summary>
-        [SerializeField] private Texture2D m_portrait;          // UI表示用など
+        [SerializeField, Obsolete("Sprites を使用してください")] private Texture2D m_portrait;          // UI表示用など
 
         /// <summary>
-        /// 俳優の見た目として最優先で表示するメイン Sprite。Sprite Editor で切り出した画像を直接指定する。
+        /// 旧実装で使用していた単体 Sprite。互換目的で保持するのみとし、新規アセットでは Sprites を利用する。
         /// </summary>
-        [SerializeField] private Sprite m_portraitSprite;
+        [SerializeField, Obsolete("Sprites を使用してください")] private Sprite m_portraitSprite;
 
         /// <summary>
-        /// アニメーションや差分表示に利用する追加 Sprite 一覧。Inspector 上で任意枚数を登録できる。
+        /// 俳優の見た目として使用する Sprite 一覧。先頭要素 (index 0) をメインの見た目として扱う。
         /// </summary>
         [SerializeField] private List<Sprite> m_sprites = new List<Sprite>();
 
@@ -88,14 +89,39 @@ namespace FUnity.Runtime.Core
         /// <summary>表示名。</summary>
         public string DisplayName => m_displayName;
 
-        /// <summary>UI 表示に使用するポートレート（Texture2D）。Sprite 未使用時のフォールバックに限定する。</summary>
+        /// <summary>UI 表示に使用するポートレート（Texture2D）。Sprite 移行前の互換目的のみに利用する。</summary>
+        [Obsolete("Sprites を使用してください")]
         public Texture2D Portrait => m_portrait;
 
-        /// <summary>UI 表示に利用するメイン Sprite。null の場合は <see cref="Portrait"/> や <see cref="Sprites"/> が利用される。</summary>
+        /// <summary>UI 表示に利用するメイン Sprite。互換性のために残存し、Sprites へ移行するまでの橋渡しとする。</summary>
+        [Obsolete("Sprites を使用してください")]
         public Sprite PortraitSprite => m_portraitSprite;
 
-        /// <summary>追加 Sprite の一覧。読み取り専用で公開し、Presenter から差分切り替えに利用する。</summary>
-        public IReadOnlyList<Sprite> Sprites => m_sprites;
+        /// <summary>俳優で使用する全ての Sprite。インスペクタ上で順序を整え、Sprites[0] をメインとして扱う。</summary>
+        public IReadOnlyList<Sprite> Sprites
+        {
+            get
+            {
+                if (m_sprites == null)
+                {
+                    m_sprites = new List<Sprite>();
+                }
+
+                return m_sprites;
+            }
+        }
+
+        /// <summary>
+        /// 便利プロパティ。Sprites[0] をメイン Sprite として返却し、存在しない場合は null を返す。
+        /// </summary>
+        public Sprite MainSprite
+        {
+            get
+            {
+                var sprites = Sprites;
+                return sprites.Count > 0 ? sprites[0] : null;
+            }
+        }
 
         /// <summary>初期座標（px）。</summary>
         public Vector2 InitialPosition => m_initialPosition;
@@ -123,5 +149,37 @@ namespace FUnity.Runtime.Core
 
         /// <summary>俳優座標が指すアンカー位置。</summary>
         public ActorAnchor Anchor => m_anchor;
+
+        /// <summary>
+        /// 旧フィールド (Portrait / PortraitSprite) の内容を Sprites へ移行する安全装置。
+        /// Sprites が空の場合のみ処理を行い、Sprite ベース運用へ段階的に移行する。
+        /// </summary>
+        public void EnsureSpritesMigrated()
+        {
+            if (m_sprites != null && m_sprites.Count > 0)
+            {
+                return;
+            }
+
+            if (m_portraitSprite == null)
+            {
+                return;
+            }
+
+            if (m_sprites == null)
+            {
+                m_sprites = new List<Sprite>();
+            }
+
+            if (!m_sprites.Contains(m_portraitSprite))
+            {
+                m_sprites.Add(m_portraitSprite);
+            }
+
+#if UNITY_EDITOR
+            m_portraitSprite = null;
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
+        }
     }
 }

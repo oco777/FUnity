@@ -84,13 +84,13 @@ public sealed class ActorState
 - 名前空間の衝突に注意（例：`FUnity.Runtime.Input` と `UnityEngine.Input`）
   → **`UnityEngine.Input` を明示**または `using UInput = UnityEngine.Input;` エイリアスを使用
 
-## 俳優 Sprite 運用ルール（2025-03-16 追加）
-- `FUnityActorData` の見た目は `PortraitSprite` / `Sprites` を優先し、`Texture2D m_portrait` は互換目的のフォールバックとする。
-- Presenter や View からポートレートを設定する際は必ず `SetPortrait(sprite, texture)` 形式のメソッドを経由し、Sprite → Texture2D → 無地の順で扱う。
-- SpriteList を利用する API（`ActorPresenter.SetSpriteIndex` / `ActorPresenterAdapter.SetSpriteIndex`）を経由して差分表示を切り替える。直接 `style.backgroundImage` へ Texture を設定しない。
-- 新規キャラクターアセットでは Sprite Editor でスライスした Sprite を `PortraitSprite` と `Sprites` に登録する。Texture2D のみを追加する実装は非推奨。
-- `FUnityActorData` のビジュアル管理は Sprite / SpriteList を標準とし、Texture2D `Portrait` は後方互換フォールバックのみに留める。
-- 俳優の画像表示は UI Toolkit の `Image` 要素を必須とし、`style.backgroundImage` へ直接設定しない。
+## 俳優 Sprite 運用ルール（2025-04-04 更新）
+- `FUnityActorData` の見た目は `Sprites` リストを唯一の正規データとし、`Portrait` / `PortraitSprite` は互換目的でのみ保持する。
+- Sprites[0] をメインビジュアルとして扱い、Presenter / View は `FUnityActorData.EnsureSpritesMigrated()` を呼び出したうえで `Sprites` を参照する。
+- Presenter や View からポートレートを設定する際は `SetSprite(Sprite)` / `ApplyActorData(data, index)` を経由し、Texture2D を直接渡さない。
+- SpriteList を利用する API（`ActorPresenter.SetSpriteIndex` / `ActorPresenterAdapter.SetSpriteIndex`）を経由して差分表示を切り替える。直接 `style.backgroundImage` に Texture を設定しない。
+- 新規キャラクターアセットは Sprite Editor でスライスした Sprite を `Sprites` に登録し、Texture2D のみの登録は禁止する。
+- 俳優の画像表示は UI Toolkit の `Image` 要素を必須とし、背景画像 (`style.backgroundImage`) を直接操作しない。
 
 ## 例外・エラー処理の方針
 - **早期 return** と **わかりやすい `Debug.LogWarning/Error`** を徹底

@@ -8,18 +8,19 @@
 - `MousePositionService` に左ボタン押下状態を公開する `IsPressed` プロパティと PointerDown/PointerUp の購読を実装しました。
 - Visual Scripting 動きユニット「マウスポインターへ向ける」を `FUnity/Scratch/動き` カテゴリに追加しました。
 - Visual Scripting 調べるユニット「マウスポインターまでの距離」「マウスが押された」を `FUnity/Scratch/調べる` に追加しました。
-- `FUnityActorData` に `PortraitSprite` / `Sprites` を追加し、Sprite ベースのポートレート管理を開始しました。
 - `ActorPresenter` と `ActorPresenterAdapter` に `SetSpriteIndex` / `SpriteIndex` / `SpriteCount` を追加し、SpriteList 切り替え API を公開しました。
+- `FUnityActorDataMigrationWindow` を追加し、旧 Portrait / PortraitSprite を Sprites へ一括移行できるようにしました。
 
 ### Changed
 - `ScratchUnitUtil` に `GetDirectionDegreesForCurrentMode` を追加し、Scratch モードでは上=0°/右=90°/左=-90°/下=±180°、通常モードでは従来通り右=0° となるよう向き計算を統一しました。`DirFromDegrees` もモード差を吸収するよう更新しています。
-- Actor 表示処理を Sprite 優先へ刷新し、`ActorView` / `FUnityManager` では Texture2D をフォールバック扱いとしました。
+- `FUnityActorData` の見た目設定を `Sprites` リストへ一本化し、`Portrait` / `PortraitSprite` を互換フィールドとして `Obsolete` 化しました。
+- `ActorView` と `ActorPresenter` を Sprite リスト前提に再設計し、旧 Texture2D フィールドは自動マイグレーション後のフォールバックのみで参照するようにしました。
 
 ### Docs
 - `VS_Scratch_Mapping.md` にマウス座標ユニットを追記し、`AGENTS.md` と `CONTRIBUTING.md` に座標変換・カテゴリ規約の運用ルールを追加しました。
 - マウスポインター関連ユニットの追加に合わせて `VS_Scratch_Mapping.md` / `AGENTS.md` / `CONTRIBUTING.md` を更新し、マウス押下追跡やグライド挙動の指針を明文化しました。
 - Scratch モードで上=0°となる角度ルールと共通変換関数の利用を `AGENTS.md` / `CONTRIBUTING.md` / `Docs/VS_Scratch_Mapping.md` に追記しました。
-- Sprite 運用ルールと将来の差し替えユニット指針を `AGENTS.md` / `CONTRIBUTING.md` / `Docs/VS_Scratch_Mapping.md` に追記しました。
+- Sprite 運用ルールを `AGENTS.md` / `CONTRIBUTING.md` で Sprites 一本化の方針に更新しました。
 
 ## [v0.2.0] - 2025-11-09
 
