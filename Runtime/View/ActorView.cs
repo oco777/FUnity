@@ -365,8 +365,6 @@ namespace FUnity.Runtime.View
                 return;
             }
 
-            actorData.EnsureSpritesMigrated();
-
             var sprites = actorData.Sprites;
             if (sprites == null || sprites.Count == 0)
             {
