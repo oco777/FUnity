@@ -1,6 +1,7 @@
 // Updated: 2025-03-03
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Core;
@@ -1026,6 +1027,7 @@ namespace FUnity.Runtime.View
 
         /// <summary>
         /// ポートレート要素を解決して専用 Image を 1 つだけ配置し、backgroundImage の直接使用を避ける。
+        /// 既存の Image を極力再利用し、重複してしまった要素はクリーンアップする。
         /// </summary>
         private void EnsurePortraitImage()
         {
@@ -1040,6 +1042,11 @@ namespace FUnity.Runtime.View
 
             if (m_PortraitImage == null)
             {
+                m_PortraitImage = m_PortraitElement.Q<Image>("portrait-image");
+            }
+
+            if (m_PortraitImage == null)
+            {
                 m_PortraitImage = new Image
                 {
                     name = "portrait-image",
@@ -1047,17 +1054,25 @@ namespace FUnity.Runtime.View
                     pickingMode = PickingMode.Ignore,
                 };
                 m_PortraitImage.style.flexGrow = 1f;
+                m_PortraitElement.Add(m_PortraitImage);
             }
-
-            if (m_PortraitImage.parent != m_PortraitElement)
+            else if (m_PortraitImage.parent != m_PortraitElement)
             {
                 m_PortraitImage.RemoveFromHierarchy();
                 m_PortraitElement.Add(m_PortraitImage);
             }
 
-            // もし root に昔の背景画像を使っていたのなら、それはクリアしてOK
+            var duplicates = m_PortraitElement.Children()
+                .OfType<Image>()
+                .Where(image => image != m_PortraitImage && image.name == "portrait-image")
+                .ToList();
+            foreach (var extra in duplicates)
+            {
+                extra.RemoveFromHierarchy();
+            }
+
+            // 旧スタイルが残らないように背景を明示クリアする
             m_PortraitElement.style.backgroundImage = StyleKeyword.Null;
-            // 背景色を消したい場合
             m_PortraitElement.style.backgroundColor = StyleKeyword.Null;
         }
         /// <summary>

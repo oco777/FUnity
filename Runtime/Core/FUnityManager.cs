@@ -1122,6 +1122,7 @@ namespace FUnity.Runtime.Core
 
         /// <summary>
         /// 俳優に紐付く Sprite を UI 要素へ適用し、#portrait コンテナ内の Image を再構築する。
+        /// 既存の Image を再利用して重複を避け、speech-bubble 等の別要素は消去しない。
         /// </summary>
         /// <param name="element">検索対象の UI 要素。</param>
         /// <param name="data">俳優設定。</param>
@@ -1139,10 +1140,11 @@ namespace FUnity.Runtime.Core
 
             // 2) #root 直下に残っている古い Image #portrait-image を削除
             //    （ここが今回の「上の画像」を消すポイント）
-            var strayRootImage = root.Children()
+            var strayRootImages = root.Children()
                 .OfType<Image>()
-                .FirstOrDefault(img => img.name == PortraitImageElementName);
-            if (strayRootImage != null)
+                .Where(img => img.name == PortraitImageElementName)
+                .ToList();
+            foreach (var strayRootImage in strayRootImages)
             {
                 strayRootImage.RemoveFromHierarchy();
             }
@@ -1152,17 +1154,33 @@ namespace FUnity.Runtime.Core
             if (portrait == null)
                 return;
 
-            // 4) #portrait の中を毎回クリアして、Image を 1 個だけにする
-            portrait.Clear();
-
-            var img = new Image
+            // 4) #portrait 内の Image(#portrait-image) を再利用。存在しなければ 1 度だけ生成する。
+            var img = portrait.Q<Image>(PortraitImageElementName);
+            if (img == null)
             {
-                name = PortraitImageElementName,
-                scaleMode = ScaleMode.ScaleToFit,
-                pickingMode = PickingMode.Ignore
-            };
-            img.style.flexGrow = 1f;
-            portrait.Add(img);
+                img = new Image
+                {
+                    name = PortraitImageElementName,
+                    scaleMode = ScaleMode.ScaleToFit,
+                    pickingMode = PickingMode.Ignore
+                };
+                img.style.flexGrow = 1f;
+                portrait.Add(img);
+            }
+            else if (img.parent != portrait)
+            {
+                img.RemoveFromHierarchy();
+                portrait.Add(img);
+            }
+
+            var duplicateImages = portrait.Children()
+                .OfType<Image>()
+                .Where(image => image != img && image.name == PortraitImageElementName)
+                .ToList();
+            foreach (var extra in duplicateImages)
+            {
+                extra.RemoveFromHierarchy();
+            }
 
             // 5) Sprites から Sprite を取得して適用
             var sprites = data.Sprites;
@@ -1185,6 +1203,7 @@ namespace FUnity.Runtime.Core
 
             // 念のため背景もクリア
             portrait.style.backgroundImage = default;
+            portrait.style.backgroundColor = StyleKeyword.Null;
         }
         /// <summary>
         /// Resources から俳優用 VisualTreeAsset を読み込む。既定パスが失敗した場合はフォールバックを試みる。
