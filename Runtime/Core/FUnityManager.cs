@@ -988,7 +988,7 @@ namespace FUnity.Runtime.Core
             }
 
             ApplyActorElementStyles(visual.Element, visual.Data);
-            ApplyActorPortrait(visual.Element, visual.Data);
+            ApplyActorSprite(visual.Element, visual.Data);
         }
 
         /// <summary>
@@ -1117,11 +1117,11 @@ namespace FUnity.Runtime.Core
         }
 
         /// <summary>
-        /// ポートレート画像を適用し、未設定時は単色背景へフォールバックする。
+        /// 俳優に紐付く Sprite を UI 要素へ適用し、未設定時は単色背景へフォールバックする。
         /// </summary>
         /// <param name="element">検索対象の UI 要素。</param>
         /// <param name="data">俳優設定。</param>
-        private void ApplyActorPortrait(VisualElement element, FUnityActorData data)
+        private void ApplyActorSprite(VisualElement element, FUnityActorData data)
         {
             if (element == null)
             {
@@ -1136,15 +1136,13 @@ namespace FUnity.Runtime.Core
 
             if (portrait == null)
             {
-                FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' のポートレート要素が見つかりません。");
+                FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' の Sprite 要素が見つかりません。");
                 return;
             }
 
             Sprite resolvedSprite = null;
             if (data != null)
             {
-                data.EnsureSpritesMigrated();
-
                 var spriteList = data.Sprites;
                 if (spriteList != null)
                 {
@@ -1159,11 +1157,6 @@ namespace FUnity.Runtime.Core
                     }
                 }
             }
-
-            Texture2D texture = null;
-#pragma warning disable CS0618
-            texture = data?.Portrait;
-#pragma warning restore CS0618
 
             Image imageElement;
             if (portrait is Image existingImage)
@@ -1205,17 +1198,10 @@ namespace FUnity.Runtime.Core
                 return;
             }
 
-            if (texture != null)
-            {
-                imageElement.sprite = null;
-                imageElement.image = texture;
-                return;
-            }
-
             imageElement.sprite = null;
             imageElement.image = null;
             portrait.style.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 0.9f);
-            FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' のポートレート Sprite/Texture が設定されていないため単色背景を使用します。");
+            FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' の Sprite が設定されていないため単色背景を使用します。");
         }
 
         /// <summary>
@@ -1547,7 +1533,7 @@ namespace FUnity.Runtime.Core
 
             var actorRoot = ResolveActorRootElement(container);
 
-            ApplyActorPortrait(actorRoot ?? container, actor);
+            ApplyActorSprite(actorRoot ?? container, actor);
 
             if (actorRoot != null)
             {

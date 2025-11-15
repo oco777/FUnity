@@ -13,8 +13,11 @@
 
 ### Changed
 - `ScratchUnitUtil` に `GetDirectionDegreesForCurrentMode` を追加し、Scratch モードでは上=0°/右=90°/左=-90°/下=±180°、通常モードでは従来通り右=0° となるよう向き計算を統一しました。`DirFromDegrees` もモード差を吸収するよう更新しています。
-- `FUnityActorData` の見た目設定を `Sprites` リストへ一本化し、`Portrait` / `PortraitSprite` を互換フィールドとして `Obsolete` 化しました。
-- `ActorView` と `ActorPresenter` を Sprite リスト前提に再設計し、旧 Texture2D フィールドは自動マイグレーション後のフォールバックのみで参照するようにしました。
+- `FUnityActorData` の見た目設定を `Sprites` リストのみで運用するよう更新し、旧 Portrait 系フィールドを完全に削除しました。
+- `ActorView` と `ActorPresenter` を Sprite リスト前提に再設計し、Texture2D フォールバックとマイグレーション呼び出しを廃止しました。
+
+### Removed
+- `FUnityActorData.EnsureSpritesMigrated()` を含む Portrait 移行用 API と関連フォールバックを削除しました。
 
 ### Docs
 - `VS_Scratch_Mapping.md` にマウス座標ユニットを追記し、`AGENTS.md` と `CONTRIBUTING.md` に座標変換・カテゴリ規約の運用ルールを追加しました。

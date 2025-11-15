@@ -78,7 +78,7 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
 
 ## Actor Sprite の管理指針
 
-- 俳優アセット（`FUnityActorData`）の見た目は `Sprites` リストのみを正規データとし、`Portrait` / `PortraitSprite` は互換目的のみに残します。
+- 俳優アセット（`FUnityActorData`）の見た目は `Sprites` リストのみを正規データとし、旧 `Portrait` / `PortraitSprite` フィールドは廃止済みです。
 - Sprite の差し替えは Presenter API（`ActorPresenter.SetSpriteIndex`）およびアダプタ API（`ActorPresenterAdapter.SetSpriteIndex`）経由で行い、直接 `style.backgroundImage` に Texture を設定しないでください。
 - Unity の Sprite Editor でスライスした Sprite をインポートし、Inspector 上では `Sprites` に順序どおり登録してから PR を提出してください。
 - 新規アセットは Texture Type = Sprite, Sprite Mode = Multiple を基本とし、差分は 1 アセット内で管理してください。

@@ -1,5 +1,4 @@
-// Updated: 2025-04-04
-using System;
+// Updated: 2025-05-20
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -32,16 +31,6 @@ namespace FUnity.Runtime.Core
     {
         /// <summary>UI 上に表示する名前。空の場合は要素名のみ設定される。</summary>
         [SerializeField] private string m_displayName = "Fooni";
-
-        /// <summary>
-        /// 旧実装で利用していたポートレート画像。互換目的で保持し、新規アセットでは Sprite 利用を推奨する。
-        /// </summary>
-        [SerializeField, Obsolete("Sprites を使用してください")] private Texture2D m_portrait;          // UI表示用など
-
-        /// <summary>
-        /// 旧実装で使用していた単体 Sprite。互換目的で保持するのみとし、新規アセットでは Sprites を利用する。
-        /// </summary>
-        [SerializeField, Obsolete("Sprites を使用してください")] private Sprite m_portraitSprite;
 
         /// <summary>
         /// 俳優の見た目として使用する Sprite 一覧。先頭要素 (index 0) をメインの見た目として扱う。
@@ -88,14 +77,6 @@ namespace FUnity.Runtime.Core
 
         /// <summary>表示名。</summary>
         public string DisplayName => m_displayName;
-
-        /// <summary>UI 表示に使用するポートレート（Texture2D）。Sprite 移行前の互換目的のみに利用する。</summary>
-        [Obsolete("Sprites を使用してください")]
-        public Texture2D Portrait => m_portrait;
-
-        /// <summary>UI 表示に利用するメイン Sprite。互換性のために残存し、Sprites へ移行するまでの橋渡しとする。</summary>
-        [Obsolete("Sprites を使用してください")]
-        public Sprite PortraitSprite => m_portraitSprite;
 
         /// <summary>俳優で使用する全ての Sprite。インスペクタ上で順序を整え、Sprites[0] をメインとして扱う。</summary>
         public IReadOnlyList<Sprite> Sprites
@@ -150,36 +131,5 @@ namespace FUnity.Runtime.Core
         /// <summary>俳優座標が指すアンカー位置。</summary>
         public ActorAnchor Anchor => m_anchor;
 
-        /// <summary>
-        /// 旧フィールド (Portrait / PortraitSprite) の内容を Sprites へ移行する安全装置。
-        /// Sprites が空の場合のみ処理を行い、Sprite ベース運用へ段階的に移行する。
-        /// </summary>
-        public void EnsureSpritesMigrated()
-        {
-            if (m_sprites != null && m_sprites.Count > 0)
-            {
-                return;
-            }
-
-            if (m_portraitSprite == null)
-            {
-                return;
-            }
-
-            if (m_sprites == null)
-            {
-                m_sprites = new List<Sprite>();
-            }
-
-            if (!m_sprites.Contains(m_portraitSprite))
-            {
-                m_sprites.Add(m_portraitSprite);
-            }
-
-#if UNITY_EDITOR
-            m_portraitSprite = null;
-            UnityEditor.EditorUtility.SetDirty(this);
-#endif
-        }
     }
 }

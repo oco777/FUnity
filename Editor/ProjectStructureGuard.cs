@@ -94,7 +94,7 @@ namespace FUnity.Editor
 
     /// <summary>
     /// 旧フィールド (Portrait / PortraitSprite) を Sprites へ移行するための簡易マイグレーションウィンドウ。
-    /// 既存アセットを一括変換し、新しい Sprite ベースの運用へ移行しやすくする。
+    /// フィールド自体は 2025-05 時点で削除済みのため、古いアセットの確認・変換用途として維持する。
     /// </summary>
     public sealed class FUnityActorDataMigrationWindow : EditorWindow
     {
@@ -127,7 +127,7 @@ namespace FUnity.Editor
         /// </summary>
         private void OnGUI()
         {
-            EditorGUILayout.HelpBox("Portrait / PortraitSprite に保存された Sprite を Sprites[0] へ移行します。", MessageType.Info);
+            EditorGUILayout.HelpBox("Legacy Portrait フィールドに保存された Sprite を Sprites[0] へ移行します（現行バージョンではフィールドが削除されています）。", MessageType.Info);
 
             if (GUILayout.Button("Scan and Migrate All FUnityActorData"))
             {

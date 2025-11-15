@@ -68,12 +68,6 @@ namespace FUnity.Runtime.Presenter
         /// <summary>UI Toolkit 側の描画を担当する View。</summary>
         private IActorView m_View;
 
-        /// <summary>ポートレート表示用に生成したランタイムスプライト。</summary>
-        private Sprite m_RuntimePortrait;
-
-        /// <summary>上記ランタイムスプライトを生成した元テクスチャ。再生成の無駄を避けるために保持する。</summary>
-        private Texture2D m_RuntimePortraitSource;
-
         /// <summary>SpriteList 切り替え時に利用する現在のインデックス。</summary>
         private int m_SpriteIndex;
 
@@ -317,8 +311,6 @@ namespace FUnity.Runtime.Presenter
             m_PositionBoundsLogical = new Rect(0f, 0f, 0f, 0f);
             m_HasPositionBounds = false;
 
-            m_RuntimePortrait = null;
-            m_RuntimePortraitSource = null;
             m_SpriteIndex = 0;
             m_UseSpriteIndexOverride = false;
 
@@ -835,7 +827,7 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// SpriteList と旧 Texture を考慮して現在使用する Sprite を解決する。
+        /// SpriteList の内容から現在使用する Sprite を解決する。
         /// </summary>
         /// <returns>表示に利用する Sprite。利用可能な Sprite が無ければ null。</returns>
         private Sprite ResolveCurrentSprite()
@@ -850,8 +842,6 @@ namespace FUnity.Runtime.Presenter
 
                 return null;
             }
-
-            m_ActorData.EnsureSpritesMigrated();
 
             Sprite resolved = null;
 
@@ -883,21 +873,12 @@ namespace FUnity.Runtime.Presenter
                 return resolved;
             }
 
-            Sprite fallback = null;
-#pragma warning disable CS0618
-            var legacyPortrait = m_ActorData.Portrait;
-#pragma warning restore CS0618
-            if (legacyPortrait != null)
-            {
-                fallback = EnsureRuntimePortraitSprite(legacyPortrait);
-            }
-
             if (m_State != null)
             {
                 m_State.SpriteIndex = SpriteCount > 0 ? Mathf.Clamp(m_SpriteIndex, 0, SpriteCount - 1) : 0;
             }
 
-            return fallback;
+            return null;
         }
 
         /// <summary>
@@ -937,32 +918,6 @@ namespace FUnity.Runtime.Presenter
 
             resolvedIndex = safeIndex;
             return null;
-        }
-
-        /// <summary>
-        /// Texture2D ベースの旧ポートレートからランタイム Sprite を生成または再利用する。
-        /// </summary>
-        /// <param name="texture">Sprite 化したいテクスチャ。</param>
-        /// <returns>生成・再利用した Sprite。テクスチャ未設定時は null。</returns>
-        private Sprite EnsureRuntimePortraitSprite(Texture2D texture)
-        {
-            if (texture == null)
-            {
-                return null;
-            }
-
-            if (m_RuntimePortrait != null && m_RuntimePortraitSource == texture)
-            {
-                return m_RuntimePortrait;
-            }
-
-            m_RuntimePortraitSource = texture;
-            m_RuntimePortrait = Sprite.Create(
-                texture,
-                new Rect(0f, 0f, texture.width, texture.height),
-                new Vector2(0.5f, 0.5f));
-
-            return m_RuntimePortrait;
         }
 
         /// <summary>
@@ -1025,8 +980,6 @@ namespace FUnity.Runtime.Presenter
             {
                 return;
             }
-
-            m_ActorData.EnsureSpritesMigrated();
 
             var sprites = m_ActorData.Sprites;
             if (sprites != null && sprites.Count > 0)
