@@ -297,6 +297,7 @@ namespace FUnity.Runtime.Presenter
             m_State.SetPositionUnchecked(logicalInitial);
             m_State.Speed = Mathf.Max(0f, data != null ? GetConfiguredSpeed(data) : 300f);
             m_State.SpriteIndex = 0;
+            m_State.CostumeIndex = 0;
             if (shouldInitializeDirection)
             {
                 m_State.DirectionDeg = DefaultDirectionDeg;
@@ -314,10 +315,10 @@ namespace FUnity.Runtime.Presenter
             m_SpriteIndex = 0;
             m_UseSpriteIndexOverride = false;
 
+            ApplyCostumeFromState();
+
             if (m_View != null)
             {
-                ApplyCurrentSpriteToView();
-
                 if (m_BaseSize.x > 0f || m_BaseSize.y > 0f)
                 {
                     m_View.SetSize(m_BaseSize);
@@ -824,6 +825,11 @@ namespace FUnity.Runtime.Presenter
             }
 
             m_View.SetSprite(sprite);
+
+            if (m_State != null)
+            {
+                m_State.CostumeIndex = m_State.SpriteIndex;
+            }
         }
 
         /// <summary>
@@ -838,6 +844,7 @@ namespace FUnity.Runtime.Presenter
                 if (m_State != null)
                 {
                     m_State.SpriteIndex = 0;
+                    m_State.CostumeIndex = 0;
                 }
 
                 return null;
@@ -853,6 +860,7 @@ namespace FUnity.Runtime.Presenter
                 if (m_State != null)
                 {
                     m_State.SpriteIndex = overrideIndex;
+                    m_State.CostumeIndex = overrideIndex;
                 }
 
                 if (resolved != null)
@@ -866,6 +874,7 @@ namespace FUnity.Runtime.Presenter
             if (m_State != null)
             {
                 m_State.SpriteIndex = listIndex;
+                m_State.CostumeIndex = listIndex;
             }
 
             if (resolved != null)
@@ -875,10 +884,48 @@ namespace FUnity.Runtime.Presenter
 
             if (m_State != null)
             {
-                m_State.SpriteIndex = SpriteCount > 0 ? Mathf.Clamp(m_SpriteIndex, 0, SpriteCount - 1) : 0;
+                var safeIndex = SpriteCount > 0 ? Mathf.Clamp(m_SpriteIndex, 0, SpriteCount - 1) : 0;
+                m_State.SpriteIndex = safeIndex;
+                m_State.CostumeIndex = safeIndex;
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// ActorState に保持された内部コスチュームインデックスを利用して見た目を更新します。
+        /// 利用可能な Sprite が存在しない場合は View に null を適用します。
+        /// </summary>
+        public void ApplyCostumeFromState()
+        {
+            if (m_State == null)
+            {
+                m_SpriteIndex = 0;
+                m_View?.SetSprite(null);
+                return;
+            }
+
+            var sprites = m_ActorData?.Sprites;
+            var count = sprites != null ? sprites.Count : 0;
+            m_State.NormalizeCostumeIndex(count);
+
+            if (count <= 0)
+            {
+                m_SpriteIndex = 0;
+                m_State.SpriteIndex = 0;
+                m_State.CostumeIndex = 0;
+                m_View?.SetSprite(null);
+                return;
+            }
+
+            var requestedIndex = m_State.CostumeIndex;
+            var sprite = ResolveSpriteFromList(requestedIndex, out var resolvedIndex);
+
+            m_SpriteIndex = resolvedIndex;
+            m_State.SpriteIndex = resolvedIndex;
+            m_State.CostumeIndex = resolvedIndex;
+
+            m_View?.SetSprite(sprite);
         }
 
         /// <summary>
@@ -990,6 +1037,7 @@ namespace FUnity.Runtime.Presenter
                 if (m_State != null)
                 {
                     m_State.SpriteIndex = m_SpriteIndex;
+                    m_State.CostumeIndex = m_SpriteIndex;
                 }
 
                 m_View?.SetSprite(sprites[m_SpriteIndex]);
@@ -1001,9 +1049,86 @@ namespace FUnity.Runtime.Presenter
             if (m_State != null)
             {
                 m_State.SpriteIndex = 0;
+                m_State.CostumeIndex = 0;
             }
 
             ApplyCurrentSpriteToView();
+        }
+
+        /// <summary>
+        /// Scratch の「コスチュームを (n) にする」に相当する処理を行い、1 始まりの Scratch コスチューム番号から内部インデックスへ変換して反映します。
+        /// </summary>
+        /// <param name="costumeNumber">1 始まりで指定された Scratch コスチューム番号。</param>
+        public void SetCostumeNumber(int costumeNumber)
+        {
+            if (m_State == null || m_ActorData == null)
+            {
+                return;
+            }
+
+            var sprites = m_ActorData.Sprites;
+            var count = sprites != null ? sprites.Count : 0;
+            if (count <= 0)
+            {
+                return;
+            }
+
+            var internalIndex = costumeNumber - 1;
+            m_State.CostumeIndex = internalIndex;
+            m_State.NormalizeCostumeIndex(count);
+
+            m_UseSpriteIndexOverride = true;
+            ApplyCostumeFromState();
+        }
+
+        /// <summary>
+        /// Scratch の「次のコスチュームにする」に相当し、コスチュームを循環的に 1 枚進めます。
+        /// </summary>
+        public void NextCostume()
+        {
+            if (m_State == null || m_ActorData == null)
+            {
+                return;
+            }
+
+            var sprites = m_ActorData.Sprites;
+            var count = sprites != null ? sprites.Count : 0;
+            if (count <= 0)
+            {
+                return;
+            }
+
+            m_State.AdvanceCostume(count);
+            m_UseSpriteIndexOverride = true;
+            ApplyCostumeFromState();
+        }
+
+        /// <summary>
+        /// Scratch の「コスチュームの番号」に相当し、現在のコスチュームを 1 始まりの番号で返します。
+        /// </summary>
+        /// <returns>1 始まりの Scratch コスチューム番号。利用可能な Sprite が無い場合は 0。</returns>
+        public int GetCostumeNumber()
+        {
+            if (m_State == null || m_ActorData == null)
+            {
+                return 0;
+            }
+
+            var sprites = m_ActorData.Sprites;
+            var count = sprites != null ? sprites.Count : 0;
+            if (count <= 0)
+            {
+                m_State.CostumeIndex = 0;
+                m_State.SpriteIndex = 0;
+                m_SpriteIndex = 0;
+                return 0;
+            }
+
+            m_State.NormalizeCostumeIndex(count);
+            var normalized = m_State.CostumeIndex;
+            m_State.SpriteIndex = normalized;
+            m_SpriteIndex = normalized;
+            return normalized + 1;
         }
 
         /// <summary>

@@ -41,6 +41,7 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
   - 新しい VS ユニットを追加する際はカテゴリパス（`FUnity/Scratch/...`）と日本語タイトルを確定させ、同じ表記で `Docs/VS_Scratch_Mapping.md` に追記する。
   - マウス座標や押下状態を扱うユニットは `IMousePositionProvider`（`FUnityManager.MouseProvider`）経由で取得し、スクリーン座標からの直接計算を避ける。
   - 向きや角度を扱う Scratch 系ユニットでは `ScratchUnitUtil.GetDirectionDegreesForCurrentMode` と `DirFromDegrees` を必ず利用し、Scratch モード時は上=0°・右=90°・左=-90°・下=±180°、通常モードでは右=0° となるよう変換する。
+  - コスチュームの切り替えは `ActorState.CostumeIndex` を更新し、`ActorPresenter.ApplyCostumeFromState()` → `ActorView.SetSprite(Sprite)` の経路で反映する。Visual Scripting 側から UI Toolkit の `Image` を直接操作しない。
 
 ## ランタイム配置に関する必須ルール
 
