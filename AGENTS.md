@@ -136,6 +136,7 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
   - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を付与し、Scratch 系ユニット共通アイコンを使用する。
   - ノード検索性向上のため、利用可能な場合は `[UnitSubtitle]`（または同等の検索キーワード属性）に `funity scratch` とカテゴリ名・関連日本語・英語キーワードを半角スペース区切りで設定する（例：`funity scratch 動き move steps`）。
   - コード差分がある場合は `Docs/VS_Scratch_Mapping.md` を同期させ、タイトルとカテゴリの差異を残さない。
+  - 向きの角度を計算する際は **必ず `ScratchUnitUtil.GetDirectionDegreesForCurrentMode` を経由し、`DirFromDegrees` と対で利用**する。Scratch モードでは上=0°/右=90°、通常モードでは右=0° というルールを崩さないこと。
 
 ## Scratch マウス座標ユニット規約（2025-03-20 追加）
 - UI Toolkit で取得したローカル座標は必ず Scratch 座標系へ変換する。式: `x = local.x - (width * 0.5f)`, `y = (height * 0.5f) - local.y`。

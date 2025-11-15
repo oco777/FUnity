@@ -9,9 +9,13 @@
 - Visual Scripting 動きユニット「マウスポインターへ向ける」を `FUnity/Scratch/動き` カテゴリに追加しました。
 - Visual Scripting 調べるユニット「マウスポインターまでの距離」「マウスが押された」を `FUnity/Scratch/調べる` に追加しました。
 
+### Changed
+- `ScratchUnitUtil` に `GetDirectionDegreesForCurrentMode` を追加し、Scratch モードでは上=0°/右=90°/左=-90°/下=±180°、通常モードでは従来通り右=0° となるよう向き計算を統一しました。`DirFromDegrees` もモード差を吸収するよう更新しています。
+
 ### Docs
 - `VS_Scratch_Mapping.md` にマウス座標ユニットを追記し、`AGENTS.md` と `CONTRIBUTING.md` に座標変換・カテゴリ規約の運用ルールを追加しました。
 - マウスポインター関連ユニットの追加に合わせて `VS_Scratch_Mapping.md` / `AGENTS.md` / `CONTRIBUTING.md` を更新し、マウス押下追跡やグライド挙動の指針を明文化しました。
+- Scratch モードで上=0°となる角度ルールと共通変換関数の利用を `AGENTS.md` / `CONTRIBUTING.md` / `Docs/VS_Scratch_Mapping.md` に追記しました。
 
 ## [v0.2.0] - 2025-11-09
 

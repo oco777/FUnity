@@ -59,6 +59,11 @@ namespace FUnity.Runtime.Core
         public FUnityProjectData ProjectData => m_Project;
 
         /// <summary>
+        /// 現在アクティブな制作モード設定を返します。ProjectData からの解決を優先し、未設定の場合は Inspector の値を利用します。
+        /// </summary>
+        public FUnityModeConfig ActiveModeConfig => ResolveActiveModeConfig();
+
+        /// <summary>
         /// Visual Scripting から参照する既定の <see cref="ActorPresenterAdapter"/>。Inspector で明示設定し、未設定時はシーン内を探索する。
         /// </summary>
         [SerializeField]
@@ -2408,6 +2413,51 @@ namespace FUnity.Runtime.Core
             }
 
             return false;
+        }
+    }
+
+    /// <summary>
+    /// FUnity の制作モードに関する共通ユーティリティです。ランタイムから Scratch モードかどうかを簡易判定できます。
+    /// </summary>
+    public static class FUnityModeUtil
+    {
+        /// <summary>
+        /// 現在のランタイムが Scratch モードで動作しているかどうかを返します。FUnityManager の解決済み設定を参照し、
+        /// ProjectData によるゲームモード指定も併せてチェックします。
+        /// </summary>
+        public static bool IsScratchMode
+        {
+            get
+            {
+                var manager = FUnityManager.Instance;
+                if (manager == null)
+                {
+                    return false;
+                }
+
+                var modeConfig = manager.ActiveModeConfig;
+                if (modeConfig != null)
+                {
+                    return modeConfig.Mode == FUnityAuthoringMode.Scratch;
+                }
+
+                var project = manager.ProjectData;
+                if (project != null)
+                {
+                    if (project.GameMode == FUnityGameMode.Scratch)
+                    {
+                        return true;
+                    }
+
+                    var fallbackConfig = project.GetActiveModeConfig();
+                    if (fallbackConfig != null)
+                    {
+                        return fallbackConfig.Mode == FUnityAuthoringMode.Scratch;
+                    }
+                }
+
+                return false;
+            }
         }
     }
 
