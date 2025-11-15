@@ -1143,13 +1143,11 @@ namespace FUnity.Runtime.Core
             Sprite resolvedSprite = null;
             if (data != null)
             {
-                if (data.PortraitSprite != null)
+                data.EnsureSpritesMigrated();
+
+                var spriteList = data.Sprites;
+                if (spriteList != null)
                 {
-                    resolvedSprite = data.PortraitSprite;
-                }
-                else if (data.Sprites != null)
-                {
-                    var spriteList = data.Sprites;
                     for (var i = 0; i < spriteList.Count; i++)
                     {
                         var candidate = spriteList[i];
@@ -1162,7 +1160,10 @@ namespace FUnity.Runtime.Core
                 }
             }
 
-            var texture = data?.Portrait;
+            Texture2D texture = null;
+#pragma warning disable CS0618
+            texture = data?.Portrait;
+#pragma warning restore CS0618
 
             Image imageElement;
             if (portrait is Image existingImage)

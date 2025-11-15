@@ -46,7 +46,7 @@ namespace FUnity.Runtime.View
         private VisualElement m_ActorRoot;
 
         /// <summary>
-        /// Presenter から指定された UI Toolkit 要素。`Configure` 呼び出し後に <see cref="SetPortrait"/> が利用する。
+        /// Presenter から指定された UI Toolkit 要素。`Configure` 呼び出し後に <see cref="SetSprite"/> が利用する。
         /// </summary>
         private VisualElement m_BoundElement;
 
@@ -335,10 +335,21 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 俳優設定を View へ適用し、Sprite / SpriteList / Texture2D の優先順位で画像を表示する。
+        /// 俳優設定を View へ適用し、Sprites に登録された Sprite を描画する。
+        /// Sprites が空の場合は画像を解除し、旧フィールドは参照しない。
         /// </summary>
         /// <param name="actorData">表示対象となる俳優設定。null の場合は画像を全て解除する。</param>
         public void ApplyActorData(FUnityActorData actorData)
+        {
+            ApplyActorData(actorData, 0);
+        }
+
+        /// <summary>
+        /// 俳優設定とインデックスを指定して View へ適用する。Sprites[index] を描画し、範囲外の場合は丸め込む。
+        /// </summary>
+        /// <param name="actorData">表示対象となる俳優設定。</param>
+        /// <param name="spriteIndex">表示したい Sprite のインデックス。</param>
+        public void ApplyActorData(FUnityActorData actorData, int spriteIndex)
         {
             EnsurePortraitImage();
 
@@ -350,29 +361,21 @@ namespace FUnity.Runtime.View
 
             if (actorData == null)
             {
-                SetSprite(null, null);
+                SetSprite(null);
                 return;
             }
 
-            if (actorData.PortraitSprite != null)
+            actorData.EnsureSpritesMigrated();
+
+            var sprites = actorData.Sprites;
+            if (sprites == null || sprites.Count == 0)
             {
-                SetSprite(actorData.PortraitSprite, null);
+                SetSprite(null);
                 return;
             }
 
-            if (actorData.Sprites != null && actorData.Sprites.Count > 0)
-            {
-                SetSprite(actorData.Sprites[0], null);
-                return;
-            }
-
-            if (actorData.Portrait != null)
-            {
-                SetSprite(null, actorData.Portrait);
-                return;
-            }
-
-            SetSprite(null, null);
+            var safeIndex = Mathf.Clamp(spriteIndex, 0, sprites.Count - 1);
+            SetSprite(sprites[safeIndex]);
         }
 
         /// <summary>
@@ -479,21 +482,10 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 従来 API 互換のポートレート設定メソッド。内部的には <see cref="SetSprite"/> を呼び出す。
+        /// Sprite を UI Toolkit Image へ設定し、Texture2D 互換フィールドへは依存しない描画を行う。
         /// </summary>
-        /// <param name="sprite">表示する Sprite。null の場合は Texture2D を利用する。</param>
-        /// <param name="fallbackTexture">Sprite 未設定時のフォールバックとして利用する Texture2D。</param>
-        public void SetPortrait(Sprite sprite, Texture2D fallbackTexture)
-        {
-            SetSprite(sprite, fallbackTexture);
-        }
-
-        /// <summary>
-        /// Sprite または Texture2D を UI Toolkit Image へ設定し、フォールバックも含めて描画する。
-        /// </summary>
-        /// <param name="sprite">表示したい Sprite。null の場合は Texture2D フォールバックを利用する。</param>
-        /// <param name="fallbackTexture">Sprite 未指定時に使用する従来の Texture2D。</param>
-        public void SetSprite(Sprite sprite, Texture2D fallbackTexture)
+        /// <param name="sprite">表示したい Sprite。null の場合は画像を解除する。</param>
+        public void SetSprite(Sprite sprite)
         {
             EnsurePortraitImage();
 
@@ -503,11 +495,6 @@ namespace FUnity.Runtime.View
                 {
                     m_Image.sprite = sprite;
                     m_Image.image = null;
-                }
-                else if (fallbackTexture != null)
-                {
-                    m_Image.sprite = null;
-                    m_Image.image = fallbackTexture;
                 }
                 else
                 {

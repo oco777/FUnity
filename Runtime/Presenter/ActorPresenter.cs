@@ -831,12 +831,11 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            var fallbackTexture = m_ActorData != null ? m_ActorData.Portrait : null;
-            m_View.SetSprite(sprite, fallbackTexture);
+            m_View.SetSprite(sprite);
         }
 
         /// <summary>
-        /// SpriteList や PortraitSprite、旧 Texture を考慮して現在使用する Sprite を解決する。
+        /// SpriteList と旧 Texture を考慮して現在使用する Sprite を解決する。
         /// </summary>
         /// <returns>表示に利用する Sprite。利用可能な Sprite が無ければ null。</returns>
         private Sprite ResolveCurrentSprite()
@@ -851,6 +850,8 @@ namespace FUnity.Runtime.Presenter
 
                 return null;
             }
+
+            m_ActorData.EnsureSpritesMigrated();
 
             Sprite resolved = null;
 
@@ -870,16 +871,6 @@ namespace FUnity.Runtime.Presenter
                 }
             }
 
-            if (m_ActorData.PortraitSprite != null)
-            {
-                if (m_State != null)
-                {
-                    m_State.SpriteIndex = 0;
-                }
-
-                return m_ActorData.PortraitSprite;
-            }
-
             resolved = ResolveSpriteFromList(m_SpriteIndex, out var listIndex);
             m_SpriteIndex = listIndex;
             if (m_State != null)
@@ -892,7 +883,14 @@ namespace FUnity.Runtime.Presenter
                 return resolved;
             }
 
-            var fallback = EnsureRuntimePortraitSprite(m_ActorData.Portrait);
+            Sprite fallback = null;
+#pragma warning disable CS0618
+            var legacyPortrait = m_ActorData.Portrait;
+#pragma warning restore CS0618
+            if (legacyPortrait != null)
+            {
+                fallback = EnsureRuntimePortraitSprite(legacyPortrait);
+            }
 
             if (m_State != null)
             {
@@ -1028,6 +1026,8 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
+            m_ActorData.EnsureSpritesMigrated();
+
             var sprites = m_ActorData.Sprites;
             if (sprites != null && sprites.Count > 0)
             {
@@ -1039,7 +1039,7 @@ namespace FUnity.Runtime.Presenter
                     m_State.SpriteIndex = m_SpriteIndex;
                 }
 
-                m_View?.SetSprite(sprites[m_SpriteIndex], m_ActorData.Portrait);
+                m_View?.SetSprite(sprites[m_SpriteIndex]);
                 return;
             }
 
@@ -1050,7 +1050,7 @@ namespace FUnity.Runtime.Presenter
                 m_State.SpriteIndex = 0;
             }
 
-            m_View?.SetSprite(m_ActorData.PortraitSprite, m_ActorData.Portrait);
+            ApplyCurrentSpriteToView();
         }
 
         /// <summary>
