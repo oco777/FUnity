@@ -25,7 +25,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         [SerializeField]
         private ActorPresenter m_ActorPresenter;
 
-        /// <summary>Presenter 未接続時に保持する向き（度）。0=右, 90=上, 180=左, 270=下。</summary>
+        /// <summary>Presenter 未接続時に保持する内部角度（度）。0=右, 90=上, 180=左, 270=下。</summary>
         [SerializeField]
         private float m_LocalDirectionDeg = 90f;
 
@@ -179,9 +179,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
-        /// 現在の向きを度単位で設定する。0=右、90=上、180=左、270=下 として扱う。
+        /// 現在の向きを内部角度（0=右, 90=上, 180=左, 270=下）として設定します。
         /// </summary>
-        /// <param name="degrees">設定する角度（度）。</param>
+        /// <param name="degrees">設定する内部角度（度）。</param>
         public void SetDirection(float degrees)
         {
             m_LocalDirectionDeg = degrees;
@@ -211,9 +211,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
-        /// 現在の向きを度単位で取得する。0=右、90=上、180=左、270=下 を想定する。
+        /// 現在の向きを内部角度（0=右, 90=上, 180=左, 270=下）として取得します。
         /// </summary>
-        /// <returns>現在の向き（度）。</returns>
+        /// <returns>現在の内部角度（度）。</returns>
         public float GetDirection()
         {
             if (m_ActorPresenter == null)

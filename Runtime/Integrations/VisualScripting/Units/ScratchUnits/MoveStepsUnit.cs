@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine;
 using Unity.VisualScripting;
+using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
@@ -86,8 +87,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var view = controller.ActorView;
             var rootScaledSize = view != null ? view.GetRootScaledSizePx() : Vector2.zero;
             var currentCenter = presenter.GetPosition();
-            var directionDeg = controller.GetDirection();
-            var uiDirection = ScratchUnitUtil.DirFromDegrees(directionDeg);
+            var directionInternal = controller.GetDirection();
+            var directionForMode = FUnityModeUtil.IsScratchMode
+                ? ScratchAngleUtil.InternalToScratch(directionInternal)
+                : directionInternal;
+            var uiDirection = ScratchUnitUtil.DirFromDegrees(directionForMode);
             if (uiDirection.sqrMagnitude <= Mathf.Epsilon)
             {
                 uiDirection = new Vector2(0f, -1f);
@@ -102,7 +106,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             var remaining = movePixels;
             var hasBounced = false;
-            var nextDirectionDeg = directionDeg;
+            var nextDirectionInternal = directionInternal;
             var logicalDirection = new Vector2(uiDirection.x, -uiDirection.y);
             logicalDirection.Normalize();
 
@@ -136,7 +140,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                     uiDirection = bouncedDirection;
                     logicalDirection = new Vector2(uiDirection.x, -uiDirection.y);
                     logicalDirection.Normalize();
-                    nextDirectionDeg = ScratchUnitUtil.DegreesFromUiDirection(uiDirection);
+                    var nextDirectionForMode = ScratchUnitUtil.DegreesFromUiDirection(uiDirection);
+                    nextDirectionInternal = FUnityModeUtil.IsScratchMode
+                        ? ScratchAngleUtil.ScratchToInternal(nextDirectionForMode)
+                        : nextDirectionForMode;
                     continue;
                 }
 
@@ -148,7 +155,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             if (hasBounced)
             {
-                controller.SetDirection(nextDirectionDeg);
+                controller.SetDirection(nextDirectionInternal);
             }
 
             yield return m_Exit;
