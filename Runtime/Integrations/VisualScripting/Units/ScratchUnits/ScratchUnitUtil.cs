@@ -118,7 +118,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return false;
             }
 
-            var variables = flow.Variables;
+            var variables = flow.variables;
             if (variables == null)
             {
                 return false;
@@ -152,7 +152,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var variables = flow.Variables;
+            var variables = flow.variables;
             if (variables == null)
             {
                 return;
