@@ -55,13 +55,9 @@ namespace FUnity.Runtime.View
 
         /// <summary>回転および背景差し替えに利用するポートレート要素。</summary>
         private VisualElement m_PortraitElement;
-        private Image m_PortraitImage;
 
-        /// <summary>
-        /// Sprite や Texture2D を UI Toolkit 上へ描画するための Image 要素。
-        /// 俳優ルート要素直下へ追加し、backgroundImage を使用せず安全に表示する。
-        /// </summary>
-        private Image m_Image;
+        /// <summary>ポートレート表示専用の Image 要素。Sprite を直接描画するために使用する。</summary>
+        private Image m_PortraitImage;
 
         /// <summary>色相回転を適用する際に使用するレンダリングパイプライン。</summary>
         private HueShiftPipeline m_HuePipeline;
@@ -317,7 +313,7 @@ namespace FUnity.Runtime.View
             }
             else
             {
-                m_Image = null;
+                m_PortraitImage = null;
                 m_SpeechBubble = null;
                 m_SpeechLabel = null;
             }
@@ -488,22 +484,22 @@ namespace FUnity.Runtime.View
         {
             EnsurePortraitImage();
 
-            if (m_Image != null)
+            if (m_PortraitImage != null)
             {
                 if (sprite != null)
                 {
-                    m_Image.sprite = sprite;
-                    m_Image.image = null;
+                    m_PortraitImage.sprite = sprite;
+                    m_PortraitImage.image = null;
                 }
                 else
                 {
-                    m_Image.sprite = null;
-                    m_Image.image = null;
+                    m_PortraitImage.sprite = null;
+                    m_PortraitImage.image = null;
                 }
             }
 
             var portrait = ResolvePortraitElement();
-            if (portrait != null && portrait != m_Image)
+            if (portrait != null && portrait != m_PortraitImage)
             {
                 portrait.style.backgroundImage = new StyleBackground();
                 portrait.style.backgroundColor = StyleKeyword.Null;
@@ -1004,7 +1000,7 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// ポートレート要素を遅延解決し、キャッシュを維持する。存在しない場合は null を返す。
+        /// ポートレート要素を遅延解決し、キャッシュを維持する。未定義の場合は #root 要素へフォールバックする。
         /// </summary>
         /// <returns>回転・画像差し替え対象の VisualElement。</returns>
         private VisualElement ResolvePortraitElement()
@@ -1014,34 +1010,32 @@ namespace FUnity.Runtime.View
                 return m_PortraitElement;
             }
 
-            if (m_Image != null)
-            {
-                m_PortraitElement = m_Image;
-                return m_PortraitElement;
-            }
-
-            if (m_BoundElement == null)
+            var searchBase = GetRootElement();
+            if (searchBase == null)
             {
                 return null;
             }
 
-            m_PortraitElement = m_BoundElement.Q<VisualElement>("portrait")
-                ?? m_BoundElement.Q<VisualElement>(className: "portrait")
-                ?? m_BoundElement.Q<VisualElement>(className: "actor-portrait");
+            m_PortraitElement = searchBase.Q<VisualElement>("portrait")
+                ?? searchBase.Q<VisualElement>(className: "portrait")
+                ?? searchBase.Q<VisualElement>(className: "actor-portrait")
+                ?? searchBase;
 
             return m_PortraitElement;
         }
 
         /// <summary>
-        /// 俳優ルート要素へ UI Toolkit Image を確実に配置し、backgroundImage の直接使用を避ける。
+        /// ポートレート要素を解決して専用 Image を 1 つだけ配置し、backgroundImage の直接使用を避ける。
         /// </summary>
         private void EnsurePortraitImage()
         {
             if (m_PortraitElement == null)
             {
-                // どこかで m_RootElement から Q しておく:
-                // m_PortraitElement = m_RootElement.Q<VisualElement>("portrait");
-                return;
+                m_PortraitElement = ResolvePortraitElement();
+                if (m_PortraitElement == null)
+                {
+                    return;
+                }
             }
 
             if (m_PortraitImage == null)
