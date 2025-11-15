@@ -1123,85 +1123,39 @@ namespace FUnity.Runtime.Core
         /// <param name="data">俳優設定。</param>
         private void ApplyActorSprite(VisualElement element, FUnityActorData data)
         {
-            if (element == null)
+            if (element == null || data == null)
             {
                 return;
             }
 
-            var root = element.Q<VisualElement>(RootElementName) ?? element;
-            var portrait = root.Q<VisualElement>(PortraitElementName)
-                ?? root.Q<VisualElement>(className: PortraitElementName)
-                ?? element.Q<VisualElement>(PortraitElementName)
-                ?? element.Q<VisualElement>(className: PortraitElementName);
+            var rootImage = element.Q<VisualElement>("portrait-image");
+            if (rootImage != null && rootImage.parent == element)
+            {
+                element.Remove(rootImage);
+            }
 
+            var portrait = element.Q<VisualElement>(PortraitElementName);
             if (portrait == null)
             {
-                FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' の Sprite 要素が見つかりません。");
                 return;
             }
 
-            Sprite resolvedSprite = null;
-            if (data != null)
+            portrait.Clear();
+
+            var img = new Image()
             {
-                var spriteList = data.Sprites;
-                if (spriteList != null)
-                {
-                    for (var i = 0; i < spriteList.Count; i++)
-                    {
-                        var candidate = spriteList[i];
-                        if (candidate != null)
-                        {
-                            resolvedSprite = candidate;
-                            break;
-                        }
-                    }
-                }
-            }
+                name = "portrait-image",
+                scaleMode = ScaleMode.ScaleToFit,
+                pickingMode = PickingMode.Ignore
+            };
+            portrait.Add(img);
 
-            Image imageElement;
-            if (portrait is Image existingImage)
-            {
-                imageElement = existingImage;
-            }
-            else
-            {
-                imageElement = portrait.Q<Image>("portrait-image") ?? portrait.Q<Image>(className: "portrait-image");
-                if (imageElement == null)
-                {
-                    imageElement = new Image
-                    {
-                        name = "portrait-image",
-                        scaleMode = ScaleMode.ScaleToFit,
-                        pickingMode = PickingMode.Ignore,
-                    };
-                    imageElement.style.flexGrow = 1f;
-                }
+            var sprites = data.Sprites;
+            var resolved = (sprites != null && sprites.Count > 0) ? sprites[0] : null;
 
-                if (imageElement.parent != portrait)
-                {
-                    imageElement.RemoveFromHierarchy();
-                    portrait.Insert(0, imageElement);
-                }
-            }
-
-            portrait.style.backgroundImage = new StyleBackground();
-            portrait.style.backgroundSize = StyleKeyword.Null;
-            portrait.style.backgroundColor = StyleKeyword.Null;
-            imageElement.scaleMode = ScaleMode.ScaleToFit;
-            imageElement.pickingMode = PickingMode.Ignore;
-            imageElement.style.flexGrow = 1f;
-
-            if (resolvedSprite != null)
-            {
-                imageElement.sprite = resolvedSprite;
-                imageElement.image = null;
-                return;
-            }
-
-            imageElement.sprite = null;
-            imageElement.image = null;
-            portrait.style.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 0.9f);
-            FUnityLog.LogWarning($"'{data?.DisplayName ?? "(Unknown)"}' の Sprite が設定されていないため単色背景を使用します。");
+            img.sprite = resolved;
+            img.image = null;
+            portrait.style.backgroundImage = default;
         }
 
         /// <summary>
