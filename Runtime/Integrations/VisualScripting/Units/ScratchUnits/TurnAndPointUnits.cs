@@ -228,7 +228,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 yield break;
             }
 
-            var degrees = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+            var degrees = ScratchUnitUtil.GetDirectionDegreesForCurrentMode(delta);
             adapter.SetDirection(degrees);
             yield return m_Exit;
         }

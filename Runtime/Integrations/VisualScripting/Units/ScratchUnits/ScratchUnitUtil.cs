@@ -493,14 +493,40 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// Scratch 方位（0°=上、90°=右、180°=下、-90°=左）を UI 座標系（右=+X、下=+Y）へ変換した単位ベクトルを返します。
+        /// 差分ベクトルから現在のモードに適した向きの角度（度）を計算します。
+        /// Scratch モード時は上=0°、それ以外は右=0° を返します。
+        /// </summary>
+        /// <param name="delta">対象までの差分ベクトル（論理座標系）。</param>
+        /// <returns>現在のモード基準で正規化された角度（度）。</returns>
+        public static float GetDirectionDegreesForCurrentMode(Vector2 delta)
+        {
+            if (delta.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return 0f;
+            }
+
+            var degreesFromRight = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+            if (!FUnityModeUtil.IsScratchMode)
+            {
+                return NormalizeSignedAngle(degreesFromRight);
+            }
+
+            var degreesFromUp = 90f - degreesFromRight;
+            return NormalizeSignedAngle(degreesFromUp);
+        }
+
+        /// <summary>
+        /// 現在のモードに応じた角度（度）を UI 座標系（右=+X、下=+Y）の単位ベクトルへ変換します。
+        /// Scratch モードでは上=0°、それ以外では右=0° を基準とします。
         /// </summary>
         /// <param name="degrees">変換する角度（度）。</param>
         /// <returns>UI 座標系における進行方向ベクトル。</returns>
         public static Vector2 DirFromDegrees(float degrees)
         {
-            var rad = degrees * Mathf.Deg2Rad;
-            return new Vector2(Mathf.Sin(rad), -Mathf.Cos(rad));
+            var normalized = NormalizeSignedAngle(degrees);
+            var reference = FUnityModeUtil.IsScratchMode ? 90f - normalized : normalized;
+            var rad = reference * Mathf.Deg2Rad;
+            return new Vector2(Mathf.Cos(rad), -Mathf.Sin(rad));
         }
 
         /// <summary>
@@ -773,10 +799,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// UI 座標系の方向ベクトルから Scratch の方位（度）を計算します。
+        /// UI 座標系の方向ベクトルから現在のモードに応じた方位（度）を計算します。
+        /// Scratch モードでは上=0°、それ以外では右=0° を返します。
         /// </summary>
         /// <param name="dirPx">UI 座標系の方向ベクトル。</param>
-        /// <returns>Scratch 方位の角度（度）。</returns>
+        /// <returns>現在のモード基準での角度（度）。</returns>
         public static float DegreesFromUiDirection(Vector2 dirPx)
         {
             if (dirPx.sqrMagnitude <= Mathf.Epsilon)
@@ -784,10 +811,24 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return 0f;
             }
 
-            var normalized = dirPx.normalized;
-            var radians = Mathf.Atan2(normalized.x, -normalized.y);
-            var degrees = radians * Mathf.Rad2Deg;
-            return degrees;
+            var logicalDelta = ToLogicalDelta(dirPx);
+            return GetDirectionDegreesForCurrentMode(logicalDelta);
+        }
+
+        /// <summary>
+        /// 角度を -180° ～ 180° の範囲へ正規化します。Scratch 互換の方向比較や UI 回転計算で一貫した値を得るために利用します。
+        /// </summary>
+        /// <param name="degrees">正規化対象の角度（度）。</param>
+        /// <returns>-180° ～ 180° に収めた角度（度）。</returns>
+        private static float NormalizeSignedAngle(float degrees)
+        {
+            var normalized = Mathf.Repeat(degrees + 180f, 360f) - 180f;
+            if (Mathf.Approximately(normalized, -180f) && degrees > 0f)
+            {
+                return 180f;
+            }
+
+            return normalized;
         }
 
         /// <summary>

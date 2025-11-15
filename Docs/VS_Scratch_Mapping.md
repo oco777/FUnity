@@ -32,6 +32,8 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | ○度に向ける | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.PointDirectionUnit | ○度に向ける | FUnity/Scratch/動き | 向きを絶対設定。定義: Runtime/.../TurnAndPointUnits.cs |
 | マウスポインターへ向ける | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.PointTowardsMousePointerUnit | マウスポインターへ向ける | FUnity/Scratch/動き | カーソル方向へ即時旋回。定義: Runtime/.../TurnAndPointUnits.cs |
 
+> **角度の扱い:** Runtime/Integrations/VisualScripting/Units/ScratchUnits/ScratchUnitUtil.cs の `GetDirectionDegreesForCurrentMode` を経由し、Scratch モードでは上=0°/右=90°/左=-90°/下=±180°、通常モードでは従来通り右=0° の角度ルールを適用しています。`DirFromDegrees` も同ユーティリティでモード差を吸収します。
+
 ## 見た目
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
