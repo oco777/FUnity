@@ -89,6 +89,8 @@ public sealed class ActorState
 - Presenter や View からポートレートを設定する際は必ず `SetPortrait(sprite, texture)` 形式のメソッドを経由し、Sprite → Texture2D → 無地の順で扱う。
 - SpriteList を利用する API（`ActorPresenter.SetSpriteIndex` / `ActorPresenterAdapter.SetSpriteIndex`）を経由して差分表示を切り替える。直接 `style.backgroundImage` へ Texture を設定しない。
 - 新規キャラクターアセットでは Sprite Editor でスライスした Sprite を `PortraitSprite` と `Sprites` に登録する。Texture2D のみを追加する実装は非推奨。
+- `FUnityActorData` のビジュアル管理は Sprite / SpriteList を標準とし、Texture2D `Portrait` は後方互換フォールバックのみに留める。
+- 俳優の画像表示は UI Toolkit の `Image` 要素を必須とし、`style.backgroundImage` へ直接設定しない。
 
 ## 例外・エラー処理の方針
 - **早期 return** と **わかりやすい `Debug.LogWarning/Error`** を徹底

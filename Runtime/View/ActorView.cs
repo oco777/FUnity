@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using FUnity.Runtime.Core;
 using FUnity.Runtime.Input;
 using FUnity.Runtime.Model;
 using FUnity.Runtime.Presenter;
@@ -54,6 +55,12 @@ namespace FUnity.Runtime.View
 
         /// <summary>回転および背景差し替えに利用するポートレート要素。</summary>
         private VisualElement m_PortraitElement;
+
+        /// <summary>
+        /// Sprite や Texture2D を UI Toolkit 上へ描画するための Image 要素。
+        /// 俳優ルート要素直下へ追加し、backgroundImage を使用せず安全に表示する。
+        /// </summary>
+        private Image m_Image;
 
         /// <summary>色相回転を適用する際に使用するレンダリングパイプライン。</summary>
         private HueShiftPipeline m_HuePipeline;
@@ -304,10 +311,12 @@ namespace FUnity.Runtime.View
             if (m_RootElement != null)
             {
                 ApplyCenterPivot(m_RootElement);
+                EnsurePortraitImage();
                 EnsureSpeechElements();
             }
             else
             {
+                m_Image = null;
                 m_SpeechBubble = null;
                 m_SpeechLabel = null;
             }
@@ -323,6 +332,47 @@ namespace FUnity.Runtime.View
 
             RegisterGeometryCallbacks();
             ApplyAllTransforms();
+        }
+
+        /// <summary>
+        /// 俳優設定を View へ適用し、Sprite / SpriteList / Texture2D の優先順位で画像を表示する。
+        /// </summary>
+        /// <param name="actorData">表示対象となる俳優設定。null の場合は画像を全て解除する。</param>
+        public void ApplyActorData(FUnityActorData actorData)
+        {
+            EnsurePortraitImage();
+
+            var root = GetRootElement();
+            if (root != null)
+            {
+                root.style.backgroundImage = new StyleBackground();
+            }
+
+            if (actorData == null)
+            {
+                SetSprite(null, null);
+                return;
+            }
+
+            if (actorData.PortraitSprite != null)
+            {
+                SetSprite(actorData.PortraitSprite, null);
+                return;
+            }
+
+            if (actorData.Sprites != null && actorData.Sprites.Count > 0)
+            {
+                SetSprite(actorData.Sprites[0], null);
+                return;
+            }
+
+            if (actorData.Portrait != null)
+            {
+                SetSprite(null, actorData.Portrait);
+                return;
+            }
+
+            SetSprite(null, null);
         }
 
         /// <summary>
@@ -429,61 +479,54 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
-        /// 俳優のポートレート画像を UI Toolkit の `portrait` 要素へ設定する。Sprite を優先し、未指定時は Texture2D を利用する。
+        /// 従来 API 互換のポートレート設定メソッド。内部的には <see cref="SetSprite"/> を呼び出す。
         /// </summary>
         /// <param name="sprite">表示する Sprite。null の場合は Texture2D を利用する。</param>
         /// <param name="fallbackTexture">Sprite 未設定時のフォールバックとして利用する Texture2D。</param>
         public void SetPortrait(Sprite sprite, Texture2D fallbackTexture)
         {
+            SetSprite(sprite, fallbackTexture);
+        }
+
+        /// <summary>
+        /// Sprite または Texture2D を UI Toolkit Image へ設定し、フォールバックも含めて描画する。
+        /// </summary>
+        /// <param name="sprite">表示したい Sprite。null の場合は Texture2D フォールバックを利用する。</param>
+        /// <param name="fallbackTexture">Sprite 未指定時に使用する従来の Texture2D。</param>
+        public void SetSprite(Sprite sprite, Texture2D fallbackTexture)
+        {
+            EnsurePortraitImage();
+
+            if (m_Image != null)
+            {
+                if (sprite != null)
+                {
+                    m_Image.sprite = sprite;
+                    m_Image.image = null;
+                }
+                else if (fallbackTexture != null)
+                {
+                    m_Image.sprite = null;
+                    m_Image.image = fallbackTexture;
+                }
+                else
+                {
+                    m_Image.sprite = null;
+                    m_Image.image = null;
+                }
+            }
+
             var portrait = ResolvePortraitElement();
-            if (portrait == null)
+            if (portrait != null && portrait != m_Image)
             {
-                var root = GetRootElement();
-                portrait = ResolveSpriteElement(root ?? m_ActorRoot ?? m_BoundElement);
-                if (portrait == null)
-                {
-                    return;
-                }
-            }
-
-            if (portrait is Image imageElement)
-            {
-                portrait.style.backgroundImage = StyleBackground.none;
+                portrait.style.backgroundImage = new StyleBackground();
                 portrait.style.backgroundColor = StyleKeyword.Null;
-
-                if (sprite != null)
-                {
-                    imageElement.sprite = sprite;
-                    imageElement.image = null;
-                }
-                else if (fallbackTexture != null)
-                {
-                    imageElement.sprite = null;
-                    imageElement.image = fallbackTexture;
-                }
-                else
-                {
-                    imageElement.sprite = null;
-                    imageElement.image = null;
-                }
             }
-            else
+
+            var root = GetRootElement();
+            if (root != null)
             {
-                if (sprite != null)
-                {
-                    portrait.style.backgroundImage = new StyleBackground(sprite);
-                    portrait.style.backgroundColor = StyleKeyword.Null;
-                }
-                else if (fallbackTexture != null)
-                {
-                    portrait.style.backgroundImage = new StyleBackground(fallbackTexture);
-                    portrait.style.backgroundColor = StyleKeyword.Null;
-                }
-                else
-                {
-                    portrait.style.backgroundImage = StyleBackground.none;
-                    portrait.style.backgroundColor = StyleKeyword.Null;
-                }
+                root.style.backgroundImage = new StyleBackground();
             }
 
             InvalidateSourceTexture();
@@ -985,6 +1028,12 @@ namespace FUnity.Runtime.View
                 return m_PortraitElement;
             }
 
+            if (m_Image != null)
+            {
+                m_PortraitElement = m_Image;
+                return m_PortraitElement;
+            }
+
             if (m_BoundElement == null)
             {
                 return null;
@@ -995,6 +1044,38 @@ namespace FUnity.Runtime.View
                 ?? m_BoundElement.Q<VisualElement>(className: "actor-portrait");
 
             return m_PortraitElement;
+        }
+
+        /// <summary>
+        /// 俳優ルート要素へ UI Toolkit Image を確実に配置し、backgroundImage の直接使用を避ける。
+        /// </summary>
+        private void EnsurePortraitImage()
+        {
+            if (m_RootElement == null)
+            {
+                return;
+            }
+
+            if (m_Image == null)
+            {
+                m_Image = new Image
+                {
+                    name = "portrait-image",
+                    scaleMode = ScaleMode.ScaleToFit,
+                    pickingMode = PickingMode.Ignore,
+                };
+                m_Image.style.flexGrow = 1f;
+            }
+
+            if (m_Image.parent != m_RootElement)
+            {
+                m_Image.RemoveFromHierarchy();
+                m_RootElement.Insert(0, m_Image);
+            }
+
+            m_PortraitElement = m_Image;
+            m_RootElement.style.backgroundImage = new StyleBackground();
+            m_RootElement.style.backgroundColor = StyleKeyword.Null;
         }
 
         /// <summary>

@@ -102,3 +102,4 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - 既存ユニットのタイトルやカテゴリを変更した場合は、該当行の `UnitTitle` と `UnitCategory` を同じ値へ更新してください。
 - TypeIcon を変更した場合は、本ドキュメントにその理由を記載し、プロジェクト全体で統一できるか検討してください。
 - Sprite 差し替え系ユニットを追加する場合は、`ActorPresenterAdapter.SetSpriteIndex` と `ActorPresenter.SetSpriteIndex` を呼び出し、`SpriteIndex` / `SpriteCount` のプロパティを活用して枚数管理を行ってください。
+- 歩行など SpriteList を利用するアニメーションは `NextSpriteUnit` / `SetSpriteIndexUnit` で操作し、Presenter API を直接呼び出す際も同名メソッドを経由します。
