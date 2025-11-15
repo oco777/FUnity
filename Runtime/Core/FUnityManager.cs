@@ -1128,30 +1128,34 @@ namespace FUnity.Runtime.Core
         private void ApplyActorSprite(VisualElement element, FUnityActorData data)
         {
             if (element == null || data == null)
-            {
                 return;
+
+            // 1) 本当の #root を取得（element がそのまま root の場合もある）
+            var root = element.Q<VisualElement>("root");
+            if (root == null)
+            {
+                root = element;
             }
 
-            var root = ResolveActorRootElement(element) ?? element;
-
-            var wrongPortraitImage = root.hierarchy.Children()
+            // 2) #root 直下に残っている古い Image #portrait-image を削除
+            //    （ここが今回の「上の画像」を消すポイント）
+            var strayRootImage = root.Children()
                 .OfType<Image>()
                 .FirstOrDefault(img => img.name == PortraitImageElementName);
-
-            if (wrongPortraitImage != null)
+            if (strayRootImage != null)
             {
-                wrongPortraitImage.RemoveFromHierarchy();
+                strayRootImage.RemoveFromHierarchy();
             }
 
+            // 3) #portrait を探す
             var portrait = root.Q<VisualElement>(PortraitElementName);
             if (portrait == null)
-            {
                 return;
-            }
 
+            // 4) #portrait の中を毎回クリアして、Image を 1 個だけにする
             portrait.Clear();
 
-            var img = new Image()
+            var img = new Image
             {
                 name = PortraitImageElementName,
                 scaleMode = ScaleMode.ScaleToFit,
@@ -1160,15 +1164,28 @@ namespace FUnity.Runtime.Core
             img.style.flexGrow = 1f;
             portrait.Add(img);
 
+            // 5) Sprites から Sprite を取得して適用
             var sprites = data.Sprites;
-            var resolved = (sprites != null && sprites.Count > 0) ? sprites[0] : null;
+            Sprite resolved = null;
+            if (sprites != null && sprites.Count > 0)
+            {
+                resolved = sprites[0];
+            }
 
-            img.sprite = resolved;
-            img.image = null;
+            if (resolved != null)
+            {
+                img.sprite = resolved;
+                img.image = null;
+            }
+            else
+            {
+                img.sprite = null;
+                img.image = null;
+            }
+
+            // 念のため背景もクリア
             portrait.style.backgroundImage = default;
-            portrait.style.backgroundColor = StyleKeyword.Null;
         }
-
         /// <summary>
         /// Resources から俳優用 VisualTreeAsset を読み込む。既定パスが失敗した場合はフォールバックを試みる。
         /// </summary>

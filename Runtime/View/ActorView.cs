@@ -55,6 +55,7 @@ namespace FUnity.Runtime.View
 
         /// <summary>回転および背景差し替えに利用するポートレート要素。</summary>
         private VisualElement m_PortraitElement;
+        private Image m_PortraitImage;
 
         /// <summary>
         /// Sprite や Texture2D を UI Toolkit 上へ描画するための Image 要素。
@@ -1036,33 +1037,35 @@ namespace FUnity.Runtime.View
         /// </summary>
         private void EnsurePortraitImage()
         {
-            if (m_RootElement == null)
+            if (m_PortraitElement == null)
             {
+                // どこかで m_RootElement から Q しておく:
+                // m_PortraitElement = m_RootElement.Q<VisualElement>("portrait");
                 return;
             }
 
-            if (m_Image == null)
+            if (m_PortraitImage == null)
             {
-                m_Image = new Image
+                m_PortraitImage = new Image
                 {
                     name = "portrait-image",
                     scaleMode = ScaleMode.ScaleToFit,
                     pickingMode = PickingMode.Ignore,
                 };
-                m_Image.style.flexGrow = 1f;
+                m_PortraitImage.style.flexGrow = 1f;
             }
 
-            if (m_Image.parent != m_RootElement)
+            if (m_PortraitImage.parent != m_PortraitElement)
             {
-                m_Image.RemoveFromHierarchy();
-                m_RootElement.Insert(0, m_Image);
+                m_PortraitImage.RemoveFromHierarchy();
+                m_PortraitElement.Add(m_PortraitImage);
             }
 
-            m_PortraitElement = m_Image;
-            m_RootElement.style.backgroundImage = new StyleBackground();
-            m_RootElement.style.backgroundColor = StyleKeyword.Null;
+            // もし root に昔の背景画像を使っていたのなら、それはクリアしてOK
+            m_PortraitElement.style.backgroundImage = StyleKeyword.Null;
+            // 背景色を消したい場合
+            m_PortraitElement.style.backgroundColor = StyleKeyword.Null;
         }
-
         /// <summary>
         /// 描画効果の基準となる元テクスチャを再取得できるよう、キャッシュを無効化する。
         /// </summary>
