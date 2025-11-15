@@ -32,6 +32,7 @@
 - [⚙ Modes](#-modes)
 - [Visual Scripting での移動例](#visual-scripting-での移動例)
 - [トラブルシューティング早見表](#トラブルシューティング早見表)
+- [Roadmap / 今後追加したい機能（案）](#roadmap--今後追加したい機能案)
 - [ドキュメント](#ドキュメント)
 - [ライセンス](#ライセンス)
 - [貢献方法](#貢献方法)
@@ -91,6 +92,15 @@
 - `CS0234`（`Input.GetAxisRaw` が見つからない）: `UnityEngine.Input.GetAxisRaw` と完全修飾するか、`using UInput = UnityEngine.Input;` を追加します。
 - テーマが null のまま: `Assets/UI Toolkit/UnityThemes/` を確認し、存在しない場合は **FUnity/Create/FUnityProjectData** を再実行して `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` が生成されることを確認します。
 - 俳優 UI が表示されない: `FooniElement.uxml` で `name="root"` と `name="actor-root"` が設定されているか確認し、`FooniUIBridge` が要素を取得できるようにします。
+
+## Roadmap / 今後追加したい機能（案）
+
+- YouTube モード（構想中）
+  - Visual Scripting で作成したアニメーションを
+    Unity Recorder から動画ファイルとして書き出し、
+    YouTube 向けに発表できる作品にするモード。
+  - タイトル → 本編 → エンディング の定型テンプレートを用意し、
+    キャラクター差し替えだけで作品が作れる構成を目指す。
 
 ## ドキュメント
 - [導入手順](Docs/setup.md)
