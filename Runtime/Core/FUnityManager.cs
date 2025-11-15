@@ -1,5 +1,6 @@
 // Updated: 2025-02-14
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -137,6 +138,9 @@ namespace FUnity.Runtime.Core
 
         /// <summary>既定で探索するポートレート要素名。</summary>
         private const string PortraitElementName = "portrait";
+
+        /// <summary>ポートレート Image 要素に使用する既定の名前。</summary>
+        private const string PortraitImageElementName = "portrait-image";
 
         /// <summary>既定で探索するルート要素名。</summary>
         private const string RootElementName = "root";
@@ -1128,13 +1132,18 @@ namespace FUnity.Runtime.Core
                 return;
             }
 
-            var rootImage = element.Q<Image>("portrait-image");
-            if (rootImage != null && rootImage.parent == element)
+            var root = ResolveActorRootElement(element) ?? element;
+
+            var wrongPortraitImage = root.hierarchy.Children()
+                .OfType<Image>()
+                .FirstOrDefault(img => img.name == PortraitImageElementName);
+
+            if (wrongPortraitImage != null)
             {
-                element.Remove(rootImage);
+                wrongPortraitImage.RemoveFromHierarchy();
             }
 
-            var portrait = element.Q<VisualElement>(PortraitElementName);
+            var portrait = root.Q<VisualElement>(PortraitElementName);
             if (portrait == null)
             {
                 return;
@@ -1144,7 +1153,7 @@ namespace FUnity.Runtime.Core
 
             var img = new Image()
             {
-                name = "portrait-image",
+                name = PortraitImageElementName,
                 scaleMode = ScaleMode.ScaleToFit,
                 pickingMode = PickingMode.Ignore
             };
