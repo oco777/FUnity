@@ -26,6 +26,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <summary>Scratch の 1 歩をピクセルへ換算する倍率です。</summary>
         private const float StepToPixels = 1f;
 
+        /// <summary>フロー変数に保存するスレッド ID のキーです。</summary>
+        private const string ThreadIdKey = "FUnity_ThreadId";
+
+        /// <summary>フロー変数に保存する俳優 ID のキーです。</summary>
+        private const string ActorIdKey = "FUnity_ActorId";
+
         /// <summary>
         /// 現在のフローがホストしている Runner（Self）に紐づく Object 変数を取得します。
         /// </summary>
@@ -93,6 +99,67 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             return objectVariables.IsDefined("ui") ? objectVariables.Get("ui") : null;
+        }
+
+        /// <summary>
+        /// Flow に保存されたスレッドコンテキストを取得し、俳優 ID とスレッド ID を返します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="actorId">取得した俳優 ID。</param>
+        /// <param name="threadId">取得したスレッド ID。</param>
+        /// <returns>必要な情報が揃っている場合は true。</returns>
+        public static bool TryGetThreadContext(Flow flow, out string actorId, out Guid threadId)
+        {
+            actorId = null;
+            threadId = Guid.Empty;
+
+            if (flow == null)
+            {
+                return false;
+            }
+
+            var variables = flow.Variables;
+            if (variables == null)
+            {
+                return false;
+            }
+
+            if (!variables.IsDefined(ActorIdKey) || !variables.IsDefined(ThreadIdKey))
+            {
+                return false;
+            }
+
+            actorId = variables.Get<string>(ActorIdKey);
+            var threadIdString = variables.Get<string>(ThreadIdKey);
+            if (!Guid.TryParse(threadIdString, out threadId))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Flow に俳優 ID とスレッド ID を保存し、停止系ユニットから参照できるようにします。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="actorId">保存する俳優 ID。</param>
+        /// <param name="threadId">保存するスレッド ID。</param>
+        public static void SetThreadContext(Flow flow, string actorId, Guid threadId)
+        {
+            if (flow == null)
+            {
+                return;
+            }
+
+            var variables = flow.Variables;
+            if (variables == null)
+            {
+                return;
+            }
+
+            variables.Set(ActorIdKey, actorId ?? string.Empty);
+            variables.Set(ThreadIdKey, threadId.ToString());
         }
 
         /// <summary>

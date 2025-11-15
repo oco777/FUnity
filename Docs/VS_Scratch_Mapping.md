@@ -62,6 +62,9 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | ○のクローンを作る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CreateCloneOfDisplayNameUnit | ○のクローンを作る | FUnity/Scratch/制御 | 指定俳優を複製。定義: Runtime/.../CloneUnits.cs |
 | クローンされたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIStartAsCloneUnit | クローンされたとき | Events/FUnity/Scratch/制御 | クローン生成時イベント。定義: Runtime/.../CloneUnits.cs |
 | このクローンを削除する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.DeleteThisCloneUnit | このクローンを削除する | FUnity/Scratch/制御 | クローンを破棄。定義: Runtime/.../CloneUnits.cs |
+| すべてを止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopAllUnit | Scratch/すべてを止める | FUnity/Scratch/制御 | ScriptThreadManager で全スレッド停止。定義: Runtime/.../StopControlUnits.cs |
+| このスクリプトを止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopThisScriptUnit | Scratch/このスクリプトを止める | FUnity/Scratch/制御 | 現在スレッドのみ停止。定義: Runtime/.../StopControlUnits.cs |
+| スプライトの他のスクリプトを止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopOtherScriptsInSpriteUnit | Scratch/スプライトの他のスクリプトを止める | FUnity/Scratch/制御 | 同俳優の他スレッド停止。定義: Runtime/.../StopControlUnits.cs |
 | もし○なら | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.IfThenUnit | もし○なら | FUnity/Scratch/制御 | 条件成立時のみ本体を実行。定義: Runtime/.../ConditionUnits.cs |
 
 ## イベント
