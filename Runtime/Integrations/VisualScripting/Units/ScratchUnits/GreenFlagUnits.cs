@@ -62,7 +62,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         /// <param name="reference">現在のグラフ参照。</param>
         /// <param name="args">空のイベント引数。</param>
-        public override void Trigger(GraphReference reference, EmptyEventArgs args)
+        private void TriggerWithThreadRegistration(GraphReference reference, EmptyEventArgs args)
         {
             var flow = Flow.New(reference);
             var coroutine = flow.StartCoroutine(RunEventCoroutine(flow, args));

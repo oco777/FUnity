@@ -167,7 +167,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         /// <param name="reference">現在のグラフ参照。</param>
         /// <param name="args">クローンイベント引数。</param>
-        public override void Trigger(GraphReference reference, CloneEventArgs args)
+        private void TriggerWithThreadRegistration(GraphReference reference, CloneEventArgs args)
         {
             var flow = Flow.New(reference);
             var coroutine = flow.StartCoroutine(RunEventCoroutine(flow, args));

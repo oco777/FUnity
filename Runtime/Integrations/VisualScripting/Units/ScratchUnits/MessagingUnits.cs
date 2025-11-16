@@ -200,7 +200,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         /// <param name="reference">現在のグラフ参照。</param>
         /// <param name="args">受信したメッセージ引数。</param>
-        public override void Trigger(GraphReference reference, MessagingCommon.Args args)
+        private void TriggerWithThreadRegistration(GraphReference reference, MessagingCommon.Args args)
         {
             var flow = Flow.New(reference);
             var coroutine = flow.StartCoroutine(RunEventCoroutine(flow, args));
