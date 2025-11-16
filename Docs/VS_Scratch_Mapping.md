@@ -8,6 +8,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を全ユニットへ付与し、FUnity Scratch 系ユニットであることを明示する。
 - ノード検索性向上のため、利用可能な場合は `[UnitSubtitle]`（または同等の検索キーワード属性）に `funity scratch` とカテゴリ名・日本語/英語の関連語を半角スペース区切りで登録する（例：`funity scratch 見た目 say speech`）。
 - コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
+- Scratch 系のコルーチン Unit は `ControlInputCoroutine` と `IEnumerator` ベースの実装を用い、スレッド登録・停止はイベント Unit 側の `ScratchUnitUtil.EnsureScratchThreadRegistered` で行う方針とする。
 
 ## 動き
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |

@@ -14,54 +14,33 @@ using Object = UnityEngine.Object;
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
-    /// Scratch 系のコルーチン Unit が共有する登録処理を提供し、スレッド管理へ自動的に紐付けるための基底クラスです。
-    /// フロー開始時にコルーチンを起動し、俳優 ID とグラフ情報を <see cref="FUnityScriptThreadManager"/> へ登録します。
+    /// Scratch 系のコルーチン Unit が共有する、コルーチン入力生成のための基底クラスです。
+    /// スレッド停止機能は Scratch の EventUnit 側でのみ扱います。
     /// </summary>
     public abstract class ScratchCoroutineUnitBase : Unit
     {
-        /// <summary>コルーチン入力を作成し、起動時に Scratch スレッド登録を行います。</summary>
+        /// <summary>
+        /// Visual Scripting 標準の ControlInputCoroutine を使って、
+        /// IEnumerator ベースのコルーチン Unit を定義するためのヘルパーです。
+        /// </summary>
         /// <param name="key">ControlInput のキー名。</param>
-        /// <param name="coroutineFactory">実行するコルーチンを生成するデリゲート。</param>
-        /// <returns>登録済みの ControlInput。</returns>
-        protected ControlInput CreateScratchCoroutineInput(string key, Func<Flow, IEnumerator> coroutineFactory)
+        /// <param name="coroutineFactory">Flow から IEnumerator を生成するファクトリ。</param>
+        /// <returns>生成された ControlInput。</returns>
+        protected ControlInput CreateScratchCoroutineInput(
+            string key,
+            Func<Flow, IEnumerator> coroutineFactory)
         {
-            return ControlInput(key, flow =>
+            // この入力は「コルーチン」として扱われる。
+            return ControlInputCoroutine(key, flow =>
             {
-                var routine = coroutineFactory != null ? coroutineFactory(flow) : null;
-                var coroutine = StartScratchCoroutine(flow, routine);
-                if (coroutine == null && flow != null && routine != null)
+                if (coroutineFactory == null)
                 {
-                    flow.StartCoroutine(routine);
+                    return null;
                 }
 
-                return null;
+                // Unit 側で定義した IEnumerator をそのまま Visual Scripting に渡す。
+                return coroutineFactory(flow);
             });
-        }
-
-        /// <summary>
-        /// 指定したコルーチンを開始し、ActorId とともに Scratch スレッドへ登録します。
-        /// </summary>
-        /// <param name="flow">現在のフロー情報。</param>
-        /// <param name="routine">起動するコルーチン。</param>
-        /// <returns>開始に成功した場合は Unity のコルーチン参照。失敗時は null。</returns>
-        protected Coroutine StartScratchCoroutine(Flow flow, IEnumerator routine)
-        {
-            if (flow == null || routine == null)
-            {
-                return null;
-            }
-
-            var coroutine = flow.StartCoroutine(routine);
-            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
-            ScriptGraphAsset graph = null;
-
-            if (flow.stack?.machine is ScriptMachine machine)
-            {
-                graph = machine.nest?.macro as ScriptGraphAsset;
-            }
-
-            ScratchUnitUtil.EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
-            return coroutine;
         }
     }
 
