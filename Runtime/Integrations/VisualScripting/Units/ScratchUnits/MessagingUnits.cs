@@ -205,9 +205,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             using (var flow = Flow.New(reference))
             {
                 var routine = RunEventCoroutine(flow, args);
-                var coroutine = FUnityScriptThreadManager.Instance.StartCoroutine(routine);
-
-                ScratchUnitUtil.EnsureScratchThreadRegistered(flow, coroutine);
+                ScratchUnitUtil.StartScratchCoroutine(flow, routine);
             }
         }
 
