@@ -15,8 +15,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// <summary>スレッドに付随する情報を保持するテーブルです。</summary>
         private readonly Dictionary<Guid, ScriptThreadInfo> m_Threads = new Dictionary<Guid, ScriptThreadInfo>();
 
-        /// <summary>シングルトンインスタンスをキャッシュします。</summary>
-        private static FUnityScriptThreadManager s_Instance;
+        /// <summary>Scratch 用スレッドを管理するテーブルです。</summary>
+        private readonly Dictionary<string, ScratchThreadInfo> m_ScratchThreads = new Dictionary<string, ScratchThreadInfo>();
+
+        /// <summary>シングルトンインスタンスを参照します。</summary>
+        public static FUnityScriptThreadManager Instance { get; private set; }
 
         /// <summary>
         /// Visual Scripting のスレッド情報を表すデータクラスです。
@@ -38,28 +41,36 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
-        /// スレッドマネージャのインスタンスを返します。存在しない場合はシーンに生成します。
+        /// Scratch イベント由来のスレッド情報を表すデータクラスです。
         /// </summary>
-        public static FUnityScriptThreadManager Instance
+        internal sealed class ScratchThreadInfo
         {
-            get
+            /// <summary>スレッド固有の ID です（Guid 文字列）。</summary>
+            public string ThreadId;
+
+            /// <summary>属している俳優（Runner）の識別子です。</summary>
+            public string ActorId;
+
+            /// <summary>実行している ScriptGraph アセットです。</summary>
+            public ScriptGraphAsset Graph;
+
+            /// <summary>実行中のコルーチン参照です。</summary>
+            public Coroutine Coroutine;
+        }
+
+        /// <summary>
+        /// 唯一のインスタンスを初期化します。重複があれば自身を破棄します。
+        /// </summary>
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
             {
-                if (s_Instance != null)
-                {
-                    return s_Instance;
-                }
-
-                s_Instance = FindObjectOfType<FUnityScriptThreadManager>();
-                if (s_Instance != null)
-                {
-                    return s_Instance;
-                }
-
-                var go = new GameObject("FUnityScriptThreadManager");
-                s_Instance = go.AddComponent<FUnityScriptThreadManager>();
-                DontDestroyOnLoad(go);
-                return s_Instance;
+                Destroy(gameObject);
+                return;
             }
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
         /// <summary>
@@ -175,6 +186,147 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 }
 
                 m_Threads.Remove(info.ThreadId);
+            }
+        }
+
+        /// <summary>
+        /// Scratch のイベント Unit から開始されたスレッドを登録します。
+        /// </summary>
+        /// <param name="actorId">スレッドを所有する俳優の識別子。</param>
+        /// <param name="graph">実行している ScriptGraph アセット。</param>
+        /// <param name="coroutine">実行中のコルーチン。</param>
+        /// <returns>登録に成功した場合は生成したスレッド ID。コルーチンが null の場合は null。</returns>
+        public string RegisterScratchThread(string actorId, ScriptGraphAsset graph, Coroutine coroutine)
+        {
+            if (coroutine == null)
+            {
+                Debug.LogWarning("[FUnity] RegisterScratchThread: coroutine is null.");
+                return null;
+            }
+
+            var threadId = Guid.NewGuid().ToString("N");
+
+            var info = new ScratchThreadInfo
+            {
+                ThreadId = threadId,
+                ActorId = actorId ?? string.Empty,
+                Graph = graph,
+                Coroutine = coroutine,
+            };
+
+            m_ScratchThreads[threadId] = info;
+            return threadId;
+        }
+
+        /// <summary>
+        /// Scratch 用に登録されたスレッドを登録解除します。
+        /// </summary>
+        /// <param name="threadId">解除するスレッド ID。</param>
+        public void UnregisterScratchThread(string threadId)
+        {
+            if (string.IsNullOrEmpty(threadId))
+            {
+                return;
+            }
+
+            m_ScratchThreads.Remove(threadId);
+        }
+
+        /// <summary>
+        /// すべての Scratch スレッドを停止します。
+        /// </summary>
+        public void StopAllScratchThreads()
+        {
+            foreach (var info in m_ScratchThreads.Values)
+            {
+                if (info?.Coroutine == null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    StopCoroutine(info.Coroutine);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[FUnity] StopAllScratchThreads: Failed to stop coroutine: {ex}");
+                }
+            }
+
+            m_ScratchThreads.Clear();
+        }
+
+        /// <summary>
+        /// 指定した ID の Scratch スレッドだけを停止します。
+        /// </summary>
+        /// <param name="threadId">停止対象のスレッド ID。</param>
+        public void StopScratchThread(string threadId)
+        {
+            if (string.IsNullOrEmpty(threadId))
+            {
+                return;
+            }
+
+            if (!m_ScratchThreads.TryGetValue(threadId, out var info))
+            {
+                return;
+            }
+
+            if (info?.Coroutine != null)
+            {
+                try
+                {
+                    StopCoroutine(info.Coroutine);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[FUnity] StopScratchThread: Failed to stop coroutine: {ex}");
+                }
+            }
+
+            m_ScratchThreads.Remove(threadId);
+        }
+
+        /// <summary>
+        /// 指定俳優に属する Scratch スレッドのうち、指定したスレッド以外を停止します。
+        /// </summary>
+        /// <param name="actorId">対象となる俳優の識別子。</param>
+        /// <param name="exceptThreadId">停止対象から除外するスレッド ID。</param>
+        public void StopOtherScratchThreadsOfActor(string actorId, string exceptThreadId)
+        {
+            if (string.IsNullOrEmpty(actorId))
+            {
+                return;
+            }
+
+            var toStop = new List<string>();
+
+            foreach (var kv in m_ScratchThreads)
+            {
+                var tid = kv.Key;
+                var info = kv.Value;
+                if (info == null)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(info.ActorId, actorId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(exceptThreadId) && string.Equals(info.ThreadId, exceptThreadId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                toStop.Add(tid);
+            }
+
+            foreach (var threadId in toStop)
+            {
+                StopScratchThread(threadId);
             }
         }
 
