@@ -82,6 +82,9 @@ namespace FUnity.Runtime.Core
         /// <summary>俳優設定と Presenter を対応付けるマップ。</summary>
         private readonly Dictionary<FUnityActorData, ActorPresenter> m_ActorPresenterMap = new Dictionary<FUnityActorData, ActorPresenter>();
 
+        /// <summary>俳優設定と Runner GameObject の対応を保持するマップ。</summary>
+        private readonly Dictionary<FUnityActorData, GameObject> m_ActorRunnerMap = new Dictionary<FUnityActorData, GameObject>();
+
         /// <summary>Presenter 初期化待ちの ActorPresenterAdapter 群。</summary>
         private readonly Dictionary<FUnityActorData, List<ActorPresenterAdapter>> m_PendingActorControllers = new Dictionary<FUnityActorData, List<ActorPresenterAdapter>>();
 
@@ -738,7 +741,6 @@ namespace FUnity.Runtime.Core
 
             if (!m_LoggedMissingAdapter)
             {
-                Debug.LogWarning("[FUnity] ActorPresenterAdapter が見つかりません。FUnityManager の Default Actor Presenter Adapter に割り当てるか、Visual Scripting グラフから参照してください。");
                 m_LoggedMissingAdapter = true;
             }
         }
@@ -830,6 +832,11 @@ namespace FUnity.Runtime.Core
                 m_ActorPresenterMap[visual.Data] = presenter;
                 BindActorGraphContext(visual.Data, presenter, view, visual.Element);
                 BindPresenterToControllers(visual.Data, presenter);
+
+                if (m_ActorRunnerMap.TryGetValue(visual.Data, out var runner) && runner != null)
+                {
+                    EnsureActorPresenterAdapter(runner, presenter, visual.Element);
+                }
 
                 visual.Presenter = presenter;
                 visual.View = view;
@@ -1561,6 +1568,30 @@ namespace FUnity.Runtime.Core
         }
 
         /// <summary>
+        /// 指定された俳優設定に対応する UI 要素を探索する。
+        /// </summary>
+        /// <param name="actor">対象の俳優設定。</param>
+        /// <returns>見つかった <see cref="VisualElement"/>。存在しない場合は null。</returns>
+        private VisualElement TryGetActorElement(FUnityActorData actor)
+        {
+            if (actor == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < m_ActorVisuals.Count; i++)
+            {
+                var entry = m_ActorVisuals[i];
+                if (entry.Data == actor)
+                {
+                    return entry.Element;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// <see cref="ActorPresenterAdapter"/> に俳優要素をバインドし、浮遊アニメーション設定を同期する。
         /// </summary>
         /// <param name="actorVE">俳優 UI 要素。</param>
@@ -1690,6 +1721,7 @@ namespace FUnity.Runtime.Core
 
             m_ActorRunnerInstances.Clear();
             m_ActorScriptMachines.Clear();
+            m_ActorRunnerMap.Clear();
         }
 
         /// <summary>
@@ -1810,6 +1842,7 @@ namespace FUnity.Runtime.Core
             runner.layer = 0;
 
             m_ActorRunnerInstances.Add(runner);
+            m_ActorRunnerMap[actor] = runner;
 
             return runner;
         }
@@ -1867,18 +1900,62 @@ namespace FUnity.Runtime.Core
                 return;
             }
 
-            var controller = runner.GetComponent<ActorPresenterAdapter>();
-            if (controller == null)
-            {
-                controller = runner.AddComponent<ActorPresenterAdapter>();
-            }
+            var actorRoot = TryGetActorElement(actor);
+            var presenter = m_ActorPresenterMap.TryGetValue(actor, out var resolvedPresenter) ? resolvedPresenter : null;
+            var controller = EnsureActorPresenterAdapter(runner, presenter, actorRoot);
 
-            if (!actor.FloatAnimation)
+            if (controller != null && !actor.FloatAnimation)
             {
                 controller.EnableFloat(false);
             }
 
             RegisterControllerForActor(actor, controller);
+        }
+
+        /// <summary>
+        /// 指定した Runner へ <see cref="ActorPresenterAdapter"/> を確実に追加し、Presenter と UI 要素をバインドする。
+        /// </summary>
+        /// <param name="runner">対象の Runner GameObject。</param>
+        /// <param name="presenter">接続する Presenter。null の場合は警告のみ出力する。</param>
+        /// <param name="actorRoot">UI Toolkit 上の俳優ルート要素。</param>
+        /// <returns>取得または追加された <see cref="ActorPresenterAdapter"/>。失敗時は null。</returns>
+        private ActorPresenterAdapter EnsureActorPresenterAdapter(
+            GameObject runner,
+            ActorPresenter presenter,
+            VisualElement actorRoot)
+        {
+            if (runner == null)
+            {
+                Debug.LogWarning("[FUnity] EnsureActorPresenterAdapter: runner が null です。");
+                return null;
+            }
+
+            var adapter = runner.GetComponent<ActorPresenterAdapter>();
+            if (adapter == null)
+            {
+                adapter = runner.AddComponent<ActorPresenterAdapter>();
+                Debug.Log($"[FUnity] Added ActorPresenterAdapter to runner '{runner.name}'.");
+            }
+
+            if (presenter != null)
+            {
+                adapter.SetActorPresenter(presenter);
+            }
+            else
+            {
+                Debug.LogWarning($"[FUnity] EnsureActorPresenterAdapter: presenter が null です (runner='{runner.name}').");
+            }
+
+            if (actorRoot != null)
+            {
+                adapter.BindActorElement(actorRoot);
+            }
+            else
+            {
+                Debug.LogWarning($"[FUnity] EnsureActorPresenterAdapter: actorRoot が null です (runner='{runner.name}').");
+            }
+
+            return adapter;
         }
 
         /// <summary>

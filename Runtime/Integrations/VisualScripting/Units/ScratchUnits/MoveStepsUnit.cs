@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
+using FUnity.Runtime.Presenter;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -60,17 +61,17 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>exit ポートへ制御を渡す列挙子。</returns>
         private IEnumerator Run(Flow flow)
         {
-            var controller = ScratchUnitUtil.ResolveAdapter(flow);
-            if (controller == null)
+            if (!ScratchUnitUtil.TryGetActorPresenter(flow, out var presenter) || presenter == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Move Steps: ActorPresenterAdapter が見つからないため移動できません。VSPresenterBridge などからアダプタを登録してください。");
+                Debug.LogWarning("[FUnity] MoveStepsUnit: ActorPresenter を取得できませんでした。");
                 yield return m_Exit;
                 yield break;
             }
 
-            if (controller.Presenter == null)
+            var controller = ScratchUnitUtil.ResolveAdapter(flow);
+            if (controller == null)
             {
-                Debug.LogWarning("[FUnity] Scratch/Move Steps: ActorPresenter が未設定のため移動できません。");
+                Debug.LogWarning("[FUnity] MoveStepsUnit: ActorPresenterAdapter を解決できませんでした。");
                 yield return m_Exit;
                 yield break;
             }
@@ -83,7 +84,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 yield break;
             }
 
-            var presenter = controller.Presenter;
             var view = controller.ActorView;
             var rootScaledSize = view != null ? view.GetRootScaledSizePx() : Vector2.zero;
             var currentCenter = presenter.GetPosition();

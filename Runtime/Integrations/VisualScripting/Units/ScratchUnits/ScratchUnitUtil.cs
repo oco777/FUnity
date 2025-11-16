@@ -113,6 +113,60 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
+        /// Flow から <see cref="ActorPresenter"/> を取得するヘルパーです。
+        /// 1. Object Variables に保存された "presenter" を確認し、見つからない場合は Runner 上の <see cref="ActorPresenterAdapter"/> から取得します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="presenter">取得した Presenter。</param>
+        /// <returns>取得に成功した場合は true。</returns>
+        public static bool TryGetActorPresenter(Flow flow, out ActorPresenter presenter)
+        {
+            presenter = null;
+
+            if (flow == null)
+            {
+                Debug.LogWarning("[FUnity] TryGetActorPresenter: flow が null です。");
+                return false;
+            }
+
+            var stack = flow.stack;
+            var machine = stack?.machine;
+            if (machine != null)
+            {
+                try
+                {
+                    var objVars = Variables.Object(machine);
+                    if (objVars.IsDefined("presenter"))
+                    {
+                        presenter = objVars.Get<ActorPresenter>("presenter");
+                        if (presenter != null)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[FUnity] TryGetActorPresenter: Object Variables からの取得に失敗しました: {e}");
+                }
+            }
+
+            var go = stack?.gameObject;
+            if (go != null)
+            {
+                var adapter = go.GetComponent<ActorPresenterAdapter>();
+                if (adapter != null && adapter.Presenter != null)
+                {
+                    presenter = adapter.Presenter;
+                    return true;
+                }
+            }
+
+            Debug.LogWarning("[FUnity] TryGetActorPresenter: ActorPresenter を取得できませんでした。");
+            return false;
+        }
+
+        /// <summary>
         /// Runner に格納された view 参照を取得します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
