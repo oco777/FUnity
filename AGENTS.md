@@ -165,6 +165,7 @@ FUnity の Scratch モードでは、Visual Scripting のイベント Unit か�
 - イベント Unit のルール
   - 「緑の旗が押されたとき」「クリックされたとき」「キーが押されたとき」「メッセージを受け取ったとき」「クローンされたとき」など、Scratch のイベントに対応するすべての Unit は、スクリプト開始時に必ず `ScratchUnitUtil.EnsureScratchThreadRegistered(...)` を呼び出して Scratch スレッドを登録する。
   - 新しい Scratch イベント Unit を追加する場合も、既存の `GreenFlagUnits` などを参考に同じ登録パターンを踏襲する。
+  - EventUnit 側では Flow からアダプタ/グラフを自動解決できる `ScratchUnitUtil.EnsureScratchThreadRegistered(flow, coroutine)` を必ず利用し、Coroutine ベースの Unit（`ScratchCoroutineUnitBase` 派生など）からは呼び出さない。
 
 - 停止ブロックのルール
   - 「すべてを止める」: `FUnityScriptThreadManager.StopAllScratchThreads()` を呼び出す。

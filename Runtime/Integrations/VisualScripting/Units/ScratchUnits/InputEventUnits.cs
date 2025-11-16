@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -81,6 +82,39 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             data.m_WasDown = isDown;
 
             return isPressed;
+        }
+
+        /// <summary>
+        /// キー押下イベントでフローを発火し、開始したコルーチンを Scratch スレッドとして登録します。
+        /// </summary>
+        /// <param name="reference">現在のグラフ参照。</param>
+        /// <param name="args">空のイベント引数。</param>
+        public override void Trigger(GraphReference reference, EmptyEventArgs args)
+        {
+            var flow = Flow.New(reference);
+            var coroutine = flow.StartCoroutine(RunEventCoroutine(flow, args));
+
+            ScratchUnitUtil.EnsureScratchThreadRegistered(flow, coroutine);
+        }
+
+        /// <summary>
+        /// EventUnit 標準のフロー実行をコルーチンでラップし、終了時に Flow を破棄します。
+        /// </summary>
+        /// <param name="flow">現在のフロー。</param>
+        /// <param name="args">イベント引数。</param>
+        /// <returns>実行完了までの列挙子。</returns>
+        private IEnumerator RunEventCoroutine(Flow flow, EmptyEventArgs args)
+        {
+            using (flow)
+            {
+                if (!ShouldTrigger(flow, args))
+                {
+                    yield break;
+                }
+
+                AssignArguments(flow, args);
+                flow.Invoke(trigger);
+            }
         }
     }
 }

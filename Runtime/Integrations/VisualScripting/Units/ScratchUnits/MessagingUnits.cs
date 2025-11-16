@@ -194,5 +194,38 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var message = args.Message ?? string.Empty;
             return string.Equals(filter, message, StringComparison.Ordinal);
         }
+
+        /// <summary>
+        /// メッセージ受信イベントでフローを発火し、開始したコルーチンを Scratch スレッドとして登録します。
+        /// </summary>
+        /// <param name="reference">現在のグラフ参照。</param>
+        /// <param name="args">受信したメッセージ引数。</param>
+        public override void Trigger(GraphReference reference, MessagingCommon.Args args)
+        {
+            var flow = Flow.New(reference);
+            var coroutine = flow.StartCoroutine(RunEventCoroutine(flow, args));
+
+            ScratchUnitUtil.EnsureScratchThreadRegistered(flow, coroutine);
+        }
+
+        /// <summary>
+        /// EventUnit 標準のフロー実行をコルーチンでラップし、終了時に Flow を破棄します。
+        /// </summary>
+        /// <param name="flow">現在のフロー。</param>
+        /// <param name="args">受信したメッセージ引数。</param>
+        /// <returns>実行完了までの列挙子。</returns>
+        private IEnumerator RunEventCoroutine(Flow flow, MessagingCommon.Args args)
+        {
+            using (flow)
+            {
+                if (!ShouldTrigger(flow, args))
+                {
+                    yield break;
+                }
+
+                AssignArguments(flow, args);
+                flow.Invoke(trigger);
+            }
+        }
     }
 }

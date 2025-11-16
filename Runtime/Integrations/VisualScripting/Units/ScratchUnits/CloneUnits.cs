@@ -161,6 +161,39 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             return true;
         }
+
+        /// <summary>
+        /// クローン開始イベントでフローを発火し、開始したコルーチンを Scratch スレッドとして登録します。
+        /// </summary>
+        /// <param name="reference">現在のグラフ参照。</param>
+        /// <param name="args">クローンイベント引数。</param>
+        public override void Trigger(GraphReference reference, CloneEventArgs args)
+        {
+            var flow = Flow.New(reference);
+            var coroutine = flow.StartCoroutine(RunEventCoroutine(flow, args));
+
+            ScratchUnitUtil.EnsureScratchThreadRegistered(flow, coroutine);
+        }
+
+        /// <summary>
+        /// EventUnit 標準のフロー実行をコルーチンでラップし、終了時に Flow を破棄します。
+        /// </summary>
+        /// <param name="flow">現在のフロー。</param>
+        /// <param name="args">クローンイベント引数。</param>
+        /// <returns>実行完了までの列挙子。</returns>
+        private IEnumerator RunEventCoroutine(Flow flow, CloneEventArgs args)
+        {
+            using (flow)
+            {
+                if (!ShouldTrigger(flow, args))
+                {
+                    yield break;
+                }
+
+                AssignArguments(flow, args);
+                flow.Invoke(trigger);
+            }
+        }
     }
 
     /// <summary>
