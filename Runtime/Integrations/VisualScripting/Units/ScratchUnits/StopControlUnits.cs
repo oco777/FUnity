@@ -64,7 +64,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>常に null を返し、フローを終端させます。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            if (ScratchUnitUtil.TryGetThreadContext(flow, out _, out var threadId))
+            if (ScratchUnitUtil.TryGetThreadContext(flow, out _, out Guid threadId))
             {
                 FUnityScriptThreadManager.Instance.StopThread(threadId);
             }
@@ -107,7 +107,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>常に後続へ継続する ControlOutput を返します。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            if (ScratchUnitUtil.TryGetThreadContext(flow, out var actorId, out var threadId))
+            if (ScratchUnitUtil.TryGetThreadContext(flow, out string actorId, out Guid threadId))
             {
                 FUnityScriptThreadManager.Instance.StopThreadsOfActorExcept(actorId, threadId);
             }

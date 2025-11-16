@@ -149,7 +149,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>必要な情報が揃っており、Guid へ変換できた場合は true。</returns>
         public static bool TryGetThreadContext(Flow flow, out string actorId, out Guid threadId)
         {
-            var result = TryGetThreadContext(flow, out actorId, out var threadIdString);
+            string threadIdString;
+            var result = TryGetThreadContext(flow, out actorId, out threadIdString);
             if (!result)
             {
                 threadId = Guid.Empty;
@@ -219,7 +220,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return null;
             }
 
-            if (TryGetThreadContext(flow, out var existingActorId, out var existingThreadId) &&
+            if (TryGetThreadContext(flow, out string existingActorId, out string existingThreadId) &&
                 !string.IsNullOrEmpty(existingThreadId))
             {
                 return existingThreadId;
