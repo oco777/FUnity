@@ -49,10 +49,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 graph = machine.nest.macro as ScriptGraphAsset;
             }
 
-            if (graph == null)
-            {
-                graph = machine.graph;
-            }
+            // machine.graph は FlowGraph 型なので ScriptGraphAsset には代入しない。
+            // ScriptGraphAsset が取れない場合は graph は null のままで OK。
 
             IEnumerator Routine()
             {
