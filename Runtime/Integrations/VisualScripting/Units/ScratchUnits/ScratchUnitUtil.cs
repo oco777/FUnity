@@ -302,10 +302,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (flow.stack?.machine is ScriptMachine machine)
             {
                 graph = machine.nest?.macro as ScriptGraphAsset;
-                if (graph == null)
-                {
-                    graph = machine.graph as ScriptGraphAsset;
-                }
             }
 
             return EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
