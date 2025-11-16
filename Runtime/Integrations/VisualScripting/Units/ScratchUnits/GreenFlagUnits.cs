@@ -43,7 +43,16 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             var adapter = ScratchUnitUtil.ResolveAdapter(flow);
-            var graph = machine.nest?.source as ScriptGraphAsset;
+            ScriptGraphAsset graph = null;
+            if (machine.nest != null)
+            {
+                graph = machine.nest.macro as ScriptGraphAsset;
+            }
+
+            if (graph == null)
+            {
+                graph = machine.graph;
+            }
 
             IEnumerator Routine()
             {
@@ -51,6 +60,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 {
                     flow.Invoke(trigger);
                 }
+
+                yield break;
             }
 
             var coroutine = machine.StartCoroutine(Routine());
