@@ -280,6 +280,38 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
+        /// EventUnit 側から利用しやすいように、Flow 情報のみから
+        /// ActorPresenterAdapter と ScriptGraphAsset を自動解決してスレッド登録を行うオーバーロードです。
+        /// EventUnit（Scratch スクリプトの開始点）専用の呼び出し口として利用してください。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="coroutine">登録対象のコルーチン。</param>
+        /// <returns>登録済みまたは新規登録したスレッド ID。登録に失敗した場合は null。</returns>
+        public static string EnsureScratchThreadRegistered(
+            Flow flow,
+            Coroutine coroutine)
+        {
+            if (flow == null || coroutine == null)
+            {
+                return null;
+            }
+
+            var adapter = ResolveAdapter(flow);
+
+            ScriptGraphAsset graph = null;
+            if (flow.stack?.machine is ScriptMachine machine)
+            {
+                graph = machine.nest?.macro as ScriptGraphAsset;
+                if (graph == null)
+                {
+                    graph = machine.graph as ScriptGraphAsset;
+                }
+            }
+
+            return EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
+        }
+
+        /// <summary>
         /// Flow 情報から <see cref="ActorPresenterAdapter"/> を自動的に解決します。
         /// 優先度: ScriptGraphAsset Variables → Graph Variables → Object Variables → 自身の GameObject → 静的キャッシュ → シーン検索。
         /// </summary>
