@@ -1916,8 +1916,8 @@ namespace FUnity.Runtime.Core
         /// 指定した Runner へ <see cref="ActorPresenterAdapter"/> を確実に追加し、Presenter と UI 要素をバインドする。
         /// </summary>
         /// <param name="runner">対象の Runner GameObject。</param>
-        /// <param name="presenter">接続する Presenter。null の場合は警告のみ出力する。</param>
-        /// <param name="actorRoot">UI Toolkit 上の俳優ルート要素。</param>
+        /// <param name="presenter">接続する Presenter。null の場合は初期化順序上の未解決としてスキップする。</param>
+        /// <param name="actorRoot">UI Toolkit 上の俳優ルート要素。未生成時は後続フェーズでの再呼び出しに任せる。</param>
         /// <returns>取得または追加された <see cref="ActorPresenterAdapter"/>。失敗時は null。</returns>
         private ActorPresenterAdapter EnsureActorPresenterAdapter(
             GameObject runner,
@@ -1943,7 +1943,7 @@ namespace FUnity.Runtime.Core
             }
             else
             {
-                Debug.LogWarning($"[FUnity] EnsureActorPresenterAdapter: presenter が null です (runner='{runner.name}').");
+                // Presenter 未解決は Awake 直後など正常な初期化順序で発生するため、ここでは黙って後続フェーズに委ねる。
             }
 
             if (actorRoot != null)
@@ -1952,7 +1952,7 @@ namespace FUnity.Runtime.Core
             }
             else
             {
-                Debug.LogWarning($"[FUnity] EnsureActorPresenterAdapter: actorRoot が null です (runner='{runner.name}').");
+                // UI 未生成のケースも想定されるため、後続の RebuildUI などで再度バインドする。
             }
 
             return adapter;
