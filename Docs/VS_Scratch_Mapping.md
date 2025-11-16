@@ -72,7 +72,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 ## イベント
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
-| 緑の旗が押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenGreenFlagClickedUnit | 緑の旗が押されたとき | Events/FUnity/Scratch/イベント | Runner 対象の緑の旗イベント。定義: Runtime/.../GreenFlagUnits.cs |
+| 緑の旗が押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenGreenFlagClickedUnit | 緑の旗が押されたとき | Events/FUnity/Scratch/イベント | Runner 対象の緑の旗イベント。開始時に Scratch 用スレッドを登録。定義: Runtime/.../GreenFlagUnits.cs |
 | ○キーが押されたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.OnKeyPressedUnit | ○キーが押されたとき | Events/FUnity/Scratch/イベント | 押下エッジで発火。定義: Runtime/.../InputEventUnits.cs |
 | メッセージを送る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BroadcastMessageUnit | メッセージを送る | FUnity/Scratch/イベント | 即時配信。定義: Runtime/.../MessagingUnits.cs |
 | メッセージを送って待つ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BroadcastAndWaitUnit | メッセージを送って待つ | FUnity/Scratch/イベント | 同期配信後に継続。定義: Runtime/.../MessagingUnits.cs |
