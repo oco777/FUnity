@@ -1,5 +1,6 @@
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
+using System;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
