@@ -146,6 +146,38 @@ docs(vs): update VS_Scratch_Mapping.md for new/renamed Units
   - コード差分がある場合は `Docs/VS_Scratch_Mapping.md` を同期させ、タイトルとカテゴリの差異を残さない。
   - 向きの角度を計算する際は **必ず `ScratchUnitUtil.GetDirectionDegreesForCurrentMode` を経由し、`DirFromDegrees` と対で利用**する。Scratch モードでは上=0°/右=90°、通常モードでは右=0° というルールを崩さないこと。
 
+## Scratch モードのスレッド管理と停止ブロック（2025-11-XX 追加）
+
+FUnity の Scratch モードでは、Visual Scripting のイベント Unit から開始される各スクリプトを「Scratch スレッド」として `FUnityScriptThreadManager` が一括管理します。Scratch の「停止」ブロックと同等の挙動を再現するため、以下のルールを厳守してください。
+
+- スレッド管理の目的
+  - Scratch の「すべてを止める」「このスクリプトを止める」「スプライトの他のスクリプトを止める」を正しく再現するため。
+  - スクリプト開始時に ActorId/ThreadId を登録し、停止対象を明確にするため。
+
+- 主なコンポーネント
+  - `FUnityScriptThreadManager`
+    - `RegisterScratchThread(actorId, graph, coroutine)` / `UnregisterScratchThread(threadId)`
+    - `StopAllScratchThreads()` / `StopScratchThread(threadId)` / `StopOtherScratchThreadsOfActor(actorId, exceptThreadId)`
+  - `ScratchUnitUtil`
+    - `Flow.variables` に `FUNITY_SCRATCH_ACTOR_ID` / `FUNITY_SCRATCH_THREAD_ID` を保存・取得
+    - `EnsureScratchThreadRegistered(flow, adapter, graph, coroutine)` で開始スクリプトを一括登録
+
+- イベント Unit のルール
+  - 「緑の旗が押されたとき」「クリックされたとき」「キーが押されたとき」「メッセージを受け取ったとき」「クローンされたとき」など、Scratch のイベントに対応するすべての Unit は、スクリプト開始時に必ず `ScratchUnitUtil.EnsureScratchThreadRegistered(...)` を呼び出して Scratch スレッドを登録する。
+  - 新しい Scratch イベント Unit を追加する場合も、既存の `GreenFlagUnits` などを参考に同じ登録パターンを踏襲する。
+
+- 停止ブロックのルール
+  - 「すべてを止める」: `FUnityScriptThreadManager.StopAllScratchThreads()` を呼び出す。
+  - 「このスクリプトを止める」: `ScratchUnitUtil.TryGetThreadContext(flow, out string _, out string threadId)` で ThreadId を取得し、`FUnityScriptThreadManager.StopScratchThread(threadId)` を呼ぶ。
+  - 「スプライトの他のスクリプトを止める」:
+    - `ScratchUnitUtil.TryGetThreadContext(flow, out string actorId, out string threadId)` で ActorId/ThreadId を取得。
+    - `FUnityScriptThreadManager.StopOtherScratchThreadsOfActor(actorId, threadId)` を呼び、同一スプライトの他スレッドのみ停止する。
+
+- AGENT が気をつけること
+  - Stop 系 Unit からは Guid ベースの旧 API ではなく Scratch 専用 API を使用する（StopControlUnits.cs は移行済み）。
+  - ThreadId の保存には必ず `Flow.variables` とキー定数 `FUNITY_SCRATCH_THREAD_ID` / `FUNITY_SCRATCH_ACTOR_ID` を使う。
+  - Stop 系ユニットやイベントユニットを変更・追加した場合は `Docs/VS_Scratch_Mapping.md` の対応表も同じ PR で更新する。
+
 ## Scratch マウス座標ユニット規約（2025-03-20 追加）
 - UI Toolkit で取得したローカル座標は必ず Scratch 座標系へ変換する。式: `x = local.x - (width * 0.5f)`, `y = (height * 0.5f) - local.y`。
 - ステージ論理サイズは UIScaleService などから取得し、幅・高さいずれかが 0 以下の場合は 480x360 へフォールバックする。
