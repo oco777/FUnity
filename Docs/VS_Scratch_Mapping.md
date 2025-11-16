@@ -59,7 +59,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
 | ○回繰り返す | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.RepeatNUnit | ○回繰り返す | FUnity/Scratch/制御 | 指定回数ループ。定義: Runtime/.../LoopUnits.cs |
-| ずっと | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ForeverUnit | ずっと | FUnity/Scratch/制御 | 永続ループ。`StartScratchCoroutine` 経由でスレッド登録し、停止ブロックと連動。定義: Runtime/.../LoopUnits.cs |
+| ずっと | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ForeverUnit | ずっと | FUnity/Scratch/制御 | 永続ループ。Visual Scripting 標準の `ControlInputCoroutine` で Flow コルーチンを回し、`body` を毎フレーム実行してから 1 フレーム待機する。定義: Runtime/.../LoopUnits.cs |
 | ○秒待つ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WaitSecondsUnit | ○秒待つ | FUnity/Scratch/制御 | 指定時間待機。Visual Scripting 標準のコルーチン経由で待機し、完了後に後続フローへ進む。定義: Runtime/.../WaitSecondsUnit.cs |
 | 自分のクローンを作る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CreateCloneOfSelfUnit | 自分のクローンを作る | FUnity/Scratch/制御 | 自身を複製。定義: Runtime/.../CloneUnits.cs |
 | ○のクローンを作る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.CreateCloneOfDisplayNameUnit | ○のクローンを作る | FUnity/Scratch/制御 | 指定俳優を複製。定義: Runtime/.../CloneUnits.cs |

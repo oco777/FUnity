@@ -80,7 +80,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitCategory("FUnity/Scratch/制御")]
     [UnitSubtitle("funity scratch 制御 forever loop ずっと")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
-    public sealed class ForeverUnit : ScratchCoroutineUnitBase
+    public sealed class ForeverUnit : Unit
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
         [DoNotSerialize]
@@ -97,18 +97,18 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         public ControlOutput Body => m_Body;
 
         /// <summary>
-        /// ポート定義を行い、コルーチン入力と body 出力を登録します。
+        /// ポート定義を行い、Visual Scripting 標準のコルーチン入力と body 出力を登録します。
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = CreateScratchCoroutineInput("enter", OnEnterCoroutine);
+            m_Enter = ControlInputCoroutine("enter", OnEnterCoroutine);
             m_Body = ControlOutput("body");
 
             Succession(m_Enter, m_Body);
         }
 
         /// <summary>
-        /// 停止条件が提供されるまで body ポートを無限に呼び出します。
+        /// 「ずっと」ブロックの本体で、Flow コルーチンとして body を毎フレーム実行します。
         /// 各反復の後には 1 フレーム待機して描画更新へ制御を返します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
@@ -117,7 +117,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             while (true)
             {
+                // body に接続されたノード群を実行し、後続ユニットへ制御を渡します。
                 yield return m_Body;
+
+                // 1 フレーム待機してから次のループを開始し、Scratch の「ずっと」相当の周期を再現します。
                 yield return null;
             }
         }
