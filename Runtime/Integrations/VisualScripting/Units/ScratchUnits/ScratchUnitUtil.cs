@@ -27,10 +27,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private const float StepToPixels = 1f;
 
         /// <summary>フロー変数に保存するスレッド ID のキーです。</summary>
-        private const string ThreadIdKey = "FUnity_ThreadId";
+        private const string ThreadIdKey = "FUNITY_SCRATCH_THREAD_ID";
 
         /// <summary>フロー変数に保存する俳優 ID のキーです。</summary>
-        private const string ActorIdKey = "FUnity_ActorId";
+        private const string ActorIdKey = "FUNITY_SCRATCH_ACTOR_ID";
 
         /// <summary>
         /// 現在のフローがホストしている Runner（Self）に紐づく Object 変数を取得します。
@@ -108,10 +108,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <param name="actorId">取得した俳優 ID。</param>
         /// <param name="threadId">取得したスレッド ID。</param>
         /// <returns>必要な情報が揃っている場合は true。</returns>
-        public static bool TryGetThreadContext(Flow flow, out string actorId, out Guid threadId)
+        public static bool TryGetThreadContext(Flow flow, out string actorId, out string threadId)
         {
             actorId = null;
-            threadId = Guid.Empty;
+            threadId = null;
 
             if (flow == null)
             {
@@ -130,9 +130,35 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             actorId = variables.Get<string>(ActorIdKey);
-            var threadIdString = variables.Get<string>(ThreadIdKey);
+            threadId = variables.Get<string>(ThreadIdKey);
+
+            if (string.IsNullOrEmpty(threadId))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Guid 形式での互換取得用ラッパーです。既存の停止系ユニットからの移行期間に利用します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="actorId">取得した俳優 ID。</param>
+        /// <param name="threadId">取得したスレッド ID。</param>
+        /// <returns>必要な情報が揃っており、Guid へ変換できた場合は true。</returns>
+        public static bool TryGetThreadContext(Flow flow, out string actorId, out Guid threadId)
+        {
+            var result = TryGetThreadContext(flow, out actorId, out var threadIdString);
+            if (!result)
+            {
+                threadId = Guid.Empty;
+                return false;
+            }
+
             if (!Guid.TryParse(threadIdString, out threadId))
             {
+                threadId = Guid.Empty;
                 return false;
             }
 
@@ -145,7 +171,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <param name="flow">現在のフロー情報。</param>
         /// <param name="actorId">保存する俳優 ID。</param>
         /// <param name="threadId">保存するスレッド ID。</param>
-        public static void SetThreadContext(Flow flow, string actorId, Guid threadId)
+        public static void SetThreadContext(Flow flow, string actorId, string threadId)
         {
             if (flow == null)
             {
@@ -159,7 +185,65 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             variables.Set(ActorIdKey, actorId ?? string.Empty);
-            variables.Set(ThreadIdKey, threadId.ToString());
+            variables.Set(ThreadIdKey, threadId ?? string.Empty);
+        }
+
+        /// <summary>
+        /// Guid 形式の ID を受け取り、内部的に文字列化して保存する互換ラッパーです。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="actorId">保存する俳優 ID。</param>
+        /// <param name="threadId">保存するスレッド ID。</param>
+        public static void SetThreadContext(Flow flow, string actorId, Guid threadId)
+        {
+            SetThreadContext(flow, actorId, threadId.ToString());
+        }
+
+        /// <summary>
+        /// Scratch のイベント Unit から開始されたスレッドを FUnityScriptThreadManager に登録し、Flow.variables に俳優 ID とスレッド ID を保存します。
+        /// すでにフロー側にスレッド ID が設定されている場合は再登録せず、その ID を返します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="adapter">俳優の Presenter 参照を解決するアダプタ。</param>
+        /// <param name="graph">実行中の ScriptGraph アセット。</param>
+        /// <param name="coroutine">登録対象のコルーチン。</param>
+        /// <returns>登録済みまたは新規登録したスレッド ID。登録に失敗した場合は null。</returns>
+        public static string EnsureScratchThreadRegistered(
+            Flow flow,
+            ActorPresenterAdapter adapter,
+            ScriptGraphAsset graph,
+            Coroutine coroutine)
+        {
+            if (flow == null || coroutine == null)
+            {
+                return null;
+            }
+
+            if (TryGetThreadContext(flow, out var existingActorId, out var existingThreadId) &&
+                !string.IsNullOrEmpty(existingThreadId))
+            {
+                return existingThreadId;
+            }
+
+            var manager = FUnityScriptThreadManager.Instance;
+            if (manager == null)
+            {
+                return null;
+            }
+
+            var actorId = existingActorId;
+            if (string.IsNullOrEmpty(actorId) && adapter != null && adapter.Presenter != null)
+            {
+                actorId = adapter.Presenter.ActorKey;
+            }
+
+            var threadId = manager.RegisterScratchThread(actorId, graph, coroutine);
+            if (!string.IsNullOrEmpty(threadId))
+            {
+                SetThreadContext(flow, actorId, threadId);
+            }
+
+            return threadId;
         }
 
         /// <summary>
