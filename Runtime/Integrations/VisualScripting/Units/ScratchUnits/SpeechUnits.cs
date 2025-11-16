@@ -14,7 +14,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitCategory("FUnity/Scratch/見た目")]
     [UnitSubtitle("funity scratch 見た目 say speech 吹き出し 秒 言う")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
-    public sealed class SayForSecondsUnit : Unit
+    public sealed class SayForSecondsUnit : ScratchCoroutineUnitBase
     {
         /// <summary>制御フローの入力ポート。</summary>
         [DoNotSerialize]
@@ -52,7 +52,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             m_Exit = ControlOutput("exit");
             m_Text = ValueInput<string>("text", string.Empty);
             m_Seconds = ValueInput<float>("seconds", 2f);
-            m_Enter = ControlInputCoroutine("enter", OnEnterCoroutine);
+            m_Enter = CreateScratchCoroutineInput("enter", OnEnterCoroutine);
 
             Succession(m_Enter, m_Exit);
         }
@@ -156,7 +156,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitCategory("FUnity/Scratch/見た目")]
     [UnitSubtitle("funity scratch 見た目 think thought 吹き出し 秒 考える")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
-    public sealed class ThinkForSecondsUnit : Unit
+    public sealed class ThinkForSecondsUnit : ScratchCoroutineUnitBase
     {
         /// <summary>制御フローの入力ポート。</summary>
         [DoNotSerialize]
@@ -194,7 +194,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             m_Exit = ControlOutput("exit");
             m_Text = ValueInput<string>("text", string.Empty);
             m_Seconds = ValueInput<float>("seconds", 2f);
-            m_Enter = ControlInputCoroutine("enter", OnEnterCoroutine);
+            m_Enter = CreateScratchCoroutineInput("enter", OnEnterCoroutine);
 
             Succession(m_Enter, m_Exit);
         }

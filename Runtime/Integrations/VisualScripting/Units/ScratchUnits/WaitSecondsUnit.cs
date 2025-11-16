@@ -13,7 +13,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitCategory("FUnity/Scratch/制御")]
     [UnitSubtitle("funity scratch 制御 wait seconds delay 待つ")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
-    public sealed class WaitSecondsUnit : Unit
+    public sealed class WaitSecondsUnit : ScratchCoroutineUnitBase
     {
         /// <summary>フロー入力を受け取る ControlInput です。</summary>
         [DoNotSerialize]
@@ -41,7 +41,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInputCoroutine("enter", RunCoroutine);
+            m_Enter = CreateScratchCoroutineInput("enter", RunCoroutine);
             m_Exit = ControlOutput("exit");
             m_Seconds = ValueInput<float>("seconds", 1f);
 

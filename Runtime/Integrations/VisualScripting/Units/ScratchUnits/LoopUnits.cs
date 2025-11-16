@@ -80,7 +80,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitCategory("FUnity/Scratch/制御")]
     [UnitSubtitle("funity scratch 制御 forever loop ずっと")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
-    public sealed class ForeverUnit : Unit
+    public sealed class ForeverUnit : ScratchCoroutineUnitBase
     {
         /// <summary>フロー開始を受け取る ControlInput です。</summary>
         [DoNotSerialize]
@@ -101,7 +101,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         protected override void Definition()
         {
-            m_Enter = ControlInputCoroutine("enter", OnEnterCoroutine);
+            m_Enter = CreateScratchCoroutineInput("enter", OnEnterCoroutine);
             m_Body = ControlOutput("body");
 
             Succession(m_Enter, m_Body);
