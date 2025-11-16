@@ -113,8 +113,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// Flow から <see cref="ActorPresenter"/> を取得するヘルパーです。
-        /// 1. Object Variables に保存された "presenter" を確認し、見つからない場合は Runner 上の <see cref="ActorPresenterAdapter"/> から取得します。
+        /// Flow から <see cref="ActorPresenter"/> を取得するための高レベルなヘルパーです。
+        /// 実際の解決ロジックは <see cref="ResolveAdapter(Flow)"/> および
+        /// <see cref="ResolveActorPresenter(Flow, ActorPresenterAdapter)"/> に委譲します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <param name="presenter">取得した Presenter。</param>
@@ -129,37 +130,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return false;
             }
 
-            var stack = flow.stack;
-            var machine = stack?.machine;
-            if (machine != null)
-            {
-                try
-                {
-                    var objVars = Variables.Object(machine);
-                    if (objVars.IsDefined("presenter"))
-                    {
-                        presenter = objVars.Get<ActorPresenter>("presenter");
-                        if (presenter != null)
-                        {
-                            return true;
-                        }
-                    }
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogWarning($"[FUnity] TryGetActorPresenter: Object Variables からの取得に失敗しました: {e}");
-                }
-            }
+            var adapter = ResolveAdapter(flow);
 
-            var go = stack?.gameObject;
-            if (go != null)
+            presenter = ResolveActorPresenter(flow, adapter);
+
+            if (presenter != null)
             {
-                var adapter = go.GetComponent<ActorPresenterAdapter>();
-                if (adapter != null && adapter.Presenter != null)
-                {
-                    presenter = adapter.Presenter;
-                    return true;
-                }
+                return true;
             }
 
             Debug.LogWarning("[FUnity] TryGetActorPresenter: ActorPresenter を取得できませんでした。");

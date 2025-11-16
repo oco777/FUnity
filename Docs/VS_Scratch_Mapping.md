@@ -10,6 +10,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
 - Scratch 系のコルーチン Unit は `ScratchCoroutineUnitBase.StartScratchCoroutine` を経由して実行し、開始直後に `ScratchUnitUtil.EnsureScratchThreadRegistered` でスレッド登録を行う。
 - `ScratchUnitUtil.StartScratchCoroutine` では `FUnityScriptThreadManager.Instance.StartCoroutine(...)` を用いてコルーチンを起動し、`Flow.StartCoroutine(...)` は使用しない。
+- Presenter 取得は `ScratchUnitUtil.TryGetActorPresenter` を経由し、内部で `ResolveAdapter` と `ResolveActorPresenter` に委譲する共通ロジックを利用する。
 
 ## 動き
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
