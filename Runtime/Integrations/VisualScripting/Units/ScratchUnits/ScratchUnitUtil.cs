@@ -17,7 +17,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch 系のコルーチン Unit が共有する登録処理を提供し、スレッド管理へ自動的に紐付けるための基底クラスです。
     /// フロー開始時にコルーチンを起動し、俳優 ID とグラフ情報を <see cref="FUnityScriptThreadManager"/> へ登録します。
     /// </summary>
-    internal abstract class ScratchCoroutineUnitBase : Unit
+    public abstract class ScratchCoroutineUnitBase : Unit
     {
         /// <summary>コルーチン入力を作成し、起動時に Scratch スレッド登録を行います。</summary>
         /// <param name="key">ControlInput のキー名。</param>
