@@ -1,6 +1,8 @@
+using System.Collections;
 using Unity.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
+using UnityEngine;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -16,6 +18,44 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     {
         /// <summary>Visual Scripting 側でイベント登録を行うかどうかを制御します。</summary>
         protected override bool register => true;
+
+        /// <summary>
+        /// GreenFlag イベントをコルーチンとして実行し、スクリプトスレッドを登録します。
+        /// ScriptMachine が見つからない場合は既存の実装にフォールバックします。
+        /// </summary>
+        /// <param name="reference">現在処理中のグラフ参照。</param>
+        /// <param name="args">空のイベント引数。</param>
+        public new void Trigger(GraphReference reference, EmptyEventArgs args)
+        {
+            var machine = reference?.machine as ScriptMachine;
+            if (machine == null)
+            {
+                base.Trigger(reference, args);
+                return;
+            }
+
+            var flow = Flow.New(reference);
+            AssignArguments(flow, args);
+            if (!ShouldTrigger(flow, args))
+            {
+                flow.Dispose();
+                return;
+            }
+
+            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
+            var graph = machine.nest?.source as ScriptGraphAsset;
+
+            IEnumerator Routine()
+            {
+                using (flow)
+                {
+                    flow.Invoke(trigger);
+                }
+            }
+
+            var coroutine = machine.StartCoroutine(Routine());
+            ScratchUnitUtil.EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
+        }
 
         /// <summary>
         /// Runner（self）をターゲットとする EventHook を返し、同一 Runner からの発火のみ受け付けます。
