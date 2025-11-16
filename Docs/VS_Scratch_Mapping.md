@@ -14,7 +14,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 ## 動き
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
-| ○歩動かす | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.MoveStepsUnit | ○歩動かす | FUnity/Scratch/動き | 境界反射と残距離再移動に対応。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MoveStepsUnit.cs |
+| ○歩動かす | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.MoveStepsUnit | ○歩動かす | FUnity/Scratch/動き | 境界反射と残距離再移動に対応。Presenter は `ScratchUnitUtil.TryGetActorPresenter` 経由で取得。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/MoveStepsUnit.cs |
 | もし端に着いたら、跳ね返る | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.BounceIfOnEdgeUnit | もし端に着いたら、跳ね返る | FUnity/Scratch/動き | 反射後に中心座標をステージ内へ押し戻す。定義: Runtime/.../BounceAndRotationStyleUnits.cs |
 | 回転方法を左右のみにする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetRotationStyleLeftRightUnit | 回転方法を左右のみにする | FUnity/Scratch/動き | 左右反転のみ許可。定義: Runtime/.../BounceAndRotationStyleUnits.cs |
 | 回転方法を回転しないにする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetRotationStyleDontRotateUnit | 回転方法を回転しないにする | FUnity/Scratch/動き | 見た目を常に直立へ固定。定義: Runtime/.../BounceAndRotationStyleUnits.cs |
