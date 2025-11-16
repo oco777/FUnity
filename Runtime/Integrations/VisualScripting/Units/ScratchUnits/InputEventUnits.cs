@@ -26,8 +26,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// </summary>
         private bool m_WasDown;
 
-        /// <summary>EventUnit の自動登録機構を利用するための設定値です。</summary>
-        protected override bool register => true;
+        /// <summary>
+        /// EventUnit の自動登録機構は使わず、StartListening/StopListening で明示的に登録します。
+        /// </summary>
+        protected override bool register => false;
 
         /// <summary>
         /// Update フックを利用してキー状態をポーリングします。
@@ -37,6 +39,35 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         public override EventHook GetHook(GraphReference reference)
         {
             return EventHooks.Update;
+        }
+
+        /// <summary>
+        /// グラフ開始時に Update イベントへの購読を開始します。
+        /// FUnity の Scratch スレッド管理と連携するため、TriggerWithThreadRegistration を登録します。
+        /// </summary>
+        /// <param name="stack">現在のグラフスタック。</param>
+        public override void StartListening(GraphStack stack)
+        {
+            base.StartListening(stack);
+
+            var reference = stack.ToReference();
+            var hook = GetHook(reference);
+
+            EventBus.Register<EmptyEventArgs>(hook, TriggerWithThreadRegistration);
+        }
+
+        /// <summary>
+        /// グラフ終了時に Update イベントからの購読を解除します。
+        /// </summary>
+        /// <param name="stack">現在のグラフスタック。</param>
+        public override void StopListening(GraphStack stack)
+        {
+            var reference = stack.ToReference();
+            var hook = GetHook(reference);
+
+            EventBus.Unregister<EmptyEventArgs>(hook, TriggerWithThreadRegistration);
+
+            base.StopListening(stack);
         }
 
         /// <summary>
