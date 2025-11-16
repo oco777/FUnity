@@ -244,7 +244,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// Flow.StartCoroutine をラップし、Scratch スレッドの登録を確実に行うユーティリティです。
+        /// Scratch 用スレッドマネージャー経由でコルーチンを開始し、開始直後にスレッド登録を行うユーティリティです。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <param name="routine">実行するコルーチン。</param>
@@ -256,7 +256,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return null;
             }
 
-            var coroutine = flow.StartCoroutine(routine);
+            var manager = FUnityScriptThreadManager.Instance;
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity.Thread] FUnityScriptThreadManager.Instance が見つからないため、Scratch コルーチンを開始できません。");
+                return null;
+            }
+
+            var coroutine = manager.StartCoroutine(routine);
 
             var adapter = ResolveAdapter(flow);
             ScriptGraphAsset graph = null;
