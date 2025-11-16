@@ -145,50 +145,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             return new EventHook(FUnityEventNames.OnCloneStart, reference.self);
         }
 
-        /// <summary>
-        /// クローン開始イベントをコルーチンとして実行し、Scratch 用スレッドとして登録します。
-        /// ScriptMachine が存在しない場合は従来の処理にフォールバックします。
-        /// </summary>
-        /// <param name="reference">現在のグラフ参照。</param>
-        /// <param name="args">クローンイベント引数。</param>
-        public new void Trigger(GraphReference reference, CloneEventArgs args)
-        {
-            var machine = reference?.machine as ScriptMachine;
-            if (machine == null)
-            {
-                base.Trigger(reference, args);
-                return;
-            }
-
-            var flow = Flow.New(reference);
-            AssignArguments(flow, args);
-            if (!ShouldTrigger(flow, args))
-            {
-                flow.Dispose();
-                return;
-            }
-
-            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
-            ScriptGraphAsset graph = null;
-            if (machine.nest != null)
-            {
-                graph = machine.nest.macro as ScriptGraphAsset;
-            }
-
-            IEnumerator Routine()
-            {
-                using (flow)
-                {
-                    flow.Invoke(trigger);
-                }
-
-                yield break;
-            }
-
-            var coroutine = machine.StartCoroutine(Routine());
-            ScratchUnitUtil.EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
-        }
-
         /// <summary>EventUnit 基底の定義を呼び出します。</summary>
         protected override void Definition()
         {
