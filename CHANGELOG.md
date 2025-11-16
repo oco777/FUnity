@@ -10,6 +10,7 @@
 - Visual Scripting 調べるユニット「マウスポインターまでの距離」「マウスが押された」を `FUnity/Scratch/調べる` に追加しました。
 - `ActorPresenter` と `ActorPresenterAdapter` に `SetSpriteIndex` / `SpriteIndex` / `SpriteCount` を追加し、SpriteList 切り替え API を公開しました。
 - `FUnityActorDataMigrationWindow` を追加し、旧 Portrait / PortraitSprite を Sprites へ一括移行できるようにしました。
+- Scratch モードの停止ユニット（すべてを止める／このスクリプトを止める／スプライトの他のスクリプトを止める）と Scratch 専用スレッド管理 API を追加しました。
 
 ### Changed
 - `ScratchUnitUtil` に `GetDirectionDegreesForCurrentMode` を追加し、Scratch モードでは上=0°/右=90°/左=-90°/下=±180°、通常モードでは従来通り右=0° となるよう向き計算を統一しました。`DirFromDegrees` もモード差を吸収するよう更新しています。

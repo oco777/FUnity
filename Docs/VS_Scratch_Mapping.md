@@ -67,6 +67,14 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | スプライトの他のスクリプトを止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopOtherScriptsInSpriteUnit | Scratch/スプライトの他のスクリプトを止める | FUnity/Scratch/制御 | 同俳優の他 Scratch スレッド停止。定義: Runtime/.../StopControlUnits.cs |
 | もし○なら | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.IfThenUnit | もし○なら | FUnity/Scratch/制御 | 条件成立時のみ本体を実行。定義: Runtime/.../ConditionUnits.cs |
 
+### 停止ブロック
+
+| Scratch ブロック名 | FUnity Unit 名 | 備考 |
+| --- | --- | --- |
+| すべてを止める | Events/FUnity/Scratch/制御/すべてを止める | `FUnityScriptThreadManager.StopAllScratchThreads()` を呼び出し、登録済みの Scratch スレッドを全停止する。 |
+| このスクリプトを止める | Events/FUnity/Scratch/制御/このスクリプトを止める | `ScratchUnitUtil` から ThreadId を取得し、`FUnityScriptThreadManager.StopScratchThread(...)` を通じて現在の Scratch スレッドのみ停止する。 |
+| スプライトの他のスクリプトを止める | Events/FUnity/Scratch/制御/スプライトの他のスクリプトを止める | `ScratchUnitUtil` で ActorId/ThreadId を取得し、`FUnityScriptThreadManager.StopOtherScratchThreadsOfActor(...)` を使って同一 Actor の他スレッドを停止する。 |
+
 > **補足:** Scratch 系の停止ユニットは、`FUnityScriptThreadManager` に用意した Scratch 専用スレッドテーブルを利用してコルーチンを管理します。`ScratchUnitUtil` に保存した string ベースの ActorId/ThreadId を参照し、`StopAllScratchThreads`・`StopScratchThread`・`StopOtherScratchThreadsOfActor` を呼び出して対象を制御します。
 
 ## イベント
