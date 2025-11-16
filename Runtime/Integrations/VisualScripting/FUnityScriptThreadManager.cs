@@ -238,6 +238,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting
 
             var threadId = Guid.NewGuid().ToString("N");
 
+            Debug.Log($"[FUnity.Thread] Register actor={actorId}, thread={threadId}");
+
             var info = new ScratchThreadInfo
             {
                 ThreadId = threadId,
@@ -269,6 +271,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// </summary>
         public void StopAllScratchThreads()
         {
+            Debug.Log($"[FUnity.Thread] StopAll requested count={m_ScratchThreads.Count}");
+
             foreach (var info in m_ScratchThreads.Values)
             {
                 if (info?.Coroutine == null)
