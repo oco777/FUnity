@@ -12,14 +12,41 @@ namespace FUnity.Runtime.Integrations.VisualScripting
     [AddComponentMenu("")]
     public sealed class FUnityScriptThreadManager : MonoBehaviour
     {
+        /// <summary>シングルトンインスタンスを保持する静的フィールドです。</summary>
+        private static FUnityScriptThreadManager s_Instance;
+
         /// <summary>スレッドに付随する情報を保持するテーブルです。</summary>
         private readonly Dictionary<Guid, ScriptThreadInfo> m_Threads = new Dictionary<Guid, ScriptThreadInfo>();
 
         /// <summary>Scratch 用スレッドを管理するテーブルです。</summary>
         private readonly Dictionary<string, ScratchThreadInfo> m_ScratchThreads = new Dictionary<string, ScratchThreadInfo>();
 
-        /// <summary>シングルトンインスタンスを参照します。</summary>
-        public static FUnityScriptThreadManager Instance { get; private set; }
+        /// <summary>
+        /// シングルトンインスタンスを参照します。見つからない場合はシーンから検索し、存在しなければ自動生成します。
+        /// </summary>
+        public static FUnityScriptThreadManager Instance
+        {
+            get
+            {
+                if (s_Instance == null)
+                {
+                    s_Instance = FindObjectOfType<FUnityScriptThreadManager>();
+
+                    if (s_Instance == null)
+                    {
+                        var go = new GameObject("FUnityScriptThreadManager");
+                        s_Instance = go.AddComponent<FUnityScriptThreadManager>();
+                        DontDestroyOnLoad(go);
+                    }
+                }
+
+                return s_Instance;
+            }
+            private set
+            {
+                s_Instance = value;
+            }
+        }
 
         /// <summary>
         /// Visual Scripting のスレッド情報を表すデータクラスです。
@@ -59,18 +86,23 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         }
 
         /// <summary>
-        /// 唯一のインスタンスを初期化します。重複があれば自身を破棄します。
+        /// シーンに配置されたインスタンスを優先的に登録し、重複があれば破棄します。
         /// </summary>
         private void Awake()
         {
             if (Instance != null && Instance != this)
             {
+                Debug.LogWarning("[FUnity] FUnityScriptThreadManager already exists. Destroying duplicate.", this);
                 Destroy(gameObject);
                 return;
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+
+            if (gameObject.scene.rootCount > 0)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
         }
 
         /// <summary>
