@@ -9,6 +9,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - ノード検索性向上のため、利用可能な場合は `[UnitSubtitle]`（または同等の検索キーワード属性）に `funity scratch` とカテゴリ名・日本語/英語の関連語を半角スペース区切りで登録する（例：`funity scratch 見た目 say speech`）。
 - コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
 - Scratch 系のコルーチン Unit は `ScratchCoroutineUnitBase.StartScratchCoroutine` を経由して実行し、開始直後に `ScratchUnitUtil.EnsureScratchThreadRegistered` でスレッド登録を行う。
+- `ScratchUnitUtil.StartScratchCoroutine` では `FUnityScriptThreadManager.Instance.StartCoroutine(...)` を用いてコルーチンを起動し、`Flow.StartCoroutine(...)` は使用しない。
 
 ## 動き
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
