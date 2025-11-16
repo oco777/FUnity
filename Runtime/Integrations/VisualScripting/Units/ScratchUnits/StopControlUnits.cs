@@ -1,6 +1,5 @@
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
-using System;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -26,13 +25,19 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// すべてのスレッドを停止し、後続フローには進めません。
+        /// Scratch 用に登録されたすべてのスレッドを停止し、後続フローには進めません。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <returns>常に null を返し、フローを終端させます。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            FUnityScriptThreadManager.Instance.StopAllThreads();
+            var manager = FUnityScriptThreadManager.Instance;
+            if (manager == null)
+            {
+                return null;
+            }
+
+            manager.StopAllScratchThreads();
             return null;
         }
     }
@@ -59,15 +64,20 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// 現在のフローが紐づくスレッドを停止します。
+        /// 現在のフローが紐づく Scratch スレッドを停止します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <returns>常に null を返し、フローを終端させます。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            if (ScratchUnitUtil.TryGetThreadContext(flow, out _, out Guid threadId))
+            if (ScratchUnitUtil.TryGetThreadContext(flow, out string _, out string threadId) &&
+                !string.IsNullOrEmpty(threadId))
             {
-                FUnityScriptThreadManager.Instance.StopThread(threadId);
+                var manager = FUnityScriptThreadManager.Instance;
+                if (manager != null)
+                {
+                    manager.StopScratchThread(threadId);
+                }
             }
 
             return null;
@@ -102,15 +112,20 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// 同一俳優に属するスレッドのうち、自身以外を停止します。
+        /// 同一俳優に属する Scratch スレッドのうち、自身以外を停止します。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <returns>常に後続へ継続する ControlOutput を返します。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            if (ScratchUnitUtil.TryGetThreadContext(flow, out string actorId, out Guid threadId))
+            if (ScratchUnitUtil.TryGetThreadContext(flow, out string actorId, out string threadId) &&
+                !string.IsNullOrEmpty(actorId))
             {
-                FUnityScriptThreadManager.Instance.StopThreadsOfActorExcept(actorId, threadId);
+                var manager = FUnityScriptThreadManager.Instance;
+                if (manager != null)
+                {
+                    manager.StopOtherScratchThreadsOfActor(actorId, threadId);
+                }
             }
 
             return m_Output;
