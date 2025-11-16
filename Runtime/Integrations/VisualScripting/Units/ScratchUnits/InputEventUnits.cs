@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -37,6 +38,50 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         public override EventHook GetHook(GraphReference reference)
         {
             return EventHooks.Update;
+        }
+
+        /// <summary>
+        /// キー押下イベントをコルーチンとして起動し、Scratch 用スレッドとして登録します。
+        /// ScriptMachine を取得できない場合は従来の同期実行にフォールバックします。
+        /// </summary>
+        /// <param name="reference">現在のグラフ参照。</param>
+        /// <param name="args">空のイベント引数。</param>
+        public new void Trigger(GraphReference reference, EmptyEventArgs args)
+        {
+            var machine = reference?.machine as ScriptMachine;
+            if (machine == null)
+            {
+                base.Trigger(reference, args);
+                return;
+            }
+
+            var flow = Flow.New(reference);
+            AssignArguments(flow, args);
+            if (!ShouldTrigger(flow, args))
+            {
+                flow.Dispose();
+                return;
+            }
+
+            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
+            ScriptGraphAsset graph = null;
+            if (machine.nest != null)
+            {
+                graph = machine.nest.macro as ScriptGraphAsset;
+            }
+
+            IEnumerator Routine()
+            {
+                using (flow)
+                {
+                    flow.Invoke(trigger);
+                }
+
+                yield break;
+            }
+
+            var coroutine = machine.StartCoroutine(Routine());
+            ScratchUnitUtil.EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
         }
 
         /// <summary>

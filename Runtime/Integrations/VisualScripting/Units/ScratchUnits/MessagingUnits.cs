@@ -160,6 +160,50 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
+        /// メッセージ受信イベントをコルーチンで実行し、Scratch 用スレッドとして登録します。
+        /// ScriptMachine を取得できない場合は既存の同期処理にフォールバックします。
+        /// </summary>
+        /// <param name="reference">現在のグラフ参照。</param>
+        /// <param name="args">メッセージイベント引数。</param>
+        public new void Trigger(GraphReference reference, MessagingCommon.Args args)
+        {
+            var machine = reference?.machine as ScriptMachine;
+            if (machine == null)
+            {
+                base.Trigger(reference, args);
+                return;
+            }
+
+            var flow = Flow.New(reference);
+            AssignArguments(flow, args);
+            if (!ShouldTrigger(flow, args))
+            {
+                flow.Dispose();
+                return;
+            }
+
+            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
+            ScriptGraphAsset graph = null;
+            if (machine.nest != null)
+            {
+                graph = machine.nest.macro as ScriptGraphAsset;
+            }
+
+            IEnumerator Routine()
+            {
+                using (flow)
+                {
+                    flow.Invoke(trigger);
+                }
+
+                yield break;
+            }
+
+            var coroutine = machine.StartCoroutine(Routine());
+            ScratchUnitUtil.EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
+        }
+
+        /// <summary>
         /// ポート定義と EventUnit 基底の初期化を行います。
         /// </summary>
         protected override void Definition()
