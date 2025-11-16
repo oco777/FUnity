@@ -1,5 +1,6 @@
 // Updated: 2025-10-19
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
@@ -12,6 +13,58 @@ using Object = UnityEngine.Object;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
+    /// <summary>
+    /// Scratch 系のコルーチン Unit が共有する登録処理を提供し、スレッド管理へ自動的に紐付けるための基底クラスです。
+    /// フロー開始時にコルーチンを起動し、俳優 ID とグラフ情報を <see cref="FUnityScriptThreadManager"/> へ登録します。
+    /// </summary>
+    internal abstract class ScratchCoroutineUnitBase : Unit
+    {
+        /// <summary>コルーチン入力を作成し、起動時に Scratch スレッド登録を行います。</summary>
+        /// <param name="key">ControlInput のキー名。</param>
+        /// <param name="coroutineFactory">実行するコルーチンを生成するデリゲート。</param>
+        /// <returns>登録済みの ControlInput。</returns>
+        protected ControlInput CreateScratchCoroutineInput(string key, Func<Flow, IEnumerator> coroutineFactory)
+        {
+            return ControlInput(key, flow =>
+            {
+                var routine = coroutineFactory != null ? coroutineFactory(flow) : null;
+                var coroutine = StartScratchCoroutine(flow, routine);
+                if (coroutine == null && flow != null && routine != null)
+                {
+                    flow.StartCoroutine(routine);
+                }
+
+                return null;
+            });
+        }
+
+        /// <summary>
+        /// 指定したコルーチンを開始し、ActorId とともに Scratch スレッドへ登録します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <param name="routine">起動するコルーチン。</param>
+        /// <returns>開始に成功した場合は Unity のコルーチン参照。失敗時は null。</returns>
+        protected Coroutine StartScratchCoroutine(Flow flow, IEnumerator routine)
+        {
+            if (flow == null || routine == null)
+            {
+                return null;
+            }
+
+            var coroutine = flow.StartCoroutine(routine);
+            var adapter = ScratchUnitUtil.ResolveAdapter(flow);
+            ScriptGraphAsset graph = null;
+
+            if (flow.stack?.machine is ScriptMachine machine)
+            {
+                graph = machine.nest?.macro as ScriptGraphAsset;
+            }
+
+            ScratchUnitUtil.EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
+            return coroutine;
+        }
+    }
+
     /// <summary>
     /// Scratch 系 Unit 共通の補助処理を提供し、Presenter アダプタの自動解決や方向ベクトル計算を行うユーティリティクラスです。
     /// </summary>
