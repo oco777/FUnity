@@ -21,6 +21,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     {
         /// <summary>
         /// Scratch スレッド登録を挟みつつ、IEnumerator ベースのコルーチン Unit を定義するためのヘルパーです。
+        /// 現時点では、スレッド登録は EventUnit 側のみで行い、
+        /// Coroutine Unit 側は Visual Scripting 標準のコルーチン挙動に委ねます。
         /// </summary>
         /// <param name="key">ControlInput のキー名。</param>
         /// <param name="coroutineFactory">Flow から IEnumerator を生成するファクトリ。</param>
@@ -29,22 +31,28 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             string key,
             Func<Flow, IEnumerator> coroutineFactory)
         {
-            return ControlInput(key, flow =>
+            return ControlInputCoroutine(key, flow =>
             {
                 if (coroutineFactory == null)
                 {
-                    return null;
+                    return EmptyCoroutine();
                 }
 
-                var routine = coroutineFactory(flow);
-                StartScratchCoroutine(flow, routine);
-
-                return null;
+                return coroutineFactory(flow);
             });
         }
 
         /// <summary>
+        /// コルーチンが指定されていない場合に使用する空のコルーチンです。
+        /// </summary>
+        private static IEnumerator EmptyCoroutine()
+        {
+            yield break;
+        }
+
+        /// <summary>
         /// Scratch スレッドとして扱うコルーチンを開始し、開始直後にスレッド登録を行います。
+        /// （EventUnit 側から利用することを想定しています）
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <param name="routine">実行するコルーチン。</param>

@@ -7,7 +7,8 @@ using UInput = UnityEngine.Input;
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
     /// <summary>
-    /// Scratch の「〇〇キーが押されたとき」ブロックを再現し、押下瞬間にフローを発火する Unit です。
+    /// Scratch の「〇〇キーが押されたとき」ブロックを再現し、
+    /// 対象キーが押されたフレームでフローを発火する EventUnit です。
     /// </summary>
     [UnitTitle("○キーが押されたとき")]
     [UnitShortTitle("○キー")]
@@ -21,53 +22,18 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private ValueInput m_Key;
 
         /// <summary>
-        /// 直近のフレームでキーが押下されていたかどうかを保持する一時フラグです。
-        /// イベントデータは EventUnit 基底クラスの Data を使用し、独自の Data 型を登録しません。
+        /// この EventUnit を EventBus に登録するかどうかを指定します。
+        /// true にしておくことで、Visual Scripting がこのイベントをリッスンします。
         /// </summary>
-        private bool m_WasDown;
+        protected override bool register => true;
 
         /// <summary>
-        /// EventUnit の自動登録機構は使わず、StartListening/StopListening で明示的に登録します。
+        /// Visual Scripting の組み込み Update イベントを使用します。
         /// </summary>
-        protected override bool register => false;
-
-        /// <summary>
-        /// Update フックを利用してキー状態をポーリングします。
-        /// </summary>
-        /// <param name="reference">現在のグラフ参照。</param>
-        /// <returns>利用する EventHook。</returns>
         public override EventHook GetHook(GraphReference reference)
         {
+            // UnityOnUpdateMessageListener から発火される標準の Update イベント
             return EventHooks.Update;
-        }
-
-        /// <summary>
-        /// グラフ開始時に Update イベントへの購読を開始します。
-        /// FUnity の Scratch スレッド管理と連携するため、TriggerWithThreadRegistration を登録します。
-        /// </summary>
-        /// <param name="stack">現在のグラフスタック。</param>
-        public override void StartListening(GraphStack stack)
-        {
-            base.StartListening(stack);
-
-            var reference = stack.ToReference();
-            var hook = GetHook(reference);
-
-            EventBus.Register<EmptyEventArgs>(hook, TriggerWithThreadRegistration);
-        }
-
-        /// <summary>
-        /// グラフ終了時に Update イベントからの購読を解除します。
-        /// </summary>
-        /// <param name="stack">現在のグラフスタック。</param>
-        public override void StopListening(GraphStack stack)
-        {
-            var reference = stack.ToReference();
-            var hook = GetHook(reference);
-
-            EventBus.Unregister<EmptyEventArgs>(hook, TriggerWithThreadRegistration);
-
-            base.StopListening(stack);
         }
 
         /// <summary>
@@ -76,65 +42,29 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         protected override void Definition()
         {
             base.Definition();
+
+            // 監視対象キー (デフォルトは Space)
             m_Key = ValueInput<ScratchKey>("key", ScratchKey.Space);
-            // EventUnit では ControlInput を要求しないため Requirement は不要。
         }
 
         /// <summary>
-        /// Update ごとに押下エッジを検出し、押された瞬間のみ発火させるかどうかを返します。
+        /// Update ごとに「このフレームでキーが押されたか（GetKeyDown）」を判定します。
+        /// true を返したフレームでのみ trigger が実行されます。
         /// </summary>
-        /// <param name="flow">現在処理しているフロー。</param>
-        /// <param name="args">イベント引数（未使用）。</param>
-        /// <returns>押下エッジが検出された場合は true。</returns>
         protected override bool ShouldTrigger(Flow flow, EmptyEventArgs args)
         {
             var scratchKey = flow.GetValue<ScratchKey>(m_Key);
             var keyCode = ScratchKeyUtil.ToKeyCode(scratchKey);
             if (keyCode == KeyCode.None)
             {
-                m_WasDown = false;
                 return false;
             }
 
-            var isDown = UInput.GetKey(keyCode);
-            var isPressed = isDown && !m_WasDown;
-            m_WasDown = isDown;
-
-            return isPressed;
+            // 押下瞬間のみを拾う
+            return UInput.GetKeyDown(keyCode);
         }
 
-        /// <summary>
-        /// キー押下イベントでフローを発火し、開始したコルーチンを Scratch スレッドとして登録します。
-        /// </summary>
-        /// <param name="reference">現在のグラフ参照。</param>
-        /// <param name="args">空のイベント引数。</param>
-        private void TriggerWithThreadRegistration(GraphReference reference, EmptyEventArgs args)
-        {
-            using (var flow = Flow.New(reference))
-            {
-                var routine = RunEventCoroutine(flow, args);
-                ScratchUnitUtil.StartScratchCoroutine(flow, routine);
-            }
-        }
-
-        /// <summary>
-        /// EventUnit 標準のフロー実行をコルーチンでラップし、終了時に Flow を破棄します。
-        /// </summary>
-        /// <param name="flow">現在のフロー。</param>
-        /// <param name="args">イベント引数。</param>
-        /// <returns>実行完了までの列挙子。</returns>
-        private IEnumerator RunEventCoroutine(Flow flow, EmptyEventArgs args)
-        {
-            using (flow)
-            {
-                if (!ShouldTrigger(flow, args))
-                {
-                    yield break;
-                }
-
-                AssignArguments(flow, args);
-                flow.Invoke(trigger);
-            }
-        }
+        // EventUnit<EmptyEventArgs> の標準パイプラインをそのまま利用するので、
+        // StartListening / StopListening / Trigger のオーバーライドは不要です。
     }
 }

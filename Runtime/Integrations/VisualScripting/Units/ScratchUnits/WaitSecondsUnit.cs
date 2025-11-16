@@ -57,10 +57,15 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private IEnumerator RunCoroutine(Flow flow)
         {
             var seconds = Mathf.Max(0f, flow.GetValue<float>(m_Seconds));
+
+            Debug.Log($"[FUnity.Wait] WaitSecondsUnit start seconds={seconds}");
+
             if (seconds > 0f)
             {
                 yield return new WaitForSeconds(seconds);
             }
+
+            ////Debug.Log("[FUnity.Wait] WaitSecondsUnit exit");
 
             yield return m_Exit;
         }
