@@ -138,30 +138,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIReceiveMessageUnit : EventUnit<MessagingCommon.Args>
     {
-        /// <summary>EventBus 登録状態を保持するデータ構造です。</summary>
-        private sealed class ScratchEventListenerData : IGraphElementData
-        {
-            /// <summary>現在リッスン中かどうか。</summary>
-            public bool m_IsListening;
-
-            /// <summary>EventBus に登録するためのフック。</summary>
-            public EventHook m_Hook;
-
-            /// <summary>イベント受信時に呼び出すハンドラ。</summary>
-            public Action<MessagingCommon.Args> m_Handler;
-
-            /// <summary>GraphReference のキャッシュ。</summary>
-            public GraphReference m_Reference;
-        }
-
         /// <summary>EventUnit の自動登録を有効にします。</summary>
         protected override bool register => true;
 
         /// <summary>イベントデータを生成します。</summary>
-        /// <returns>Scratch 用リスナーデータ。</returns>
+        /// <returns>EventUnit 既定のデータ構造。</returns>
         public override IGraphElementData CreateData()
         {
-            return new ScratchEventListenerData();
+            return new Data();
         }
 
         /// <summary>受信したいメッセージ名を指定するフィルタ入力です。</summary>
@@ -229,19 +213,26 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var data = stack.GetElementData<ScratchEventListenerData>();
-            if (data.m_IsListening)
+            var data = stack.GetElementData<Data>(this);
+            data.listenerCount += 1;
+
+            if (data.listenerCount > 1)
             {
+                stack.SetElementData(this, data);
                 return;
             }
 
             var reference = stack.ToReference();
-            data.m_Reference = reference;
-            data.m_Hook = GetHook(reference);
-            data.m_Handler = args => TriggerWithThreadRegistration(reference, args);
+            data.reference = reference;
+            data.hook = GetHook(reference);
+            data.handler = args => TriggerWithThreadRegistration(reference, args);
 
-            EventBus.Register(data.m_Hook, data.m_Handler);
-            data.m_IsListening = true;
+            if (data.hook.name != null && data.handler != null)
+            {
+                EventBus.Register(data.hook, data.handler);
+            }
+
+            stack.SetElementData(this, data);
         }
 
         /// <summary>
@@ -255,21 +246,26 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var data = stack.GetElementData<ScratchEventListenerData>();
-            if (!data.m_IsListening)
+            var data = stack.GetElementData<Data>(this);
+            if (data.listenerCount <= 0)
             {
                 return;
             }
 
-            if (data.m_Hook != null && data.m_Handler != null)
+            data.listenerCount -= 1;
+            if (data.listenerCount <= 0)
             {
-                EventBus.Unregister(data.m_Hook, data.m_Handler);
+                if (data.hook.name != null && data.handler != null)
+                {
+                    EventBus.Unregister(data.hook, data.handler);
+                }
+
+                data.handler = null;
+                data.hook = default;
+                data.reference = null;
             }
 
-            data.m_IsListening = false;
-            data.m_Handler = null;
-            data.m_Hook = null;
-            data.m_Reference = null;
+            stack.SetElementData(this, data);
         }
 
         /// <summary>
@@ -302,7 +298,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 }
 
                 AssignArguments(flow, args);
-                flow.Invoke(trigger);
+
+                var coroutine = flow.StartCoroutine(trigger);
+                while (coroutine.MoveNext())
+                {
+                    yield return coroutine.Current;
+                }
             }
         }
     }
