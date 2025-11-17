@@ -229,7 +229,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var data = stack.GetElementData<ScratchEventListenerData>();
+            var data = stack.GetElementData<ScratchEventListenerData>(this);
             if (data.m_IsListening)
             {
                 return;
@@ -255,7 +255,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var data = stack.GetElementData<ScratchEventListenerData>();
+            var data = stack.GetElementData<ScratchEventListenerData>(this);
             if (!data.m_IsListening)
             {
                 return;
