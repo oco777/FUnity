@@ -138,8 +138,31 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIReceiveMessageUnit : EventUnit<MessagingCommon.Args>
     {
+        /// <summary>EventBus 登録状態を保持するデータ構造です。</summary>
+        private sealed class ScratchEventListenerData : IGraphElementData
+        {
+            /// <summary>現在リッスン中かどうか。</summary>
+            public bool m_IsListening;
+
+            /// <summary>EventBus に登録するためのフック。</summary>
+            public EventHook m_Hook;
+
+            /// <summary>イベント受信時に呼び出すハンドラ。</summary>
+            public Action<MessagingCommon.Args> m_Handler;
+
+            /// <summary>GraphReference のキャッシュ。</summary>
+            public GraphReference m_Reference;
+        }
+
         /// <summary>EventUnit の自動登録を有効にします。</summary>
         protected override bool register => true;
+
+        /// <summary>イベントデータを生成します。</summary>
+        /// <returns>Scratch 用リスナーデータ。</returns>
+        public override IGraphElementData CreateData()
+        {
+            return new ScratchEventListenerData();
+        }
 
         /// <summary>受信したいメッセージ名を指定するフィルタ入力です。</summary>
         [DoNotSerialize]
@@ -193,6 +216,60 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             var message = args.Message ?? string.Empty;
             return string.Equals(filter, message, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// メッセージ受信イベントを EventBus に登録し、Scratch スレッド登録経由でフローを開始します。
+        /// </summary>
+        /// <param name="stack">現在のグラフスタック。</param>
+        public override void StartListening(GraphStack stack)
+        {
+            if (stack == null)
+            {
+                return;
+            }
+
+            var data = stack.GetElementData<ScratchEventListenerData>();
+            if (data.m_IsListening)
+            {
+                return;
+            }
+
+            var reference = stack.ToReference();
+            data.m_Reference = reference;
+            data.m_Hook = GetHook(reference);
+            data.m_Handler = args => TriggerWithThreadRegistration(reference, args);
+
+            EventBus.Register(data.m_Hook, data.m_Handler);
+            data.m_IsListening = true;
+        }
+
+        /// <summary>
+        /// メッセージ受信イベントのリッスンを解除します。
+        /// </summary>
+        /// <param name="stack">現在のグラフスタック。</param>
+        public override void StopListening(GraphStack stack)
+        {
+            if (stack == null)
+            {
+                return;
+            }
+
+            var data = stack.GetElementData<ScratchEventListenerData>();
+            if (!data.m_IsListening)
+            {
+                return;
+            }
+
+            if (data.m_Hook != null && data.m_Handler != null)
+            {
+                EventBus.Unregister(data.m_Hook, data.m_Handler);
+            }
+
+            data.m_IsListening = false;
+            data.m_Handler = null;
+            data.m_Hook = null;
+            data.m_Reference = null;
         }
 
         /// <summary>
