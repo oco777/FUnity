@@ -10,6 +10,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
 - Scratch 系のコルーチン Unit は `ScratchCoroutineUnitBase.StartScratchCoroutine` を経由して実行し、開始直後に `ScratchUnitUtil.EnsureScratchThreadRegistered` でスレッド登録を行う。
 - Scratch のイベント Unit（緑の旗/キー押下/メッセージ受信/クローン開始など）は EventBus 登録時に Flow を新規作成し、`ScratchUnitUtil.StartScratchCoroutine` で実行を開始してから ActorId/ThreadId を Flow.variables に保存する。トップレベルの起動経路は必ず `ScratchUnitUtil.StartScratchCoroutine` を通し、`Flow.StartCoroutine` 単独で開始しない。
+- Scratch のイベントリスナー状態は GraphReference 単位で static Dictionary に保持し、EventBus.Register/Unregister ではジェネリック型引数を明示する。`GraphStack.SetElementData` や EventUnit.Data 拡張に依存しない。
 - コルーチン専用ポート（例: Forever の `enter`）を叩く際は、Flow 上で `flow.StartCoroutine(trigger)` を使って実行し、コルーチンとしてのみ許可されているポートを正しく起動する。
 - Presenter 取得は `ScratchUnitUtil.TryGetActorPresenter` を経由し、内部で `ResolveAdapter` と `ResolveActorPresenter` に委譲する共通ロジックを利用する。
 

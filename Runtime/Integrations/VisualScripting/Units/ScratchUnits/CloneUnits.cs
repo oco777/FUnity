@@ -1,6 +1,7 @@
 // Updated: 2025-10-21
 using System.Collections;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -135,6 +136,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIStartAsCloneUnit : EventUnit<CloneEventArgs>
     {
+        /// <summary>GraphReference ごとに登録したクローン開始イベントのハンドラ管理。</summary>
+        private static readonly Dictionary<GraphReference, Action<CloneEventArgs>> s_Handlers
+            = new Dictionary<GraphReference, Action<CloneEventArgs>>();
+
         /// <summary>EventBus に登録するかどうか。</summary>
         protected override bool register => true;
 
@@ -181,26 +186,21 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var data = stack.GetElementData<Data>(this);
-            data.listenerCount += 1;
+            var reference = stack.ToReference();
 
-            if (data.listenerCount > 1)
+            if (s_Handlers.ContainsKey(reference))
             {
-                stack.SetElementData(this, data);
                 return;
             }
 
-            var reference = stack.ToReference();
-            data.reference = reference;
-            data.hook = GetHook(reference);
-            data.handler = args => TriggerWithThreadRegistration(reference, args);
+            var hook = GetHook(reference);
+            Action<CloneEventArgs> handler = args => TriggerWithThreadRegistration(reference, args);
 
-            if (data.hook.name != null && data.handler != null)
+            if (hook.name != null && handler != null)
             {
-                EventBus.Register(data.hook, data.handler);
+                EventBus.Register<CloneEventArgs>(hook, handler);
+                s_Handlers[reference] = handler;
             }
-
-            stack.SetElementData(this, data);
         }
 
         /// <summary>
@@ -214,26 +214,20 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var data = stack.GetElementData<Data>(this);
-            if (data.listenerCount <= 0)
+            var reference = stack.ToReference();
+
+            if (!s_Handlers.TryGetValue(reference, out var handler) || handler == null)
             {
                 return;
             }
 
-            data.listenerCount -= 1;
-            if (data.listenerCount <= 0)
+            var hook = GetHook(reference);
+            if (hook.name != null)
             {
-                if (data.hook.name != null && data.handler != null)
-                {
-                    EventBus.Unregister(data.hook, data.handler);
-                }
-
-                data.handler = null;
-                data.hook = default;
-                data.reference = null;
+                EventBus.Unregister<CloneEventArgs>(hook, handler);
             }
 
-            stack.SetElementData(this, data);
+            s_Handlers.Remove(reference);
         }
 
         /// <summary>

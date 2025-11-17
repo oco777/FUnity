@@ -2,6 +2,7 @@
 // Summary: Scratch メッセージ関連（送信／送信して待つ／受信イベント）の Visual Scripting Unit 群です。
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
 
@@ -138,6 +139,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIReceiveMessageUnit : EventUnit<MessagingCommon.Args>
     {
+        /// <summary>GraphReference ごとに登録済みのメッセージリスナーを保存します。</summary>
+        private static readonly Dictionary<GraphReference, Action<MessagingCommon.Args>> s_Handlers
+            = new Dictionary<GraphReference, Action<MessagingCommon.Args>>();
+
         /// <summary>EventUnit の自動登録を有効にします。</summary>
         protected override bool register => true;
 
@@ -213,26 +218,21 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var data = stack.GetElementData<Data>(this);
-            data.listenerCount += 1;
+            var reference = stack.ToReference();
 
-            if (data.listenerCount > 1)
+            if (s_Handlers.ContainsKey(reference))
             {
-                stack.SetElementData(this, data);
                 return;
             }
 
-            var reference = stack.ToReference();
-            data.reference = reference;
-            data.hook = GetHook(reference);
-            data.handler = args => TriggerWithThreadRegistration(reference, args);
+            var hook = GetHook(reference);
+            Action<MessagingCommon.Args> handler = args => TriggerWithThreadRegistration(reference, args);
 
-            if (data.hook.name != null && data.handler != null)
+            if (hook.name != null && handler != null)
             {
-                EventBus.Register(data.hook, data.handler);
+                EventBus.Register<MessagingCommon.Args>(hook, handler);
+                s_Handlers[reference] = handler;
             }
-
-            stack.SetElementData(this, data);
         }
 
         /// <summary>
@@ -246,26 +246,20 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var data = stack.GetElementData<Data>(this);
-            if (data.listenerCount <= 0)
+            var reference = stack.ToReference();
+
+            if (!s_Handlers.TryGetValue(reference, out var handler) || handler == null)
             {
                 return;
             }
 
-            data.listenerCount -= 1;
-            if (data.listenerCount <= 0)
+            var hook = GetHook(reference);
+            if (hook.name != null)
             {
-                if (data.hook.name != null && data.handler != null)
-                {
-                    EventBus.Unregister(data.hook, data.handler);
-                }
-
-                data.handler = null;
-                data.hook = default;
-                data.reference = null;
+                EventBus.Unregister<MessagingCommon.Args>(hook, handler);
             }
 
-            stack.SetElementData(this, data);
+            s_Handlers.Remove(reference);
         }
 
         /// <summary>
