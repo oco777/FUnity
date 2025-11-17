@@ -119,7 +119,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var hook = GetHook(reference);
             if (hook.name != null)
             {
-                EventBus.Unregister<EmptyEventArgs>(hook, handler);
+                EventBus.Unregister(hook, handler);
             }
 
             s_Handlers.Remove(reference);
@@ -156,11 +156,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
                 AssignArguments(flow, args);
 
-                var coroutine = flow.StartCoroutine(trigger);
-                while (coroutine.MoveNext())
-                {
-                    yield return coroutine.Current;
-                }
+                flow.StartCoroutine(trigger);
+                yield break;
             }
         }
     }
