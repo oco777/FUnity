@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using Unity.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -16,8 +17,31 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenGreenFlagClickedUnit : EventUnit<EmptyEventArgs>
     {
+        /// <summary>イベントのリッスン状態とコールバックを保持するデータ構造です。</summary>
+        private sealed class ScratchEventListenerData : IGraphElementData
+        {
+            /// <summary>現在リッスン中かどうか。</summary>
+            public bool m_IsListening;
+
+            /// <summary>イベントバス登録に使用するフック。</summary>
+            public EventHook m_Hook;
+
+            /// <summary>イベント発火時に呼び出すハンドラ。</summary>
+            public Action<EmptyEventArgs> m_Handler;
+
+            /// <summary>対象グラフの参照。</summary>
+            public GraphReference m_Reference;
+        }
+
         /// <summary>Visual Scripting 側でイベント登録を行うかどうかを制御します。</summary>
         protected override bool register => true;
+
+        /// <summary>イベントデータを生成します。</summary>
+        /// <returns>Scratch 用のリスナー状態を保持するデータ。</returns>
+        public override IGraphElementData CreateData()
+        {
+            return new ScratchEventListenerData();
+        }
 
         /// <summary>
         /// Runner（self）をターゲットとする EventHook を返し、同一 Runner からの発火のみ受け付けます。
@@ -55,6 +79,60 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         protected override bool ShouldTrigger(Flow flow, EmptyEventArgs args)
         {
             return true;
+        }
+
+        /// <summary>
+        /// グラフ有効化時に EventBus へリッスンを登録し、Scratch スレッド登録経由でフローを実行します。
+        /// </summary>
+        /// <param name="stack">現在のグラフスタック。</param>
+        public override void StartListening(GraphStack stack)
+        {
+            if (stack == null)
+            {
+                return;
+            }
+
+            var data = stack.GetElementData<ScratchEventListenerData>();
+            if (data.m_IsListening)
+            {
+                return;
+            }
+
+            var reference = stack.ToReference();
+            data.m_Reference = reference;
+            data.m_Hook = GetHook(reference);
+            data.m_Handler = args => TriggerWithThreadRegistration(reference, args);
+
+            EventBus.Register(data.m_Hook, data.m_Handler);
+            data.m_IsListening = true;
+        }
+
+        /// <summary>
+        /// グラフ無効化時に EventBus から登録を解除します。
+        /// </summary>
+        /// <param name="stack">現在のグラフスタック。</param>
+        public override void StopListening(GraphStack stack)
+        {
+            if (stack == null)
+            {
+                return;
+            }
+
+            var data = stack.GetElementData<ScratchEventListenerData>();
+            if (!data.m_IsListening)
+            {
+                return;
+            }
+
+            if (data.m_Hook != null && data.m_Handler != null)
+            {
+                EventBus.Unregister(data.m_Hook, data.m_Handler);
+            }
+
+            data.m_IsListening = false;
+            data.m_Handler = null;
+            data.m_Hook = null;
+            data.m_Reference = null;
         }
 
         /// <summary>

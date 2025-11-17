@@ -1,5 +1,6 @@
 // Updated: 2025-10-21
 using System.Collections;
+using System;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -134,8 +135,31 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIStartAsCloneUnit : EventUnit<CloneEventArgs>
     {
+        /// <summary>イベントのリッスン状態を保持する Scratch 専用データです。</summary>
+        private sealed class ScratchEventListenerData : IGraphElementData
+        {
+            /// <summary>現在 EventBus に登録済みかどうか。</summary>
+            public bool m_IsListening;
+
+            /// <summary>登録に使用する EventHook。</summary>
+            public EventHook m_Hook;
+
+            /// <summary>イベント発火時に呼び出すハンドラ。</summary>
+            public Action<CloneEventArgs> m_Handler;
+
+            /// <summary>現在の GraphReference。</summary>
+            public GraphReference m_Reference;
+        }
+
         /// <summary>EventBus に登録するかどうか。</summary>
         protected override bool register => true;
+
+        /// <summary>Scratch 用のリスナー状態を生成します。</summary>
+        /// <returns>リスナー状態データ。</returns>
+        public override IGraphElementData CreateData()
+        {
+            return new ScratchEventListenerData();
+        }
 
         /// <summary>クローン開始イベントに使用する EventHook を返します。</summary>
         /// <param name="reference">現在のグラフ参照。</param>
@@ -160,6 +184,60 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         protected override bool ShouldTrigger(Flow flow, CloneEventArgs args)
         {
             return true;
+        }
+
+        /// <summary>
+        /// クローン開始イベントを EventBus に登録し、Scratch スレッドを経由してフローを開始します。
+        /// </summary>
+        /// <param name="stack">現在のグラフスタック。</param>
+        public override void StartListening(GraphStack stack)
+        {
+            if (stack == null)
+            {
+                return;
+            }
+
+            var data = stack.GetElementData<ScratchEventListenerData>();
+            if (data.m_IsListening)
+            {
+                return;
+            }
+
+            var reference = stack.ToReference();
+            data.m_Reference = reference;
+            data.m_Hook = GetHook(reference);
+            data.m_Handler = args => TriggerWithThreadRegistration(reference, args);
+
+            EventBus.Register(data.m_Hook, data.m_Handler);
+            data.m_IsListening = true;
+        }
+
+        /// <summary>
+        /// EventBus からクローン開始イベントの購読を解除します。
+        /// </summary>
+        /// <param name="stack">現在のグラフスタック。</param>
+        public override void StopListening(GraphStack stack)
+        {
+            if (stack == null)
+            {
+                return;
+            }
+
+            var data = stack.GetElementData<ScratchEventListenerData>();
+            if (!data.m_IsListening)
+            {
+                return;
+            }
+
+            if (data.m_Hook != null && data.m_Handler != null)
+            {
+                EventBus.Unregister(data.m_Hook, data.m_Handler);
+            }
+
+            data.m_IsListening = false;
+            data.m_Handler = null;
+            data.m_Hook = null;
+            data.m_Reference = null;
         }
 
         /// <summary>

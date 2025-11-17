@@ -302,6 +302,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return null;
             }
 
+            var ownerName = flow.stack?.gameObject != null ? flow.stack.gameObject.name : "(no owner)";
+            Debug.Log($"[FUnity.Thread] StartScratchCoroutine owner={ownerName}");
+
             var coroutine = manager.StartCoroutine(routine);
 
             var adapter = ResolveAdapter(flow);
