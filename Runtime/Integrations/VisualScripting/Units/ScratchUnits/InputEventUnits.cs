@@ -139,33 +139,28 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <param name="args">空のイベント引数。</param>
         private void TriggerWithThreadRegistration(GraphReference reference, EmptyEventArgs args)
         {
-            using (var flow = Flow.New(reference))
-            {
-                var routine = RunEventCoroutine(flow, args);
-                ScratchUnitUtil.StartScratchCoroutine(flow, routine);
-            }
+            var flow = Flow.New(reference);
+            var routine = RunEventCoroutine(flow, args);
+            ScratchUnitUtil.StartScratchCoroutine(flow, routine);
         }
 
         /// <summary>
-        /// ShouldTrigger と AssignArguments を走らせた後、trigger ポートを実行します。
+        /// ShouldTrigger と AssignArguments を走らせた後、trigger ポートを実行し、Flow の破棄は Visual Scripting 側に委ねます。
         /// </summary>
         /// <param name="flow">現在のフロー。</param>
         /// <param name="args">空のイベント引数。</param>
         /// <returns>実行完了までの列挙子。</returns>
         private IEnumerator RunEventCoroutine(Flow flow, EmptyEventArgs args)
         {
-            using (flow)
+            if (!ShouldTrigger(flow, args))
             {
-                if (!ShouldTrigger(flow, args))
-                {
-                    yield break;
-                }
-
-                AssignArguments(flow, args);
-
-                flow.StartCoroutine(trigger);
                 yield break;
             }
+
+            AssignArguments(flow, args);
+
+            flow.StartCoroutine(trigger);
+            yield break;
         }
     }
 }
