@@ -96,9 +96,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting
 
             /// <summary>実行中の Flow 参照です。</summary>
             public Flow Flow;
-
-            /// <summary>Flow がまだ終了していない場合に true となります。</summary>
-            public bool IsAlive => Flow != null && !Flow.isEnded;
         }
 
         /// <summary>
