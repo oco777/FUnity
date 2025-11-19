@@ -69,6 +69,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
 
         /// <summary>
         /// Scratch イベント由来のスレッド情報を表すデータクラスです。
+        /// Unity の Coroutine ではなく、Visual Scripting の Flow を直接追跡します。
         /// </summary>
         internal sealed class ScratchThreadInfo
         {
@@ -81,8 +82,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting
             /// <summary>実行している ScriptGraph アセットです。</summary>
             public ScriptGraphAsset Graph;
 
-            /// <summary>実行中のコルーチン参照です。</summary>
-            public Coroutine Coroutine;
+            /// <summary>実行中の Flow 参照です。</summary>
+            public Flow Flow;
         }
 
         /// <summary>
@@ -226,13 +227,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// </summary>
         /// <param name="actorId">スレッドを所有する俳優の識別子。</param>
         /// <param name="graph">実行している ScriptGraph アセット。</param>
-        /// <param name="coroutine">実行中のコルーチン。</param>
-        /// <returns>登録に成功した場合は生成したスレッド ID。コルーチンが null の場合は null。</returns>
-        public string RegisterScratchThread(string actorId, ScriptGraphAsset graph, Coroutine coroutine)
+        /// <param name="flow">実行中の Flow。</param>
+        /// <returns>登録に成功した場合は生成したスレッド ID。Flow が null の場合は null。</returns>
+        public string RegisterScratchThread(string actorId, ScriptGraphAsset graph, Flow flow)
         {
-            if (coroutine == null)
+            if (flow == null)
             {
-                Debug.LogWarning("[FUnity] RegisterScratchThread: coroutine is null.");
+                Debug.LogWarning("[FUnity.Thread] RegisterScratchThread: flow is null.");
                 return null;
             }
 
@@ -245,7 +246,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 ThreadId = threadId,
                 ActorId = actorId ?? string.Empty,
                 Graph = graph,
-                Coroutine = coroutine,
+                Flow = flow,
             };
 
             m_ScratchThreads[threadId] = info;
@@ -275,18 +276,19 @@ namespace FUnity.Runtime.Integrations.VisualScripting
 
             foreach (var info in m_ScratchThreads.Values)
             {
-                if (info?.Coroutine == null)
+                var flow = info?.Flow;
+                if (flow == null)
                 {
                     continue;
                 }
 
                 try
                 {
-                    StopCoroutine(info.Coroutine);
+                    flow.StopCoroutine(true);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[FUnity] StopAllScratchThreads: Failed to stop coroutine: {ex}");
+                    Debug.LogWarning($"[FUnity] StopAllScratchThreads: Failed to stop flow: {ex}");
                 }
             }
 
@@ -309,15 +311,16 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            if (info?.Coroutine != null)
+            var flow = info?.Flow;
+            if (flow != null)
             {
                 try
                 {
-                    StopCoroutine(info.Coroutine);
+                    flow.StopCoroutine(true);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[FUnity] StopScratchThread: Failed to stop coroutine: {ex}");
+                    Debug.LogWarning($"[FUnity] StopScratchThread: Failed to stop flow: {ex}");
                 }
             }
 

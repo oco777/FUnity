@@ -263,34 +263,23 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// メッセージ受信イベントでフローを発火し、開始したコルーチンを Scratch スレッドとして登録します。
+        /// メッセージ受信イベントでフローを発火し、起動した Flow を Scratch スレッドとして登録します。
         /// </summary>
         /// <param name="reference">現在のグラフ参照。</param>
         /// <param name="args">受信したメッセージ引数。</param>
         private void TriggerWithThreadRegistration(GraphReference reference, MessagingCommon.Args args)
         {
             var flow = Flow.New(reference);
-            var routine = RunEventCoroutine(flow, args);
-            ScratchUnitUtil.StartScratchCoroutine(flow, routine);
-        }
-
-        /// <summary>
-        /// EventUnit 標準のフロー実行をコルーチンでラップし、Flow の破棄は Visual Scripting 側に委ねます。
-        /// </summary>
-        /// <param name="flow">現在のフロー。</param>
-        /// <param name="args">受信したメッセージ引数。</param>
-        /// <returns>実行完了までの列挙子。</returns>
-        private IEnumerator RunEventCoroutine(Flow flow, MessagingCommon.Args args)
-        {
             if (!ShouldTrigger(flow, args))
             {
-                yield break;
+                flow.Dispose();
+                return;
             }
 
             AssignArguments(flow, args);
 
             flow.StartCoroutine(trigger);
-            yield break;
+            ScratchUnitUtil.RegisterScratchFlow(flow);
         }
     }
 }

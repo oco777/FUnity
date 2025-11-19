@@ -51,15 +51,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// Scratch スレッドとして扱うコルーチンを開始し、開始直後にスレッド登録を行います。
-        /// （EventUnit 側から利用することを想定しています）
+        /// Scratch スレッドとして Flow を登録する互換ラッパーです。
+        /// Coroutine ベースの旧設計を置き換えるため、実際のコルーチン開始は呼び出し元で行ってください。
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
-        /// <param name="routine">実行するコルーチン。</param>
-        /// <returns>開始したコルーチン参照。開始できない場合は null。</returns>
-        protected Coroutine StartScratchCoroutine(Flow flow, IEnumerator routine)
+        /// <returns>登録したスレッド ID。登録できない場合は null。</returns>
+        protected string RegisterScratchFlow(Flow flow)
         {
-            return ScratchUnitUtil.StartScratchCoroutine(flow, routine);
+            return ScratchUnitUtil.RegisterScratchFlow(flow);
         }
     }
 
@@ -283,14 +282,14 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// Scratch 用スレッドマネージャー経由でコルーチンを開始し、開始直後にスレッド登録を行うユーティリティです。
+        /// Visual Scripting の Flow を Scratch スレッドとして登録し、Flow.variables に俳優 ID とスレッド ID を保存します。
+        /// Unity Coroutine には依存せず、Flow.StartCoroutine で起動済みであることを前提とします。
         /// </summary>
-        /// <param name="flow">現在のフロー情報。</param>
-        /// <param name="routine">実行するコルーチン。</param>
-        /// <returns>開始したコルーチン参照。開始できない場合は null。</returns>
-        public static Coroutine StartScratchCoroutine(Flow flow, IEnumerator routine)
+        /// <param name="flow">登録対象の Flow。</param>
+        /// <returns>登録したスレッド ID。登録できない場合は null。</returns>
+        public static string RegisterScratchFlow(Flow flow)
         {
-            if (flow == null || routine == null)
+            if (flow == null)
             {
                 return null;
             }
@@ -298,60 +297,21 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var manager = FUnityScriptThreadManager.Instance;
             if (manager == null)
             {
-                Debug.LogWarning("[FUnity.Thread] FUnityScriptThreadManager.Instance が見つからないため、Scratch コルーチンを開始できません。");
+                Debug.LogWarning("[FUnity.Thread] FUnityScriptThreadManager.Instance が見つからないため、Scratch フローを登録できません。");
                 return null;
             }
 
-            var ownerName = flow.stack?.gameObject != null ? flow.stack.gameObject.name : "(no owner)";
-            Debug.Log($"[FUnity.Thread] StartScratchCoroutine owner={ownerName}");
-
-            var coroutine = manager.StartCoroutine(routine);
-
-            var adapter = ResolveAdapter(flow);
-            ScriptGraphAsset graph = null;
-
-            if (flow.stack?.machine is ScriptMachine machine)
-            {
-                graph = machine.nest?.macro as ScriptGraphAsset;
-            }
-
-            EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
-
-            return coroutine;
-        }
-
-        /// <summary>
-        /// Scratch のイベント Unit から開始されたスレッドを FUnityScriptThreadManager に登録し、Flow.variables に俳優 ID とスレッド ID を保存します。
-        /// すでにフロー側にスレッド ID が設定されている場合は再登録せず、その ID を返します。
-        /// </summary>
-        /// <param name="flow">現在のフロー情報。</param>
-        /// <param name="adapter">俳優の Presenter 参照を解決するアダプタ。</param>
-        /// <param name="graph">実行中の ScriptGraph アセット。</param>
-        /// <param name="coroutine">登録対象のコルーチン。</param>
-        /// <returns>登録済みまたは新規登録したスレッド ID。登録に失敗した場合は null。</returns>
-        public static string EnsureScratchThreadRegistered(
-            Flow flow,
-            ActorPresenterAdapter adapter,
-            ScriptGraphAsset graph,
-            Coroutine coroutine)
-        {
-            Debug.Log("[FUnity.Thread] EnsureScratchThreadRegistered called");
-
-            if (flow == null || coroutine == null)
-            {
-                return null;
-            }
-
-            if (TryGetThreadContext(flow, out string existingActorId, out string existingThreadId) &&
-                !string.IsNullOrEmpty(existingThreadId))
+            if (TryGetThreadContext(flow, out var existingActorId, out var existingThreadId) && !string.IsNullOrEmpty(existingThreadId))
             {
                 return existingThreadId;
             }
 
-            var manager = FUnityScriptThreadManager.Instance;
-            if (manager == null)
+            var adapter = ResolveAdapter(flow);
+
+            ScriptGraphAsset graph = null;
+            if (flow.stack?.machine is ScriptMachine machine)
             {
-                return null;
+                graph = machine.nest?.macro as ScriptGraphAsset;
             }
 
             var actorId = existingActorId;
@@ -360,41 +320,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 actorId = adapter.Presenter.ActorKey;
             }
 
-            var threadId = manager.RegisterScratchThread(actorId, graph, coroutine);
+            var threadId = manager.RegisterScratchThread(actorId, graph, flow);
             if (!string.IsNullOrEmpty(threadId))
             {
                 SetThreadContext(flow, actorId, threadId);
             }
 
             return threadId;
-        }
-
-        /// <summary>
-        /// EventUnit 側から利用しやすいように、Flow 情報のみから
-        /// ActorPresenterAdapter と ScriptGraphAsset を自動解決してスレッド登録を行うオーバーロードです。
-        /// EventUnit（Scratch スクリプトの開始点）専用の呼び出し口として利用してください。
-        /// </summary>
-        /// <param name="flow">現在のフロー情報。</param>
-        /// <param name="coroutine">登録対象のコルーチン。</param>
-        /// <returns>登録済みまたは新規登録したスレッド ID。登録に失敗した場合は null。</returns>
-        public static string EnsureScratchThreadRegistered(
-            Flow flow,
-            Coroutine coroutine)
-        {
-            if (flow == null || coroutine == null)
-            {
-                return null;
-            }
-
-            var adapter = ResolveAdapter(flow);
-
-            ScriptGraphAsset graph = null;
-            if (flow.stack?.machine is ScriptMachine machine)
-            {
-                graph = machine.nest?.macro as ScriptGraphAsset;
-            }
-
-            return EnsureScratchThreadRegistered(flow, adapter, graph, coroutine);
         }
 
         /// <summary>

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -133,34 +132,23 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// イベントをコルーチン化し、Scratch 用スレッドに登録してから処理を実行します。
+        /// キー入力イベントで Flow を開始し、Scratch 用スレッドに登録してから処理を実行します。
         /// </summary>
         /// <param name="reference">現在のグラフ参照。</param>
         /// <param name="args">空のイベント引数。</param>
         private void TriggerWithThreadRegistration(GraphReference reference, EmptyEventArgs args)
         {
             var flow = Flow.New(reference);
-            var routine = RunEventCoroutine(flow, args);
-            ScratchUnitUtil.StartScratchCoroutine(flow, routine);
-        }
-
-        /// <summary>
-        /// ShouldTrigger と AssignArguments を走らせた後、trigger ポートを実行し、Flow の破棄は Visual Scripting 側に委ねます。
-        /// </summary>
-        /// <param name="flow">現在のフロー。</param>
-        /// <param name="args">空のイベント引数。</param>
-        /// <returns>実行完了までの列挙子。</returns>
-        private IEnumerator RunEventCoroutine(Flow flow, EmptyEventArgs args)
-        {
             if (!ShouldTrigger(flow, args))
             {
-                yield break;
+                flow.Dispose();
+                return;
             }
 
             AssignArguments(flow, args);
 
             flow.StartCoroutine(trigger);
-            yield break;
+            ScratchUnitUtil.RegisterScratchFlow(flow);
         }
     }
 }
