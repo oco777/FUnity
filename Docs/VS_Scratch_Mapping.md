@@ -10,6 +10,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
 - Scratch 系のコルーチン Unit は Visual Scripting 標準の `flow.StartCoroutine` を用い、開始後に `ScratchUnitUtil.RegisterScratchFlow` で Flow を登録して停止ブロックと連動させる。
 - Scratch のイベント Unit（緑の旗/キー押下/メッセージ受信/クローン開始など）は EventBus 登録時に Flow を新規作成し、`flow.StartCoroutine(trigger)` で起動してから `ScratchUnitUtil.RegisterScratchFlow(flow)` で ActorId/ThreadId を Flow.variables に保存する。Unity の Coroutine へは依存しない。
+- `ScratchUnitUtil.RegisterScratchFlow` は Flow.variables に `FUNITY_SCRATCH_ACTOR_ID` / `FUNITY_SCRATCH_THREAD_ID` を格納し、`FUnityScriptThreadManager` の `(actorId, threadId)` テーブルへ登録する。停止系ユニットは Flow から逆引きした ActorId/ThreadId を使って停止対象を精密に選択する。
 - Scratch のイベントリスナー状態は GraphReference 単位で static Dictionary に保持し、EventBus.Register/Unregister ではジェネリック型引数を明示する。`GraphStack.SetElementData` や EventUnit.Data 拡張に依存しない。
 - コルーチン専用ポート（例: Forever の `enter`）を叩く際は、Flow 上で `flow.StartCoroutine(trigger)` を使って実行し、コルーチンとしてのみ許可されているポートを正しく起動する。
 - Presenter 取得は `ScratchUnitUtil.TryGetActorPresenter` を経由し、内部で `ResolveAdapter` と `ResolveActorPresenter` に委譲する共通ロジックを利用する。
@@ -68,7 +69,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | クローンされたとき | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.WhenIStartAsCloneUnit | クローンされたとき | Events/FUnity/Scratch/制御 | クローン生成時に発火する Scratch スクリプトの入口。`flow.StartCoroutine(trigger)` で起動後、`ScratchUnitUtil.RegisterScratchFlow` により Flow をスレッド登録して停止ブロックと連動させる。Flow の破棄は Visual Scripting のコルーチン側で行う。定義: Runtime/.../CloneUnits.cs |
 | このクローンを削除する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.DeleteThisCloneUnit | このクローンを削除する | FUnity/Scratch/制御 | クローンを破棄。定義: Runtime/.../CloneUnits.cs |
 | すべてを止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopAllUnit | Scratch/すべてを止める | FUnity/Scratch/制御 | Scratch 用スレッドテーブル経由で全スレッド停止。定義: Runtime/.../StopControlUnits.cs |
-| このスクリプトを止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopThisScriptUnit | Scratch/このスクリプトを止める | FUnity/Scratch/制御 | 現在の Scratch スレッドのみ停止。定義: Runtime/.../StopControlUnits.cs |
+| このスクリプトを止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopThisScriptUnit | Scratch/このスクリプトを止める | FUnity/Scratch/制御 | Flow.variables から ActorId/ThreadId を取得し、`FUnityScriptThreadManager.StopScratchThread(actorId, threadId)` で自身のみ停止。定義: Runtime/.../StopControlUnits.cs |
 | スプライトの他のスクリプトを止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopOtherScriptsInSpriteUnit | Scratch/スプライトの他のスクリプトを止める | FUnity/Scratch/制御 | 同俳優の他 Scratch スレッド停止。定義: Runtime/.../StopControlUnits.cs |
 | もし○なら | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.IfThenUnit | もし○なら | FUnity/Scratch/制御 | 条件成立時のみ本体を実行。定義: Runtime/.../ConditionUnits.cs |
 
@@ -77,10 +78,10 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | Scratch ブロック名 | FUnity Unit 名 | 備考 |
 | --- | --- | --- |
 | すべてを止める | Events/FUnity/Scratch/制御/すべてを止める | `FUnityScriptThreadManager.StopAllScratchThreads()` を呼び出し、登録済みの Scratch スレッドを全停止する。 |
-| このスクリプトを止める | Events/FUnity/Scratch/制御/このスクリプトを止める | `ScratchUnitUtil` から ThreadId を取得し、`FUnityScriptThreadManager.StopScratchThread(...)` を通じて現在の Scratch スレッドのみ停止する。 |
+| このスクリプトを止める | Events/FUnity/Scratch/制御/このスクリプトを止める | `ScratchUnitUtil` から ActorId/ThreadId を取得し、`FUnityScriptThreadManager.StopScratchThread(actorId, threadId)` で現在の Scratch スレッドのみ停止する。 |
 | スプライトの他のスクリプトを止める | Events/FUnity/Scratch/制御/スプライトの他のスクリプトを止める | `ScratchUnitUtil` で ActorId/ThreadId を取得し、`FUnityScriptThreadManager.StopOtherScratchThreadsOfActor(...)` を使って同一 Actor の他スレッドを停止する。 |
 
-> **補足:** Scratch 系の停止ユニットは、`FUnityScriptThreadManager` に用意した Scratch 専用スレッドテーブルを利用してコルーチンを管理します。`ScratchUnitUtil` に保存した string ベースの ActorId/ThreadId を参照し、`StopAllScratchThreads`・`StopScratchThread`・`StopOtherScratchThreadsOfActor` を呼び出して対象を制御します。`FUnityScriptThreadManager.Instance` はシーン上に存在しない場合でもアクセス時に自動生成され、`DontDestroyOnLoad` で保持されるため、停止ブロックからの呼び出しが常に有効になります。
+> **補足:** Scratch 系の停止ユニットは、`FUnityScriptThreadManager` に用意した `(actorId, threadId)` ベースのスレッドテーブルを利用して Flow を管理します。`ScratchUnitUtil` に保存した ActorId/ThreadId を参照し、`StopAllScratchThreads`・`StopScratchThread`・`StopOtherScratchThreadsOfActor` を呼び出して対象を制御します。`FUnityScriptThreadManager.FindOrCreate()` はシーン上に存在しない場合でもアクセス時に自動生成され、`DontDestroyOnLoad` で保持されるため、停止ブロックからの呼び出しが常に有効になります。
 
 ## イベント
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |

@@ -18,8 +18,19 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// <summary>スレッドに付随する情報を保持するテーブルです。</summary>
         private readonly Dictionary<Guid, ScriptThreadInfo> m_Threads = new Dictionary<Guid, ScriptThreadInfo>();
 
-        /// <summary>Scratch 用スレッドを管理するテーブルです。</summary>
-        private readonly Dictionary<string, ScratchThreadInfo> m_ScratchThreads = new Dictionary<string, ScratchThreadInfo>();
+        /// <summary>Scratch 用スレッドを管理するテーブルです。俳優 ID とスレッド ID の組み合わせで一意に追跡します。</summary>
+        private readonly Dictionary<(string actorId, string threadId), ScratchThreadInfo> m_ScratchThreads
+            = new Dictionary<(string actorId, string threadId), ScratchThreadInfo>();
+
+        /// <summary>
+        /// シングルトンインスタンスを検索または生成し、呼び出し元へ返します。
+        /// EventUnit やユーティリティから参照される想定です。
+        /// </summary>
+        /// <returns>シーン上で有効な <see cref="FUnityScriptThreadManager"/>。</returns>
+        public static FUnityScriptThreadManager FindOrCreate()
+        {
+            return Instance;
+        }
 
         /// <summary>
         /// シングルトンインスタンスを参照します。見つからない場合はシーンから検索し、存在しなければ自動生成します。
@@ -71,7 +82,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// Scratch イベント由来のスレッド情報を表すデータクラスです。
         /// Unity の Coroutine ではなく、Visual Scripting の Flow を直接追跡します。
         /// </summary>
-        internal sealed class ScratchThreadInfo
+        [Serializable]
+        private sealed class ScratchThreadInfo
         {
             /// <summary>スレッド固有の ID です（Guid 文字列）。</summary>
             public string ThreadId;
@@ -84,6 +96,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting
 
             /// <summary>実行中の Flow 参照です。</summary>
             public Flow Flow;
+
+            /// <summary>Flow がまだ終了していない場合に true となります。</summary>
+            public bool IsAlive => Flow != null && !Flow.isEnded;
         }
 
         /// <summary>
@@ -229,17 +244,29 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// <param name="graph">実行している ScriptGraph アセット。</param>
         /// <param name="flow">実行中の Flow。</param>
         /// <returns>登録に成功した場合は生成したスレッド ID。Flow が null の場合は null。</returns>
-        public string RegisterScratchThread(string actorId, ScriptGraphAsset graph, Flow flow)
+        public void RegisterScratchThread(string actorId, ScriptGraphAsset graph, Flow flow, string threadId)
         {
             if (flow == null)
             {
                 Debug.LogWarning("[FUnity.Thread] RegisterScratchThread: flow is null.");
-                return null;
+                return;
             }
 
-            var threadId = Guid.NewGuid().ToString("N");
+            if (string.IsNullOrEmpty(actorId))
+            {
+                Debug.LogWarning("[FUnity.Thread] RegisterScratchThread: actorId is null or empty.");
+                return;
+            }
 
+            if (string.IsNullOrEmpty(threadId))
+            {
+                Debug.LogWarning("[FUnity.Thread] RegisterScratchThread: threadId is null or empty.");
+                return;
+            }
+
+#if UNITY_EDITOR
             Debug.Log($"[FUnity.Thread] Register actor={actorId}, thread={threadId}");
+#endif
 
             var info = new ScratchThreadInfo
             {
@@ -249,8 +276,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 Flow = flow,
             };
 
-            m_ScratchThreads[threadId] = info;
-            return threadId;
+            var key = (info.ActorId, info.ThreadId);
+            m_ScratchThreads[key] = info;
         }
 
         /// <summary>
@@ -264,7 +291,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            m_ScratchThreads.Remove(threadId);
+            var targetKey = m_ScratchThreads.Keys
+                .FirstOrDefault(key => string.Equals(key.threadId, threadId, StringComparison.Ordinal));
+
+            if (!string.IsNullOrEmpty(targetKey.threadId))
+            {
+                m_ScratchThreads.Remove(targetKey);
+            }
         }
 
         /// <summary>
@@ -272,59 +305,43 @@ namespace FUnity.Runtime.Integrations.VisualScripting
         /// </summary>
         public void StopAllScratchThreads()
         {
+            if (m_ScratchThreads.Count == 0)
+            {
+                return;
+            }
+
+#if UNITY_EDITOR
             Debug.Log($"[FUnity.Thread] StopAll requested count={m_ScratchThreads.Count}");
+#endif
 
             foreach (var info in m_ScratchThreads.Values)
             {
-                var flow = info?.Flow;
-                if (flow == null)
-                {
-                    continue;
-                }
-
-                try
-                {
-                    flow.StopCoroutine(true);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"[FUnity] StopAllScratchThreads: Failed to stop flow: {ex}");
-                }
+                TryStopFlow(info?.Flow);
             }
 
             m_ScratchThreads.Clear();
         }
 
         /// <summary>
-        /// 指定した ID の Scratch スレッドだけを停止します。
+        /// 指定した Scratch スレッドだけを停止します。
         /// </summary>
+        /// <param name="actorId">停止対象の俳優 ID。</param>
         /// <param name="threadId">停止対象のスレッド ID。</param>
-        public void StopScratchThread(string threadId)
+        public void StopScratchThread(string actorId, string threadId)
         {
-            if (string.IsNullOrEmpty(threadId))
+            if (string.IsNullOrEmpty(actorId) || string.IsNullOrEmpty(threadId))
             {
                 return;
             }
 
-            if (!m_ScratchThreads.TryGetValue(threadId, out var info))
+            var key = (actorId, threadId);
+            if (!m_ScratchThreads.TryGetValue(key, out var info))
             {
                 return;
             }
 
-            var flow = info?.Flow;
-            if (flow != null)
-            {
-                try
-                {
-                    flow.StopCoroutine(true);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"[FUnity] StopScratchThread: Failed to stop flow: {ex}");
-                }
-            }
-
-            m_ScratchThreads.Remove(threadId);
+            TryStopFlow(info?.Flow);
+            m_ScratchThreads.Remove(key);
         }
 
         /// <summary>
@@ -339,12 +356,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            var toStop = new List<string>();
+            var keysToStop = new List<(string actorId, string threadId)>();
 
-            foreach (var kv in m_ScratchThreads)
+            foreach (var entry in m_ScratchThreads)
             {
-                var tid = kv.Key;
-                var info = kv.Value;
+                var key = entry.Key;
+                var info = entry.Value;
                 if (info == null)
                 {
                     continue;
@@ -360,12 +377,37 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                     continue;
                 }
 
-                toStop.Add(tid);
+                keysToStop.Add(key);
             }
 
-            foreach (var threadId in toStop)
+            foreach (var key in keysToStop)
             {
-                StopScratchThread(threadId);
+                if (m_ScratchThreads.TryGetValue(key, out var info))
+                {
+                    TryStopFlow(info?.Flow);
+                    m_ScratchThreads.Remove(key);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Flow 停止処理を共通化します。例外は警告ログに変換します。
+        /// </summary>
+        /// <param name="flow">停止対象のフロー。</param>
+        private static void TryStopFlow(Flow flow)
+        {
+            if (flow == null)
+            {
+                return;
+            }
+
+            try
+            {
+                flow.StopCoroutine(true);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[FUnity] ScratchThreadManager: Failed to stop flow: {ex}");
             }
         }
 
