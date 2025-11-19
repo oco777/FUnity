@@ -301,7 +301,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return null;
             }
 
-            if (TryGetThreadContext(flow, out var existingActorId, out var existingThreadId) && !string.IsNullOrEmpty(existingThreadId))
+            if (TryGetThreadContext(flow, out var existingActorId, out string existingThreadId) && !string.IsNullOrEmpty(existingThreadId))
             {
                 return existingThreadId;
             }
