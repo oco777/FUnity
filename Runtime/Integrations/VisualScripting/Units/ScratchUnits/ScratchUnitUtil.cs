@@ -76,11 +76,11 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <summary>Scratch の 1 歩をピクセルへ換算する倍率です。</summary>
         private const float StepToPixels = 1f;
 
-        /// <summary>フロー変数に保存するスレッド ID のキーです。</summary>
-        private const string ThreadIdKey = "FUNITY_SCRATCH_THREAD_ID";
+        /// <summary>フロー変数に保存する Scratch スレッド ID のキーです。</summary>
+        private const string ScratchThreadIdKey = "FUNITY_SCRATCH_THREAD_ID";
 
         /// <summary>フロー変数に保存する俳優 ID のキーです。</summary>
-        private const string ActorIdKey = "FUNITY_SCRATCH_ACTOR_ID";
+        private const string ScratchActorIdKey = "FUNITY_SCRATCH_ACTOR_ID";
 
         /// <summary>
         /// 現在のフローがホストしている Runner（Self）に紐づく Object 変数を取得します。
@@ -205,20 +205,15 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return false;
             }
 
-            if (!variables.IsDefined(ActorIdKey) || !variables.IsDefined(ThreadIdKey))
+            if (!variables.IsDefined(ScratchActorIdKey) || !variables.IsDefined(ScratchThreadIdKey))
             {
                 return false;
             }
 
-            actorId = variables.Get<string>(ActorIdKey);
-            threadId = variables.Get<string>(ThreadIdKey);
+            actorId = variables.Get<string>(ScratchActorIdKey);
+            threadId = variables.Get<string>(ScratchThreadIdKey);
 
-            if (string.IsNullOrEmpty(threadId))
-            {
-                return false;
-            }
-
-            return true;
+            return !string.IsNullOrEmpty(actorId) && !string.IsNullOrEmpty(threadId);
         }
 
         /// <summary>
@@ -266,8 +261,8 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            variables.Set(ActorIdKey, actorId ?? string.Empty);
-            variables.Set(ThreadIdKey, threadId ?? string.Empty);
+            variables.Set(ScratchActorIdKey, actorId ?? string.Empty);
+            variables.Set(ScratchThreadIdKey, threadId ?? string.Empty);
         }
 
         /// <summary>
@@ -294,39 +289,80 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return null;
             }
 
-            var manager = FUnityScriptThreadManager.Instance;
-            if (manager == null)
-            {
-                Debug.LogWarning("[FUnity.Thread] FUnityScriptThreadManager.Instance が見つからないため、Scratch フローを登録できません。");
-                return null;
-            }
-
-            if (TryGetThreadContext(flow, out var existingActorId, out string existingThreadId) && !string.IsNullOrEmpty(existingThreadId))
+            if (TryGetThreadContext(flow, out var existingActorId, out string existingThreadId) &&
+                !string.IsNullOrEmpty(existingThreadId))
             {
                 return existingThreadId;
             }
 
-            var adapter = ResolveAdapter(flow);
-
-            ScriptGraphAsset graph = null;
-            if (flow.stack?.machine is ScriptMachine machine)
+            var actorId = !string.IsNullOrEmpty(existingActorId) ? existingActorId : ResolveScratchActorId(flow);
+            if (string.IsNullOrEmpty(actorId))
             {
-                graph = machine.nest?.macro as ScriptGraphAsset;
+                Debug.LogWarning("[FUnity.Thread] ScratchUnitUtil.RegisterScratchFlow: ActorKey を取得できないため Flow を登録できません。");
+                return null;
             }
 
-            var actorId = existingActorId;
-            if (string.IsNullOrEmpty(actorId) && adapter != null && adapter.Presenter != null)
+            var graph = TryGetScriptGraph(flow);
+            if (graph == null)
             {
-                actorId = adapter.Presenter.ActorKey;
+                Debug.LogWarning("[FUnity.Thread] ScratchUnitUtil.RegisterScratchFlow: ScriptGraphAsset を解決できません。");
+                return null;
             }
 
-            var threadId = manager.RegisterScratchThread(actorId, graph, flow);
-            if (!string.IsNullOrEmpty(threadId))
+            var manager = FUnityScriptThreadManager.FindOrCreate();
+            if (manager == null)
             {
-                SetThreadContext(flow, actorId, threadId);
+                Debug.LogWarning("[FUnity.Thread] ScratchUnitUtil.RegisterScratchFlow: ThreadManager を生成できません。");
+                return null;
             }
 
+            var threadId = Guid.NewGuid().ToString("N");
+            manager.RegisterScratchThread(actorId, graph, flow, threadId);
+            SetThreadContext(flow, actorId, threadId);
             return threadId;
+        }
+
+        /// <summary>
+        /// Flow から自分自身の俳優キーを推定します。Object Variables → Presenter → Adapter の順で確認します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>解決できた俳優キー。取得できない場合は空文字列。</returns>
+        private static string ResolveScratchActorId(Flow flow)
+        {
+            var actorKey = VSPresenterBridge.GetSelfActorKey(flow);
+            if (!string.IsNullOrEmpty(actorKey))
+            {
+                return actorKey;
+            }
+
+            var runner = flow?.stack?.gameObject;
+            if (runner == null)
+            {
+                return string.Empty;
+            }
+
+            var adapter = runner.GetComponent<ActorPresenterAdapter>();
+            if (adapter != null && adapter.Presenter != null && !string.IsNullOrEmpty(adapter.Presenter.ActorKey))
+            {
+                return adapter.Presenter.ActorKey;
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Flow が属する ScriptGraphAsset を取得します。ScriptMachine → Nest → Macro の順に辿ります。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>取得できた ScriptGraphAsset。見つからない場合は null。</returns>
+        private static ScriptGraphAsset TryGetScriptGraph(Flow flow)
+        {
+            if (flow?.stack?.machine is ScriptMachine machine)
+            {
+                return machine.nest?.macro as ScriptGraphAsset;
+            }
+
+            return null;
         }
 
         /// <summary>

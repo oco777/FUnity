@@ -31,7 +31,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>常に null を返し、フローを終端させます。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            var manager = FUnityScriptThreadManager.Instance;
+            var manager = FUnityScriptThreadManager.FindOrCreate();
             if (manager == null)
             {
                 return null;
@@ -70,13 +70,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <returns>常に null を返し、フローを終端させます。</returns>
         private ControlOutput OnEnter(Flow flow)
         {
-            if (ScratchUnitUtil.TryGetThreadContext(flow, out string _, out string threadId) &&
-                !string.IsNullOrEmpty(threadId))
+            if (ScratchUnitUtil.TryGetThreadContext(flow, out string actorId, out string threadId) &&
+                !string.IsNullOrEmpty(actorId) && !string.IsNullOrEmpty(threadId))
             {
-                var manager = FUnityScriptThreadManager.Instance;
+                var manager = FUnityScriptThreadManager.FindOrCreate();
                 if (manager != null)
                 {
-                    manager.StopScratchThread(threadId);
+                    manager.StopScratchThread(actorId, threadId);
                 }
             }
 
@@ -121,7 +121,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (ScratchUnitUtil.TryGetThreadContext(flow, out string actorId, out string threadId) &&
                 !string.IsNullOrEmpty(actorId))
             {
-                var manager = FUnityScriptThreadManager.Instance;
+                var manager = FUnityScriptThreadManager.FindOrCreate();
                 if (manager != null)
                 {
                     manager.StopOtherScratchThreadsOfActor(actorId, threadId);
