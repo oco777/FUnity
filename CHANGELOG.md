@@ -2,20 +2,21 @@
 
 ## [Unreleased]
 
+_No unreleased changes yet._
+
+## [v0.3.0] - 2025-11-20
+
 ### Added
-- `MousePositionService` を追加し、UI Toolkit の PointerMoveEvent を Scratch 座標系へ変換するマウス座標サービスを提供しました。
-- Visual Scripting 値ユニット「マウスのx座標」「マウスのy座標」を `FUnity/Scratch/調べる` カテゴリに追加しました。
-- `MousePositionService` に左ボタン押下状態を公開する `IsPressed` プロパティと PointerDown/PointerUp の購読を実装しました。
-- Visual Scripting 動きユニット「マウスポインターへ向ける」を `FUnity/Scratch/動き` カテゴリに追加しました。
-- Visual Scripting 調べるユニット「マウスポインターまでの距離」「マウスが押された」を `FUnity/Scratch/調べる` に追加しました。
-- `ActorPresenter` と `ActorPresenterAdapter` に `SetSpriteIndex` / `SpriteIndex` / `SpriteCount` を追加し、SpriteList 切り替え API を公開しました。
-- `FUnityActorDataMigrationWindow` を追加し、旧 Portrait / PortraitSprite を Sprites へ一括移行できるようにしました。
-- Scratch モードの停止ユニット（すべてを止める／このスクリプトを止める／スプライトの他のスクリプトを止める）と Scratch 専用スレッド管理 API を追加しました。
+- `MousePositionService` を追加し、UI Toolkit の PointerMoveEvent を Scratch 座標系へ変換するマウス座標サービスに左ボタン押下追跡を含めました。
+- Visual Scripting にマウスポインター関連ユニット（x / y 座標、距離、押下判定、マウスポインターへ向ける）を `FUnity/Scratch/調べる` および `FUnity/Scratch/動き` カテゴリへ追加しました。
+- `ActorPresenter` と `ActorPresenterAdapter` に SpriteList の切り替え API（`SetSpriteIndex` / `SpriteIndex` / `SpriteCount`）を追加し、アクターの見た目を複数スプライトから選択できるようにしました。
+- `FUnityActorDataMigrationWindow` を追加し、旧 Portrait / PortraitSprite フィールドを Sprites リストへ一括移行できるようにしました。
+- Scratch モードの停止ユニット（すべてを止める／このスクリプトを止める／スプライトの他のスクリプトを止める）と専用スレッド管理 API を追加し、Scratch の停止挙動を再現しました。
 
 ### Changed
-- `ScratchUnitUtil` に `GetDirectionDegreesForCurrentMode` を追加し、Scratch モードでは上=0°/右=90°/左=-90°/下=±180°、通常モードでは従来通り右=0° となるよう向き計算を統一しました。`DirFromDegrees` もモード差を吸収するよう更新しています。
-- `FUnityActorData` の見た目設定を `Sprites` リストのみで運用するよう更新し、旧 Portrait 系フィールドを完全に削除しました。
-- `ActorView` と `ActorPresenter` を Sprite リスト前提に再設計し、Texture2D フォールバックとマイグレーション呼び出しを廃止しました。
+- `ScratchUnitUtil` に `GetDirectionDegreesForCurrentMode` を追加し、Scratch モードでは上=0°/右=90°/左=-90°/下=±180°となる角度計算へ統一しました。`DirFromDegrees` もモード差を吸収するよう更新しています。
+- `FUnityActorData` の見た目設定を `Sprites` リストのみで運用するよう更新し、Texture2D フォールバックを廃止しました。
+- `ActorView` と `ActorPresenter` を Sprite リスト前提に再設計し、旧 Portrait 系フィールドに依存しない実装へ移行しました。
 
 ### Removed
 - `FUnityActorData.EnsureSpritesMigrated()` を含む Portrait 移行用 API と関連フォールバックを削除しました。

@@ -16,12 +16,18 @@
 - 各モードの仕様やブロック互換ポリシーは [`Assets/FUnity/Docs/Modes/README.md`](Assets/FUnity/Docs/Modes/README.md) を参照してください。
 
 ## 現状機能サマリ
-- UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.1.0`）によるバージョン固定にも対応。
+- UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.3.0`）によるバージョン固定にも対応。
 - Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/FUnityProjectData**）で初期データを生成。
 - `Runtime/Resources/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
 - `FUnityManager` がシーン起動時に “FUnity UI” GameObject と `UIDocument` を構築し、UI ブリッジや Runner 参照をセットアップ。
 - Unity Visual Scripting を **必須依存**とし、Macro が無い場合でも `Fooni_FloatSetup.asset` を自動生成して割り当てる。
 - Scratch 互換の見た目操作として「大きさを ◯ % にする」「大きさを ◯ % ずつ変える」ユニットを提供し、Presenter 経由で UI Toolkit `style.scale` を中心ピボットで適用。
+
+## What's new in 0.3.0
+
+- UI Toolkit の Pointer イベントを Scratch 座標系へ変換する `MousePositionService` を拡張し、マウスポインター関連ユニット（座標・距離・押下判定・マウスポインターへ向ける）を追加しました。
+- Actor の Sprites リストを切り替える `SetSpriteIndex` などの API を Presenter/Adapter に実装し、旧 Portrait フィールドを移行するエディタツールを追加しました。
+- Scratch モードの停止ユニットと専用スレッド管理 API を備え、停止ブロックの挙動や向き計算（上=0°）を Scratch と一致させました。
 
 ## 目次
 - [システム要件](#システム要件)
@@ -55,7 +61,7 @@
 特定のタグに固定したい場合は、`#タグ名` を付けます。
 
 ```json
-"com.papacoder.funity": "https://github.com/oco777/FUnity.git#v0.1.0"
+"com.papacoder.funity": "https://github.com/oco777/FUnity.git#v0.3.0"
 ```
 
 > ℹ️ Visual Scripting は必須依存のため、`#if UNITY_VISUAL_SCRIPTING` などのガードは不要です。パッケージ導入時に `com.unity.visualscripting` が自動インストールされます。
