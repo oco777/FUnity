@@ -1,8 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement name="actor-container" class="actor-container">
         <ui:VisualElement name="root" class="actor-root">
-            <ui:VisualElement name="portrait" class="actor-portrait fooni-image" />
-            <ui:Label name="speech" class="actor-speech" text="" />
+            <ui:VisualElement name="visual" class="actor-visual">
+                <ui:VisualElement name="portrait" class="actor-portrait fooni-image" />
+            </ui:VisualElement>
+            <ui:VisualElement name="speech-layer" class="actor-speech-layer speech-bubble speech-say">
+                <ui:Label name="speech" class="speech-text" text="" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

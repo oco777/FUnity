@@ -118,6 +118,12 @@ namespace FUnity.Runtime.View
         /// <summary>UI Toolkit の scale に適用する下限値。</summary>
         private const float MinimumScale = 0.01f;
 
+        /// <summary>吹き出しの最大幅（px）。レイアウト初期化時に利用する。</summary>
+        private const float SpeechMaxWidthPx = 240f;
+
+        /// <summary>吹き出し文字の基準フォントサイズ（px）。</summary>
+        private const float SpeechBaseFontPx = 14f;
+
 #if UNITY_2022_3_OR_NEWER
         /// <summary>
         /// UI Toolkit の `style.scale` を参照し、XY 成分のみを Vector2 として安全に取得するヘルパー。
@@ -733,19 +739,14 @@ namespace FUnity.Runtime.View
                 return;
             }
 
+            ResetSpeechStyle();
             m_SpeechLabel.text = message ?? string.Empty;
             m_SpeechBubble.EnableInClassList("speech-think", isThought);
             m_SpeechBubble.EnableInClassList("speech-say", !isThought);
             // 吹き出し表示のたびに視認性を最優先で担保するため、インライン style を強制適用する。
             // USS 側の競合を無視して文字色・背景色・フォントサイズを確実に反映する。
             m_SpeechLabel.style.color = Color.black;
-
-            // 既定フォントサイズが未解決または 0/NaN の場合は 14px を基準として 2 倍にする。
-            var resolvedFontSize = m_SpeechLabel.resolvedStyle.fontSize;
-            var baseFontPx = float.IsNaN(resolvedFontSize) || resolvedFontSize <= 0f
-                ? 14f
-                : resolvedFontSize;
-            m_SpeechLabel.style.fontSize = baseFontPx * 2f;
+            m_SpeechLabel.style.fontSize = SpeechBaseFontPx * 2f;
 
             // 背景はわずかに透過を抑えた白、境界線と余白を最低限付与して読みやすさを向上させる。
             m_SpeechBubble.style.backgroundColor = new Color(1f, 1f, 1f, 0.98f);
@@ -764,6 +765,28 @@ namespace FUnity.Runtime.View
             m_SpeechBubble.style.borderLeftColor = borderColor;
 
             m_SpeechBubble.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// 吹き出し表示のたびにサイズやスケールを初期化し、累積的な拡大を防ぐ。
+        /// </summary>
+        private void ResetSpeechStyle()
+        {
+            if (m_SpeechBubble != null)
+            {
+                m_SpeechBubble.style.width = StyleKeyword.Auto;
+                m_SpeechBubble.style.height = StyleKeyword.Auto;
+                m_SpeechBubble.style.maxWidth = SpeechMaxWidthPx;
+                m_SpeechBubble.style.scale = IdentityScale;
+                m_SpeechBubble.style.display = DisplayStyle.None;
+            }
+
+            if (m_SpeechLabel != null)
+            {
+                m_SpeechLabel.style.width = StyleKeyword.Auto;
+                m_SpeechLabel.style.height = StyleKeyword.Auto;
+                m_SpeechLabel.style.fontSize = SpeechBaseFontPx * 2f;
+            }
         }
 
         /// <summary>
@@ -1026,6 +1049,34 @@ namespace FUnity.Runtime.View
         }
 
         /// <summary>
+        /// 回転適用専用の要素を解決する。優先順位は actor-visual → portrait → root の順とし、吹き出しを含まないツリーを選択する。
+        /// </summary>
+        /// <returns>回転・左右反転を適用する対象要素。</returns>
+        private VisualElement ResolveRotationTarget()
+        {
+            var searchBase = GetRootElement();
+            if (searchBase == null)
+            {
+                return null;
+            }
+
+            var visualRoot = searchBase.Q<VisualElement>("visual")
+                ?? searchBase.Q<VisualElement>(className: "actor-visual");
+            if (visualRoot != null)
+            {
+                return visualRoot;
+            }
+
+            var portrait = ResolvePortraitElement();
+            if (portrait != null && portrait != searchBase)
+            {
+                return portrait;
+            }
+
+            return portrait ?? searchBase;
+        }
+
+        /// <summary>
         /// ポートレート要素を解決して専用 Image を 1 つだけ配置し、backgroundImage の直接使用を避ける。
         /// 既存の Image を極力再利用し、重複してしまった要素はクリーンアップする。
         /// </summary>
@@ -1205,6 +1256,14 @@ namespace FUnity.Runtime.View
                 return;
             }
 
+            var speechLayer = m_RootElement.Q<VisualElement>("speech-layer");
+            var speechLabel = speechLayer?.Q<Label>("speech");
+            if (speechLayer != null)
+            {
+                m_SpeechBubble = speechLayer;
+                m_SpeechLabel = speechLabel ?? m_SpeechLabel;
+            }
+
             if (m_SpeechBubble != null && m_SpeechBubble.parent != m_RootElement)
             {
                 m_SpeechBubble.RemoveFromHierarchy();
@@ -1249,6 +1308,26 @@ namespace FUnity.Runtime.View
                 };
                 m_SpeechLabel.AddToClassList("speech-text");
                 m_SpeechBubble.Add(m_SpeechLabel);
+            }
+
+            if (m_SpeechBubble != null)
+            {
+                m_SpeechBubble.AddToClassList("speech-bubble");
+                m_SpeechBubble.AddToClassList("speech-say");
+                m_SpeechBubble.pickingMode = PickingMode.Ignore;
+                m_SpeechBubble.style.position = Position.Absolute;
+                m_SpeechBubble.style.left = new Length(50f, LengthUnit.Percent);
+                m_SpeechBubble.style.bottom = new Length(100f, LengthUnit.Percent);
+                m_SpeechBubble.style.translate = new Translate(
+                    new Length(-50f, LengthUnit.Percent),
+                    new Length(-8f, LengthUnit.Pixel),
+                    0f);
+            }
+
+            if (m_SpeechLabel != null)
+            {
+                m_SpeechLabel.AddToClassList("speech-text");
+                m_SpeechLabel.pickingMode = PickingMode.Ignore;
             }
         }
 
@@ -1366,14 +1445,21 @@ namespace FUnity.Runtime.View
         /// </summary>
         private void ApplyRotationToRoot()
         {
-            var root = GetRootElement();
-            if (root == null)
+            var rotationTarget = ResolveRotationTarget();
+            if (rotationTarget == null)
             {
                 return;
             }
 
-            ApplyCenterPivot(root);
-            root.style.rotate = new Rotate(Angle.Degrees(m_CurrentRotationDeg));
+            ApplyCenterPivot(rotationTarget);
+            rotationTarget.style.rotate = new Rotate(Angle.Degrees(m_CurrentRotationDeg));
+
+            var root = GetRootElement();
+            if (root != null && root != rotationTarget)
+            {
+                ApplyCenterPivot(root);
+                root.style.rotate = new Rotate(Angle.Degrees(0f));
+            }
         }
 
         /// <summary>
