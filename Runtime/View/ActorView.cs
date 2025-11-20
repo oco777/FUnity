@@ -764,6 +764,7 @@ namespace FUnity.Runtime.View
             m_SpeechBubble.style.borderBottomColor = borderColor;
             m_SpeechBubble.style.borderLeftColor = borderColor;
 
+            ApplySpeechBubbleTransformCompensation();
             m_SpeechBubble.style.display = DisplayStyle.Flex;
         }
 
@@ -787,6 +788,36 @@ namespace FUnity.Runtime.View
                 m_SpeechLabel.style.height = StyleKeyword.Auto;
                 m_SpeechLabel.style.fontSize = SpeechBaseFontPx * 2f;
             }
+        }
+
+        /// <summary>
+        /// #root に適用した拡縮・左右反転を打ち消し、吹き出しを常に読みやすい向きと等倍サイズへ補正する。
+        /// 俳優の向き変更や拡大率更新後にも安定した見た目を維持するために呼び出す。
+        /// </summary>
+        private void ApplySpeechBubbleTransformCompensation()
+        {
+            if (m_SpeechBubble == null)
+            {
+                return;
+            }
+
+            var root = GetRootElement();
+            if (root == null)
+            {
+                return;
+            }
+
+#if UNITY_2022_3_OR_NEWER
+            var rootScale = ResolveScaleXY(root, 1f);
+            var safeScaleX = Mathf.Approximately(rootScale.x, 0f) ? 1f : rootScale.x;
+            var safeScaleY = Mathf.Approximately(rootScale.y, 0f) ? 1f : rootScale.y;
+            var compensatedX = 1f / safeScaleX;
+            var compensatedY = 1f / safeScaleY;
+            ApplyScaleXY(m_SpeechBubble, compensatedX, compensatedY);
+#endif
+
+            ApplyCenterPivot(m_SpeechBubble);
+            m_SpeechBubble.style.rotate = new Rotate(Angle.Degrees(0f));
         }
 
         /// <summary>
@@ -1424,6 +1455,7 @@ namespace FUnity.Runtime.View
 
         /// <summary>
         /// 現在のスケール値を #root 要素へ適用し、中心を基点に拡縮できるようにする。
+        /// 同時に吹き出し側の反転補正も行い、向き変更時の可読性を保つ。
         /// </summary>
         private void ApplyScaleToRoot()
         {
@@ -1438,6 +1470,7 @@ namespace FUnity.Runtime.View
             var scaleX = m_CurrentScale * m_FlipSignX;
             ApplyScaleXY(root, scaleX, m_CurrentScale);
 #endif
+            ApplySpeechBubbleTransformCompensation();
         }
 
         /// <summary>
