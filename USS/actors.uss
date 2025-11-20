@@ -16,6 +16,15 @@
     position: absolute;
 }
 
+.actor-visual {
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .funity-stage__viewport {
     position: relative;
     overflow: hidden;
@@ -29,6 +38,15 @@
     top: 0;
     width: 100%;
     height: 100%;
+}
+
+.actor-speech-layer {
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    translate: -50% -8px;
+    display: none;
+    z-index: 20;
 }
 
 .speech-bubble {
