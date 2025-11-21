@@ -59,6 +59,19 @@ namespace FUnity.Runtime.Core
         /// <summary>現在使用中の ProjectData。RootLayoutBootstrapper など外部コンポーネントが参照する。</summary>
         public FUnityProjectData ProjectData => m_Project;
 
+#if UNITY_EDITOR
+        /// <summary>
+        /// Editor 専用で ProjectData 参照を差し替え、UI ブートストラッパーの参照も更新します。
+        /// Inspector 以外からプロジェクトを切り替える補助用途で使用します。
+        /// </summary>
+        /// <param name="projectData">新たに割り当てる <see cref="FUnityProjectData"/>。</param>
+        public void Editor_SetProjectData(FUnityProjectData projectData)
+        {
+            m_Project = projectData;
+            UpdateBootstrapperProjectData();
+        }
+#endif
+
         /// <summary>
         /// 現在アクティブな制作モード設定を返します。ProjectData からの解決を優先し、未設定の場合は Inspector の値を利用します。
         /// </summary>
