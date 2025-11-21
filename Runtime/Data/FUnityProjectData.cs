@@ -17,6 +17,11 @@ namespace FUnity.Runtime.Core
     [CreateAssetMenu(menuName = "FUnity/Project Data", fileName = "FUnityProjectData")]
     public sealed class FUnityProjectData : ScriptableObject
     {
+        /// <summary>
+        /// プロジェクトを識別する表示名。アセット名と揃えておくと運用しやすい。
+        /// </summary>
+        [SerializeField] private string m_ProjectName;
+
         [System.Serializable]
         public class RunnerEntry
         {
@@ -98,6 +103,9 @@ namespace FUnity.Runtime.Core
         /// <summary>俳優データのリスト。Presenter 初期化時に順次消費される。</summary>
         public List<FUnityActorData> Actors => m_actors;
 
+        /// <summary>プロジェクトを識別する名称。空文字の場合はアセット名を参照する。</summary>
+        public string ProjectName => m_ProjectName;
+
         /// <summary>起動時に設定するフレームレート。-1 の場合はプラットフォーム既定値を尊重する。</summary>
         public int TargetFPS => m_TargetFPS;
 
@@ -126,6 +134,27 @@ namespace FUnity.Runtime.Core
                     return m_ScratchModeConfig;
             }
         }
+
+        /// <summary>
+        /// 新規プロジェクト生成時にプロジェクト名とステージ参照を初期化する。
+        /// </summary>
+        /// <param name="projectName">ユーザーが指定したプロジェクト名。</param>
+        /// <param name="stageData">同時に生成したステージデータの参照。</param>
+        public void InitializeForNewProject(string projectName, FUnityStageData stageData)
+        {
+            m_ProjectName = projectName;
+            m_stage = stageData;
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (string.IsNullOrEmpty(m_ProjectName) && !string.IsNullOrEmpty(name))
+            {
+                m_ProjectName = name;
+            }
+        }
+#endif
     }
 
     /// <summary>
