@@ -1,8 +1,54 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace FUnity.Runtime.Core
 {
+    /// <summary>
+    /// ステージ背景 1 枚分の表示情報を保持するデータクラス。
+    /// </summary>
+    [System.Serializable]
+    public class StageBackgroundInfo
+    {
+        /// <summary>背景を一意に識別する内部 ID。</summary>
+        [SerializeField] private string m_Id;
+
+        /// <summary>UI 上に表示する背景名。</summary>
+        [SerializeField] private string m_DisplayName;
+
+        /// <summary>表示に使用する背景 Sprite。</summary>
+        [SerializeField] private Sprite m_Sprite;
+
+        /// <summary>
+        /// デフォルトコンストラクタ。Unity のシリアライズで利用する。
+        /// </summary>
+        public StageBackgroundInfo()
+        {
+        }
+
+        /// <summary>
+        /// 背景情報を初期化するコンストラクタ。ID・表示名・Sprite を一括設定する。
+        /// </summary>
+        /// <param name="id">背景を識別する ID。</param>
+        /// <param name="displayName">インスペクターや UI で表示する背景名。</param>
+        /// <param name="sprite">背景として使用する Sprite。</param>
+        public StageBackgroundInfo(string id, string displayName, Sprite sprite)
+        {
+            m_Id = id;
+            m_DisplayName = displayName;
+            m_Sprite = sprite;
+        }
+
+        /// <summary>背景を一意に識別する内部 ID。</summary>
+        public string Id => m_Id;
+
+        /// <summary>UI 上に表示する背景名。</summary>
+        public string DisplayName => m_DisplayName;
+
+        /// <summary>表示に使用する背景 Sprite。</summary>
+        public Sprite Sprite => m_Sprite;
+    }
+
     /// <summary>
     /// ステージ背景などの静的設定を保持する Model レイヤーの ScriptableObject。
     /// </summary>
@@ -34,6 +80,14 @@ namespace FUnity.Runtime.Core
         /// </summary>
         [SerializeField] private Texture2D m_backgroundImage;
 
+        /// <summary>登録されているステージ背景候補の一覧。</summary>
+        [SerializeField]
+        private List<StageBackgroundInfo> m_backgrounds = new List<StageBackgroundInfo>();
+
+        /// <summary>デフォルトで表示する背景のインデックス。</summary>
+        [SerializeField]
+        private int m_defaultBackgroundIndex = 0;
+
         /// <summary>
         /// 背景スケール既定値を示す定数。Presenter からも共有するため public とする。
         /// </summary>
@@ -64,10 +118,28 @@ namespace FUnity.Runtime.Core
         public Color BackgroundColor => m_backgroundColor;
 
         /// <summary>背景画像。null の場合は背景色のみ適用する。</summary>
-        public Texture2D BackgroundImage => m_backgroundImage;
+        public Texture2D BackgroundImage
+        {
+            get
+            {
+                var defaultBackground = GetDefaultBackground();
+                if (defaultBackground?.Sprite != null)
+                {
+                    return defaultBackground.Sprite.texture;
+                }
+
+                return m_backgroundImage;
+            }
+        }
 
         /// <summary>背景画像のスケール種別（"contain" / "cover"）。</summary>
         public string BackgroundScale => NormalizeBackgroundScale(m_backgroundScale);
+
+        /// <summary>登録されているステージ背景候補の一覧。null の場合でも空リストを返す。</summary>
+        public IReadOnlyList<StageBackgroundInfo> Backgrounds => m_backgrounds ??= new List<StageBackgroundInfo>();
+
+        /// <summary>デフォルトで表示する背景のインデックス。</summary>
+        public int DefaultBackgroundIndex => m_defaultBackgroundIndex;
 
         /// <summary>ステージ横幅（px）。1px 未満の値が入っている場合は既定値へ丸める。</summary>
         public int StageWidth => m_stageWidth > 0 ? m_stageWidth : DefaultStageWidth;
@@ -79,11 +151,64 @@ namespace FUnity.Runtime.Core
         public Vector2Int StageSize => new Vector2Int(StageWidth, StageHeight);
 
         /// <summary>
+        /// デフォルト背景情報を取得する。インデックスが範囲外の場合は最初の要素を返す。
+        /// </summary>
+        /// <returns>デフォルト設定された背景情報。背景が未登録の場合は null。</returns>
+        public StageBackgroundInfo GetDefaultBackground()
+        {
+            if (m_backgrounds == null || m_backgrounds.Count == 0)
+            {
+                return null;
+            }
+
+            if (m_defaultBackgroundIndex < 0 || m_defaultBackgroundIndex >= m_backgrounds.Count)
+            {
+                return m_backgrounds[0];
+            }
+
+            return m_backgrounds[m_defaultBackgroundIndex];
+        }
+
+        /// <summary>
+        /// 背景 ID から対応する背景情報を検索する。
+        /// </summary>
+        /// <param name="id">検索対象の背景 ID。null または空文字の場合は null を返す。</param>
+        /// <returns>一致する背景情報。見つからない場合は null。</returns>
+        public StageBackgroundInfo GetBackgroundById(string id)
+        {
+            if (string.IsNullOrEmpty(id) || m_backgrounds == null)
+            {
+                return null;
+            }
+
+            return m_backgrounds.Find(background => background != null && background.Id == id);
+        }
+
+        /// <summary>
+        /// インデックス指定で背景情報を取得する。範囲外の場合は null を返す。
+        /// </summary>
+        /// <param name="index">取得したい背景のインデックス。</param>
+        /// <returns>インデックスに対応する背景情報。範囲外は null。</returns>
+        public StageBackgroundInfo GetBackgroundAt(int index)
+        {
+            if (m_backgrounds == null || index < 0 || index >= m_backgrounds.Count)
+            {
+                return null;
+            }
+
+            return m_backgrounds[index];
+        }
+
+        /// <summary>
         /// シリアライズされた背景スケール値を正規化し、許可された語のみ保持する。
         /// </summary>
         private void OnValidate()
         {
             m_backgroundScale = NormalizeBackgroundScale(m_backgroundScale);
+
+            EnsureBackgroundListAllocated();
+            TryMigrateLegacyBackgroundImage();
+            ClampDefaultBackgroundIndex();
 
             if (m_stageWidth <= 0)
             {
@@ -110,6 +235,85 @@ namespace FUnity.Runtime.Core
 
             var normalized = raw.Trim().ToLowerInvariant();
             return normalized == BackgroundScaleCover ? BackgroundScaleCover : BackgroundScaleContain;
+        }
+
+        /// <summary>
+        /// 背景リストが null になっている場合に空リストへ初期化する。
+        /// </summary>
+        private void EnsureBackgroundListAllocated()
+        {
+            if (m_backgrounds == null)
+            {
+                m_backgrounds = new List<StageBackgroundInfo>();
+            }
+        }
+
+        /// <summary>
+        /// 旧来の単一背景テクスチャが存在する場合に背景リストへ取り込む。Sprite に変換できなければテクスチャを残す。
+        /// </summary>
+        private void TryMigrateLegacyBackgroundImage()
+        {
+            if (m_backgrounds.Count > 0)
+            {
+                return;
+            }
+
+            if (m_backgroundImage == null)
+            {
+                return;
+            }
+
+            var legacySprite = TryCreateSpriteFromTexture(m_backgroundImage);
+            if (legacySprite != null)
+            {
+                var fallbackId = string.IsNullOrEmpty(m_stageName) ? "DefaultBackground" : m_stageName;
+                var displayName = string.IsNullOrEmpty(m_stageName) ? "Default Background" : m_stageName;
+                m_backgrounds.Add(new StageBackgroundInfo(fallbackId, displayName, legacySprite));
+                m_defaultBackgroundIndex = 0;
+            }
+        }
+
+        /// <summary>
+        /// 背景リストの範囲に収まるようデフォルトインデックスを丸める。
+        /// </summary>
+        private void ClampDefaultBackgroundIndex()
+        {
+            if (m_backgrounds.Count == 0)
+            {
+                m_defaultBackgroundIndex = 0;
+                return;
+            }
+
+            m_defaultBackgroundIndex = Mathf.Clamp(m_defaultBackgroundIndex, 0, m_backgrounds.Count - 1);
+        }
+
+        /// <summary>
+        /// 旧来の Texture2D から Sprite を生成する。生成に失敗した場合は null を返す。
+        /// </summary>
+        /// <param name="texture">変換元のテクスチャ。</param>
+        /// <returns>生成した Sprite。失敗時は null。</returns>
+        private static Sprite TryCreateSpriteFromTexture(Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return null;
+            }
+
+            if (texture.width <= 0 || texture.height <= 0)
+            {
+                Debug.LogWarning("[FUnity.StageData] 旧背景テクスチャのサイズが不正なため、Sprite を生成できません。");
+                return null;
+            }
+
+            try
+            {
+                return Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogWarning($"[FUnity.StageData] 旧背景テクスチャから Sprite の生成に失敗しました: {exception.Message}");
+                return null;
+            }
         }
     }
 }
