@@ -85,7 +85,12 @@ namespace FUnity.EditorTools
             m_PrimaryColor = EditorGUILayout.ColorField("Primary Color", m_PrimaryColor);
             var actorName = GetActorName();
             var hasValidActorName = !string.IsNullOrEmpty(actorName);
-            var baseFolderPreview = string.IsNullOrEmpty(m_Folder) ? "Assets/FUnity/Actors" : m_Folder;
+            var activeProjectActorsFolder = GetActiveProjectActorsFolder(false);
+            var baseFolderPreview = string.IsNullOrEmpty(m_Folder) ? activeProjectActorsFolder : m_Folder;
+            if (string.IsNullOrEmpty(baseFolderPreview))
+            {
+                baseFolderPreview = "Assets";
+            }
             var folderValid = IsFolderInAssets(baseFolderPreview);
 
             if (!hasValidActorName)
@@ -125,11 +130,17 @@ namespace FUnity.EditorTools
                 return;
             }
 
-            var baseFolder = NormalizeFolderPath(m_Folder);
-            if (string.IsNullOrEmpty(baseFolder))
+            if (!TryGetActiveFUnityProject(out var projectData, true))
             {
-                baseFolder = "Assets/FUnity/Actors";
+                return;
             }
+
+            if (!TryGetActorsFolderPath(projectData, true, out var actorsFolderPath))
+            {
+                return;
+            }
+
+            var baseFolder = NormalizeFolderPath(string.IsNullOrEmpty(m_Folder) ? actorsFolderPath : m_Folder);
 
             if (!IsFolderInAssets(baseFolder))
             {
@@ -137,7 +148,13 @@ namespace FUnity.EditorTools
                 return;
             }
 
-            var actorFolder = ResolveActorFolder(baseFolder, actorName);
+            if (!IsFolderInsideActorsRoot(baseFolder, actorsFolderPath))
+            {
+                EditorUtility.DisplayDialog("Error", "Output Folder must be inside the current project's Actors folder.", "OK");
+                return;
+            }
+
+            var actorFolder = ResolveActorFolder(baseFolder, actorName, actorsFolderPath);
             if (!IsFolderInAssets(actorFolder))
             {
                 EditorUtility.DisplayDialog("Error", "Actor folder must be inside the Assets directory.", "OK");
@@ -341,7 +358,13 @@ namespace FUnity.EditorTools
                 return;
             }
 
-            var suggested = $"Assets/FUnity/Actors/{actorName}";
+            var activeProjectActorsFolder = GetActiveProjectActorsFolder(false);
+            if (string.IsNullOrEmpty(activeProjectActorsFolder))
+            {
+                return;
+            }
+
+            var suggested = $"{activeProjectActorsFolder}/{actorName}";
             if (force)
             {
                 if (string.IsNullOrEmpty(m_Folder))
@@ -403,12 +426,12 @@ namespace FUnity.EditorTools
         /// <summary>
         /// 基底フォルダから俳優名サブフォルダを計算し、二重付与を避けた正規化パスを返す。
         /// </summary>
-        private string ResolveActorFolder(string baseFolder, string actorName)
+        private string ResolveActorFolder(string baseFolder, string actorName, string actorsRootFolder)
         {
             var normalizedBase = NormalizeFolderPath(baseFolder);
             if (string.IsNullOrEmpty(normalizedBase))
             {
-                normalizedBase = "Assets/FUnity/Actors";
+                normalizedBase = NormalizeFolderPath(actorsRootFolder);
             }
 
             if (normalizedBase.EndsWith($"/{actorName}", System.StringComparison.Ordinal))
@@ -451,6 +474,153 @@ namespace FUnity.EditorTools
 
             Debug.Log($"[FUnity] Created ScriptGraphAsset: {assetPath}");
             return graph;
+        }
+
+        /// <summary>
+        /// 現在のシーンに存在する FUnityManager から ProjectData を取得し、適合しない場合はダイアログ表示を行う。
+        /// </summary>
+        /// <param name="projectData">取得した <see cref="FUnityProjectData"/>。</param>
+        /// <param name="showDialog">問題発生時にダイアログを表示するかどうか。</param>
+        private static bool TryGetActiveFUnityProject(out FUnityProjectData projectData, bool showDialog)
+        {
+            projectData = null;
+
+            var managers = Object.FindObjectsOfType<FUnityManager>();
+            if (managers == null || managers.Length == 0)
+            {
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog(
+                        "FUnity Actor 作成",
+                        "現在のシーンに FUnityManager が見つかりません。\nFUnityManager を配置してから Actor を作成してください。",
+                        "OK");
+                }
+
+                return false;
+            }
+
+            if (managers.Length > 1)
+            {
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog(
+                        "FUnity Actor 作成",
+                        "現在のシーンに複数の FUnityManager が存在します。\n1 つに絞ってから実行してください。",
+                        "OK");
+                }
+
+                return false;
+            }
+
+            var manager = managers[0];
+            if (manager.ProjectData == null)
+            {
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog(
+                        "FUnity Actor 作成",
+                        "FUnityManager の Project (FUnityProjectData) が設定されていません。\n有効なプロジェクトを設定してから実行してください。",
+                        "OK");
+                }
+
+                return false;
+            }
+
+            projectData = manager.ProjectData;
+            return true;
+        }
+
+        /// <summary>
+        /// 指定された ProjectData から Actors フォルダパスを算出し、存在しなければ作成する。
+        /// </summary>
+        /// <param name="projectData">フォルダを導出する <see cref="FUnityProjectData"/>。</param>
+        /// <param name="showDialog">失敗時にダイアログを表示するかどうか。</param>
+        /// <param name="actorsFolderPath">算出された Actors フォルダパス。</param>
+        private static bool TryGetActorsFolderPath(FUnityProjectData projectData, bool showDialog, out string actorsFolderPath)
+        {
+            actorsFolderPath = string.Empty;
+            if (projectData == null)
+            {
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog(
+                        "FUnity Actor 作成",
+                        "FUnityProjectData が null です。",
+                        "OK");
+                }
+
+                return false;
+            }
+
+            var projectDataPath = AssetDatabase.GetAssetPath(projectData);
+            if (string.IsNullOrEmpty(projectDataPath))
+            {
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog(
+                        "FUnity Actor 作成",
+                        "FUnityProjectData のパスを取得できませんでした。",
+                        "OK");
+                }
+
+                return false;
+            }
+
+            var projectFolder = Path.GetDirectoryName(projectDataPath);
+            if (string.IsNullOrEmpty(projectFolder))
+            {
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog(
+                        "FUnity Actor 作成",
+                        "FUnityProjectData のフォルダを特定できませんでした。",
+                        "OK");
+                }
+
+                return false;
+            }
+
+            projectFolder = projectFolder.Replace("\\", "/");
+            actorsFolderPath = projectFolder + "/Actors";
+
+            if (!AssetDatabase.IsValidFolder(actorsFolderPath))
+            {
+                AssetDatabase.CreateFolder(projectFolder, "Actors");
+                actorsFolderPath = projectFolder + "/Actors";
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 現在アクティブなプロジェクトの Actors フォルダパスを取得し、取得失敗時は空文字を返す。
+        /// </summary>
+        /// <param name="showDialog">問題発生時にダイアログを表示するかどうか。</param>
+        private static string GetActiveProjectActorsFolder(bool showDialog)
+        {
+            if (!TryGetActiveFUnityProject(out var projectData, showDialog))
+            {
+                return string.Empty;
+            }
+
+            return TryGetActorsFolderPath(projectData, showDialog, out var actorsFolderPath) ? actorsFolderPath : string.Empty;
+        }
+
+        /// <summary>
+        /// 指定フォルダが現在のプロジェクト Actors 直下に存在するか判定する。
+        /// </summary>
+        /// <param name="folderPath">判定対象のフォルダ。</param>
+        /// <param name="actorsRootFolder">許可される Actors ルートフォルダ。</param>
+        private bool IsFolderInsideActorsRoot(string folderPath, string actorsRootFolder)
+        {
+            var normalizedFolder = NormalizeFolderPath(folderPath);
+            var normalizedActorsRoot = NormalizeFolderPath(actorsRootFolder);
+            if (string.IsNullOrEmpty(normalizedFolder) || string.IsNullOrEmpty(normalizedActorsRoot))
+            {
+                return false;
+            }
+
+            return normalizedFolder == normalizedActorsRoot || normalizedFolder.StartsWith(normalizedActorsRoot + "/", System.StringComparison.Ordinal);
         }
     }
 }
