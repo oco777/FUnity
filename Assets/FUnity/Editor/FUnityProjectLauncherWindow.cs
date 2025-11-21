@@ -113,7 +113,7 @@ namespace FUnity.EditorTools
             {
                 itemsSource = m_Projects,
                 selectionType = SelectionType.None,
-                virtualizationMethod = CollectionVirtualizationMethod.Dynamic,
+                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
                 style = { height = 260, marginTop = 4 }
             };
 
