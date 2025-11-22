@@ -273,13 +273,13 @@ namespace FUnity.Runtime.UI
 
                 if (!m_LoggedMissingModeConfig)
                 {
-                    Debug.LogWarning("[FUnity.Root] FUnityProjectData に ModeConfig が割り当てられていません。メニュー FUnity/Create/FUnityProjectData を再実行するか、Inspector で ModeConfig を設定してください。Scratch 表示スケールの自動調整をスキップします。", this);
+                    Debug.LogWarning("[FUnity.Root] FUnityProjectData に ModeConfig が割り当てられていません。メニュー FUnity/Create/FUnityProjectData を再実行するか、Inspector で ModeConfig を設定してください。ブロックモード（Scratch 互換）の表示スケール自動調整をスキップします。", this);
                     m_LoggedMissingModeConfig = true;
                 }
             }
             else if (!m_LoggedMissingModeConfig)
             {
-                Debug.LogWarning("[FUnity.Root] FUnityProjectData が未設定です。メニュー FUnity/Create/FUnityProjectData を実行して ProjectData を生成してください。Scratch 表示スケールの自動調整をスキップします。", this);
+                Debug.LogWarning("[FUnity.Root] FUnityProjectData が未設定です。メニュー FUnity/Create/FUnityProjectData を実行して ProjectData を生成してください。ブロックモード（Scratch 互換）の表示スケール自動調整をスキップします。", this);
                 m_LoggedMissingModeConfig = true;
             }
 

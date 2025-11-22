@@ -30,7 +30,7 @@ namespace FUnity.Runtime.Authoring
         private const int DefaultScratchStageHeight = 360;
 
         [SerializeField]
-        [Tooltip("制作モードの種類。Scratch 互換か unityroom 公開かを選びます。")]
+        [Tooltip("制作モードの種類。ブロックモード（Scratch 互換）か、unityroom 公開用モードかを選びます。")]
         private FUnityAuthoringMode m_Mode = FUnityAuthoringMode.Scratch;
 
         [SerializeField]
@@ -42,7 +42,7 @@ namespace FUnity.Runtime.Authoring
         private float m_PixelsPerUnit = 100f;
 
         [SerializeField]
-        [Tooltip("Unity の Physics2D 機能を利用可能にするかどうか。Scratch 互換を重視する場合は無効化します。")]
+        [Tooltip("Unity の Physics2D 機能を利用可能にするかどうか。ブロックモード（Scratch 互換）の挙動を重視する場合は無効化します。")]
         private bool m_AllowUnityPhysics2D;
 
         [SerializeField]
@@ -58,23 +58,23 @@ namespace FUnity.Runtime.Authoring
         private List<string> m_EnabledExtensions = new List<string>();
 
         [SerializeField]
-        [Tooltip("Scratch モード時にステージサイズを 480x360 に固定するかどうか。")]
+        [Tooltip("ブロックモード（Scratch 互換）時にステージサイズを 480x360 に固定するかどうか。")]
         private bool m_UseScratchFixedStage = true;
 
         [SerializeField]
-        [Tooltip("Scratch 固定ステージ適用時の幅（px）。")]
+        [Tooltip("ブロックモード（Scratch 互換）の固定ステージ適用時の幅（px）。")]
         private int m_ScratchStageWidth = DefaultScratchStageWidth;
 
         [SerializeField]
-        [Tooltip("Scratch 固定ステージ適用時の高さ（px）。")]
+        [Tooltip("ブロックモード（Scratch 互換）の固定ステージ適用時の高さ（px）。")]
         private int m_ScratchStageHeight = DefaultScratchStageHeight;
 
         [SerializeField]
-        [Tooltip("論理座標の原点を指定します。unityroom では TopLeft、Scratch では Center を推奨します。")]
+        [Tooltip("論理座標の原点を指定します。unityroom では TopLeft、ブロックモード（Scratch 互換）では Center を推奨します。")]
         private CoordinateOrigin m_Origin = CoordinateOrigin.TopLeft;
 
         [SerializeField]
-        [Tooltip("浮遊アニメーション用の論理オフセット適用を許可するかどうか。Scratch モードでは揺れ防止のため無効化を推奨します。")]
+        [Tooltip("浮遊アニメーション用の論理オフセット適用を許可するかどうか。ブロックモード（Scratch 互換）では揺れ防止のため無効化を推奨します。")]
         private bool m_EnableFloatOffset = true;
 
         /// <summary>制作モードの種類。UI やビルド設定の切り替え条件として参照します。</summary>
