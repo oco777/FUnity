@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using FUnity.Runtime.Core;
+using FUnity.Runtime.Data;
 
 namespace FUnity.EditorTools
 {
@@ -33,7 +33,7 @@ namespace FUnity.EditorTools
         /// <summary>
         /// メニューからウィンドウを開き、タイトルを設定します。
         /// </summary>
-        [MenuItem("FUnity/Authoring/Open Project Launcher...")]
+        [MenuItem("FUnity/Authoring/Open Project Launcher.")]
         public static void Open()
         {
             var window = GetWindow<FUnityProjectLauncherWindow>();
@@ -89,13 +89,16 @@ namespace FUnity.EditorTools
                 }
             }
 
-            if (m_Projects.Count == 0)
+            if (m_StatusLabel != null)
             {
-                m_StatusLabel.text = "Projects フォルダ内に FUnityProjectData が見つかりません。";
-            }
-            else
-            {
-                m_StatusLabel.text = $"{m_Projects.Count} 個のプロジェクトが見つかりました。";
+                if (m_Projects.Count == 0)
+                {
+                    m_StatusLabel.text = "Projects フォルダに FUnityProjectData が見つかりませんでした。";
+                }
+                else
+                {
+                    m_StatusLabel.text = $"{m_Projects.Count} 個の FUnityProjectData が見つかりました。";
+                }
             }
         }
 
@@ -112,37 +115,37 @@ namespace FUnity.EditorTools
             m_ListView = new ListView
             {
                 itemsSource = m_Projects,
-                selectionType = SelectionType.None,
-                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
-                style = { height = 260, marginTop = 4 }
+                selectionType = SelectionType.Single,
+                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight
             };
 
             m_ListView.makeItem = () =>
             {
-                var row = new VisualElement
-                {
-                    style =
-                    {
-                        flexDirection = FlexDirection.Row,
-                        alignItems = Align.Center,
-                        marginBottom = 2
-                    }
-                };
+                var row = new VisualElement();
+                row.style.flexDirection = FlexDirection.Column;
 
-                var label = new Label
+                var header = new Label();
+                header.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+                var pathLabel = new Label();
+                pathLabel.style.fontSize = 10;
+                pathLabel.style.color = new StyleColor(Color.gray);
+
+                var objectField = new ObjectField
                 {
-                    style =
-                    {
-                        flexGrow = 1
-                    }
+                    objectType = typeof(FUnityProjectData)
                 };
+                objectField.style.marginTop = 2;
 
                 var button = new Button
                 {
-                    text = "このプロジェクトを使う"
+                    text = "このプロジェクトを使用"
                 };
+                button.style.marginTop = 2;
 
-                row.Add(label);
+                row.Add(header);
+                row.Add(pathLabel);
+                row.Add(objectField);
                 row.Add(button);
 
                 return row;
@@ -150,21 +153,27 @@ namespace FUnity.EditorTools
 
             m_ListView.bindItem = (element, index) =>
             {
-                var projectData = m_Projects[index];
-                var label = element.Q<Label>();
-                var button = element.Q<Button>();
-
-                label.text = GetDisplayName(projectData);
-
-                if (button.userData is Action previousHandler)
+                if (index < 0 || index >= m_Projects.Count)
                 {
-                    button.clicked -= previousHandler;
+                    return;
                 }
 
-                var capturedIndex = index;
-                Action handler = () => OnSelectProjectClicked(m_Projects[capturedIndex]);
-                button.userData = handler;
-                button.clicked += handler;
+                var projectData = m_Projects[index];
+                var header = (Label)element.ElementAt(0);
+                var pathLabel = (Label)element.ElementAt(1);
+                var objectField = (ObjectField)element.ElementAt(2);
+                var button = (Button)element.ElementAt(3);
+
+                header.text = projectData != null ? GetDisplayName(projectData) : "(null)";
+
+                var path = AssetDatabase.GetAssetPath(projectData);
+                pathLabel.text = string.IsNullOrEmpty(path) ? "(path not found)" : path;
+
+                objectField.value = projectData;
+                objectField.SetEnabled(false);
+
+                button.clickable = null;
+                button.clickable = new Clickable(() => SwitchProject(projectData));
             };
 
             m_Root.Add(m_ListView);
@@ -184,11 +193,14 @@ namespace FUnity.EditorTools
         /// ListView のボタン押下時に、現在のシーンに存在する FUnityManager の ProjectData を切り替えます。
         /// </summary>
         /// <param name="selectedProject">選択された ProjectData。</param>
-        private void OnSelectProjectClicked(FUnityProjectData selectedProject)
+        private void SwitchProject(FUnityProjectData selectedProject)
         {
             if (selectedProject == null)
             {
-                m_StatusLabel.text = "選択された ProjectData が無効です。";
+                EditorUtility.DisplayDialog(
+                    "FUnity Project Launcher",
+                    "選択された FUnityProjectData が null です。",
+                    "OK");
                 return;
             }
 
@@ -202,7 +214,7 @@ namespace FUnity.EditorTools
             }
 
             var activeScene = EditorSceneManager.GetActiveScene();
-            if (!activeScene.IsValid())
+            if (!activeScene.IsValid() || !activeScene.isLoaded)
             {
                 EditorUtility.DisplayDialog(
                     "FUnity Project Launcher",
