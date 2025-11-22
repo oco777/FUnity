@@ -122,6 +122,33 @@ namespace FUnity.EditorTools
             var stage = ScriptableObject.CreateInstance<FUnityStageData>();
             AssetDatabase.CreateAsset(stage, StageAssetPath);
 
+            ApplyCommonProjectDefaults(project, stage);
+
+            var actor = ConfigureFooniActorData();
+            RemoveDuplicateActorResource();
+            LinkProjectData(project, stage, actor);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Selection.activeObject = project;
+
+            Debug.Log("[FUnity] Created default project data assets and linked the Fooni actor.");
+        }
+
+        /// <summary>
+        /// 新規作成直後の Project/Stage に対し、Actor 以外の共通初期設定をまとめて適用する。
+        /// テーマの確保や PanelSettings への割り当て、背景設定、ModeConfig のデフォルト化を担当する。
+        /// </summary>
+        /// <param name="project">ModeConfig を設定する対象の ProjectData。</param>
+        /// <param name="stage">背景を割り当てる対象の StageData。</param>
+        internal static void ApplyCommonProjectDefaults(FUnityProjectData project, FUnityStageData stage)
+        {
+            if (project == null || stage == null)
+            {
+                return;
+            }
+
             EnsureFolder(FUnityFolderPath);
             EnsureFolder(FUnityUiFolderPath);
             EnsureFolder(FUnityUiUssFolderPath);
@@ -132,17 +159,7 @@ namespace FUnity.EditorTools
 
             AssignStageBackground(stage);
 
-            var actor = ConfigureFooniActorData();
-            RemoveDuplicateActorResource();
-            LinkProjectData(project, stage, actor);
             AssignDefaultModeConfigs(project);
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            Selection.activeObject = project;
-
-            Debug.Log("[FUnity] Created default project data assets and linked the Fooni actor.");
         }
 
         /// <summary>

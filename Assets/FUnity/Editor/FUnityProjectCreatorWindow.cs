@@ -142,6 +142,8 @@ namespace FUnity.EditorTools
             var projectDataPath = $"{projectFolderPath}/{projectName}_ProjectData.asset";
             AssetDatabase.CreateAsset(projectData, projectDataPath);
 
+            CreateProjectData.ApplyCommonProjectDefaults(projectData, stageData);
+
             EditorUtility.SetDirty(stageData);
             EditorUtility.SetDirty(projectData);
             AssetDatabase.SaveAssets();
