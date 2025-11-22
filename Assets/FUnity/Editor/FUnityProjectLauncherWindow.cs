@@ -15,8 +15,8 @@ namespace FUnity.EditorTools
     /// </summary>
     public sealed class FUnityProjectLauncherWindow : EditorWindow
     {
-        /// <summary>ProjectData を探索するルートフォルダー。</summary>
-        private const string ProjectsFolderPath = "Assets/FUnity/Projects";
+        /// <summary>ProjectData を探索するルートフォルダー。Assets 全体を対象にする。</summary>
+        private const string AssetsFolderPath = "Assets";
 
         /// <summary>UI Toolkit のルート要素。</summary>
         private VisualElement m_Root;
@@ -72,13 +72,13 @@ namespace FUnity.EditorTools
         }
 
         /// <summary>
-        /// Projects フォルダーから <see cref="FUnityProjectData"/> を検索し、一覧に格納します。
+        /// Assets フォルダー全体から <see cref="FUnityProjectData"/> を検索し、一覧に格納します。
         /// </summary>
         private void ReloadProjects()
         {
             m_Projects = new List<FUnityProjectData>();
 
-            var guids = AssetDatabase.FindAssets("t:FUnityProjectData", new[] { ProjectsFolderPath });
+            var guids = AssetDatabase.FindAssets("t:FUnityProjectData", new[] { AssetsFolderPath });
             foreach (var guid in guids)
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
@@ -93,7 +93,7 @@ namespace FUnity.EditorTools
             {
                 if (m_Projects.Count == 0)
                 {
-                    m_StatusLabel.text = "Projects フォルダに FUnityProjectData が見つかりませんでした。";
+                    m_StatusLabel.text = "Assets フォルダに FUnityProjectData が見つかりませんでした。";
                 }
                 else
                 {
