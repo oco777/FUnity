@@ -165,7 +165,7 @@ namespace FUnity.EditorTools
             if (manager != null)
             {
                 Undo.RecordObject(manager, "Switch FUnity Project");
-                manager.Project = projectData;
+                manager.Editor_SetProjectData(projectData);
                 EditorUtility.SetDirty(manager);
 
                 Debug.Log($"[FUnity] Switched current FUnityManager project to '{projectName}'.");
