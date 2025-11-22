@@ -241,7 +241,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_UIDocument: {fileID: 0}
-  m_Project: {fileID: 0}
+  m_Project: {fileID: 11400000, guid: a2cda0cd2c8d9e84e9b89edf5602e6ac, type: 2}
+  m_ActiveModeConfig: {fileID: 0}
   m_DefaultActorPresenterAdapter: {fileID: 0}
 --- !u!4 &105976448
 Transform:
