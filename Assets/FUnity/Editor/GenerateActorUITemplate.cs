@@ -72,13 +72,6 @@ namespace FUnity.EditorTools
                 SuggestOutputFolder(false);
             }
 
-            EditorGUI.BeginChangeCheck();
-            var folderInput = EditorGUILayout.TextField("Output Folder", m_Folder);
-            if (EditorGUI.EndChangeCheck())
-            {
-                m_Folder = NormalizeFolderPath(folderInput);
-            }
-
             m_PortraitSlot = EditorGUILayout.TextField("Portrait Slot Name", m_PortraitSlot);
             m_Width = EditorGUILayout.IntField("Width (px)", m_Width);
             m_Height = EditorGUILayout.IntField("Height (px)", m_Height);
