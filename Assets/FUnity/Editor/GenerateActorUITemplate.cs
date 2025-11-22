@@ -213,6 +213,14 @@ namespace FUnity.EditorTools
             var serializedActor = new SerializedObject(targetActor);
             var changed = false;
 
+            // なぜ: 新規生成時に表示名もテンプレート由来のActor名へ揃えたい。何を: m_displayNameへactorNameを設定。どうする: SerializedObject経由で値を上書きする。
+            var displayNameProperty = serializedActor.FindProperty("m_displayName");
+            if (displayNameProperty != null && displayNameProperty.stringValue != actorName)
+            {
+                displayNameProperty.stringValue = actorName;
+                changed = true;
+            }
+
             var uxmlProperty = serializedActor.FindProperty("m_ElementUxml");
             if (uxmlProperty != null && uxmlProperty.objectReferenceValue != uxmlAsset)
             {
