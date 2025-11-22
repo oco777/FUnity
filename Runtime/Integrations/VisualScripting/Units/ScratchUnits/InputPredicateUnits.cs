@@ -10,7 +10,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○キーが押された？")]
     [UnitShortTitle("○キー？")]
-    [UnitCategory("FUnity/Scratch/調べる")]
+    [UnitCategory("FUnity/Blocks/調べる")]
     [UnitSubtitle("funity scratch 調べる key keyboard pressed 押された check")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class KeyIsPressedUnit : Unit

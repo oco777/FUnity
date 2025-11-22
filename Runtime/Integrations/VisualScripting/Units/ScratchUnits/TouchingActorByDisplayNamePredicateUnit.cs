@@ -10,7 +10,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「◯◯に触れた？」ブロックを再現し、Graph のコンテキストから取得した自分自身と、指定 DisplayName の可視俳優（本体＋クローン）との接触を判定する Unit です。
     /// </summary>
     [UnitTitle("○○に触れた？")]
-    [UnitCategory("FUnity/Scratch/調べる")]
+    [UnitCategory("FUnity/Blocks/調べる")]
     [UnitSubtitle("funity scratch 調べる touch actor クローン display name 触れた")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TouchingActorByDisplayNamePredicateUnit : Unit

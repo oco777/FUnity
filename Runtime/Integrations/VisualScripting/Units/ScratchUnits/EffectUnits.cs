@@ -12,7 +12,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により自動解決します。
     /// </summary>
     [UnitTitle("色の効果を○ずつ変える")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 color effect change 画像")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeColorEffectByUnit : Unit
@@ -78,7 +78,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「色の効果を ◯ にする」に対応し、指定値を絶対適用するカスタム Unit です。
     /// </summary>
     [UnitTitle("色の効果を○にする")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 color effect set 画像")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetColorEffectToUnit : Unit
@@ -157,7 +157,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「画像効果をなくす」に対応し、Tint を初期状態へ戻すカスタム Unit です。
     /// </summary>
     [UnitTitle("画像効果をなくす")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 clear graphic effect 画像")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ClearGraphicEffectsUnit : Unit

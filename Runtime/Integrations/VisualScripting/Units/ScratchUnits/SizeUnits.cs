@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Presenter 側で #root 要素へスケールを反映するため、左上座標がスケール変更時も維持されます。
     /// </summary>
     [UnitTitle("大きさを○%にする")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 size scale 大きさ percent")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetSizePercentUnit : Unit
@@ -76,7 +76,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 拡縮対象は Presenter から View へ伝搬され、#root 要素が左上原点のまま拡縮されます。
     /// </summary>
     [UnitTitle("大きさを○%ずつ変える")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 size scale change 大きさ percent")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeSizeByPercentUnit : Unit

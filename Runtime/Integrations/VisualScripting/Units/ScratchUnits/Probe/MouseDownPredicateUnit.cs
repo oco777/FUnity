@@ -9,7 +9,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe
     /// Scratch の「マウスが押された」ブロックを再現し、左ボタン押下状態を返す Unit です。
     /// </summary>
     [UnitTitle("マウスが押された")]
-    [UnitCategory("FUnity/Scratch/調べる")]
+    [UnitCategory("FUnity/Blocks/調べる")]
     [UnitSubtitle("funity scratch 調べる mouse down pressed ボタン")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class MouseDownPredicateUnit : Unit

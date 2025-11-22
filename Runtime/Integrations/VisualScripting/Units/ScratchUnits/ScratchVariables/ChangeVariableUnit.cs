@@ -7,7 +7,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「（変数）を○ずつ変える」に対応し、指定した変数へ加算を行うユニットです。
     /// </summary>
     [UnitTitle("（変数）を○ずつ変える")]
-    [UnitCategory("FUnity/Scratch/変数")]
+    [UnitCategory("FUnity/Blocks/変数")]
     [UnitSubtitle("funity scratch 変数 change variable add")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeVariableUnit : Unit
