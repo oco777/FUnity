@@ -3,7 +3,7 @@
   "displayName": "FUnity - Visual Programming Environment",
   "version": "0.3.0",
   "unity": "6000.0",
-  "description": "A Scratch-inspired educational toolkit for Unity UI Toolkit.",
+  "description": "A block-based (Scratch-compatible) educational toolkit for Unity UI Toolkit.",
   "keywords": [
     "education",
     "scratch",

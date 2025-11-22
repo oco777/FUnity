@@ -2046,7 +2046,7 @@ namespace FUnity.Runtime.Presenter
             if (Mathf.Abs(computedCenter.x - expectedCenter.x) >= 0.5f || Mathf.Abs(computedCenter.y - expectedCenter.y) >= 0.5f)
             {
                 Debug.LogWarning(
-                    $"[FUnity] ActorPresenter: Scratch 中央原点での中心座標が想定外です。centerX={computedCenter.x:F2} (expected {expectedCenter.x:F2}), centerY={computedCenter.y:F2} (expected {expectedCenter.y:F2}).");
+                    $"[FUnity] ActorPresenter: ブロックモード（Scratch 互換）の中央原点での中心座標が想定外です。centerX={computedCenter.x:F2} (expected {expectedCenter.x:F2}), centerY={computedCenter.y:F2} (expected {expectedCenter.y:F2}).");
             }
         }
 
