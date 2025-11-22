@@ -7,7 +7,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「変数（変数）を隠す」に対応し、変数モニターを非表示にします。
     /// </summary>
     [UnitTitle("変数（変数）を隠す")]
-    [UnitCategory("FUnity/Scratch/変数")]
+    [UnitCategory("FUnity/Blocks/変数")]
     [UnitSubtitle("funity scratch 変数 hide variable monitor")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class HideVariableUnit : Unit

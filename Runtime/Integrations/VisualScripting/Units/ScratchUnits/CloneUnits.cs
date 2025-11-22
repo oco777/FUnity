@@ -15,7 +15,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により自動解決されます。
     /// </summary>
     [UnitTitle("自分のクローンを作る")]
-    [UnitCategory("FUnity/Scratch/制御")]
+    [UnitCategory("FUnity/Blocks/制御")]
     [UnitSubtitle("funity scratch 制御 clone create self クローン")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class CreateCloneOfSelfUnit : Unit
@@ -61,7 +61,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 実行中のグラフから <see cref="ActorPresenterAdapter"/> を解決し、<see cref="VSPresenterBridge"/> 経由でクローン生成を依頼します。
     /// </summary>
     [UnitTitle("○のクローンを作る")]
-    [UnitCategory("FUnity/Scratch/制御")]
+    [UnitCategory("FUnity/Blocks/制御")]
     [UnitSubtitle("funity scratch 制御 clone create 指定 クローン display name")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class CreateCloneOfDisplayNameUnit : Unit
@@ -131,7 +131,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「クローンされたとき」イベントを表現し、新しく生成されたクローンごとにトリガーを発火します。
     /// </summary>
     [UnitTitle("クローンされたとき")]
-    [UnitCategory("Events/FUnity/Scratch/制御")]
+    [UnitCategory("Events/FUnity/Blocks/制御")]
     [UnitSubtitle("funity scratch 制御 clone event when クローン")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIStartAsCloneUnit : EventUnit<CloneEventArgs>
@@ -255,7 +255,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「このクローンを削除する」に対応し、現在の Presenter がクローンであれば安全に破棄します。
     /// </summary>
     [UnitTitle("このクローンを削除する")]
-    [UnitCategory("FUnity/Scratch/制御")]
+    [UnitCategory("FUnity/Blocks/制御")]
     [UnitSubtitle("funity scratch 制御 clone delete remove クローン")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class DeleteThisCloneUnit : Unit

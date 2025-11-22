@@ -29,7 +29,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「メッセージを送る」に相当し、指定メッセージを即時配信する Unit です。
     /// </summary>
     [UnitTitle("メッセージを送る")]
-    [UnitCategory("FUnity/Scratch/イベント")]
+    [UnitCategory("FUnity/Blocks/イベント")]
     [UnitSubtitle("funity scratch イベント broadcast message send メッセージ")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class BroadcastMessageUnit : Unit
@@ -81,7 +81,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「メッセージを送って待つ」に相当し、受信側の処理が終わるまで同フレームで待機する Unit です。
     /// </summary>
     [UnitTitle("メッセージを送って待つ")]
-    [UnitCategory("FUnity/Scratch/イベント")]
+    [UnitCategory("FUnity/Blocks/イベント")]
     [UnitSubtitle("funity scratch イベント broadcast wait message メッセージ")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class BroadcastAndWaitUnit : Unit
@@ -134,7 +134,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「メッセージを受け取ったとき」に相当し、指定メッセージ受信でフローを発火する EventUnit です。
     /// </summary>
     [UnitTitle("メッセージを受け取ったとき")]
-    [UnitCategory("Events/FUnity/Scratch/イベント")]
+    [UnitCategory("Events/FUnity/Blocks/イベント")]
     [UnitSubtitle("funity scratch イベント receive message broadcast 受信")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIReceiveMessageUnit : EventUnit<MessagingCommon.Args>

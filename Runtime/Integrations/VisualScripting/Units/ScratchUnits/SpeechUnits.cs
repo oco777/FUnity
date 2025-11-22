@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// ActorPresenterAdapter を自動解決し、Presenter 経由で吹き出しを制御します。
     /// </summary>
     [UnitTitle("○と○秒言う")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 say speech 吹き出し 秒 言う")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SayForSecondsUnit : ScratchCoroutineUnitBase
@@ -90,7 +90,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「〇と言う」に対応し、無期限の発言吹き出しを表示する Visual Scripting Unit です。
     /// </summary>
     [UnitTitle("○と言う")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 say speech 吹き出し 言う")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SayUnit : Unit
@@ -153,7 +153,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「〇と〇秒考える」に対応し、指定秒数だけ思考吹き出しを表示する Visual Scripting Unit です。
     /// </summary>
     [UnitTitle("○と○秒考える")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 think thought 吹き出し 秒 考える")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ThinkForSecondsUnit : ScratchCoroutineUnitBase
@@ -232,7 +232,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「〇と考える」に対応し、無期限の思考吹き出しを表示する Visual Scripting Unit です。
     /// </summary>
     [UnitTitle("○と考える")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 think thought 吹き出し 考える")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ThinkUnit : Unit

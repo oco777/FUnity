@@ -13,7 +13,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
     [UnitTitle("○度回す")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き turn rotate degrees 回す 向き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TurnDegreesUnit : Unit
@@ -105,7 +105,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
     [UnitTitle("○度に向ける")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き point direction degrees 向ける 向き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class PointDirectionUnit : Unit
@@ -171,7 +171,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「マウスポインターへ向ける」ブロックを再現し、俳優の向きをカーソル方向へ更新する Unit です。
     /// </summary>
     [UnitTitle("マウスポインターへ向ける")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き point towards mouse pointer 向ける マウス")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class PointTowardsMousePointerUnit : Unit

@@ -7,7 +7,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「変数（変数）を表示する」に対応し、変数モニターを可視化します。
     /// </summary>
     [UnitTitle("変数（変数）を表示する")]
-    [UnitCategory("FUnity/Scratch/変数")]
+    [UnitCategory("FUnity/Blocks/変数")]
     [UnitSubtitle("funity scratch 変数 show variable monitor")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ShowVariableUnit : Unit

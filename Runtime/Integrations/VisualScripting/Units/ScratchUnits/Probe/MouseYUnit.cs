@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe
     /// </summary>
     [UnitTitle("マウスのy座標")]
     [UnitShortTitle("マウスy")]
-    [UnitCategory("FUnity/Scratch/調べる")]
+    [UnitCategory("FUnity/Blocks/調べる")]
     [UnitSubtitle("funity scratch 調べる mouse y position 座標")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class MouseYUnit : Unit

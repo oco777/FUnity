@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> を用いて自動的に解決します。
     /// </summary>
     [UnitTitle("表示する")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 show visible 表示")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ShowActorUnit : Unit
@@ -76,7 +76,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> を用いて自動的に解決します。
     /// </summary>
     [UnitTitle("隠す")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 hide invisible 隠す")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class HideActorUnit : Unit

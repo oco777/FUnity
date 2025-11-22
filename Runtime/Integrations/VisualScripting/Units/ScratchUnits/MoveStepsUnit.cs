@@ -13,7 +13,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
     [UnitTitle("○歩動かす")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き move steps 歩 進む")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class MoveStepsUnit : Unit

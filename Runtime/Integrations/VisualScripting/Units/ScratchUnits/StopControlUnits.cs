@@ -7,7 +7,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「すべてを止める」に対応し、全俳優の全スクリプトを停止するユニットです。
     /// </summary>
     [UnitTitle("Scratch/すべてを止める")]
-    [UnitCategory("FUnity/Scratch/制御")]
+    [UnitCategory("FUnity/Blocks/制御")]
     [UnitSubtitle("funity scratch 制御 stop all すべてを止める")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class StopAllUnit : Unit
@@ -46,7 +46,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「このスクリプトを止める」に対応し、実行中のスレッドのみ停止するユニットです。
     /// </summary>
     [UnitTitle("Scratch/このスクリプトを止める")]
-    [UnitCategory("FUnity/Scratch/制御")]
+    [UnitCategory("FUnity/Blocks/制御")]
     [UnitSubtitle("funity scratch 制御 stop this script このスクリプトを止める")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class StopThisScriptUnit : Unit
@@ -88,7 +88,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「スプライトの他のスクリプトを止める」に対応し、同一俳優の他スレッドを停止します。
     /// </summary>
     [UnitTitle("Scratch/スプライトの他のスクリプトを止める")]
-    [UnitCategory("FUnity/Scratch/制御")]
+    [UnitCategory("FUnity/Blocks/制御")]
     [UnitSubtitle("funity scratch 制御 stop other scripts 他のスクリプトを止める")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class StopOtherScriptsInSpriteUnit : Unit

@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「もし端に着いたら、跳ね返る」を再現し、端接触時に進行方向を反射させる制御ユニットです。
     /// </summary>
     [UnitTitle("もし端に着いたら、跳ね返る")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き bounce edge 端 跳ね返る")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class BounceIfOnEdgeUnit : Unit
@@ -111,7 +111,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「回転方向を左右のみにする」を再現し、Presenter の回転スタイルを左右反転限定へ切り替える設定ユニットです。
     /// </summary>
     [UnitTitle("回転方法を左右のみにする")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き rotation style 左右 反転 left right")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetRotationStyleLeftRightUnit : Unit
@@ -163,7 +163,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「回転方向を回転しないにする」を再現し、俳優を常に直立表示へ切り替える設定ユニットです。
     /// </summary>
     [UnitTitle("回転方法を回転しないにする")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き rotation style 回転しない upright")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetRotationStyleDontRotateUnit : Unit
@@ -215,7 +215,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「回転方向を自由に回転にする」を再現し、俳優が任意の角度で回転できる状態へ戻す設定ユニットです。
     /// </summary>
     [UnitTitle("回転方法を自由に回転するにする")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き rotation style 自由 all around")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetRotationStyleAllAroundUnit : Unit

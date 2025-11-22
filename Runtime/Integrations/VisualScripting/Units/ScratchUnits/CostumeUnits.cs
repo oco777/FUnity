@@ -9,7 +9,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「コスチュームを〇にする」ブロックに対応し、Presenter 経由で指定番号のコスチュームへ切り替える Unit です。
     /// </summary>
     [UnitTitle("コスチュームを〇にする")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 costume set コスチューム")] 
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetCostumeNumberUnit : Unit
@@ -69,7 +69,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「次のコスチュームにする」ブロックに対応し、Presenter 経由でコスチュームを循環切り替えする Unit です。
     /// </summary>
     [UnitTitle("次のコスチュームにする")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 costume next 次へ")] 
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class NextCostumeUnit : Unit
@@ -119,7 +119,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「コスチュームの番号」ブロックに対応し、現在のコスチューム番号（1 始まり）を取得する Unit です。
     /// </summary>
     [UnitTitle("コスチュームの番号")]
-    [UnitCategory("FUnity/Scratch/見た目")]
+    [UnitCategory("FUnity/Blocks/見た目")]
     [UnitSubtitle("funity scratch 見た目 costume number 番号")] 
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class CostumeNumberUnit : Unit

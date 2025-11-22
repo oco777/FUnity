@@ -10,7 +10,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe
     /// Scratch の「マウスポインターまでの距離」ブロックを再現し、自身の中心座標とマウス座標との差を返す Value Unit です。
     /// </summary>
     [UnitTitle("マウスポインターまでの距離")]
-    [UnitCategory("FUnity/Scratch/調べる")]
+    [UnitCategory("FUnity/Blocks/調べる")]
     [UnitSubtitle("funity scratch 調べる distance mouse pointer 距離")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class DistanceToMousePointerUnit : Unit

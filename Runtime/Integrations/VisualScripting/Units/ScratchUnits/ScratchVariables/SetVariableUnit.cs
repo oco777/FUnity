@@ -7,7 +7,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「（変数）を○にする」に対応し、指定した変数へ絶対値を書き込むユニットです。
     /// </summary>
     [UnitTitle("（変数）を○にする")]
-    [UnitCategory("FUnity/Scratch/変数")]
+    [UnitCategory("FUnity/Blocks/変数")]
     [UnitSubtitle("funity scratch 変数 set variable")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetVariableUnit : Unit

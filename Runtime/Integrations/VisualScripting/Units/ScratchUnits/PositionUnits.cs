@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
     [UnitTitle("x:○ y:○ へ行く")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き go position x y 座標")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GoToXYUnit : Unit
@@ -85,7 +85,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
     [UnitTitle("x座標を○ずつ変える")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き change x 座標 move")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeXByUnit : Unit
@@ -151,7 +151,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// 対象の <see cref="ActorPresenterAdapter"/> は <see cref="ScratchUnitUtil.ResolveAdapter(Flow)"/> により Unit 内で自動解決します。
     /// </summary>
     [UnitTitle("y座標を○ずつ変える")]
-    [UnitCategory("FUnity/Scratch/動き")]
+    [UnitCategory("FUnity/Blocks/動き")]
     [UnitSubtitle("funity scratch 動き change y 座標 move")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeYByUnit : Unit

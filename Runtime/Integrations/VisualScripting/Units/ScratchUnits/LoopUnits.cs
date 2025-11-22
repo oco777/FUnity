@@ -10,7 +10,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「〇回繰り返す」ブロックを再現し、指定回数だけ本体ポートを実行するカスタム Unit です。
     /// </summary>
     [UnitTitle("○回繰り返す")]
-    [UnitCategory("FUnity/Scratch/制御")]
+    [UnitCategory("FUnity/Blocks/制御")]
     [UnitSubtitle("funity scratch 制御 repeat loop 回数 繰り返す")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class RepeatNUnit : Unit
@@ -77,7 +77,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// Scratch の「ずっと」ブロックを再現し、常に本体ポートを繰り返すカスタム Unit です。
     /// </summary>
     [UnitTitle("ずっと")]
-    [UnitCategory("FUnity/Scratch/制御")]
+    [UnitCategory("FUnity/Blocks/制御")]
     [UnitSubtitle("funity scratch 制御 forever loop ずっと")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ForeverUnit : Unit
