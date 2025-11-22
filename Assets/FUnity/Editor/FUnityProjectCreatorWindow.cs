@@ -149,6 +149,17 @@ namespace FUnity.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
+            // シーン内の FUnityManager が存在する場合は、新規作成した ProjectData を紐付けてすぐ利用できるようにする。
+            var manager = Object.FindObjectOfType<FUnityManager>();
+            if (manager != null)
+            {
+                Undo.RecordObject(manager, "Switch FUnity Project");
+                manager.Project = projectData;
+                EditorUtility.SetDirty(manager);
+
+                Debug.Log($"[FUnity] Switched current FUnityManager project to '{projectName}'.");
+            }
+
             Selection.activeObject = projectData;
 
             EditorUtility.DisplayDialog(
