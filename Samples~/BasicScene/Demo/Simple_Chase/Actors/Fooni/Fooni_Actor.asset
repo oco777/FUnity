@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Fooni_Actor
   m_EditorClassIdentifier: 
   m_displayName: Fooni
-  m_sprites: []
+  m_sprites:
+  - {fileID: 271076803, guid: ec420aadd57400043b1719fe88043923, type: 3}
+  - {fileID: 598194360, guid: ec420aadd57400043b1719fe88043923, type: 3}
   m_initialPosition: {x: 0, y: 0}
   m_moveSpeed: 300
   m_floatAnimation: 1

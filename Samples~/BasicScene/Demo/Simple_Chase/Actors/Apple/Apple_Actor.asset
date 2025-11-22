@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Apple_Actor
   m_EditorClassIdentifier: 
   m_displayName: Apple
-  m_sprites: []
+  m_sprites:
+  - {fileID: 21300000, guid: 6ad3043b4c8e150439a7c6d675c95638, type: 3}
   m_initialPosition: {x: 0, y: 0}
   m_moveSpeed: 300
   m_floatAnimation: 1

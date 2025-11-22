@@ -17,7 +17,9 @@ MonoBehaviour:
   runners: []
   GlobalVariables: []
   m_stage: {fileID: 11400000, guid: 9482758fa77336e4087cb16133ef31c3, type: 2}
-  m_actors: []
+  m_actors:
+  - {fileID: 11400000, guid: 1f6c09fc66d2c08418d2ad1dd78e2598, type: 2}
+  - {fileID: 11400000, guid: baacf67f921c1454a9d970d2d0db58c4, type: 2}
   m_TargetFPS: 30
   m_DisableVSync: 1
   m_ApplyFrameRateOnStartup: 1
