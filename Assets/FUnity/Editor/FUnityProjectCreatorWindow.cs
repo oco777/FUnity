@@ -144,6 +144,17 @@ namespace FUnity.EditorTools
 
             CreateProjectData.ApplyCommonProjectDefaults(projectData, stageData);
 
+            if (projectData.GameMode == FUnityGameMode.Scratch)
+            {
+                var serializedProjectData = new SerializedObject(projectData);
+                var targetFpsProperty = serializedProjectData.FindProperty("m_TargetFPS");
+                if (targetFpsProperty != null)
+                {
+                    targetFpsProperty.intValue = 30;
+                    serializedProjectData.ApplyModifiedPropertiesWithoutUndo();
+                }
+            }
+
             EditorUtility.SetDirty(stageData);
             EditorUtility.SetDirty(projectData);
             AssetDatabase.SaveAssets();
