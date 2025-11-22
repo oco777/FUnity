@@ -8,7 +8,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("（変数）を○ずつ変える")]
     [UnitCategory("FUnity/Blocks/変数")]
-    [UnitSubtitle("funity scratch 変数 change variable add")]
+    [UnitSubtitle("変数")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeVariableUnit : Unit
     {

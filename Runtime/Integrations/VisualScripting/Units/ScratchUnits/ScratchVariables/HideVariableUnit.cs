@@ -8,7 +8,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("変数（変数）を隠す")]
     [UnitCategory("FUnity/Blocks/変数")]
-    [UnitSubtitle("funity scratch 変数 hide variable monitor")]
+    [UnitSubtitle("変数")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class HideVariableUnit : Unit
     {

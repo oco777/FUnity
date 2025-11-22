@@ -10,7 +10,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe
     /// </summary>
     [UnitTitle("マウスが押された")]
     [UnitCategory("FUnity/Blocks/調べる")]
-    [UnitSubtitle("funity scratch 調べる mouse down pressed ボタン")]
+    [UnitSubtitle("調べる")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class MouseDownPredicateUnit : Unit
     {

@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitTitle("○秒待つ")]
     [UnitShortTitle("○秒待つ")]
     [UnitCategory("FUnity/Blocks/制御")]
-    [UnitSubtitle("funity scratch 制御 wait seconds delay 待つ")]
+    [UnitSubtitle("制御")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WaitSecondsUnit : Unit
     {

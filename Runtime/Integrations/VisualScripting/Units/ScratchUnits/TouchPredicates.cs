@@ -9,7 +9,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("マウスポインターに触れた？")]
     [UnitCategory("FUnity/Blocks/調べる")]
-    [UnitSubtitle("funity scratch 調べる touch mouse pointer 触れた")]
+    [UnitSubtitle("調べる")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TouchingMousePointerPredicateUnit : Unit
     {
@@ -73,7 +73,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("端に触れた？")]
     [UnitCategory("FUnity/Blocks/調べる")]
-    [UnitSubtitle("funity scratch 調べる touch edge 境界 触れた")]
+    [UnitSubtitle("調べる")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TouchingEdgePredicateUnit : Unit
     {

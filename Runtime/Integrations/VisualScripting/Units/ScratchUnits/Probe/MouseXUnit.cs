@@ -12,7 +12,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe
     [UnitTitle("マウスのx座標")]
     [UnitShortTitle("マウスx")]
     [UnitCategory("FUnity/Blocks/調べる")]
-    [UnitSubtitle("funity scratch 調べる mouse x position 座標")]
+    [UnitSubtitle("調べる")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class MouseXUnit : Unit
     {

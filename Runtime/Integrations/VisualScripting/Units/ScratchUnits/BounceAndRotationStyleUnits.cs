@@ -12,7 +12,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("もし端に着いたら、跳ね返る")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き bounce edge 端 跳ね返る")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class BounceIfOnEdgeUnit : Unit
     {
@@ -112,7 +112,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("回転方法を左右のみにする")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き rotation style 左右 反転 left right")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetRotationStyleLeftRightUnit : Unit
     {
@@ -164,7 +164,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("回転方法を回転しないにする")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き rotation style 回転しない upright")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetRotationStyleDontRotateUnit : Unit
     {
@@ -216,7 +216,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("回転方法を自由に回転するにする")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き rotation style 自由 all around")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetRotationStyleAllAroundUnit : Unit
     {

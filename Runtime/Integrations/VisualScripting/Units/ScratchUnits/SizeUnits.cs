@@ -12,7 +12,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("大きさを○%にする")]
     [UnitCategory("FUnity/Blocks/見た目")]
-    [UnitSubtitle("funity scratch 見た目 size scale 大きさ percent")]
+    [UnitSubtitle("見た目")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetSizePercentUnit : Unit
     {
@@ -77,7 +77,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("大きさを○%ずつ変える")]
     [UnitCategory("FUnity/Blocks/見た目")]
-    [UnitSubtitle("funity scratch 見た目 size scale change 大きさ percent")]
+    [UnitSubtitle("見た目")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeSizeByPercentUnit : Unit
     {
