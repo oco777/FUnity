@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7cf6251aa24cf940914af17bd817ed9, type: 3}
+  m_Name: Apple_Actor
+  m_EditorClassIdentifier: 
+  m_displayName: Apple
+  m_sprites: []
+  m_initialPosition: {x: 0, y: 0}
+  m_moveSpeed: 300
+  m_floatAnimation: 1
+  m_ElementUxml: {fileID: 9197481963319205126, guid: ef422c117562bef4081fe13be9ec9b4a, type: 3}
+  m_ElementStyle: {fileID: 7433441132597879392, guid: 75853e22892294b42aabaa840ba837a4, type: 3}
+  m_size: {x: 128, y: 128}
+  m_anchor: 1
+  m_scriptGraph: {fileID: 11400000, guid: d3146a3de8589fb45a560124c1d1ba3b, type: 2}
+  m_actorVariables: []
