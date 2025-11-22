@@ -8,7 +8,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("すべてを止める")]
     [UnitCategory("FUnity/Blocks/制御")]
-    [UnitSubtitle("funity scratch 制御 stop all すべてを止める")]
+    [UnitSubtitle("制御")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class StopAllUnit : Unit
     {
@@ -47,7 +47,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("このスクリプトを止める")]
     [UnitCategory("FUnity/Blocks/制御")]
-    [UnitSubtitle("funity scratch 制御 stop this script このスクリプトを止める")]
+    [UnitSubtitle("制御")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class StopThisScriptUnit : Unit
     {
@@ -89,7 +89,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("スプライトの他のスクリプトを止める")]
     [UnitCategory("FUnity/Blocks/制御")]
-    [UnitSubtitle("funity scratch 制御 stop other scripts 他のスクリプトを止める")]
+    [UnitSubtitle("制御")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class StopOtherScriptsInSpriteUnit : Unit
     {

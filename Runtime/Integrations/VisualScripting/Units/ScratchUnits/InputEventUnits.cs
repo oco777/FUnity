@@ -14,7 +14,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitTitle("○キーが押されたとき")]
     [UnitShortTitle("○キー")]
     [UnitCategory("Events/FUnity/Blocks/イベント")]
-    [UnitSubtitle("funity scratch イベント key keyboard press 押された when")]
+    [UnitSubtitle("イベント")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class OnKeyPressedUnit : EventUnit<EmptyEventArgs>
     {

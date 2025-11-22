@@ -10,7 +10,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("コスチュームを〇にする")]
     [UnitCategory("FUnity/Blocks/見た目")]
-    [UnitSubtitle("funity scratch 見た目 costume set コスチューム")] 
+    [UnitSubtitle("見た目")] 
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class SetCostumeNumberUnit : Unit
     {
@@ -70,7 +70,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("次のコスチュームにする")]
     [UnitCategory("FUnity/Blocks/見た目")]
-    [UnitSubtitle("funity scratch 見た目 costume next 次へ")] 
+    [UnitSubtitle("見た目")] 
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class NextCostumeUnit : Unit
     {
@@ -120,7 +120,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("コスチュームの番号")]
     [UnitCategory("FUnity/Blocks/見た目")]
-    [UnitSubtitle("funity scratch 見た目 costume number 番号")] 
+    [UnitSubtitle("見た目")] 
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class CostumeNumberUnit : Unit
     {

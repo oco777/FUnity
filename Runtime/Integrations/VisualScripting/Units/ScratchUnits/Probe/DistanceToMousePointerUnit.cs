@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe
     /// </summary>
     [UnitTitle("マウスポインターまでの距離")]
     [UnitCategory("FUnity/Blocks/調べる")]
-    [UnitSubtitle("funity scratch 調べる distance mouse pointer 距離")]
+    [UnitSubtitle("調べる")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class DistanceToMousePointerUnit : Unit
     {

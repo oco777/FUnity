@@ -11,7 +11,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○回繰り返す")]
     [UnitCategory("FUnity/Blocks/制御")]
-    [UnitSubtitle("funity scratch 制御 repeat loop 回数 繰り返す")]
+    [UnitSubtitle("制御")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class RepeatNUnit : Unit
     {
@@ -78,7 +78,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("ずっと")]
     [UnitCategory("FUnity/Blocks/制御")]
-    [UnitSubtitle("funity scratch 制御 forever loop ずっと")]
+    [UnitSubtitle("制御")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ForeverUnit : Unit
     {

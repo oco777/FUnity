@@ -13,7 +13,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [UnitTitle("緑の旗が押されたとき")]
     [UnitShortTitle("緑の旗")]
     [UnitCategory("Events/FUnity/Blocks/イベント")]
-    [UnitSubtitle("funity scratch イベント green flag start 押された when")]
+    [UnitSubtitle("イベント")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenGreenFlagClickedUnit : EventUnit<EmptyEventArgs>
     {

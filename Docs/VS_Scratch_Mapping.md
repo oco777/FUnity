@@ -6,7 +6,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - `[UnitTitle]` は Scratch 日本語ブロック名に合わせるか、Scratch 流儀の短い日本語で命名する。
 - `[UnitCategory]` は Scratch 系ユニットの場合、イベント系は `Events/FUnity/Scratch/◯◯`、その他は `FUnity/Scratch/◯◯` 形式（カテゴリ名は日本語）で統一する。拡張ユニットは `FUnity/Scratch/拡張` を使用する。
 - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を全ユニットへ付与し、FUnity Scratch 系ユニットであることを明示する。
-- ノード検索性向上のため、利用可能な場合は `[UnitSubtitle]`（または同等の検索キーワード属性）に `funity scratch` とカテゴリ名・日本語/英語の関連語を半角スペース区切りで登録する（例：`funity scratch 見た目 say speech`）。
+- Visual Scripting 上のサブタイトルはカテゴリ名のみを表示するため、`[UnitSubtitle]` には必ずカテゴリ名（例：`動き` `見た目` `制御`）だけを設定し、検索用のキーワードは含めない。
 - コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
 - Scratch 系のコルーチン Unit は Visual Scripting 標準の `flow.StartCoroutine` を用い、開始後に `ScratchUnitUtil.RegisterScratchFlow` で Flow を登録して停止ブロックと連動させる。
 - Scratch のイベント Unit（緑の旗/キー押下/メッセージ受信/クローン開始など）は EventBus 登録時に Flow を新規作成し、`flow.StartCoroutine(trigger)` で起動してから `ScratchUnitUtil.RegisterScratchFlow(flow)` で ActorId/ThreadId を Flow.variables に保存する。Unity の Coroutine へは依存しない。

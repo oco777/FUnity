@@ -12,7 +12,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("x:○ y:○ へ行く")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き go position x y 座標")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class GoToXYUnit : Unit
     {
@@ -86,7 +86,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("x座標を○ずつ変える")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き change x 座標 move")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeXByUnit : Unit
     {
@@ -152,7 +152,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("y座標を○ずつ変える")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き change y 座標 move")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class ChangeYByUnit : Unit
     {

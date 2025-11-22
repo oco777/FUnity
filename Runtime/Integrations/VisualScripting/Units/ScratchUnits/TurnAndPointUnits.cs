@@ -14,7 +14,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○度回す")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き turn rotate degrees 回す 向き")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class TurnDegreesUnit : Unit
     {
@@ -106,7 +106,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("○度に向ける")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き point direction degrees 向ける 向き")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class PointDirectionUnit : Unit
     {
@@ -172,7 +172,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     /// </summary>
     [UnitTitle("マウスポインターへ向ける")]
     [UnitCategory("FUnity/Blocks/動き")]
-    [UnitSubtitle("funity scratch 動き point towards mouse pointer 向ける マウス")]
+    [UnitSubtitle("動き")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class PointTowardsMousePointerUnit : Unit
     {
