@@ -51,7 +51,7 @@ _No unreleased changes yet._
 
 ### Removed
 - 旧来のランタイム管理 MonoBehaviour と Visual Scripting ブリッジを削除し、`FUnityManager` / `VSPresenterBridge` / `ActorPresenterAdapter` に統一しました。
-- 使用されていなかった Editor メニュー（`FUnity/Tools/Fix Runtime Layout` など）と不要な補助クラス（Actor UI テンプレ生成やステージ背景診断など）を整理しました。
+- 使用されていなかった Editor メニュー（`FUnity/Tools/Fix Runtime Layout` など）と `GenerateActorUITemplateWindow` / `StageBackgroundDiagnosticsMenu` などの補助クラスを整理しました。
 - Scratch Float 機能を正式に廃止し、`Fooni_EnableFloatUnit` など関連ユニットと自動生成メニューを撤去しました。
 
 ### Docs
