@@ -1,6 +1,6 @@
-# Scratch モード
+# ブロックモード (Block Mode)
 
-Scratch モードは「Scratch 3.0 と同等の制作体験」を目標としたプリセットです。ステージ解像度、座標系、標準ブロックの挙動を FUnity 上で再現し、既存の Scratch プロジェクトからの移行を支援します。
+ブロックモードは「Scratch 3.0 と同等の制作体験」を意識した FUnity 独自のブロックプログラミングプリセットです。ステージ解像度、座標系、標準ブロック相当の挙動を FUnity 上で再現し、既存の Scratch プロジェクトからの移行を支援します。
 
 ## ステージ仕様
 - **ピクセルサイズ**: 480 x 360
@@ -9,17 +9,17 @@ Scratch モードは「Scratch 3.0 と同等の制作体験」を目標とした
 - **カメラ推奨**: Orthographic / Size = 180 (縦半径) で中央原点に合わせる
 - **UI Toolkit**: PanelSettings を `Fit (Contain)`、参照 DPI を 96 とし、背景のレターボックスを抑えます
 
-### 表示スケール（Scratch 専用）
+### 表示スケール（ブロックモード専用）
 - 論理ステージは常に **480 x 360** として扱い、ゲーム内の座標・当たり判定は固定サイズを基準に維持します。
 - 実ウィンドウが 480 x 360 より大きい場合は `scale = min(width / 480, height / 360)`（ただし `scale >= 1`）で **`FUnity-ScaledContentRoot`** の `transform.scale` を更新し、論理 480x360 の矩形を中央に配置します。
 - `FUnity-ScaledContentRoot` の `transform-origin` は **左上 (0%, 0%) 固定** とし、`left`/`top` を `(パネルサイズ - 表示サイズ) / 2` で計算することで中央配置を実現します。
 - ルート要素（`UIDocument.rootVisualElement`）は常に `transform.scale = 1` を維持し、`worldBound` はパネル解像度と一致します。
-- StageElement と俳優 UI は `FUnity-ScaledContentRoot` 配下に追加されるため、Scratch 用の座標変換は既存ロジックのまま利用できます。
+- StageElement と俳優 UI は `FUnity-ScaledContentRoot` 配下に追加されるため、ブロックモード用の座標変換は既存ロジックのまま利用できます。
 - 480 x 360 未満のウィンドウでは縮小せず、論理ステージをそのまま表示します（1.0 倍表示）。
 
 ## 座標系（重要）
 - 原点は **ステージ中央(0,0)**。右が +X、上が +Y です。論理サイズは常に **480×360**（±240 / ±180）で計算します。
-- UI Toolkit の左上原点座標とはランタイムで自動変換されます。Scratch モードでは次の式が適用されます。
+- UI Toolkit の左上原点座標とはランタイムで自動変換されます。ブロックモードでは次の式が適用されます。
   - `uiX = logicalX + 240`
   - `uiY = 180 - logicalY`
   - `logicalX = uiX - 240`
@@ -29,7 +29,7 @@ Scratch モードは「Scratch 3.0 と同等の制作体験」を目標とした
 - 背景画像は `StageBackgroundService` により常に中央配置され、拡大縮小は行いません（`contain/cover` の指定のみ適用）。`StageBackgroundService` からも `CoordinateConverter.OriginMode` を参照して中央寄せを制御します。
 - `FUnityActorData.Anchor` で **Center (既定)** / **TopLeft** を切り替えられます。Center を選ぶと座標が画像中心に一致し、TopLeft は UI Toolkit と同じ左上基準になります。
 - 原点から UI 座標への変換は `CoordinateConverter` が担当し、その後にアンカー補正を 1 度だけ適用して `style.left/top` を決定します。
-- 俳優の論理座標が **(0,0)** のときはステージ中央に表示されます。Center アンカーが既定であるため、Scratch モードでは `GoToXY(0,0)` が中央配置になります。
+- 俳優の論理座標が **(0,0)** のときはステージ中央に表示されます。Center アンカーが既定であるため、ブロックモードでは `GoToXY(0,0)` が中央配置になります。
 - Anchor=Center の場合、画像の中心がステージ中央と正確に一致するよう補正されます。
 
 ## ブロック互換ポリシー
@@ -47,7 +47,7 @@ Scratch モードは「Scratch 3.0 と同等の制作体験」を目標とした
 ## SB3 インポート
 実験的な `.sb3` インポート機能を提供します。手順は以下の通りです。
 
-1. `FUnityProjectData` アセットの Inspector で Scratch モードをアクティブ化します。
+1. `FUnityProjectData` アセットの Inspector でブロックモードをアクティブ化します。
 2. `Assets` 配下に `.sb3` ファイルをドラッグ＆ドロップします。
 3. インポーターが `project.json` を解析し、`FUnityProjectData` / `FUnityActorData` に変換します。
 4. `assets/` 内の画像は Sprite 化され、音声は `AudioClip` として保存されます。

@@ -1,6 +1,6 @@
-# Scratch モードの座標クランプ仕様
+# ブロックモードの座標クランプ仕様
 
-Scratch モードではステージ中央を原点 (0,0) とする中心座標系を使用します。右方向が +X、上方向が +Y です。俳優のアンカーは画像中心となり、Presenter が UI 座標との相互変換を担当します。
+ブロックモード（Scratch 風のブロックプログラミング環境）ではステージ中央を原点 (0,0) とする中心座標系を使用します。右方向が +X、上方向が +Y です。俳優のアンカーは画像中心となり、Presenter が UI 座標との相互変換を担当します。
 
 ## 中心座標のクランプ範囲
 
@@ -18,7 +18,7 @@ Scratch モードではステージ中央を原点 (0,0) とする中心座標�
 
 ## Visual Scripting の挙動
 
-Visual Scripting の Scratch 互換ユニット（位置セット・座標加算・〇歩動かす）は、最終的に `ActorPresenter` を経由して座標を更新します。Presenter 側で `ScratchBounds.ClampCenter` が呼び出されるため、グラフ側で追加のクランプ処理を行う必要はありません。
+Visual Scripting のブロックモード向けユニット（位置セット・座標加算・〇歩動かす）は、最終的に `ActorPresenter` を経由して座標を更新します。Presenter 側で `ScratchBounds.ClampCenter` が呼び出されるため、グラフ側で追加のクランプ処理を行う必要はありません。
 
 ## unityroom モードとの違い
 

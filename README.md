@@ -1,8 +1,17 @@
 # FUnity — Fun × Unity
 
-> UI Toolkit ベースの Scratch 風学習環境で、子どもたちの創造力を引き出す。
-
 ![FUnity overview](Docs/images/readme-hero.png)
+
+## FUnity とは？
+
+FUnity は、Unity 上で動作する **ブロックプログラミング & ゲーム制作環境** です。
+
+- 子どもや初心者でも扱いやすい **ブロックモード (Block Mode)** でロジックを組み立て
+- そのまま Unity の世界でゲームとして動かせる
+- 既存の Unity 資産やエディタ拡張とも連携できる
+
+ブロックモードは Scratch 風の操作感を意識しつつ、
+FUnity 独自の Actor / ステージ / プロジェクト構造に最適化されています。
 
 ## 📦 パッケージ構成と配置ルール
 - `Runtime/` — ランタイム C#。**すべての実装はここに置き、`Assets/FUnity/Runtime/` へは置かない。**
@@ -11,7 +20,7 @@
 - `Assets/FUnity/**` — プロジェクト同梱の検証用アセット。ランタイムコードは配置禁止で、混入すると Editor/CI ガードがエラーを報告します。
 
 ## ⚙ Modes
-- `FUnityProjectData` アセットの Inspector で Scratch モードと unityroom モードを切り替えられます。
+- `FUnityProjectData` アセットの Inspector で **ブロックモード (Block Mode)** と unityroom モードを切り替えられます。
 - 選択したモードに応じて `FUnityProjectData` 内の ModeConfig 参照がランタイム起動時に自動適用されます。
 - 各モードの仕様やブロック互換ポリシーは [`Assets/FUnity/Docs/Modes/README.md`](Assets/FUnity/Docs/Modes/README.md) を参照してください。
 
@@ -21,13 +30,13 @@
 - `Runtime/Resources/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
 - `FUnityManager` がシーン起動時に “FUnity UI” GameObject と `UIDocument` を構築し、UI ブリッジや Runner 参照をセットアップ。
 - Unity Visual Scripting を **必須依存**とし、Macro が無い場合でも `Fooni_FloatSetup.asset` を自動生成して割り当てる。
-- Scratch 互換の見た目操作として「大きさを ◯ % にする」「大きさを ◯ % ずつ変える」ユニットを提供し、Presenter 経由で UI Toolkit `style.scale` を中心ピボットで適用。
+- ブロックモードの見た目操作として「大きさを ◯ % にする」「大きさを ◯ % ずつ変える」ユニットを提供し、Presenter 経由で UI Toolkit `style.scale` を中心ピボットで適用。
 
 ## What's new in 0.3.0
 
-- UI Toolkit の Pointer イベントを Scratch 座標系へ変換する `MousePositionService` を拡張し、マウスポインター関連ユニット（座標・距離・押下判定・マウスポインターへ向ける）を追加しました。
+- UI Toolkit の Pointer イベントをブロックモードの座標系へ変換する `MousePositionService` を拡張し、マウスポインター関連ユニット（座標・距離・押下判定・マウスポインターへ向ける）を追加しました。
 - Actor の Sprites リストを切り替える `SetSpriteIndex` などの API を Presenter/Adapter に実装し、旧 Portrait フィールドを移行するエディタツールを追加しました。
-- Scratch モードの停止ユニットと専用スレッド管理 API を備え、停止ブロックの挙動や向き計算（上=0°）を Scratch と一致させました。
+- ブロックモードの停止ユニットと専用スレッド管理 API を備え、停止ブロックの挙動や向き計算（上=0°）を Scratch 互換の挙動に合わせました。
 
 ## 目次
 - [システム要件](#システム要件)
@@ -75,7 +84,7 @@
 - **FUnity/Create/FUnityActorData** を実行すると、ActorData と関連テンプレートが規定のフォルダに生成され、Stage や Runner を既存プロジェクトへ手早く追加できます。
   - 生成した `FUnityActorData` には `ActorElement.uxml/uss` と吹き出し用ラベルが割り当て済みで、`StageBackgroundService` と組み合わせて背景を適用できます。
   - Runner は必要に応じて既存のテンプレートを複製し、`ScriptMachine` に Macro を割り当てて Visual Scripting グラフを編集してください。
-- Visual Scripting のグラフは Runner の `ScriptMachine` から新規 Macro を作成し、`VSPresenterBridge` の Custom Event を結線すると Scratch ブロック相当の操作が行えます。
+- Visual Scripting のグラフは Runner の `ScriptMachine` から新規 Macro を作成し、`VSPresenterBridge` の Custom Event を結線するとブロックモードのブロック相当の操作が行えます。
 
 ## FUnityProjectData が行うこと
 メニュー **FUnity/Create/FUnityProjectData**（`Assets/FUnity/Editor/CreateProjectData.cs` 内）を実行すると、既存リソースを尊重しつつ以下が保証されます。

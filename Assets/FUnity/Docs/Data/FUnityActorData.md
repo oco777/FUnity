@@ -7,7 +7,7 @@
 - **TopLeft**: アクターの座標 (X, Y) は画像左上を指します。UI Toolkit の `style.left/top` と同じ基準です。
 - **変換順序**: `論理座標 → UI座標（モードの原点変換） → アンカー補正 → style.left/top`。逆変換ではアンカー補正を先に戻してから論理座標へ写像します。
 - **実装注意**: アンカー補正ではステージ幅・高さではなく、俳優要素の実サイズ（`contentRect` や `resolvedStyle`）を利用します。原点変換による中心補正と重ねて適用しないでください。
-- **デフォルト**: Scratch モード / unityroom モードともに Center が既定です。旧データは Anchor 未設定でも自動的に Center が適用されます。
+- **デフォルト**: ブロックモード / unityroom モードともに Center が既定です。旧データは Anchor 未設定でも自動的に Center が適用されます。
 
 ## 既存プロパティとの関係
 - `Size` を指定すると、アンカー補正は指定サイズに基づいて計算されます。拡大率（`SizePercent`）変更後も最新の解決済みサイズを使用します。
@@ -16,5 +16,5 @@
 
 ## Sprites（コスチューム）
 - `Sprites` リストは Scratch の「コスチューム」に相当します。要素 0 が Scratch コスチューム番号 1、要素 1 が番号 2 というように 1 始まりの表示番号へマッピングされます。
-- Scratch モードの Visual Scripting ユニット（`コスチュームを〇にする` / `次のコスチュームにする` / `コスチュームの番号`）は `ActorState.CostumeIndex` を更新し、`ActorPresenter.ApplyCostumeFromState()` → `ActorView.SetSprite(Sprite)` の順で見た目を切り替えます。
+- ブロックモードの Visual Scripting ユニット（`コスチュームを〇にする` / `次のコスチュームにする` / `コスチュームの番号`）は `ActorState.CostumeIndex` を更新し、`ActorPresenter.ApplyCostumeFromState()` → `ActorView.SetSprite(Sprite)` の順で見た目を切り替えます。
 - コスチュームを持たない（`Sprites` が空または null）俳優では番号 0 を返し、安全に no-op となります。例外は発生しません。
