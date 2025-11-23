@@ -98,9 +98,27 @@ namespace FUnity.UI
 
             // ランタイムでは PanelSettings が既にテーマを保持している前提で一切操作しない。
 #if UNITY_EDITOR
+            const string PackageThemePath = "Packages/com.papacoder.funity/Runtime/UI/UnityDefaultRuntimeTheme.tss";
             const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss";
-            var legacyTheme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
 
+            // 1. パッケージ側に常備したテーマを最優先で割り当てる。
+            var packageTheme = AssetDatabase.LoadAssetAtPath<StyleSheet>(PackageThemePath);
+            if (packageTheme != null)
+            {
+                EditorAssignTheme(panelSettings, packageTheme);
+                return;
+            }
+
+            // 2. Resources 配下の FUnityPanelThemeSettings を経由してフォールバックを試す。
+            var fallbackTheme = LoadFallbackTheme();
+            if (fallbackTheme != null)
+            {
+                EditorAssignTheme(panelSettings, fallbackTheme);
+                return;
+            }
+
+            // 3. 互換目的で、ユーザープロジェクト直下のレガシー配置も検索する。
+            var legacyTheme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
             if (legacyTheme != null)
             {
                 EditorAssignTheme(panelSettings, legacyTheme);
