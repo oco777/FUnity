@@ -1,9 +1,7 @@
 // Updated: 2025-02-14
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEditor.UIElements;
 #endif
-using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -21,10 +19,6 @@ namespace FUnity.UI
     {
         /// <summary>検索・生成対象となる PanelSettings アセット名。</summary>
         private const string ResourceName = "FUnityPanelSettings";
-
-        /// <summary>Resources 配下に常駐させるため、Assets/Resources を基準に正規パスを構築する。</summary>
-        private static readonly string ResourceDirectory = Path.Combine("Assets", "Resources");
-        private static readonly string AssetPath = Path.Combine(ResourceDirectory, ResourceName + ".asset");
         /// <summary>フォールバックテーマ設定のリソース名。</summary>
         private const string ThemeSettingsResourceName = "FUnityPanelThemeSettings";
 
@@ -32,8 +26,8 @@ namespace FUnity.UI
         private static StyleSheet s_cachedFallbackTheme;
 
         /// <summary>
-        /// 実行前に PanelSettings をロードし、存在しない場合は生成・保存まで行う。
-        /// Editor 環境では UI Builder 既定テーマを割り当て、UI Document へ一括配布する。
+        /// 実行前に PanelSettings をロードし、存在しない場合は生成のみで一時利用する。
+        /// Editor 環境でも Assets/Resources への保存は行わず、UI Document への割り当てに専念する。
         /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void EnsurePanelSettings()
@@ -50,16 +44,6 @@ namespace FUnity.UI
                 panelSettings.clearDepthStencil = true;
                 panelSettings.clearColor = true;
                 panelSettings.colorClearValue = Color.clear;
-#if UNITY_EDITOR
-                if (!Directory.Exists(ResourceDirectory))
-                {
-                    // 既存プロジェクトに Resources が無いケースを想定し、書き込み前に生成する。
-                    Directory.CreateDirectory(ResourceDirectory);
-                }
-
-                AssetDatabase.CreateAsset(panelSettings, AssetPath);
-                AssetDatabase.SaveAssets();
-#endif
             }
 
             // テーマ未設定による警告を防ぐため、確実に Theme Style Sheet を割り当てる。
