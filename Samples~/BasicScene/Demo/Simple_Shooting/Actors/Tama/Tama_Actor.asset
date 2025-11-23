@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7cf6251aa24cf940914af17bd817ed9, type: 3}
+  m_Name: Tama_Actor
+  m_EditorClassIdentifier: 
+  m_displayName: Tama
+  m_sprites:
+  - {fileID: 21300000, guid: e6e0f5da6c0bfc44b9eae76aa984c6c2, type: 3}
+  m_initialPosition: {x: 0, y: 0}
+  m_moveSpeed: 300
+  m_floatAnimation: 1
+  m_ElementUxml: {fileID: 9197481963319205126, guid: 0a4c79b71ef22ff45bd52621f5da2c85, type: 3}
+  m_ElementStyle: {fileID: 7433441132597879392, guid: 41c333311e7760e4db010b5954f77321, type: 3}
+  m_size: {x: 128, y: 128}
+  m_anchor: 1
+  m_scriptGraph: {fileID: 11400000, guid: 3358ef0269b96a744b86b8aca6b3912a, type: 2}
+  m_actorVariables: []
