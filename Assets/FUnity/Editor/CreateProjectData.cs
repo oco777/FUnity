@@ -133,8 +133,6 @@ namespace FUnity.EditorTools
             EnsureFolder(FUnityFolderPath);
             EnsureFolder(FUnityUiFolderPath);
 
-            EnsurePanelSettingsAsset();
-
             AssignStageBackground(stage);
 
             AssignDefaultModeConfigs(project);
