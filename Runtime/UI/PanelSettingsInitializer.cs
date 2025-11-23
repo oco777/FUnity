@@ -196,6 +196,7 @@ namespace FUnity.UI
 
         /// <summary>
         /// Resources からフォールバック用テーマ設定を読み込み、StyleSheet をキャッシュして返す。
+        /// Runtime/Resources 配下に常備されるパッケージ同梱アセットを前提とし、ユーザープロジェクトでの生成を必要としない。
         /// </summary>
         private static StyleSheet LoadFallbackTheme()
         {
