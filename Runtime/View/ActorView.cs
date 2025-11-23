@@ -1177,6 +1177,11 @@ namespace FUnity.Runtime.View
             var portrait = ResolvePortraitElement();
             if (portrait != null)
             {
+                if (m_PortraitImage != null && m_PortraitImage.parent == portrait)
+                {
+                    return m_PortraitImage;
+                }
+
                 return portrait;
             }
 
