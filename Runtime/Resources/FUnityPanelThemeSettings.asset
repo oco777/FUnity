@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1465bd1736ef5b94b94605e4b40e28f9, type: 3}
   m_Name: FUnityPanelThemeSettings
   m_EditorClassIdentifier: 
-  m_theme: {fileID: 7433441132597879392, guid: ac600ac74dc14999bf7b322d48a0b107, type: 3}
+  m_theme: {fileID: 7433441132597879392, guid: cd9e395fd9641b3479a9aec0675dc99d, type: 3}
