@@ -1,0 +1,30 @@
+/* Unity Default Runtime Theme (safe minimal)
+   - No YAML front matter, no unsupported at-rules.
+   - Avoids shorthand traps; uses explicit px where needed.
+   - Keep it minimal; project-specific styles can be layered later.
+*/
+
+/* Base label/text */
+Label {
+    font-size: 14px;
+}
+
+/* Buttons baseline */
+Button {
+    min-width: 80px;
+    min-height: 24px;
+}
+
+/* Actor template defaults */
+.actor {
+    flex-shrink: 0;
+}
+
+.portrait {
+    width: 100%;
+    height: 100%;
+    /* Keep aspect and fit inside parent */
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}

@@ -19,14 +19,8 @@ namespace FUnity.EditorTools
         private const string ResourcesFolderPath = "Assets/Resources";
         private const string FUnityFolderPath = "Assets/FUnity";
         private const string FUnityUiFolderPath = FUnityFolderPath + "/UI";
-        private const string FUnityUiUssFolderPath = FUnityUiFolderPath + "/USS";
         private const string ProjectAssetPath = ResourcesFolderPath + "/FUnityProjectData.asset";
         private const string StageAssetPath = ResourcesFolderPath + "/FUnityStageData.asset";
-        private const string PanelThemeSettingsAssetPath = ResourcesFolderPath + "/FUnityPanelThemeSettings.asset";
-
-        // Theme は UI Builder 標準配置（Legacy）を最優先し、無ければ FUnity 配下の正規 USS を生成して使用する。
-        private const string LegacyThemePath = "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss";
-        private const string CanonicalThemePath = FUnityUiUssFolderPath + "/UnityDefaultRuntimeTheme.uss";
 
         private const string PanelSettingsAssetPath = FUnityUiFolderPath + "/FUnityPanelSettings.asset";
         private const string DuplicateActorResourcePath = ResourcesFolderPath + "/FUnityActorData_Fooni.asset";
@@ -42,18 +36,6 @@ namespace FUnity.EditorTools
         private const string PackageRootPath = "Packages/com.papacoder.funity";
         private const string ScratchModeConfigFileName = "FUnityModeConfig_Scratch.asset";
         private const string UnityroomModeConfigFileName = "FUnityModeConfig_Unityroom.asset";
-
-        /// <summary>Unity バージョンごとに異なる PanelSettings のテーマプロパティ候補名。</summary>
-        private static readonly string[] PanelThemePropertyCandidates =
-        {
-            "themeStyleSheets",
-            "m_ThemeStyleSheets",
-            "themeStyleSheet",
-            "m_ThemeStyleSheet",
-            "themeUss",
-            "m_ThemeUss",
-            "theme"
-        };
 
         // 背景テクスチャはプロジェクト直下の正規パスを優先し、無ければパッケージ同梱版から順に探す。
         private static readonly string[] StageBackgroundCandidates =
@@ -108,7 +90,6 @@ namespace FUnity.EditorTools
         [MenuItem("FUnity/Create/FUnityProjectData")]
         /// <summary>
         /// - Resources/Assets/FUnity 配下を作成し、Project/Stage/Actor の ScriptableObject を用意する。
-        /// - UI Theme は正規/旧配置から探索し、PanelSettings を確保して SerializedObject 経由で割り当てる。
         /// - Stage 背景に Runtime/Resources/Backgrounds/Background_01.* を設定し、ActorData_Fooni に Portrait/UXML/USS を適用する。
         /// - 不足アセットは警告にとどめて続行し、最後に SaveAssets/Refresh で AssetDatabase の状態を確定させる。
         /// </summary>
@@ -138,7 +119,7 @@ namespace FUnity.EditorTools
 
         /// <summary>
         /// 新規作成直後の Project/Stage に対し、Actor 以外の共通初期設定をまとめて適用する。
-        /// テーマの確保や PanelSettings への割り当て、背景設定、ModeConfig のデフォルト化を担当する。
+        /// 背景設定や ModeConfig のデフォルト化など、プロジェクト固有の初期化のみを担当する。
         /// </summary>
         /// <param name="project">ModeConfig を設定する対象の ProjectData。</param>
         /// <param name="stage">背景を割り当てる対象の StageData。</param>
@@ -151,11 +132,8 @@ namespace FUnity.EditorTools
 
             EnsureFolder(FUnityFolderPath);
             EnsureFolder(FUnityUiFolderPath);
-            EnsureFolder(FUnityUiUssFolderPath);
 
-            var theme = EnsureThemeStyleSheet();
-            var panelSettings = EnsurePanelSettingsAsset();
-            AssignThemeToPanelSettings(panelSettings, theme);
+            EnsurePanelSettingsAsset();
 
             AssignStageBackground(stage);
 
@@ -605,79 +583,6 @@ namespace FUnity.EditorTools
         }
 
         /// <summary>
-        /// 既存テーマが UI Builder 旧フォルダに残っていればそれを使用し、無ければ正規 USS を再生成する。
-        /// Canonical を書き出した場合は Import まで行い、以降の AssetDatabase.Load を成功させる。
-        /// </summary>
-        private static StyleSheet EnsureThemeStyleSheet()
-        {
-            var theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(LegacyThemePath);
-            if (theme != null)
-            {
-                return theme;
-            }
-
-            if (!File.Exists(CanonicalThemePath) || NeedsCanonicalThemeRefresh())
-            {
-                WriteCanonicalTheme();
-            }
-
-            theme = AssetDatabase.LoadAssetAtPath<StyleSheet>(CanonicalThemePath);
-            if (theme == null)
-            {
-                Debug.LogWarning("[FUnity] UnityDefaultRuntimeTheme.uss could not be loaded.");
-            }
-
-            return theme;
-        }
-
-        /// <summary>
-        /// Canonical な USS が YAML 由来のゴミデータや空ファイルになっていないか軽量判定する。
-        /// YAML の区切り線や空文字のみの場合は再生成を促す。
-        /// </summary>
-        private static bool NeedsCanonicalThemeRefresh()
-        {
-            var firstLines = File.ReadLines(CanonicalThemePath).Take(3).ToArray();
-            var content = File.ReadAllText(CanonicalThemePath).Trim();
-            return firstLines.Any(l => l.TrimStart().StartsWith("---")) || string.IsNullOrEmpty(content);
-        }
-
-        /// <summary>
-        /// FUnity 用の安全な最小テーマを UTF-8 で上書きし、ImportAsset で再インポートを明示する。
-        /// UI Builder 標準に依存せず、基礎スタイルのみ持つ USS を配布する。
-        /// </summary>
-        private static void WriteCanonicalTheme()
-        {
-            const string ussText = "/* Unity Default Runtime Theme (safe minimal)\n"
-                + "   - No YAML front matter, no unsupported at-rules.\n"
-                + "   - Avoids shorthand traps; uses explicit px where needed.\n"
-                + "   - Keep it minimal; project-specific styles can be layered later.\n"
-                + "*/\n\n"
-                + "/* Base label/text */\n"
-                + "Label {\n"
-                + "    font-size: 14px;\n"
-                + "}\n\n"
-                + "/* Buttons baseline */\n"
-                + "Button {\n"
-                + "    min-width: 80px;\n"
-                + "    min-height: 24px;\n"
-                + "}\n\n"
-                + "/* Actor template defaults */\n"
-                + ".actor {\n"
-                + "    flex-shrink: 0;\n"
-                + "}\n\n"
-                + ".portrait {\n"
-                + "    width: 100%;\n"
-                + "    height: 100%;\n"
-                + "    /* Keep aspect and fit inside parent */\n"
-                + "    background-size: contain;\n"
-                + "    background-position: center;\n"
-                + "    background-repeat: no-repeat;\n"
-                + "}\n";
-
-            File.WriteAllText(CanonicalThemePath, ussText, System.Text.Encoding.UTF8);
-            AssetDatabase.ImportAsset(CanonicalThemePath);
-        }
-
         /// <summary>
         /// FUnity UI 専用の PanelSettings アセットを確保し、未存在なら ScriptableObject から生成する。
         /// 再生成時にも同じパスを使うため、AssetDatabase.Load と Create をセットで扱う。
@@ -693,137 +598,6 @@ namespace FUnity.EditorTools
             panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
             AssetDatabase.CreateAsset(panelSettings, PanelSettingsAssetPath);
             return panelSettings;
-        }
-
-        /// <summary>
-        /// PanelSettings の theme フィールドに指定テーマを割り当てる。SerializedObject を介し、Unity バージョン差異や配列型にも対応する。
-        /// theme が null の場合は ScriptableObject を汚さないよう即時終了する。
-        /// </summary>
-        private static void AssignThemeToPanelSettings(PanelSettings panelSettings, StyleSheet theme)
-        {
-            if (panelSettings == null || theme == null)
-            {
-                // PanelSettings や Theme が無いと SerializedObject 生成が無駄になるため処理を打ち切る。
-                return;
-            }
-
-            // SerializedObject を使い、公開 API の差異を無視して theme 関連フィールドを動的に操作する。
-            var serializedPanel = new SerializedObject(panelSettings);
-            var themeProperty = FindThemeProperty(serializedPanel);
-            if (themeProperty == null)
-            {
-                Debug.Log("[FUnity.Setup] PanelSettings に theme プロパティが見つからなかったため、ランタイム適用にフォールバックします。");
-                EnsurePanelThemeSettingsAsset(theme);
-                return;
-            }
-
-            var changed = false;
-            if (themeProperty.propertyType == SerializedPropertyType.ObjectReference)
-            {
-                if (themeProperty.objectReferenceValue != theme)
-                {
-                    themeProperty.objectReferenceValue = theme;
-                    changed = true;
-                }
-            }
-            else if (themeProperty.isArray)
-            {
-                var exists = false;
-                for (var i = 0; i < themeProperty.arraySize; i++)
-                {
-                    var element = themeProperty.GetArrayElementAtIndex(i);
-                    if (element != null && element.objectReferenceValue == theme)
-                    {
-                        exists = true;
-                        break;
-                    }
-                }
-
-                if (!exists)
-                {
-                    var insertIndex = themeProperty.arraySize;
-                    themeProperty.InsertArrayElementAtIndex(insertIndex);
-                    var element = themeProperty.GetArrayElementAtIndex(insertIndex);
-                    if (element != null)
-                    {
-                        element.objectReferenceValue = theme;
-                        changed = true;
-                    }
-                }
-            }
-            else
-            {
-                Debug.Log("[FUnity.Setup] PanelSettings の theme プロパティ型が未対応のため、ランタイム適用にフォールバックします。");
-                EnsurePanelThemeSettingsAsset(theme);
-                return;
-            }
-
-            if (!changed)
-            {
-                // 値が変わっていなければ Apply/Save を避けて AssetDatabase の再インポートを抑制する。
-                EnsurePanelThemeSettingsAsset(theme);
-                return;
-            }
-
-            serializedPanel.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(panelSettings);
-            AssetDatabase.SaveAssets();
-
-            EnsurePanelThemeSettingsAsset(theme);
-        }
-
-        /// <summary>
-        /// PanelSettings がテーマを保持できない場合に備え、フォールバック用の設定アセットを生成しテーマ参照を永続化する。
-        /// </summary>
-        private static void EnsurePanelThemeSettingsAsset(StyleSheet theme)
-        {
-            if (theme == null)
-            {
-                return;
-            }
-
-            EnsureFolder(ResourcesFolderPath);
-
-            var settings = AssetDatabase.LoadAssetAtPath<FUnityPanelThemeSettings>(PanelThemeSettingsAssetPath);
-            if (settings == null)
-            {
-                settings = ScriptableObject.CreateInstance<FUnityPanelThemeSettings>();
-                AssetDatabase.CreateAsset(settings, PanelThemeSettingsAssetPath);
-            }
-
-            var serializedSettings = new SerializedObject(settings);
-            var themeProperty = serializedSettings.FindProperty("m_theme");
-            if (themeProperty == null)
-            {
-                return;
-            }
-
-            if (themeProperty.objectReferenceValue == theme)
-            {
-                return;
-            }
-
-            themeProperty.objectReferenceValue = theme;
-            serializedSettings.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(settings);
-            AssetDatabase.SaveAssets();
-        }
-
-        /// <summary>
-        /// PanelSettings のテーマ関連プロパティを候補名順に探索し、最初に見つかった SerializedProperty を返す。
-        /// </summary>
-        private static SerializedProperty FindThemeProperty(SerializedObject serializedPanel)
-        {
-            foreach (var candidate in PanelThemePropertyCandidates)
-            {
-                var property = serializedPanel.FindProperty(candidate);
-                if (property != null)
-                {
-                    return property;
-                }
-            }
-
-            return null;
         }
 
         /// <summary>
