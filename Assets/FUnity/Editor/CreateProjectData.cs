@@ -3,34 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
 using UnityEditor;
-using Unity.VisualScripting;
 using FUnity.Runtime.Authoring;
 using FUnity.Runtime.Core;
-using FUnity.UI;
 
 namespace FUnity.EditorTools
 {
-    // プロジェクト/Stage/Actor/UI を一括生成する初期化コマンド。新規導入直後やサンプル起動前に実行する。UNITY_EDITOR 前提。
-    // CreateDefaultUIProfile で整えるロード設定と組み合わせ、FUnity 学習用シーンの最低限の土台を揃える。
+    // プロジェクト作成時の共通初期化ロジックをまとめたエディター用ユーティリティ。UNITY_EDITOR 前提。
+    // FUnityProjectCreatorWindow から呼び出され、新規 Project/Stage に背景や ModeConfig を適用する役割のみ担う。
     public static class CreateProjectData
     {
-        private const string ResourcesFolderPath = "Assets/Resources";
         private const string FUnityFolderPath = "Assets/FUnity";
-        private const string ProjectAssetPath = ResourcesFolderPath + "/FUnityProjectData.asset";
-        private const string StageAssetPath = ResourcesFolderPath + "/FUnityStageData.asset";
-
-        private const string DuplicateActorResourcePath = ResourcesFolderPath + "/FUnityActorData_Fooni.asset";
-        private const string ActorRootFolderPath = "Assets/FUnity/Data";
-        private const string ActorDataFolderPath = ActorRootFolderPath + "/Actors";
-        private const string ActorAssetPath = ActorDataFolderPath + "/FUnityActorData_Fooni.asset";
-        private const string FooniScriptGraphSearchFilter = "t:ScriptGraphAsset Fooni_FloatSetup";
-        private const string GeneratedRootFolderPath = FUnityFolderPath + "/Generated";
-        private const string GeneratedTextureFolderPath = GeneratedRootFolderPath + "/Textures";
-        private const string GeneratedGraphsFolderPath = GeneratedRootFolderPath + "/Graphs";
-        private const string GeneratedFooniTextureAssetPath = GeneratedTextureFolderPath + "/Fooni.png";
-        private const string GeneratedFooniGraphAssetPath = GeneratedGraphsFolderPath + "/Fooni_FloatSetup.asset";
         private const string PackageRootPath = "Packages/com.papacoder.funity";
         private const string ScratchModeConfigFileName = "FUnityModeConfig_Scratch.asset";
         private const string UnityroomModeConfigFileName = "FUnityModeConfig_Unityroom.asset";
@@ -45,75 +28,7 @@ namespace FUnity.EditorTools
             "Packages/com.papacoder.funity/Art/Backgrounds/Background_01.png"
         };
 
-        // Fooni 用ポートレート/UXML/USS も正規パス→パッケージの順で探し、テンプレート想定の root/portrait 要素を持つファイルを期待する。
-        private static readonly string[] FooniPortraitCandidates =
-        {
-            "Assets/FUnity/Art/Characters/Fooni.png",
-            "Assets/Art/Characters/Fooni.png",
-            "Packages/com.papacoder.funity/Art/Characters/Fooni.png",
-            GeneratedFooniTextureAssetPath
-        };
-
-        private static readonly string[] FooniElementUxmlCandidates =
-        {
-            "Assets/FUnity/UI/UXML/FooniElement.uxml",
-            "Assets/FUnity/UI/UXML/ActorElement.uxml",
-            "Packages/com.papacoder.funity/Runtime/UI/UXML/FooniElement.uxml",
-            "Packages/com.papacoder.funity/Runtime/Resources/UI/FooniElement.uxml",
-            "Packages/com.papacoder.funity/Runtime/Resources/UI/ActorElement.uxml"
-        };
-
-        private static readonly string[] FooniElementStyleCandidates =
-        {
-            "Assets/FUnity/UI/USS/FooniElement.uss",
-            "Assets/FUnity/UI/USS/ActorElement.uss",
-            "Packages/com.papacoder.funity/Runtime/UI/USS/FooniElement.uss",
-            "Packages/com.papacoder.funity/Runtime/Resources/UI/FooniElement.uss",
-            "Packages/com.papacoder.funity/Runtime/Resources/UI/ActorElement.uss"
-        };
-
-        private static readonly string[] FooniScriptGraphCandidates =
-        {
-            "Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset",
-            GeneratedFooniGraphAssetPath,
-            "Packages/com.papacoder.funity/VisualScripting/Macros/Fooni_FloatSetup.asset",
-            "Packages/com.papacoder.funity/Runtime/VisualScripting/Macros/Fooni_FloatSetup.asset"
-        };
         private const string BackgroundSearchFilter = "t:Texture2D Background_01";
-        private const string FooniPortraitSearchFilter = "t:Texture2D Fooni";
-        private const string FooniElementUxmlSearchFilter = "t:VisualTreeAsset FooniElement";
-        private const string FooniElementStyleSearchFilter = "t:StyleSheet FooniElement";
-
-        // FUnity → Create → FUnityProjectData。ProjectData/StageData/ActorData/PanelSettings を生成し相互リンクする。
-        [MenuItem("FUnity/Create/FUnityProjectData")]
-        /// <summary>
-        /// - Resources/Assets/FUnity 配下を作成し、Project/Stage/Actor の ScriptableObject を用意する。
-        /// - Stage 背景に Runtime/Resources/Backgrounds/Background_01.* を設定し、ActorData_Fooni に Portrait/UXML/USS を適用する。
-        /// - 不足アセットは警告にとどめて続行し、最後に SaveAssets/Refresh で AssetDatabase の状態を確定させる。
-        /// </summary>
-        public static void CreateDefault()
-        {
-            Directory.CreateDirectory(ResourcesFolderPath);
-
-            var project = ScriptableObject.CreateInstance<FUnityProjectData>();
-            AssetDatabase.CreateAsset(project, ProjectAssetPath);
-
-            var stage = ScriptableObject.CreateInstance<FUnityStageData>();
-            AssetDatabase.CreateAsset(stage, StageAssetPath);
-
-            ApplyCommonProjectDefaults(project, stage);
-
-            var actor = ConfigureFooniActorData();
-            RemoveDuplicateActorResource();
-            LinkProjectData(project, stage, actor);
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            Selection.activeObject = project;
-
-            Debug.Log("[FUnity] Created default project data assets and linked the Fooni actor.");
-        }
 
         /// <summary>
         /// 新規作成直後の Project/Stage に対し、Actor 以外の共通初期設定をまとめて適用する。
@@ -133,208 +48,6 @@ namespace FUnity.EditorTools
             AssignStageBackground(stage);
 
             AssignDefaultModeConfigs(project);
-        }
-
-        /// <summary>
-        /// Fooni ActorData を確保し、候補パスと GUID 検索で集めた Portrait/UXML/USS を割り当てる。テンプレート構造は root/portrait 要素を前提。
-        /// 旧 Resources 版が残る場合でも生成を優先し、削除は RemoveDuplicateActorResource に委ねる。
-        /// </summary>
-        private static FUnityActorData ConfigureFooniActorData()
-        {
-            EnsureFolder(FUnityFolderPath);
-            EnsureFolder(ActorRootFolderPath);
-            EnsureFolder(ActorDataFolderPath);
-
-            var actorObj = AssetDatabase.LoadAssetAtPath<FUnityActorData>(ActorAssetPath);
-            if (actorObj == null)
-            {
-                actorObj = ScriptableObject.CreateInstance<FUnityActorData>();
-                AssetDatabase.CreateAsset(actorObj, ActorAssetPath);
-            }
-
-            // SerializedObject 経由で m_displayName など内部プロパティにアクセスし、Unity のバージョン差異を吸収する。
-            var serializedActor = new SerializedObject(actorObj);
-            var changed = false;
-
-            changed |= SetString(serializedActor, "m_displayName", "Fooni");
-            var portraitTexture = EnsureFooniPortraitTexture();
-            changed |= SetObject(serializedActor, "m_portrait", portraitTexture);
-            changed |= SetObject(serializedActor, "m_ElementUxml", LoadFirst<VisualTreeAsset>(FooniElementUxmlCandidates, FooniElementUxmlSearchFilter));
-            changed |= SetObject(serializedActor, "m_ElementStyle", LoadFirst<StyleSheet>(FooniElementStyleCandidates, FooniElementStyleSearchFilter));
-            var scriptGraph = EnsureFooniScriptGraph();
-            changed |= SetObject(serializedActor, "m_scriptGraph", scriptGraph);
-
-            if (changed)
-            {
-                serializedActor.ApplyModifiedPropertiesWithoutUndo();
-                EditorUtility.SetDirty(actorObj);
-                AssetDatabase.SaveAssets();
-            }
-
-            return actorObj;
-        }
-
-        /// <summary>
-        /// 指定パスに ScriptGraphAsset を作成し、既に存在する場合はそれを返す。
-        /// </summary>
-        private static ScriptGraphAsset CreateScriptGraphAsset(string assetPath)
-        {
-            if (string.IsNullOrEmpty(assetPath))
-            {
-                return null;
-            }
-
-            var existing = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
-            if (existing != null)
-            {
-                return existing;
-            }
-
-            var directory = Path.GetDirectoryName(assetPath);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                var normalized = directory.Replace("\\", "/");
-                EnsureFolder(normalized);
-
-                if (!Directory.Exists(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-            }
-
-            var macro = ScriptableObject.CreateInstance<ScriptGraphAsset>();
-            macro.graph = new FlowGraph();
-
-            AssetDatabase.CreateAsset(macro, assetPath);
-            EditorUtility.SetDirty(macro);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            return macro;
-        }
-
-        /// <summary>
-        /// Fooni 用ポートレートを候補パスと GUID 検索で探し、見つからなければプレースホルダーを生成する。
-        /// 生成済みのテクスチャがあれば再利用し、AssetDatabase への不要な書き込みを避ける。
-        /// </summary>
-        private static Texture2D EnsureFooniPortraitTexture()
-        {
-            var texture = LoadFirst<Texture2D>(FooniPortraitCandidates, FooniPortraitSearchFilter, "Fooni", false);
-            if (texture != null)
-            {
-                return texture;
-            }
-
-            texture = CreateFooniPlaceholderTexture();
-            if (texture != null)
-            {
-                return texture;
-            }
-
-            Debug.LogWarning("[FUnity.Setup] Fooni 用ポートレートを生成できませんでした。");
-            return null;
-        }
-
-        /// <summary>
-        /// Fooni 向けの ScriptGraphAsset を候補から取得し、無ければプレースホルダーを生成する。
-        /// Visual Scripting は必須依存のため、生成失敗時のみ警告を出す。
-        /// </summary>
-        private static ScriptGraphAsset EnsureFooniScriptGraph()
-        {
-            var scriptGraph = LoadFirst<ScriptGraphAsset>(FooniScriptGraphCandidates, FooniScriptGraphSearchFilter, "Fooni_FloatSetup", false);
-            if (scriptGraph != null)
-            {
-                return scriptGraph;
-            }
-
-            scriptGraph = CreateScriptGraphAsset(GeneratedFooniGraphAssetPath);
-            if (scriptGraph != null)
-            {
-                Debug.Log($"[FUnity.Setup] プレースホルダーの ScriptGraphAsset を生成しました: {GeneratedFooniGraphAssetPath}");
-                return scriptGraph;
-            }
-
-            Debug.LogWarning("[FUnity.Setup] Fooni 用 ScriptGraphAsset を生成できませんでした。");
-            return null;
-        }
-
-        /// <summary>
-        /// Fooni 用の仮ポートレート画像を PNG で生成し、Generated 配下に保存する。
-        /// 既に存在する場合はロードだけ行い、複数回の再生成を避ける。
-        /// </summary>
-        private static Texture2D CreateFooniPlaceholderTexture()
-        {
-            EnsureFolder(GeneratedRootFolderPath);
-            EnsureFolder(GeneratedTextureFolderPath);
-
-            var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(GeneratedFooniTextureAssetPath);
-            if (existing != null)
-            {
-                return existing;
-            }
-
-            var absolutePath = Path.GetFullPath(GeneratedFooniTextureAssetPath);
-            var directory = Path.GetDirectoryName(absolutePath);
-            if (string.IsNullOrEmpty(directory))
-            {
-                return null;
-            }
-
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            const int width = 256;
-            const int height = 256;
-
-            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
-            {
-                name = "FooniPlaceholder"
-            };
-
-            var colors = new Color32[width * height];
-            var lightColor = new Color32(123, 167, 255, 255);
-            var darkColor = new Color32(92, 134, 221, 255);
-            var accentColor = new Color32(255, 215, 120, 255);
-
-            for (var y = 0; y < height; y++)
-            {
-                for (var x = 0; x < width; x++)
-                {
-                    var index = y * width + x;
-                    if (x > width / 3 && x < width * 2 / 3 && y > height / 3 && y < height * 2 / 3)
-                    {
-                        colors[index] = accentColor;
-                        continue;
-                    }
-
-                    var checker = ((x / 32) + (y / 32)) % 2 == 0;
-                    colors[index] = checker ? lightColor : darkColor;
-                }
-            }
-
-            texture.SetPixels32(colors);
-            texture.Apply();
-
-            var pngBytes = texture.EncodeToPNG();
-            if (pngBytes == null || pngBytes.Length == 0)
-            {
-                Object.DestroyImmediate(texture);
-                Debug.LogWarning("[FUnity.Setup] Fooni 用プレースホルダーテクスチャのエンコードに失敗しました。");
-                return null;
-            }
-
-            File.WriteAllBytes(absolutePath, pngBytes);
-            Object.DestroyImmediate(texture);
-
-            AssetDatabase.ImportAsset(GeneratedFooniTextureAssetPath);
-            var created = AssetDatabase.LoadAssetAtPath<Texture2D>(GeneratedFooniTextureAssetPath);
-            if (created != null)
-            {
-                Debug.Log($"[FUnity.Setup] プレースホルダーの Fooni ポートレートを生成しました: {GeneratedFooniTextureAssetPath}");
-            }
-
-            return created;
         }
 
         /// <summary>
@@ -608,67 +321,6 @@ namespace FUnity.EditorTools
             backgroundProperty.objectReferenceValue = texture;
             serializedStage.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(stage);
-            AssetDatabase.SaveAssets();
-        }
-
-        /// <summary>
-        /// Resources 内に残った旧 Fooni ActorData を削除し、重複ロードを防ぐ。.gitkeep 等は残しつつ対象アセットのみ削除する。
-        /// </summary>
-        private static void RemoveDuplicateActorResource()
-        {
-            if (AssetDatabase.LoadAssetAtPath<FUnityActorData>(DuplicateActorResourcePath) != null)
-            {
-                AssetDatabase.DeleteAsset(DuplicateActorResourcePath);
-            }
-        }
-
-        /// <summary>
-        /// プロジェクトデータに Stage と Actor を割り当て、配列サイズを 1 件に保つ。
-        /// 未対応フィールド構造のケースでは警告を出しつつ既定リンクを維持する。
-        /// </summary>
-        private static void LinkProjectData(FUnityProjectData project, FUnityStageData stage, FUnityActorData actor)
-        {
-            if (project == null)
-            {
-                // Project が null なら SerializedObject 化できないため早期 return。
-                return;
-            }
-
-            // SerializedObject を介して m_stage や m_actors といった内部名プロパティを一括更新する。
-            var serializedProject = new SerializedObject(project);
-            var changed = SetObject(serializedProject, "m_stage", stage);
-
-            var actorsProperty = serializedProject.FindProperty("m_actors");
-            if (actorsProperty != null)
-            {
-                if (!actorsProperty.isArray)
-                {
-                    Debug.LogWarning("[FUnity] Project data actors field is not an array; cannot link Fooni actor.");
-                }
-                else
-                {
-                    if (actorsProperty.arraySize != 1)
-                    {
-                        actorsProperty.arraySize = 1;
-                        changed = true;
-                    }
-
-                    var element = actorsProperty.GetArrayElementAtIndex(0);
-                    if (element != null && element.objectReferenceValue != actor)
-                    {
-                        element.objectReferenceValue = actor;
-                        changed = true;
-                    }
-                }
-            }
-
-            if (!changed)
-            {
-                return;
-            }
-
-            serializedProject.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(project);
             AssetDatabase.SaveAssets();
         }
 
