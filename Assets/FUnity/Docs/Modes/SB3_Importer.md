@@ -1,6 +1,6 @@
 # SB3 Importer (Experimental)
 
-`.sb3` ファイル（Scratch 3.0 プロジェクト）を FUnity に取り込むための実験的パイプラインです。Scratch モードを前提としており、Visual Scripting グラフとアセットを自動生成します。
+`.sb3` ファイル（Scratch 3.0 プロジェクト）を FUnity に取り込むための実験的パイプラインです。ブロックモードを前提としており、Visual Scripting グラフとアセットを自動生成します。
 
 ## 処理フロー
 1. `.sb3` (ZIP) を展開し、`project.json` と `assets/` を読み込みます。

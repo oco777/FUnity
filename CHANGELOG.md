@@ -11,10 +11,10 @@ _No unreleased changes yet._
 - Visual Scripting にマウスポインター関連ユニット（x / y 座標、距離、押下判定、マウスポインターへ向ける）を `FUnity/Scratch/調べる` および `FUnity/Scratch/動き` カテゴリへ追加しました。
 - `ActorPresenter` と `ActorPresenterAdapter` に SpriteList の切り替え API（`SetSpriteIndex` / `SpriteIndex` / `SpriteCount`）を追加し、アクターの見た目を複数スプライトから選択できるようにしました。
 - `FUnityActorDataMigrationWindow` を追加し、旧 Portrait / PortraitSprite フィールドを Sprites リストへ一括移行できるようにしました。
-- Scratch モードの停止ユニット（すべてを止める／このスクリプトを止める／スプライトの他のスクリプトを止める）と専用スレッド管理 API を追加し、Scratch の停止挙動を再現しました。
+- ブロックモードの停止ユニット（すべてを止める／このスクリプトを止める／スプライトの他のスクリプトを止める）と専用スレッド管理 API を追加し、Scratch の停止挙動を再現しました。
 
 ### Changed
-- `ScratchUnitUtil` に `GetDirectionDegreesForCurrentMode` を追加し、Scratch モードでは上=0°/右=90°/左=-90°/下=±180°となる角度計算へ統一しました。`DirFromDegrees` もモード差を吸収するよう更新しています。
+- `ScratchUnitUtil` に `GetDirectionDegreesForCurrentMode` を追加し、ブロックモードでは上=0°/右=90°/左=-90°/下=±180°となる角度計算へ統一しました。`DirFromDegrees` もモード差を吸収するよう更新しています。
 - `FUnityActorData` の見た目設定を `Sprites` リストのみで運用するよう更新し、Texture2D フォールバックを廃止しました。
 - `ActorView` と `ActorPresenter` を Sprite リスト前提に再設計し、旧 Portrait 系フィールドに依存しない実装へ移行しました。
 
@@ -24,7 +24,7 @@ _No unreleased changes yet._
 ### Docs
 - `VS_Scratch_Mapping.md` にマウス座標ユニットを追記し、`AGENTS.md` と `CONTRIBUTING.md` に座標変換・カテゴリ規約の運用ルールを追加しました。
 - マウスポインター関連ユニットの追加に合わせて `VS_Scratch_Mapping.md` / `AGENTS.md` / `CONTRIBUTING.md` を更新し、マウス押下追跡やグライド挙動の指針を明文化しました。
-- Scratch モードで上=0°となる角度ルールと共通変換関数の利用を `AGENTS.md` / `CONTRIBUTING.md` / `Docs/VS_Scratch_Mapping.md` に追記しました。
+- ブロックモードで上=0°となる角度ルールと共通変換関数の利用を `AGENTS.md` / `CONTRIBUTING.md` / `Docs/VS_Scratch_Mapping.md` に追記しました。
 - Sprite 運用ルールを `AGENTS.md` / `CONTRIBUTING.md` で Sprites 一本化の方針に更新しました。
 
 ## [v0.2.0] - 2025-11-09
