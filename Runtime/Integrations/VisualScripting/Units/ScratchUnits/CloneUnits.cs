@@ -78,10 +78,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         [DoNotSerialize]
         private ValueInput m_TargetDisplayName;
 
-        /// <summary>生成したクローンのアダプタ出力。失敗時は null。</summary>
-        [DoNotSerialize]
-        private ValueOutput m_CloneAdapter;
-
         /// <summary>enter→exit の制御線および入出力ポートを定義します。</summary>
         protected override void Definition()
         {
@@ -89,7 +85,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             m_Exit = ControlOutput("exit");
 
             m_TargetDisplayName = ValueInput<string>("TargetDisplayName", string.Empty);
-            m_CloneAdapter = ValueOutput<ActorPresenterAdapter>("CloneAdapter", flow => null);
 
             Succession(m_Enter, m_Exit);
             Requirement(m_TargetDisplayName, m_Enter);
@@ -106,7 +101,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (adapter == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Create Clone Of (DisplayName): ActorPresenterAdapter を解決できないためクローンを生成できません。");
-                flow.SetValue(m_CloneAdapter, null);
                 yield return m_Exit;
                 yield break;
             }
@@ -115,14 +109,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (bridge == null)
             {
                 Debug.LogWarning("[FUnity] Scratch/Create Clone Of (DisplayName): VSPresenterBridge が未初期化のためクローン生成を依頼できません。");
-                flow.SetValue(m_CloneAdapter, null);
                 yield return m_Exit;
                 yield break;
             }
 
             var displayName = flow.GetValue<string>(m_TargetDisplayName);
-            var cloneAdapter = bridge.RequestCloneByDisplayName(adapter, displayName);
-            flow.SetValue(m_CloneAdapter, cloneAdapter);
+            bridge.RequestCloneByDisplayName(adapter, displayName);
             yield return m_Exit;
         }
     }
