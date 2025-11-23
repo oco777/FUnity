@@ -18,11 +18,9 @@ namespace FUnity.EditorTools
     {
         private const string ResourcesFolderPath = "Assets/Resources";
         private const string FUnityFolderPath = "Assets/FUnity";
-        private const string FUnityUiFolderPath = FUnityFolderPath + "/UI";
         private const string ProjectAssetPath = ResourcesFolderPath + "/FUnityProjectData.asset";
         private const string StageAssetPath = ResourcesFolderPath + "/FUnityStageData.asset";
 
-        private const string PanelSettingsAssetPath = FUnityUiFolderPath + "/FUnityPanelSettings.asset";
         private const string DuplicateActorResourcePath = ResourcesFolderPath + "/FUnityActorData_Fooni.asset";
         private const string ActorRootFolderPath = "Assets/FUnity/Data";
         private const string ActorDataFolderPath = ActorRootFolderPath + "/Actors";
@@ -131,7 +129,6 @@ namespace FUnity.EditorTools
             }
 
             EnsureFolder(FUnityFolderPath);
-            EnsureFolder(FUnityUiFolderPath);
 
             AssignStageBackground(stage);
 
@@ -578,24 +575,6 @@ namespace FUnity.EditorTools
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// <summary>
-        /// FUnity UI 専用の PanelSettings アセットを確保し、未存在なら ScriptableObject から生成する。
-        /// 再生成時にも同じパスを使うため、AssetDatabase.Load と Create をセットで扱う。
-        /// </summary>
-        private static PanelSettings EnsurePanelSettingsAsset()
-        {
-            var panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>(PanelSettingsAssetPath);
-            if (panelSettings != null)
-            {
-                return panelSettings;
-            }
-
-            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
-            AssetDatabase.CreateAsset(panelSettings, PanelSettingsAssetPath);
-            return panelSettings;
         }
 
         /// <summary>
