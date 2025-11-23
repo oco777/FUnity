@@ -746,7 +746,7 @@ namespace FUnity.Runtime.View
             // 吹き出し表示のたびに視認性を最優先で担保するため、インライン style を強制適用する。
             // USS 側の競合を無視して文字色・背景色・フォントサイズを確実に反映する。
             m_SpeechLabel.style.color = Color.black;
-            m_SpeechLabel.style.fontSize = SpeechBaseFontPx * 2f;
+            m_SpeechLabel.style.fontSize = SpeechBaseFontPx * 0.8f;
 
             // 背景はわずかに透過を抑えた白、境界線と余白を最低限付与して読みやすさを向上させる。
             m_SpeechBubble.style.backgroundColor = new Color(1f, 1f, 1f, 0.98f);
@@ -786,7 +786,9 @@ namespace FUnity.Runtime.View
             {
                 m_SpeechLabel.style.width = StyleKeyword.Auto;
                 m_SpeechLabel.style.height = StyleKeyword.Auto;
-                m_SpeechLabel.style.fontSize = SpeechBaseFontPx * 2f;
+                m_SpeechLabel.style.fontSize = SpeechBaseFontPx * 0.8f;
+                // ★ 追加：テキストを折り返し可にする
+                m_SpeechLabel.style.whiteSpace = WhiteSpace.Normal;
             }
         }
 
@@ -1359,6 +1361,8 @@ namespace FUnity.Runtime.View
             {
                 m_SpeechLabel.AddToClassList("speech-text");
                 m_SpeechLabel.pickingMode = PickingMode.Ignore;
+                // ★ 追加：常に折り返し許可
+                m_SpeechLabel.style.whiteSpace = WhiteSpace.Normal;
             }
         }
 
