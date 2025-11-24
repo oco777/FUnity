@@ -282,6 +282,14 @@ namespace FUnity.Runtime.Core
         }
 
         /// <summary>
+        /// 毎フレームの更新処理として、Visual Scripting 入力ディスパッチャを駆動します。
+        /// </summary>
+        private void Update()
+        {
+            ScratchInputEventDispatcher.Tick();
+        }
+
+        /// <summary>
         /// <see cref="FUnityProjectData"/> の内容からステージと俳優 UI を再生成する。既存要素は安全に破棄し、背景サービスを再構成する。
         /// </summary>
         public void RebuildUI()
