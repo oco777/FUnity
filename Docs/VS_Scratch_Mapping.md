@@ -115,6 +115,11 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | ○と聞いて待つ | FUnity.Runtime.Integrations.VisualScripting.Units.Blocks.AskAndWaitUnit | ○と聞いて待つ | FUnity/Blocks/調べる | 中央に質問フォームを表示し、回答完了後に AnswerStore.LastAnswer へ保存してから後続フローを再開する。定義: Runtime/Integrations/VisualScripting/Units/Blocks/QuestionUnits.cs |
 | 答え | FUnity.Runtime.Integrations.VisualScripting.Units.Blocks.AnswerUnit | 答え | FUnity/Blocks/調べる | AnswerStore.LastAnswer に保持された直近の回答文字列を返す。定義: Runtime/Integrations/VisualScripting/Units/Blocks/QuestionUnits.cs |
 
+## 演算
+| Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
+| --- | --- | --- | --- | --- |
+| ○から○までの乱数 | FUnity.Runtime.Integrations.VisualScripting.Units.Blocks.RandomFromToUnit | ○から○までの乱数 | FUnity/Blocks/演算 | 両端を含む整数乱数と小数乱数の両方に対応。min > max 時は内部で入れ替え、Mathf.Approximately で端点同一を検出する。定義: Runtime/Integrations/VisualScripting/Units/Blocks/RandomFromToUnit.cs |
+
 ## 変数
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
