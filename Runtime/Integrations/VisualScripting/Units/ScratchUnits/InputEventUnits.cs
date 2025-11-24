@@ -115,7 +115,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <param name="stack">現在のグラフスタック。</param>
         public override void StartListening(GraphStack stack)
         {
-            if (stack == null || !stack.HasReference)
+            if (stack == null || !stack.isValid)
             {
                 return;
             }
@@ -138,7 +138,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <param name="stack">現在のグラフスタック。</param>
         public override void StopListening(GraphStack stack)
         {
-            if (stack == null || !stack.HasReference)
+            if (stack == null || !stack.isValid)
             {
                 return;
             }

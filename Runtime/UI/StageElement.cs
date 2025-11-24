@@ -119,7 +119,10 @@ namespace FUnity.Runtime.UI
             m_actorContainer.style.justifyContent = Justify.FlexStart;
             m_actorContainer.style.alignItems = Align.FlexStart;
 
+            // HUD やステージ名ラベルなど、クリック不要なオーバーレイ用コンテナ。
+            // 画面全体のクリックを妨げないよう PickingMode.Ignore とする。
             m_overlayContainer = CreateLayer(OverlayContainerName, OverlayContainerClassName, PickingMode.Position);
+            m_overlayContainer.pickingMode = PickingMode.Ignore;
 
             m_stageViewport.Add(m_backgroundLayer);
             m_stageViewport.Add(m_actorContainer);
