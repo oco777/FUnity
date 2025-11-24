@@ -974,6 +974,11 @@ namespace FUnity.Runtime.Core
 
             actorView.Configure(bridge, visual.Element);
             actorView.ApplyActorData(visual.Data);
+
+            // ★追加: ActorView がデータ適用したあとに、必ず
+            // FUnityActorData.Sprites[0] をポートレートに反映する
+            ApplyActorSprite(visual.Element, visual.Data);
+
             return actorView;
         }
 
@@ -1154,82 +1159,27 @@ namespace FUnity.Runtime.Core
         /// <param name="data">俳優設定。</param>
         private void ApplyActorSprite(VisualElement element, FUnityActorData data)
         {
-            if (element == null || data == null)
-                return;
+            var actorRoot = element.Q<VisualElement>("root") ?? element;
+            var portrait = actorRoot.Q<VisualElement>("portrait");
+            if (portrait == null) return;
 
-            // 1) 本当の #root を取得（element がそのまま root の場合もある）
-            var root = element.Q<VisualElement>("root");
-            if (root == null)
-            {
-                root = element;
-            }
-
-            // 2) #root 直下に残っている古い Image #portrait-image を削除
-            //    （ここが今回の「上の画像」を消すポイント）
-            var strayRootImages = root.Children()
-                .OfType<Image>()
-                .Where(img => img.name == PortraitImageElementName)
-                .ToList();
-            foreach (var strayRootImage in strayRootImages)
-            {
-                strayRootImage.RemoveFromHierarchy();
-            }
-
-            // 3) #portrait を探す
-            var portrait = root.Q<VisualElement>(PortraitElementName);
-            if (portrait == null)
-                return;
-
-            // 4) #portrait 内の Image(#portrait-image) を再利用。存在しなければ 1 度だけ生成する。
-            var img = portrait.Q<Image>(PortraitImageElementName);
+            // ⛔ 新しく生成しない
+            var img = portrait.Q<Image>("portrait-image");
             if (img == null)
             {
-                img = new Image
+                img = new Image()
                 {
-                    name = PortraitImageElementName,
+                    name = "portrait-image",
                     scaleMode = ScaleMode.ScaleToFit,
                     pickingMode = PickingMode.Ignore
                 };
-                img.style.flexGrow = 1f;
-                portrait.Add(img);
-            }
-            else if (img.parent != portrait)
-            {
-                img.RemoveFromHierarchy();
                 portrait.Add(img);
             }
 
-            var duplicateImages = portrait.Children()
-                .OfType<Image>()
-                .Where(image => image != img && image.name == PortraitImageElementName)
-                .ToList();
-            foreach (var extra in duplicateImages)
+            if (data.Sprites != null && data.Sprites.Count > 0)
             {
-                extra.RemoveFromHierarchy();
+                img.sprite = data.Sprites[0];
             }
-
-            // 5) Sprites から Sprite を取得して適用
-            var sprites = data.Sprites;
-            Sprite resolved = null;
-            if (sprites != null && sprites.Count > 0)
-            {
-                resolved = sprites[0];
-            }
-
-            if (resolved != null)
-            {
-                img.sprite = resolved;
-                img.image = null;
-            }
-            else
-            {
-                img.sprite = null;
-                img.image = null;
-            }
-
-            // 念のため背景もクリア
-            portrait.style.backgroundImage = default;
-            portrait.style.backgroundColor = StyleKeyword.Null;
         }
         /// <summary>
         /// Resources から俳優用 VisualTreeAsset を読み込む。既定パスが失敗した場合はフォールバックを試みる。

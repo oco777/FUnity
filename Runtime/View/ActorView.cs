@@ -681,15 +681,12 @@ namespace FUnity.Runtime.View
 
             if (drawable is Image imageElement)
             {
-                if (sourceTexture != null)
-                {
-                    imageElement.image = sourceTexture;
-                }
-
+                // ★ Sprite で表示している場合は image を書き換えない
                 imageElement.tintColor = Color.white;
                 return;
             }
 
+            // ここから下は、Image 以外（背景など）の場合だけ
             if (drawable != null)
             {
                 if (sourceTexture is RenderTexture renderTexture)
