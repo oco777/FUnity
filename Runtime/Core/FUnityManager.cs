@@ -211,7 +211,7 @@ namespace FUnity.Runtime.Core
 
         /// <summary>
         /// Resources から設定アセットを探索し、UI ルートと Presenter ブリッジを生成する。
-        /// Visual Scripting Runner もこの段階でスポーンする。
+        /// Visual Scripting Runner の生成は <see cref="RebuildUI"/> 内で行う。
         /// </summary>
         private void Awake()
         {
@@ -256,8 +256,6 @@ namespace FUnity.Runtime.Core
                     CreateRunner(runner);
                 }
             }
-
-            SpawnActorRunnersFromProjectData();
         }
 
         /// <summary>
