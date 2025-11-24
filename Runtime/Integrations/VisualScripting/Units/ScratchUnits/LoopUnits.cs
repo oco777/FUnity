@@ -174,7 +174,6 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             m_Enter = CreateScratchCoroutineInput("enter", RunCoroutine);
 
             Succession(m_Enter, m_Body);
-            Succession(m_Body, m_Body);
             Succession(m_Enter, m_Exit);
             Requirement(m_Condition, m_Enter);
         }
