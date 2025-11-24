@@ -14,7 +14,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.Blocks
     /// </summary>
     [UnitTitle("〇と聞いて待つ")]
     [UnitShortTitle("聞いて待つ")]
-    [UnitCategory("Events/FUnity/Blocks/調べる")]
+    [UnitCategory("FUnity/Blocks/調べる")]
     [UnitSubtitle("調べる")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class AskAndWaitUnit : Unit
@@ -92,7 +92,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.Blocks
     /// </summary>
     [UnitTitle("答え")]
     [UnitShortTitle("答え")]
-    [UnitCategory("Events/FUnity/Blocks/調べる")]
+    [UnitCategory("FUnity/Blocks/調べる")]
     [UnitSubtitle("調べる")]
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class AnswerUnit : Unit
