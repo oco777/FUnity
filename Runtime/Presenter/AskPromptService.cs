@@ -116,7 +116,6 @@ namespace FUnity.Runtime.Presenter
             panel.style.maxWidth = 420f;
             panel.style.display = DisplayStyle.Flex;
             panel.style.flexDirection = FlexDirection.Column;
-            panel.style.rowGap = 8f;
 
             var label = new Label(question)
             {
@@ -125,6 +124,7 @@ namespace FUnity.Runtime.Presenter
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
             label.style.color = Color.white;
             label.style.whiteSpace = WhiteSpace.Normal;
+            label.style.marginBottom = 8f;
 
             s_InputField = new TextField
             {
@@ -134,6 +134,7 @@ namespace FUnity.Runtime.Presenter
             };
             s_InputField.style.width = Length.Percent(100f);
             s_InputField.style.flexGrow = 1f;
+            s_InputField.style.marginBottom = 8f;
             s_InputField.RegisterCallback<KeyDownEvent>(OnKeyDownSubmit);
 
             var submitButton = new Button(Submit)
