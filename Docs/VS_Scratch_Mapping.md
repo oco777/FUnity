@@ -6,6 +6,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 - `[UnitTitle]` は Scratch 日本語ブロック名に合わせるか、Scratch 流儀の短い日本語で命名する。
 - `[UnitCategory]` は Scratch 系ユニットの場合、イベント系は `Events/FUnity/Scratch/◯◯`、その他は `FUnity/Scratch/◯◯` 形式（カテゴリ名は日本語）で統一する。拡張ユニットは `FUnity/Scratch/拡張` を使用する。
 - `[TypeIcon(typeof(FUnityScratchUnitIcon))]` を全ユニットへ付与し、FUnity Scratch 系ユニットであることを明示する。
+- 質問入力系ユニットは Blocks カテゴリ（`Events/FUnity/Blocks/調べる`）を使用する。
 - Visual Scripting 上のサブタイトルはカテゴリ名のみを表示するため、`[UnitSubtitle]` には必ずカテゴリ名（例：`動き` `見た目` `制御`）だけを設定し、検索用のキーワードは含めない。
 - コード変更と同じ PR でこの対応表を更新し、タイトルやカテゴリの差異が無いよう同期する。
 - Scratch 系のコルーチン Unit は Visual Scripting 標準の `flow.StartCoroutine` を用い、開始後に `ScratchUnitUtil.RegisterScratchFlow` で Flow を登録して停止ブロックと連動させる。
@@ -103,6 +104,8 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | マウスが押された | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.Probe.MouseDownPredicateUnit | マウスが押された | FUnity/Scratch/調べる | 左ボタン押下状態を返す。定義: Runtime/.../Probe/MouseDownPredicateUnit.cs |
 | 端に触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingEdgePredicateUnit | 端に触れた？ | FUnity/Scratch/調べる | ステージ境界との接触判定。定義: Runtime/.../TouchPredicates.cs |
 | ○○に触れた？ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.TouchingActorByDisplayNamePredicateUnit | ○○に触れた？ | FUnity/Scratch/調べる | DisplayName 指定で矩形重なりを判定。定義: Runtime/.../TouchingActorByDisplayNamePredicateUnit.cs |
+| ○と聞いて待つ | FUnity.Runtime.Integrations.VisualScripting.Units.Blocks.AskAndWaitUnit | ○と聞いて待つ | Events/FUnity/Blocks/調べる | 中央に質問フォームを表示し、回答完了後に AnswerStore.LastAnswer へ保存してから後続フローを再開する。定義: Runtime/Integrations/VisualScripting/Units/Blocks/QuestionUnits.cs |
+| 答え | FUnity.Runtime.Integrations.VisualScripting.Units.Blocks.AnswerUnit | 答え | Events/FUnity/Blocks/調べる | AnswerStore.LastAnswer に保持された直近の回答文字列を返す。定義: Runtime/Integrations/VisualScripting/Units/Blocks/QuestionUnits.cs |
 
 ## 変数
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
