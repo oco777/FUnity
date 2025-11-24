@@ -22,15 +22,48 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         private static readonly Dictionary<GraphReference, Action<EmptyEventArgs>> s_Handlers
             = new Dictionary<GraphReference, Action<EmptyEventArgs>>();
 
+        /// <summary>現在ひとつでもキー入力リスナーが登録されているかを返します。</summary>
+        internal static bool HasAnyListeners => s_Handlers.Count > 0;
+
+        /// <summary>
+        /// FUnityManager から毎フレーム呼び出され、登録済みのキー入力ハンドラを実行します。
+        /// </summary>
+        internal static void ProcessUpdate()
+        {
+            if (s_Handlers.Count == 0)
+            {
+                return;
+            }
+
+            var snapshot = new List<Action<EmptyEventArgs>>(s_Handlers.Values);
+            var args = default(EmptyEventArgs);
+
+            foreach (var handler in snapshot)
+            {
+                if (handler == null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    handler(args);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+            }
+        }
+
         /// <summary>監視対象のキーを指定する ValueInput です。</summary>
         [DoNotSerialize]
         private ValueInput m_Key;
 
         /// <summary>
-        /// この EventUnit を EventBus に登録するかどうかを指定します。
-        /// true にしておくことで、Visual Scripting がこのイベントをリッスンします。
+        /// Visual Scripting 標準の EventBus を使用しないため、登録は行いません。
         /// </summary>
-        protected override bool register => true;
+        protected override bool register => false;
 
         /// <summary>イベントデータを生成します。</summary>
         /// <returns>EventUnit 既定のデータ構造。</returns>
@@ -77,12 +110,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         }
 
         /// <summary>
-        /// Update 監視イベントを EventBus に登録し、Scratch スレッド登録経由で実行します。
+        /// FUnity 専用のディスパッチャへ登録し、Scratch スレッド登録経由で実行します。
         /// </summary>
         /// <param name="stack">現在のグラフスタック。</param>
         public override void StartListening(GraphStack stack)
         {
-            if (stack == null)
+            if (stack == null || !stack.HasReference)
             {
                 return;
             }
@@ -94,39 +127,23 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return;
             }
 
-            var hook = GetHook(reference);
             Action<EmptyEventArgs> handler = args => TriggerWithThreadRegistration(reference, args);
 
-            if (hook.name != null && handler != null)
-            {
-                EventBus.Register<EmptyEventArgs>(hook, handler);
-                s_Handlers[reference] = handler;
-            }
+            s_Handlers.Add(reference, handler);
         }
 
         /// <summary>
-        /// Update 監視イベントの登録を解除します。
+        /// FUnity 専用ディスパッチャからキー入力監視の登録を解除します。
         /// </summary>
         /// <param name="stack">現在のグラフスタック。</param>
         public override void StopListening(GraphStack stack)
         {
-            if (stack == null)
+            if (stack == null || !stack.HasReference)
             {
                 return;
             }
 
             var reference = stack.ToReference();
-
-            if (!s_Handlers.TryGetValue(reference, out var handler) || handler == null)
-            {
-                return;
-            }
-
-            var hook = GetHook(reference);
-            if (hook.name != null)
-            {
-                EventBus.Unregister(hook, handler);
-            }
 
             s_Handlers.Remove(reference);
         }
@@ -149,6 +166,24 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             flow.StartCoroutine(trigger);
             ScratchUnitUtil.RegisterScratchFlow(flow);
+        }
+    }
+}
+
+namespace FUnity.Runtime.Integrations.VisualScripting
+{
+    /// <summary>
+    /// FUnityManager から Visual Scripting の入力イベントを駆動するディスパッチャです。
+    /// 今後の拡張でマウスやゲームパッド入力も集約できるよう、現時点ではキー入力のみを委譲します。
+    /// </summary>
+    internal static class ScratchInputEventDispatcher
+    {
+        /// <summary>
+        /// 毎フレーム呼び出され、Scratch 互換の入力イベントを順次処理します。
+        /// </summary>
+        public static void Tick()
+        {
+            Units.ScratchUnits.OnKeyPressedUnit.ProcessUpdate();
         }
     }
 }
