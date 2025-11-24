@@ -125,4 +125,75 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
         }
     }
+
+    /// <summary>
+    /// Scratch の「〇まで繰り返す」ブロックを再現し、条件が成立するまで本体を反復実行するカスタム Unit です。
+    /// </summary>
+    [UnitTitle("○まで繰り返す")]
+    [UnitCategory("FUnity/Blocks/制御")]
+    [UnitSubtitle("制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
+    public sealed class RepeatUntilUnit : ScratchCoroutineUnitBase
+    {
+        /// <summary>ループ開始を受け取る ControlInput です。</summary>
+        [DoNotSerialize]
+        private ControlInput m_Enter;
+
+        /// <summary>各反復で実行する本体ポートです。</summary>
+        [DoNotSerialize]
+        private ControlOutput m_Body;
+
+        /// <summary>ループ終了後に後続へ進む ControlOutput です。</summary>
+        [DoNotSerialize]
+        private ControlOutput m_Exit;
+
+        /// <summary>終了条件を受け取る ValueInput です。</summary>
+        [DoNotSerialize]
+        private ValueInput m_Condition;
+
+        /// <summary>enter ポートへの参照を公開します。</summary>
+        public ControlInput Enter => m_Enter;
+
+        /// <summary>body ポートへの参照を公開します。</summary>
+        public ControlOutput Body => m_Body;
+
+        /// <summary>exit ポートへの参照を公開します。</summary>
+        public ControlOutput Exit => m_Exit;
+
+        /// <summary>condition ポートへの参照を公開します。</summary>
+        public ValueInput Condition => m_Condition;
+
+        /// <summary>
+        /// ポート定義を行い、条件成立までコルーチンで body を繰り返す設定を行います。
+        /// </summary>
+        protected override void Definition()
+        {
+            m_Exit = ControlOutput("exit");
+            m_Body = ControlOutput("body");
+            m_Condition = ValueInput("condition", false);
+            m_Enter = CreateScratchCoroutineInput("enter", RunCoroutine);
+
+            Succession(m_Enter, m_Body);
+            Succession(m_Body, m_Body);
+            Succession(m_Enter, m_Exit);
+            Requirement(m_Condition, m_Enter);
+        }
+
+        /// <summary>
+        /// 条件が真になるまで body を実行し、毎反復の終わりに 1 フレーム待機します。
+        /// 条件成立後は exit ポートへ制御を返します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>ループ処理を行う列挙子。</returns>
+        private IEnumerator RunCoroutine(Flow flow)
+        {
+            while (!flow.GetValue<bool>(m_Condition))
+            {
+                yield return m_Body;
+                yield return null;
+            }
+
+            yield return m_Exit;
+        }
+    }
 }

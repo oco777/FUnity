@@ -70,4 +70,64 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             yield return m_Exit;
         }
     }
+
+    /// <summary>
+    /// Scratch の「〇まで待つ」ブロックを再現し、条件が成立するまで毎フレーム待機するユニットです。
+    /// </summary>
+    [UnitTitle("○まで待つ")]
+    [UnitShortTitle("○まで待つ")]
+    [UnitCategory("FUnity/Blocks/制御")]
+    [UnitSubtitle("制御")]
+    [TypeIcon(typeof(FUnityScratchUnitIcon))]
+    public sealed class WaitUntilUnit : ScratchCoroutineUnitBase
+    {
+        /// <summary>待機を開始する ControlInput です。</summary>
+        [DoNotSerialize]
+        private ControlInput m_Enter;
+
+        /// <summary>条件成立後に後続へ進む ControlOutput です。</summary>
+        [DoNotSerialize]
+        private ControlOutput m_Exit;
+
+        /// <summary>待機判定に使用する条件値を受け取る ValueInput です。</summary>
+        [DoNotSerialize]
+        private ValueInput m_Condition;
+
+        /// <summary>enter ポートへの参照を公開します。</summary>
+        public ControlInput Enter => m_Enter;
+
+        /// <summary>exit ポートへの参照を公開します。</summary>
+        public ControlOutput Exit => m_Exit;
+
+        /// <summary>condition ポートへの参照を公開します。</summary>
+        public ValueInput Condition => m_Condition;
+
+        /// <summary>
+        /// ポート定義を行い、条件成立までコルーチンで待機する入力を登録します。
+        /// </summary>
+        protected override void Definition()
+        {
+            m_Exit = ControlOutput("exit");
+            m_Condition = ValueInput("condition", false);
+            m_Enter = CreateScratchCoroutineInput("enter", RunCoroutine);
+
+            Succession(m_Enter, m_Exit);
+            Requirement(m_Condition, m_Enter);
+        }
+
+        /// <summary>
+        /// 条件が true になるまで 1 フレームずつ待機し、成立後に exit へ遷移します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>待機処理を行う列挙子。</returns>
+        private IEnumerator RunCoroutine(Flow flow)
+        {
+            while (!flow.GetValue<bool>(m_Condition))
+            {
+                yield return null;
+            }
+
+            yield return m_Exit;
+        }
+    }
 }
