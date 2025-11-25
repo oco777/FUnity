@@ -101,15 +101,33 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.Blocks
         [DoNotSerialize]
         private ValueOutput m_AnswerOutput;
 
+        /// <summary>回答を数値として出力するポート（float）。</summary>
+        [DoNotSerialize]
+        [PortLabel("答え(float)")]
+        private ValueOutput m_AnswerFloatOutput;
+
+        /// <summary>回答を整数として出力するポート（int）。</summary>
+        [DoNotSerialize]
+        [PortLabel("答え(int)")]
+        private ValueOutput m_AnswerIntOutput;
+
         /// <summary>出力ポートの参照。</summary>
         public ValueOutput AnswerOutput => m_AnswerOutput;
+
+        /// <summary>float 変換済み回答ポートの参照。</summary>
+        public ValueOutput AnswerFloatOutput => m_AnswerFloatOutput;
+
+        /// <summary>int 変換済み回答ポートの参照。</summary>
+        public ValueOutput AnswerIntOutput => m_AnswerIntOutput;
 
         /// <summary>
         /// ポート定義を行い、回答文字列を出力します。
         /// </summary>
         protected override void Definition()
         {
-            m_AnswerOutput = ValueOutput<string>("answer", GetAnswer);
+            m_AnswerOutput = ValueOutput<string>("answer", GetAnswerString);
+            m_AnswerFloatOutput = ValueOutput<float>("answerFloat", GetAnswerFloat);
+            m_AnswerIntOutput = ValueOutput<int>("answerInt", GetAnswerInt);
         }
 
         /// <summary>
@@ -117,9 +135,36 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.Blocks
         /// </summary>
         /// <param name="flow">現在のフロー情報。</param>
         /// <returns>直近の回答文字列。</returns>
-        private static string GetAnswer(Flow flow)
+        private string GetAnswerString(Flow flow)
         {
             return AnswerStore.LastAnswer ?? string.Empty;
+        }
+
+        /// <summary>
+        /// 回答文字列を float に変換して返します。失敗時は 0f を返却します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>数値変換した回答。</returns>
+        private float GetAnswerFloat(Flow flow)
+        {
+            var text = GetAnswerString(flow) ?? string.Empty;
+            if (float.TryParse(text, out var value))
+            {
+                return value;
+            }
+
+            return 0f;
+        }
+
+        /// <summary>
+        /// 回答文字列を四捨五入した整数として返します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>四捨五入後の整数値。</returns>
+        private int GetAnswerInt(Flow flow)
+        {
+            var floatValue = GetAnswerFloat(flow);
+            return Mathf.RoundToInt(floatValue);
         }
     }
 }
