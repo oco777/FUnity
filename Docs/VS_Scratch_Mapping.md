@@ -70,6 +70,9 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | ○の音を鳴らす | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.PlaySoundUnit | ○の音を鳴らす | FUnity/Blocks/音 | サウンドサービスを介して指定 ID の音を即時再生。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SoundUnits.cs |
 | 終わるまで○の音を鳴らす | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.PlaySoundUntilDoneUnit | 終わるまで○の音を鳴らす | FUnity/Blocks/音 | サウンド再生完了までコルーチンで待機。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SoundUnits.cs |
 | すべての音を止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopAllSoundsUnit | すべての音を止める | FUnity/Blocks/音 | サウンドサービス経由で全サウンド停止。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SoundUnits.cs |
+| 音量を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeVolumeByUnit | 音量を増減 | FUnity/Blocks/音 | グローバル音量を相対変更し、0～100% にクランプ。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SoundVolumeUnits.cs |
+| 音量を○%にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetVolumeToUnit | 音量を指定 | FUnity/Blocks/音 | マスター音量を絶対設定し、再生中の AudioSource へ反映。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SoundVolumeUnits.cs |
+| 音量 | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.GetVolumeUnit | 音量 | FUnity/Blocks/音 | 現在のマスター音量（%）を返すレポータ。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SoundVolumeUnits.cs |
 
 ## 制御
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |

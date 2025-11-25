@@ -26,5 +26,16 @@ namespace FUnity.Runtime.Audio
         /// 再生中のすべてのサウンドを停止する。未再生時は何もしない。
         /// </summary>
         void StopAllSounds();
+
+        /// <summary>
+        /// マスター音量（パーセント表記）を取得または設定する。
+        /// 0～100 の範囲で解釈し、実際の AudioSource へ反映する際は 0.0～1.0 へ変換する。
+        /// </summary>
+        float VolumePercent { get; set; }
+
+        /// <summary>
+        /// 現在設定されている音量を再生中の AudioSource 群へ適用する。
+        /// </summary>
+        void ApplyVolumeToAllActiveSources();
     }
 }
