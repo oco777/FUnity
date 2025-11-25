@@ -146,7 +146,7 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 ## 変数
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
-| （変数） | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.VariableReporterUnit | （変数） | FUnity/Blocks/変数 | 変数サービスから現在値を取得して返すレポータ。定義: Runtime/.../VariableReporterUnit.cs |
+| （変数） | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.VariableReporterUnit | （変数） | FUnity/Blocks/変数 | 変数サービスから現在値を取得し、float / int / string の 3 種類で出力するレポータ。定義: Runtime/.../VariableReporterUnit.cs |
 | （変数）を○にする | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SetVariableUnit | （変数）を○にする | FUnity/Blocks/変数 | 変数サービス経由で絶対値を設定。定義: Runtime/.../ScratchVariables/SetVariableUnit.cs |
 | （変数）を○ずつ変える | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ChangeVariableUnit | （変数）を○ずつ変える | FUnity/Blocks/変数 | 変数サービス経由で加算。定義: Runtime/.../ScratchVariables/ChangeVariableUnit.cs |
 | 変数（変数）を表示する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ShowVariableUnit | 変数（変数）を表示する | FUnity/Blocks/変数 | 変数モニターを表示。定義: Runtime/.../ScratchVariables/ShowVariableUnit.cs |
