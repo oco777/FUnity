@@ -25,18 +25,18 @@ FUnity 独自の Actor / ステージ / プロジェクト構造に最適化さ�
 - 各モードの仕様やブロック互換ポリシーは [`Assets/FUnity/Docs/Modes/README.md`](Assets/FUnity/Docs/Modes/README.md) を参照してください。
 
 ## 現状機能サマリ
-- UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.4.0`）によるバージョン固定にも対応。
+- UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.5.0`）によるバージョン固定にも対応。
 - Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/FUnityProjectData**）で初期データを生成。
 - `Runtime/Resources/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
 - `FUnityManager` がシーン起動時に “FUnity UI” GameObject と `UIDocument` を構築し、UI ブリッジや Runner 参照をセットアップ。
 - Unity Visual Scripting を **必須依存**とし、Macro が無い場合でも `Fooni_FloatSetup.asset` を自動生成して割り当てる。
 - ブロックモードの見た目操作として「大きさを ◯ % にする」「大きさを ◯ % ずつ変える」ユニットを提供し、Presenter 経由で UI Toolkit `style.scale` を中心ピボットで適用。
 
-## What's new in 0.4.0
+## What's new in 0.5.0
 
-- `FUnityProjectCreatorWindow` とプロジェクトランチャーを追加し、既定データの再利用やプロジェクト切り替えを Editor からまとめて行えるようにしました。
-- ステージ背景を複数登録できるようにし、パッケージ内に既定の UI テーマと PanelSettings を同梱することで初期セットアップの手間を削減しました。
-- ブロックモード（Blocks）表記への統一やターゲット FPS=30 の適用、Hue 回転や吹き出しの見た目修正など、モード周りの挙動とビジュアルを改善しました。
+- Scratch「イベント/このスプライトが押されたとき」ユニットを追加し、イベント開始パターンを拡充しました。
+- Actor の向きと見た目の回転処理を整理し、初期状態で右方向へ移動する挙動に統一しました。
+- ブロックモードと unityroom モードの違いを整理したドキュメントを追加し、ブロックモードの角度仕様（0=上, 90=右, 180=下, 270=左）を明記しました。
 
 ## 目次
 - [システム要件](#システム要件)
@@ -70,7 +70,7 @@ FUnity 独自の Actor / ステージ / プロジェクト構造に最適化さ�
 特定のタグに固定したい場合は、`#タグ名` を付けます。
 
 ```json
-"com.papacoder.funity": "https://github.com/oco777/FUnity.git#v0.4.0"
+"com.papacoder.funity": "https://github.com/oco777/FUnity.git#v0.5.0"
 ```
 
 > ℹ️ Visual Scripting は必須依存のため、`#if UNITY_VISUAL_SCRIPTING` などのガードは不要です。パッケージ導入時に `com.unity.visualscripting` が自動インストールされます。
