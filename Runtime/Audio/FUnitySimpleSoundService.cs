@@ -26,6 +26,14 @@ namespace FUnity.Runtime.Audio
         /// <summary>マスター音量（%）。0～100 の範囲でクランプする。</summary>
         private float m_VolumePercent = 100f;
 
+        /// <summary>ピッチの効果（半音単位）。0 がデフォルト。</summary>
+        [SerializeField, Range(-120f, 120f)]
+        private float m_PitchEffect = 0f;
+
+        /// <summary>左右パンの効果（%-100～100）。0 が中央。</summary>
+        [SerializeField, Range(-100f, 100f)]
+        private float m_PanEffect = 0f;
+
         /// <summary>
         /// コンポーネント有効化時に AudioSource を保証し、ロケーターへ自身を登録する。
         /// </summary>
@@ -88,6 +96,7 @@ namespace FUnity.Runtime.Audio
 
             EnsureAudioSource();
             ApplyVolumeToAudioSource();
+            ApplyEffectsToAudioSource();
             m_AudioSource.PlayOneShot(clip);
         }
 
@@ -105,6 +114,7 @@ namespace FUnity.Runtime.Audio
 
             EnsureAudioSource();
             ApplyVolumeToAudioSource();
+            ApplyEffectsToAudioSource();
             m_AudioSource.Stop();
             m_AudioSource.clip = clip;
             m_AudioSource.Play();
@@ -143,11 +153,46 @@ namespace FUnity.Runtime.Audio
         }
 
         /// <summary>
+        /// ピッチの効果（半音単位）を取得または設定する。設定時はクランプし、AudioSource に即時反映する。
+        /// </summary>
+        public float PitchEffect
+        {
+            get => m_PitchEffect;
+            set
+            {
+                m_PitchEffect = Mathf.Clamp(value, -120f, 120f);
+                ApplySoundEffectsToAllActiveSources();
+            }
+        }
+
+        /// <summary>
+        /// 左右パンの効果（%-100～100）を取得または設定する。設定時はクランプし、AudioSource に即時反映する。
+        /// </summary>
+        public float PanEffect
+        {
+            get => m_PanEffect;
+            set
+            {
+                m_PanEffect = Mathf.Clamp(value, -100f, 100f);
+                ApplySoundEffectsToAllActiveSources();
+            }
+        }
+
+        /// <summary>
         /// 現在のマスター音量を再生に使用する AudioSource へ反映する。
         /// </summary>
         public void ApplyVolumeToAllActiveSources()
         {
             ApplyVolumeToAudioSource();
+            ApplyEffectsToAudioSource();
+        }
+
+        /// <summary>
+        /// 現在のピッチ効果・パン効果を再生に使用する AudioSource へ反映する。
+        /// </summary>
+        public void ApplySoundEffectsToAllActiveSources()
+        {
+            ApplyEffectsToAudioSource();
         }
 
         /// <summary>
@@ -189,6 +234,7 @@ namespace FUnity.Runtime.Audio
             m_AudioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
             m_AudioSource.playOnAwake = false;
             ApplyVolumeToAudioSource();
+            ApplyEffectsToAudioSource();
         }
 
         /// <summary>
@@ -205,6 +251,23 @@ namespace FUnity.Runtime.Audio
         }
 
         /// <summary>
+        /// 現在のピッチ効果・パン効果を AudioSource に適用する。AudioSource 未確保時は何も行わない。
+        /// </summary>
+        private void ApplyEffectsToAudioSource()
+        {
+            if (m_AudioSource == null)
+            {
+                return;
+            }
+
+            var pitchFactor = Mathf.Pow(2f, m_PitchEffect / 12f);
+            m_AudioSource.pitch = Mathf.Clamp(pitchFactor, 0.1f, 4f);
+
+            var pan = Mathf.Clamp(m_PanEffect * 0.01f, -1f, 1f);
+            m_AudioSource.panStereo = pan;
+        }
+
+        /// <summary>
         /// 音量パーセントを 0～100 の範囲へクランプする。
         /// </summary>
         /// <param name="value">入力値（%）。</param>
@@ -212,6 +275,16 @@ namespace FUnity.Runtime.Audio
         private float ClampVolumePercent(float value)
         {
             return Mathf.Clamp(value, 0f, 100f);
+        }
+
+        /// <summary>
+        /// すべての音の効果（ピッチ・パン）をデフォルト値にリセットし、AudioSource に反映する。
+        /// </summary>
+        public void ResetSoundEffects()
+        {
+            m_PitchEffect = 0f;
+            m_PanEffect = 0f;
+            ApplySoundEffectsToAllActiveSources();
         }
 
         /// <summary>

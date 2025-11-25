@@ -33,9 +33,25 @@ namespace FUnity.Runtime.Audio
         /// </summary>
         float VolumePercent { get; set; }
 
+        /// <summary>ピッチの効果（半音単位）。0 がデフォルトで、正で高く、負で低くなる。</summary>
+        float PitchEffect { get; set; }
+
+        /// <summary>左右パンの効果（%-100～100）。0 が中央、負で左、正で右。</summary>
+        float PanEffect { get; set; }
+
         /// <summary>
         /// 現在設定されている音量を再生中の AudioSource 群へ適用する。
         /// </summary>
         void ApplyVolumeToAllActiveSources();
+
+        /// <summary>
+        /// 現在のピッチ効果・パン効果を再生に使用する AudioSource へ反映する。
+        /// </summary>
+        void ApplySoundEffectsToAllActiveSources();
+
+        /// <summary>
+        /// すべての音の効果（ピッチ・パンなど）をデフォルト値にリセットする。
+        /// </summary>
+        void ResetSoundEffects();
     }
 }
