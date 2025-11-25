@@ -75,8 +75,8 @@ namespace FUnity.EditorTools
 
             if (soundData != null)
             {
-                var isProjectSoundDataChanged = project.soundData != soundData;
-                project.soundData = soundData;
+                var isProjectSoundDataChanged = project.SoundData != soundData;
+                project.SetSoundData(soundData);
 
                 if (isProjectSoundDataChanged)
                 {

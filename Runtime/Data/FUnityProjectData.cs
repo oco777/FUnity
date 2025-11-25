@@ -108,6 +108,18 @@ namespace FUnity.Runtime.Core
         /// <summary>プロジェクトで利用するサウンド定義。</summary>
         public FUnitySoundData SoundData => m_SoundData;
 
+#if UNITY_EDITOR
+        /// <summary>
+        /// Editor からサウンド定義を設定するためのヘルパー。
+        /// ランタイムコードからは直接呼び出さないことを想定する。
+        /// </summary>
+        /// <param name="soundData">プロジェクトへ紐づけたいサウンド定義アセット。</param>
+        public void SetSoundData(FUnitySoundData soundData)
+        {
+            m_SoundData = soundData;
+        }
+#endif
+
         /// <summary>俳優データのリスト。Presenter 初期化時に順次消費される。</summary>
         public List<FUnityActorData> Actors => m_actors;
 
