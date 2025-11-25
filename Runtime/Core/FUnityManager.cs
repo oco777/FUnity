@@ -109,6 +109,10 @@ namespace FUnity.Runtime.Core
         /// <summary>俳優設定と ScriptMachine を対応付け、Graph Variables に Self を注入するための辞書。</summary>
         private readonly Dictionary<FUnityActorData, ScriptMachine> m_ActorScriptMachines = new Dictionary<FUnityActorData, ScriptMachine>();
 
+        /// <summary>俳優 UI 要素ごとのクリックイベント登録を管理するテーブル。</summary>
+        private readonly Dictionary<VisualElement, EventCallback<PointerDownEvent>> m_SpriteClickHandlers
+            = new Dictionary<VisualElement, EventCallback<PointerDownEvent>>();
+
         /// <summary>生成済みの俳優 Runner GameObject 群。Play/Stop を跨いでクリーンアップする。</summary>
         private readonly List<GameObject> m_ActorRunnerInstances = new List<GameObject>();
 
@@ -598,10 +602,28 @@ namespace FUnity.Runtime.Core
             for (var i = 0; i < m_ActorVisuals.Count; i++)
             {
                 var visual = m_ActorVisuals[i];
-                if (visual.Element != null && visual.Element.parent != null)
+                if (visual.Element != null)
                 {
-                    visual.Element.RemoveFromHierarchy();
+                    UnregisterSpriteClickHandler(visual.Element);
+
+                    if (visual.Element.parent != null)
+                    {
+                        visual.Element.RemoveFromHierarchy();
+                    }
                 }
+            }
+
+            if (m_SpriteClickHandlers.Count > 0)
+            {
+                foreach (var pair in m_SpriteClickHandlers)
+                {
+                    if (pair.Key != null && pair.Value != null)
+                    {
+                        pair.Key.UnregisterCallback(pair.Value, TrickleDown.NoTrickleDown);
+                    }
+                }
+
+                m_SpriteClickHandlers.Clear();
             }
 
             m_ActorVisuals.Clear();
@@ -862,6 +884,8 @@ namespace FUnity.Runtime.Core
                 {
                     EnsureActorPresenterAdapter(runner, presenter, visual.Element);
                 }
+
+                RegisterSpriteClickHandler(visual.Element, presenter);
 
                 visual.Presenter = presenter;
                 visual.View = view;
@@ -1605,6 +1629,59 @@ namespace FUnity.Runtime.Core
         }
 
         /// <summary>
+        /// 俳優 UI 要素のクリックイベントを登録し、Visual Scripting へ通知します。
+        /// </summary>
+        /// <param name="actorElement">クリック対象とする UI 要素。</param>
+        /// <param name="presenter">イベントターゲットとなる Presenter。</param>
+        private void RegisterSpriteClickHandler(VisualElement actorElement, ActorPresenter presenter)
+        {
+            if (actorElement == null || presenter == null)
+            {
+                return;
+            }
+
+            var eventTarget = presenter.Runner;
+            if (eventTarget == null)
+            {
+                return;
+            }
+
+            UnregisterSpriteClickHandler(actorElement);
+
+            EventCallback<PointerDownEvent> handler = evt =>
+            {
+                if (evt == null || evt.button != (int)MouseButton.LeftMouse || eventTarget == null)
+                {
+                    return;
+                }
+
+                EventBus.Trigger(new EventHook(FUnityEventNames.OnSpriteClicked, eventTarget), new EmptyEventArgs());
+            };
+
+            actorElement.RegisterCallback(handler, TrickleDown.NoTrickleDown);
+            m_SpriteClickHandlers[actorElement] = handler;
+        }
+
+        /// <summary>
+        /// 登録済みの俳優クリックイベントを解除します。
+        /// </summary>
+        /// <param name="actorElement">解除対象の UI 要素。</param>
+        private void UnregisterSpriteClickHandler(VisualElement actorElement)
+        {
+            if (actorElement == null)
+            {
+                return;
+            }
+
+            if (m_SpriteClickHandlers.TryGetValue(actorElement, out var handler) && handler != null)
+            {
+                actorElement.UnregisterCallback(handler, TrickleDown.NoTrickleDown);
+            }
+
+            m_SpriteClickHandlers.Remove(actorElement);
+        }
+
+        /// <summary>
         /// <see cref="ActorPresenterAdapter"/> に俳優要素をバインドし、浮遊アニメーション設定を同期する。
         /// </summary>
         /// <param name="actorVE">俳優 UI 要素。</param>
@@ -2237,6 +2314,8 @@ namespace FUnity.Runtime.Core
             presenter.Original = original;
             presenter.CopyRuntimeStateFrom(original);
 
+            RegisterSpriteClickHandler(cloneVisual.Element, presenter);
+
             var cloneInfo = new ActorCloneRuntime
             {
                 ActorData = actorData,
@@ -2475,6 +2554,7 @@ namespace FUnity.Runtime.Core
 
             if (info.Element != null)
             {
+                UnregisterSpriteClickHandler(info.Element);
                 info.Element.RemoveFromHierarchy();
             }
 
@@ -2603,6 +2683,9 @@ namespace FUnity.Runtime.Core
 
         /// <summary>クローン開始時に発火するイベント名。</summary>
         public const string OnCloneStart = "FUnity.OnCloneStart";
+
+        /// <summary>俳優（スプライト）がクリックされた際に発火するイベント名。</summary>
+        public const string OnSpriteClicked = "FUnity.OnSpriteClicked";
     }
 
     /// <summary>クローン開始イベントに付随する引数（値は持たない）。</summary>
