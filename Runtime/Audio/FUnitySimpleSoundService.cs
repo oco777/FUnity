@@ -9,6 +9,7 @@ namespace FUnity.Runtime.Audio
     /// プロジェクトで定義したサウンド ID をキーに再生・停止を行う。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(AudioSource))]
     public sealed class FUnitySimpleSoundService : MonoBehaviour, IFUnitySoundService
     {
         /// <summary>シーンを跨いでサービスを共有する場合に true。既定で有効。</summary>
