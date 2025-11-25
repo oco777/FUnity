@@ -1,6 +1,7 @@
 // Updated: 2025-02-14
 using System.Collections.Generic;
 using FUnity.Runtime.Authoring;
+using FUnity.Runtime.Audio;
 using UnityEngine;
 using Unity.VisualScripting;
 
@@ -71,6 +72,10 @@ namespace FUnity.Runtime.Core
         /// <summary>生成する俳優の静的設定コレクション。</summary>
         [SerializeField] private List<FUnityActorData> m_actors = new List<FUnityActorData>();
 
+        [Header("Sound")]
+        /// <summary>プロジェクトで利用するサウンド定義。未設定の場合はサウンド初期化をスキップする。</summary>
+        [SerializeField] private FUnitySoundData m_SoundData;
+
         [Header("Performance / Frame Rate")]
         /// <summary>
         /// 起動時に設定するフレームレート。-1 を指定するとプラットフォーム既定値を維持し、60 以上を推奨する。
@@ -99,6 +104,9 @@ namespace FUnity.Runtime.Core
 
         /// <summary>読み取り専用のステージ設定。</summary>
         public FUnityStageData Stage => m_stage;
+
+        /// <summary>プロジェクトで利用するサウンド定義。</summary>
+        public FUnitySoundData SoundData => m_SoundData;
 
         /// <summary>俳優データのリスト。Presenter 初期化時に順次消費される。</summary>
         public List<FUnityActorData> Actors => m_actors;

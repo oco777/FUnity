@@ -6,6 +6,7 @@ using UnityEngine.UIElements;
 using FUnity.Runtime.Integrations.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Model;
+using FUnity.Runtime.Audio;
 using FUnity.Runtime.View;
 using FUnity.Runtime.Presenter;
 using FUnity.Runtime.Input;
@@ -69,6 +70,7 @@ namespace FUnity.Runtime.Core
         {
             m_Project = projectData;
             UpdateBootstrapperProjectData();
+            EnsureSoundService();
         }
 #endif
 
@@ -244,6 +246,8 @@ namespace FUnity.Runtime.Core
 
             ApplyProjectFrameRate();
 
+            EnsureSoundService();
+
             if (m_Project != null && m_Project.runners != null)
             {
                 foreach (var runner in m_Project.runners)
@@ -335,6 +339,8 @@ namespace FUnity.Runtime.Core
                 Debug.LogWarning("[FUnity] FUnityProjectData not found. メニュー FUnity/Create/FUnityProjectData を実行して初期アセットを生成してください。");
                 return;
             }
+
+            EnsureSoundService();
 
             ResetActorVisualState(stageElement);
 
@@ -1305,6 +1311,44 @@ namespace FUnity.Runtime.Core
                 uiGO.AddComponent<FUnity.Runtime.Input.FooniUIBridge>();
                 Debug.Log("[FUnity] Added FooniUIBridge to 'FUnity UI'.");
             }
+        }
+
+        /// <summary>
+        /// プロジェクト設定に基づいてサウンドサービスを生成・初期化する。既存サービスがある場合は再利用する。
+        /// </summary>
+        private void EnsureSoundService()
+        {
+            var project = m_Project;
+            if (project == null)
+            {
+                Debug.LogWarning("[FUnity.Sound] Project が設定されていません。サウンドサービスを初期化できません。");
+                return;
+            }
+
+            var soundData = project.SoundData;
+            if (soundData == null)
+            {
+                return;
+            }
+
+            if (FUnitySoundServiceLocator.Service is FUnitySimpleSoundService existingService)
+            {
+                existingService.Initialize(soundData.sounds);
+                return;
+            }
+
+            if (FUnitySoundServiceLocator.Service != null)
+            {
+                Debug.LogWarning("[FUnity.Sound] 既に別のサウンドサービスが登録されているため、新規生成をスキップします。");
+                return;
+            }
+
+            var go = new GameObject("FUnitySoundService");
+            var service = go.AddComponent<FUnitySimpleSoundService>();
+            go.transform.SetParent(transform, false);
+
+            service.Initialize(soundData.sounds);
+            FUnitySoundServiceLocator.Service = service;
         }
 
         /// <summary>
