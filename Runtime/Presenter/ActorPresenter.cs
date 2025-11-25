@@ -1443,7 +1443,7 @@ namespace FUnity.Runtime.Presenter
         }
 
         /// <summary>
-        /// 現在の向きを設定する。View 側は方向を保持しないため、主に移動ベクトル計算に利用する。
+        /// 現在の向きを設定する。主に移動ベクトル計算に利用し、RotationStyle.AllAround の場合は見た目の回転角度にも反映される。
         /// </summary>
         /// <param name="degrees">設定する角度（度）。</param>
         public void SetDirection(float degrees)
@@ -1453,7 +1453,15 @@ namespace FUnity.Runtime.Presenter
                 return;
             }
 
-            m_State.DirectionDeg = Normalize0To360(degrees);
+            var normalized = Normalize0To360(degrees);
+
+            m_State.DirectionDeg = normalized;
+
+            if (m_State.RotationStyle == RotationStyle.AllAround)
+            {
+                m_State.RotationDeg = normalized;
+            }
+
             ApplyRotationStyleToView();
         }
 
