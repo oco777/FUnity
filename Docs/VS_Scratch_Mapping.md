@@ -64,6 +64,13 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | 表示する | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ShowActorUnit | 表示する | FUnity/Scratch/見た目 | 俳優を表示状態へ。定義: Runtime/.../VisibilityUnits.cs |
 | 隠す | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.HideActorUnit | 隠す | FUnity/Scratch/見た目 | 俳優を非表示へ。定義: Runtime/.../VisibilityUnits.cs |
 
+## 音
+| Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
+| --- | --- | --- | --- | --- |
+| ○の音を鳴らす | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.PlaySoundUnit | ○の音を鳴らす | FUnity/Blocks/音 | サウンドサービスを介して指定 ID の音を即時再生。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SoundUnits.cs |
+| 終わるまで○の音を鳴らす | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.PlaySoundUntilDoneUnit | 終わるまで○の音を鳴らす | FUnity/Blocks/音 | サウンド再生完了までコルーチンで待機。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SoundUnits.cs |
+| すべての音を止める | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.StopAllSoundsUnit | すべての音を止める | FUnity/Blocks/音 | サウンドサービス経由で全サウンド停止。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/SoundUnits.cs |
+
 ## 制御
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
