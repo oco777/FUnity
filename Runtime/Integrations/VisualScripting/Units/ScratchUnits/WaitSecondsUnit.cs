@@ -58,7 +58,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         {
             var seconds = Mathf.Max(0f, flow.GetValue<float>(m_Seconds));
 
-            Debug.Log($"[FUnity.Wait] WaitSecondsUnit start seconds={seconds}");
+            //Debug.Log($"[FUnity.Wait] WaitSecondsUnit start seconds={seconds}");
 
             if (seconds > 0f)
             {

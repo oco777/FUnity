@@ -174,7 +174,9 @@ namespace FUnity.Runtime.Integrations.VisualScripting
                 return;
             }
 
-            m_ActorPresenter.SetDirection(m_LocalDirectionDeg);
+            // ★ Presenter の現在の向きを正とし、ローカルキャッシュを同期する
+            m_LocalDirectionDeg = presenter.GetDirection();
+
             ApplyPresenterOffsets();
         }
 

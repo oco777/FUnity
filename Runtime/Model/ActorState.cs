@@ -54,7 +54,7 @@ namespace FUnity.Runtime.Model
         /// <summary>
         /// 現在の向き（度）。0=右、90=上、180=左、270=下を想定し、<see cref="FUnity.Runtime.Presenter.ActorPresenter"/> が移動命令を解釈する際に利用する。
         /// </summary>
-        public float DirectionDeg;
+        public float DirectionDeg = 90f;
 
         /// <summary>
         /// 現在の回転角度（度）。UI 上のポートレートを中心ピボットで回転させる際に利用し、0～360 度へ正規化して保持する。

@@ -1650,7 +1650,7 @@ namespace FUnity.Runtime.Core
 
             EventCallback<PointerDownEvent> handler = evt =>
             {
-                if (evt == null || evt.button != (int)MouseButton.LeftMouse || eventTarget == null)
+                if (evt == null || evt.button != (int)UnityEngine.UIElements.MouseButton.LeftMouse || eventTarget == null)
                 {
                     return;
                 }
