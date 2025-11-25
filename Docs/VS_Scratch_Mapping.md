@@ -126,6 +126,12 @@ Scratch ブロックと FUnity 独自 Visual Scripting Unit の対応関係で�
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
 | --- | --- | --- | --- | --- |
 | ○から○までの乱数 | FUnity.Runtime.Integrations.VisualScripting.Units.Blocks.RandomFromToUnit | ○から○までの乱数 | FUnity/Blocks/演算 | 両端を含む整数乱数と小数乱数の両方に対応。min > max 時は内部で入れ替え、Mathf.Approximately で端点同一を検出する。定義: Runtime/Integrations/VisualScripting/Units/Blocks/RandomFromToUnit.cs |
+| ○ + ○ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.AddNumbersUnit | ○ + ○ | FUnity/Blocks/演算 | 2 つの値を加算する。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ArithmeticOperatorUnits.cs |
+| ○ - ○ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.SubtractNumbersUnit | ○ - ○ | FUnity/Blocks/演算 | 2 つの値を減算する。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ArithmeticOperatorUnits.cs |
+| ○ * ○ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.MultiplyNumbersUnit | ○ * ○ | FUnity/Blocks/演算 | 2 つの値を乗算する。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ArithmeticOperatorUnits.cs |
+| ○ / ○ | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.DivideNumbersUnit | ○ / ○ | FUnity/Blocks/演算 | 2 つの値を除算する。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ArithmeticOperatorUnits.cs |
+| ○ を ○ で割った余り | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.ModuloNumbersUnit | ○ を ○ で割った余り | FUnity/Blocks/演算 | 剰余演算を返す。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ArithmeticOperatorUnits.cs |
+| ○ を四捨五入 | FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits.RoundNumberUnit | ○ を四捨五入 | FUnity/Blocks/演算 | Mathf.Round で丸める。定義: Runtime/Integrations/VisualScripting/Units/ScratchUnits/ArithmeticOperatorUnits.cs |
 
 ## 変数
 | Scratch ブロック (日本語) | FUnity Unit クラス | UnitTitle | UnitCategory | 備考 |
