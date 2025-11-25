@@ -48,28 +48,52 @@ namespace FUnity.EditorTools
             }
 
             var existingGuids = AssetDatabase.FindAssets("t:FUnitySoundData", new[] { folderPath });
+            FUnitySoundData soundData = null;
+
             if (existingGuids != null && existingGuids.Length > 0)
             {
                 var existingPath = AssetDatabase.GUIDToAssetPath(existingGuids[0]);
-                var existing = AssetDatabase.LoadAssetAtPath<FUnitySoundData>(existingPath);
+                soundData = AssetDatabase.LoadAssetAtPath<FUnitySoundData>(existingPath);
 
                 EditorUtility.DisplayDialog(
                     "FUnitySoundData",
                     "このフォルダには既に FUnitySoundData.asset が存在します。既存アセットを選択します。",
                     "OK");
+            }
+            else
+            {
+                var assetPath = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(folderPath, "FUnitySoundData.asset"));
+                soundData = ScriptableObject.CreateInstance<FUnitySoundData>();
+                AssetDatabase.CreateAsset(soundData, assetPath);
+                AssetDatabase.SaveAssets();
 
-                EditorUtility.FocusProjectWindow();
-                Selection.activeObject = existing;
-                return;
+                EditorUtility.DisplayDialog(
+                    "FUnitySoundData",
+                    "新しい FUnitySoundData を作成し、現在のプロジェクトに設定しました。",
+                    "OK");
             }
 
-            var assetPath = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(folderPath, "FUnitySoundData.asset"));
-            var soundData = ScriptableObject.CreateInstance<FUnitySoundData>();
-            AssetDatabase.CreateAsset(soundData, assetPath);
-            AssetDatabase.SaveAssets();
+            if (soundData != null)
+            {
+                var isProjectSoundDataChanged = project.soundData != soundData;
+                project.soundData = soundData;
 
-            EditorUtility.FocusProjectWindow();
-            Selection.activeObject = soundData;
+                if (isProjectSoundDataChanged)
+                {
+                    EditorUtility.SetDirty(project);
+                    AssetDatabase.SaveAssets();
+                }
+
+                EditorUtility.FocusProjectWindow();
+                Selection.activeObject = soundData;
+            }
+            else
+            {
+                EditorUtility.DisplayDialog(
+                    "FUnitySoundData",
+                    "FUnitySoundData の取得または作成に失敗しました。",
+                    "OK");
+            }
         }
 
         /// <summary>
