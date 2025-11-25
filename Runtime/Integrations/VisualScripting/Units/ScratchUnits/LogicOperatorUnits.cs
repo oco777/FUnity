@@ -174,6 +174,120 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     }
 
     /// <summary>
+    /// 2 つの整数が等しいかどうかを判定する Scratch 互換の演算ユニットです。
+    /// </summary>
+    [UnitTitle("〇 = 〇(整数)")]
+    [UnitShortTitle("〇 = 〇(整数)")]
+    [UnitCategory("FUnity/Blocks/演算")]
+    [UnitSubtitle("演算")]
+    [TypeIcon(typeof(bool))]
+    public sealed class EqualIntegersUnit : Unit
+    {
+        /// <summary>左辺の整数を受け取る ValueInput です。</summary>
+        [DoNotSerialize]
+        private ValueInput m_A;
+
+        /// <summary>右辺の整数を受け取る ValueInput です。</summary>
+        [DoNotSerialize]
+        private ValueInput m_B;
+
+        /// <summary>等価比較の結果を出力する ValueOutput です。</summary>
+        [DoNotSerialize]
+        private ValueOutput m_Result;
+
+        /// <summary>A ポートへの参照を公開します。</summary>
+        public ValueInput A => m_A;
+
+        /// <summary>B ポートへの参照を公開します。</summary>
+        public ValueInput B => m_B;
+
+        /// <summary>result ポートへの参照を公開します。</summary>
+        public ValueOutput Result => m_Result;
+
+        /// <summary>
+        /// 比較に必要なポートを定義し、依存関係を登録します。
+        /// </summary>
+        protected override void Definition()
+        {
+            m_A = ValueInput<int>("a", 0);
+            m_B = ValueInput<int>("b", 0);
+            m_Result = ValueOutput<bool>("result", Operation);
+
+            Requirement(m_A, m_Result);
+            Requirement(m_B, m_Result);
+        }
+
+        /// <summary>
+        /// Flow から 2 つの整数を取得し、等しいかどうかを判定します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>2 つの整数が等しければ true。</returns>
+        private bool Operation(Flow flow)
+        {
+            var aValue = flow.GetValue<int>(m_A);
+            var bValue = flow.GetValue<int>(m_B);
+            return aValue == bValue;
+        }
+    }
+
+    /// <summary>
+    /// 2 つの文字列が等しいかどうかを判定する Scratch 互換の演算ユニットです。
+    /// </summary>
+    [UnitTitle("〇 = 〇(文字)")]
+    [UnitShortTitle("〇 = 〇(文字)")]
+    [UnitCategory("FUnity/Blocks/演算")]
+    [UnitSubtitle("演算")]
+    [TypeIcon(typeof(bool))]
+    public sealed class EqualStringsUnit : Unit
+    {
+        /// <summary>左辺の文字列を受け取る ValueInput です。</summary>
+        [DoNotSerialize]
+        private ValueInput m_A;
+
+        /// <summary>右辺の文字列を受け取る ValueInput です。</summary>
+        [DoNotSerialize]
+        private ValueInput m_B;
+
+        /// <summary>等価比較の結果を出力する ValueOutput です。</summary>
+        [DoNotSerialize]
+        private ValueOutput m_Result;
+
+        /// <summary>A ポートへの参照を公開します。</summary>
+        public ValueInput A => m_A;
+
+        /// <summary>B ポートへの参照を公開します。</summary>
+        public ValueInput B => m_B;
+
+        /// <summary>result ポートへの参照を公開します。</summary>
+        public ValueOutput Result => m_Result;
+
+        /// <summary>
+        /// 比較に必要なポートを定義し、依存関係を登録します。
+        /// </summary>
+        protected override void Definition()
+        {
+            m_A = ValueInput<string>("a", string.Empty);
+            m_B = ValueInput<string>("b", string.Empty);
+            m_Result = ValueOutput<bool>("result", Operation);
+
+            Requirement(m_A, m_Result);
+            Requirement(m_B, m_Result);
+        }
+
+        /// <summary>
+        /// Flow から 2 つの文字列を取得し、完全一致かどうかを判定します。
+        /// </summary>
+        /// <param name="flow">現在のフロー情報。</param>
+        /// <returns>文字列が一致すれば true。</returns>
+        private bool Operation(Flow flow)
+        {
+            var aValue = flow.GetValue<string>(m_A) ?? string.Empty;
+            var bValue = flow.GetValue<string>(m_B) ?? string.Empty;
+            return string.Equals(aValue, bValue, System.StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
     /// 2 つの bool 値の論理積を計算する Scratch 互換の演算ユニットです。
     /// </summary>
     [UnitTitle("〇 かつ 〇")]
