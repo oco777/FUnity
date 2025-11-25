@@ -23,6 +23,9 @@ namespace FUnity.Runtime.Audio
         /// <summary>サウンド ID と AudioClip の対応表。Initialize で再構築される。</summary>
         private readonly Dictionary<string, AudioClip> m_SoundMap = new Dictionary<string, AudioClip>();
 
+        /// <summary>マスター音量（%）。0～100 の範囲でクランプする。</summary>
+        private float m_VolumePercent = 100f;
+
         /// <summary>
         /// コンポーネント有効化時に AudioSource を保証し、ロケーターへ自身を登録する。
         /// </summary>
@@ -84,6 +87,7 @@ namespace FUnity.Runtime.Audio
             }
 
             EnsureAudioSource();
+            ApplyVolumeToAudioSource();
             m_AudioSource.PlayOneShot(clip);
         }
 
@@ -100,6 +104,7 @@ namespace FUnity.Runtime.Audio
             }
 
             EnsureAudioSource();
+            ApplyVolumeToAudioSource();
             m_AudioSource.Stop();
             m_AudioSource.clip = clip;
             m_AudioSource.Play();
@@ -122,6 +127,27 @@ namespace FUnity.Runtime.Audio
 
             m_AudioSource.Stop();
             m_AudioSource.clip = null;
+        }
+
+        /// <summary>
+        /// マスター音量（パーセント表記）を取得または設定する。設定時は内部でクランプし、AudioSource へ即時反映する。
+        /// </summary>
+        public float VolumePercent
+        {
+            get => m_VolumePercent;
+            set
+            {
+                m_VolumePercent = ClampVolumePercent(value);
+                ApplyVolumeToAllActiveSources();
+            }
+        }
+
+        /// <summary>
+        /// 現在のマスター音量を再生に使用する AudioSource へ反映する。
+        /// </summary>
+        public void ApplyVolumeToAllActiveSources()
+        {
+            ApplyVolumeToAudioSource();
         }
 
         /// <summary>
@@ -162,6 +188,30 @@ namespace FUnity.Runtime.Audio
 
             m_AudioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
             m_AudioSource.playOnAwake = false;
+            ApplyVolumeToAudioSource();
+        }
+
+        /// <summary>
+        /// 現在のマスター音量を AudioSource へ適用する。AudioSource 未確保時は何も行わない。
+        /// </summary>
+        private void ApplyVolumeToAudioSource()
+        {
+            if (m_AudioSource == null)
+            {
+                return;
+            }
+
+            m_AudioSource.volume = Mathf.Clamp01(m_VolumePercent * 0.01f);
+        }
+
+        /// <summary>
+        /// 音量パーセントを 0～100 の範囲へクランプする。
+        /// </summary>
+        /// <param name="value">入力値（%）。</param>
+        /// <returns>0～100 へ収めた値。</returns>
+        private float ClampVolumePercent(float value)
+        {
+            return Mathf.Clamp(value, 0f, 100f);
         }
 
         /// <summary>
