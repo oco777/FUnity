@@ -1,6 +1,8 @@
 using Unity.VisualScripting;
 using UnityEngine;
 using FUnity.Runtime.Integrations.VisualScripting;
+using FUnity.Runtime.Presenter;
+using FUnity.Runtime.View;
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 {
@@ -120,6 +122,105 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             var touchesBottom = actorRect.yMax >= stageRect.yMax - epsilon;
 
             return touchesLeft || touchesRight || touchesTop || touchesBottom;
+        }
+    }
+
+    /// <summary>
+    /// 背景色との接触を判定する静的ヘルパー群です。
+    /// </summary>
+    internal static class TouchPredicates
+    {
+        /// <summary>背景サンプリング用のグリッド分割数。</summary>
+        private const int SampleGrid = 3;
+
+        /// <summary>
+        /// 俳優矩形内の複数点をサンプリングし、背景色が目標色に近似しているかを判定します。
+        /// </summary>
+        /// <param name="presenter">判定対象の俳優 Presenter。</param>
+        /// <param name="targetColor">接触判定したい色。</param>
+        /// <param name="tolerance">許容する色差（RGB ユークリッド距離）。</param>
+        /// <returns>背景色が近似している点が存在すれば true。</returns>
+        public static bool IsTouchingBackgroundColor(ActorPresenter presenter, Color targetColor, float tolerance)
+        {
+            if (presenter == null)
+            {
+                Debug.LogWarning("[FUnity] TouchPredicates: presenter が null のため背景色判定を行えません。");
+                return false;
+            }
+
+            if (!presenter.IsVisible)
+            {
+                return false;
+            }
+
+            var view = presenter.ActorViewComponent;
+            if (view == null)
+            {
+                Debug.LogWarning("[FUnity] TouchPredicates: ActorView が未設定のため背景色判定を行えません。");
+                return false;
+            }
+
+            var backgroundService = presenter.StageBackgroundService;
+            if (backgroundService == null)
+            {
+                Debug.LogWarning("[FUnity] TouchPredicates: StageBackgroundService が未設定のため背景色を取得できません。");
+                return false;
+            }
+
+            var root = view.RootElement;
+            if (root == null)
+            {
+                return false;
+            }
+
+            var worldRect = root.worldBound;
+            if (worldRect.width <= 0f || worldRect.height <= 0f)
+            {
+                return false;
+            }
+
+            var clampedTolerance = Mathf.Max(0f, tolerance);
+
+            for (var iy = 0; iy < SampleGrid; iy++)
+            {
+                for (var ix = 0; ix < SampleGrid; ix++)
+                {
+                    var tx = (ix + 0.5f) / SampleGrid;
+                    var ty = (iy + 0.5f) / SampleGrid;
+
+                    var worldPos = new Vector2(
+                        worldRect.xMin + worldRect.width * tx,
+                        worldRect.yMin + worldRect.height * ty);
+
+                    if (!backgroundService.TryGetBackgroundColorAtWorldPosition(worldPos, out var sampledColor))
+                    {
+                        continue;
+                    }
+
+                    if (IsNearColor(sampledColor, targetColor, clampedTolerance))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 2 色間の距離が許容範囲内かを判定します。
+        /// </summary>
+        /// <param name="a">比較する色 A。</param>
+        /// <param name="b">比較する色 B。</param>
+        /// <param name="tolerance">許容する距離。</param>
+        /// <returns>距離が閾値以下なら true。</returns>
+        private static bool IsNearColor(in Color a, in Color b, float tolerance)
+        {
+            var dr = a.r - b.r;
+            var dg = a.g - b.g;
+            var db = a.b - b.b;
+            var dist = Mathf.Sqrt(dr * dr + dg * dg + db * db);
+            return dist <= tolerance;
         }
     }
 
