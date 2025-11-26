@@ -68,6 +68,9 @@ namespace FUnity.Runtime.Presenter
         /// <summary>UI Toolkit 側の描画を担当する View。</summary>
         private IActorView m_View;
 
+        /// <summary>ステージ背景の色取得に利用するサービス。</summary>
+        private StageBackgroundService m_StageBackgroundService;
+
         /// <summary>SpriteList 切り替え時に利用する現在のインデックス。</summary>
         private int m_SpriteIndex;
 
@@ -178,6 +181,25 @@ namespace FUnity.Runtime.Presenter
 
         /// <summary>座標変換に利用するステージ要素。null の場合は中央原点変換を利用できません。</summary>
         public VisualElement StageRootElement => m_StageCoordinateRoot;
+
+        /// <summary>背景色取得に利用する StageBackgroundService。</summary>
+        internal StageBackgroundService StageBackgroundService => m_StageBackgroundService;
+
+        /// <summary>
+        /// ステージ背景サービスを設定し、当たり判定ユニットから参照できるようにします。
+        /// </summary>
+        /// <param name="service">ステージ背景を管理するサービス。</param>
+        public void SetStageBackgroundService(StageBackgroundService service)
+        {
+            if (service == null)
+            {
+                Debug.LogWarning("[FUnity] ActorPresenter: StageBackgroundService が null のため設定できません。");
+                m_StageBackgroundService = null;
+                return;
+            }
+
+            m_StageBackgroundService = service;
+        }
 
         /// <summary>現在バインドされている View を ActorView 型として取得する。ActorView 以外の場合は null。</summary>
         internal ActorView ActorViewComponent => m_View as ActorView;

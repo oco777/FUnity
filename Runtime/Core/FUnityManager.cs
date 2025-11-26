@@ -872,6 +872,7 @@ namespace FUnity.Runtime.Core
                 var presenter = new ActorPresenter();
                 var stageRoot = m_StageElement != null ? m_StageElement.ActorContainer : null;
                 presenter.Initialize(visual.Data, state, view, m_ActiveModeConfig, stageRoot);
+                presenter.SetStageBackgroundService(m_StageBackgroundService);
                 view.SetActorPresenter(presenter);
 
                 m_ActorPresenters.Add(presenter);
@@ -2249,6 +2250,7 @@ namespace FUnity.Runtime.Core
             var presenter = new ActorPresenter();
             var stageRoot = m_StageElement != null ? m_StageElement.ActorContainer : null;
             presenter.Initialize(actorData, state, view, m_ActiveModeConfig, stageRoot);
+            presenter.SetStageBackgroundService(m_StageBackgroundService);
             view.SetActorPresenter(presenter);
 
             GameObject cloneRunner = null;

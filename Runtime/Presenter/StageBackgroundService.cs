@@ -621,5 +621,41 @@ namespace FUnity.Runtime.Presenter
 
             return false;
         }
+
+        /// <summary>
+        /// ステージ背景の指定ワールド座標における色を取得します。
+        /// 背景画像が存在しない場合は直近で適用した単色を返します。
+        /// </summary>
+        /// <param name="worldPos">ワールド座標（UI Toolkit の worldBound 基準）。</param>
+        /// <param name="color">取得した背景色。</param>
+        /// <returns>座標が有効で色を取得できた場合は true。</returns>
+        public bool TryGetBackgroundColorAtWorldPosition(Vector2 worldPos, out Color color)
+        {
+            color = m_LastColor;
+
+            if (m_TargetRoot == null)
+            {
+                return false;
+            }
+
+            if (m_LastTexture == null)
+            {
+                color = m_LastColor;
+                return true;
+            }
+
+            var local = worldPos - m_TargetRoot.worldBound.position;
+            var rect = m_TargetRoot.contentRect;
+            if (rect.width <= 0f || rect.height <= 0f)
+            {
+                return false;
+            }
+
+            var u = Mathf.Clamp01(local.x / rect.width);
+            var v = Mathf.Clamp01(1f - (local.y / rect.height));
+
+            color = m_LastTexture.GetPixelBilinear(u, v);
+            return true;
+        }
     }
 }
