@@ -411,6 +411,7 @@ namespace FUnity.Runtime.View
         {
             m_CurrentCenterPx = centerPx;
             UpdateLayoutForCenter();
+            UpdateWorldBoundCacheFromCenter();
         }
 
         /// <summary>
@@ -1424,6 +1425,33 @@ namespace FUnity.Runtime.View
 
             root.style.left = left;
             root.style.top = top;
+        }
+
+        /// <summary>
+        /// 現在保持している中心座標とスケール適用後サイズから推定される worldBound を再計算し、キャッシュへ即時反映する。
+        /// GeometryChangedEvent の発火を待たずに当たり判定で利用できる矩形を更新するために使用する。
+        /// </summary>
+        private void UpdateWorldBoundCacheFromCenter()
+        {
+            var root = GetRootElement();
+            if (root == null)
+            {
+                return;
+            }
+
+            var scaledSize = GetRootScaledSizePx();
+            if (scaledSize.x <= 0f || scaledSize.y <= 0f)
+            {
+                return;
+            }
+
+            var halfWidth = scaledSize.x * 0.5f;
+            var halfHeight = scaledSize.y * 0.5f;
+            var left = m_CurrentCenterPx.x - halfWidth;
+            var top = m_CurrentCenterPx.y - halfHeight;
+            var rect = new Rect(left, top, scaledSize.x, scaledSize.y);
+
+            UpdateWorldBoundCache(rect);
         }
 
         /// <summary>
