@@ -167,13 +167,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 return false;
             }
 
-            var root = view.RootElement;
-            if (root == null)
+            // ★ RootElement ではなく、ActorView がキャッシュしている worldBound を利用する
+            if (!view.TryGetCachedWorldBound(out var worldRect))
             {
                 return false;
             }
 
-            var worldRect = root.worldBound;
             if (worldRect.width <= 0f || worldRect.height <= 0f)
             {
                 return false;

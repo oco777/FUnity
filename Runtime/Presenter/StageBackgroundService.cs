@@ -644,8 +644,12 @@ namespace FUnity.Runtime.Presenter
                 return true;
             }
 
-            var local = worldPos - m_TargetRoot.worldBound.position;
-            var rect = m_TargetRoot.contentRect;
+            // worldPos は world 座標なので、worldBound からのオフセットでローカル化
+            var rootWorldRect = m_TargetRoot.worldBound;
+            var local = worldPos - (Vector2)rootWorldRect.position;
+
+            // ★ rect も worldBound ベースにする
+            var rect = rootWorldRect;
             if (rect.width <= 0f || rect.height <= 0f)
             {
                 return false;
