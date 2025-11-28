@@ -640,23 +640,23 @@ namespace FUnity.Runtime.Presenter
 
             if (m_LastTexture == null)
             {
-                color = m_LastColor;
+                // 画像が無いときは単色背景だけなので、前回色を返しておく
                 return true;
             }
 
-            // worldPos は world 座標なので、worldBound からのオフセットでローカル化
-            var rootWorldRect = m_TargetRoot.worldBound;
-            var local = worldPos - (Vector2)rootWorldRect.position;
-
-            // ★ rect も worldBound ベースにする
-            var rect = rootWorldRect;
+            // ★ worldPos は「ステージ左上 (0,0) 幅=480 高さ=360」の座標として扱う
+            // ※ここでは contentRect の幅・高さを使えば将来サイズが変わっても対応できます
+            var rect = m_TargetRoot.contentRect;
             if (rect.width <= 0f || rect.height <= 0f)
             {
                 return false;
             }
 
-            var u = Mathf.Clamp01(local.x / rect.width);
-            var v = Mathf.Clamp01(1f - (local.y / rect.height));
+            // worldPos をそのままローカル座標として使う
+            var local = worldPos;
+
+            var u = Mathf.Clamp01(local.x / rect.width);   // 例: 0〜480 → 0〜1
+            var v = Mathf.Clamp01(1f - (local.y / rect.height)); // 上が 1, 下が 0 になるよう反転
 
             color = m_LastTexture.GetPixelBilinear(u, v);
             return true;
