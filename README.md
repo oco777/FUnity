@@ -1,132 +1,59 @@
-# FUnity — Fun × Unity
+# FUnity — Scratch スタイルで学べる Unity 教育ツール
 
 ![FUnity overview](Docs/images/readme-hero.png)
 
-## FUnity とは？
+## 概要
+FUnity は、Scratch 風のブロックでゲームづくりを学べる Unity 用パッケージです。Actor（スプライト）、背景、サウンドを視覚的に組み合わせ、子どもや初心者でも Unity 6 環境で直感的に作品を作成できます。
 
-FUnity は、Unity 上で動作する **ブロックプログラミング & ゲーム制作環境** です。
+- 最新バージョン: **v0.5.0**
+- Visual Scripting 互換の **ブロックモード (Block Mode)** を同梱
+- Actor / Costume / Speech Balloon / Background を Scratch ライクに操作
+- UPM Git URL からそのまま導入可能
 
-- 子どもや初心者でも扱いやすい **ブロックモード (Block Mode)** でロジックを組み立て
-- そのまま Unity の世界でゲームとして動かせる
-- 既存の Unity 資産やエディタ拡張とも連携できる
+## 主な機能
+- **Visual Scripting 互換 Scratch ブロック**：ブロックモードのカテゴリと文言を揃え、学習用のサンプル Macro 付き。
+- **Actor / Costume / Speech Balloon**：Actor のスプライト切り替え、吹き出し表示、コスチュームの状態遷移を Presenter 経由で適用。
+- **Background 制御**：背景リストからの切り替えやインデックス指定をブロックで実行可能。
+- **Sound / Effects**：サウンド再生や効果切り替えを Scratch 互換のブロックで管理。
+- **Clone System**：クローン生成・停止を ScriptThreadManager が管理し、Scratch の停止ブロックとも連携。
+- **Script Thread Manager**：`FUnityScriptThreadManager` が Scratch スレッドを一元管理し、「すべてを止める」「スプライトの他のスクリプトを止める」を再現。
 
-ブロックモードは Scratch 風の操作感を意識しつつ、
-FUnity 独自の Actor / ステージ / プロジェクト構造に最適化されています。
+## 動作環境
+- Unity 6 (6000.x) 以降
+- .NET Standard 2.1 互換ランタイム
+- UI Toolkit / UI Builder
+- Unity Visual Scripting 1.9.7 以降（依存として自動追加）
 
-## 📦 パッケージ構成と配置ルール
-- `Runtime/` — ランタイム C#。**すべての実装はここに置き、`Assets/FUnity/Runtime/` へは置かない。**
-- `Editor/` — エディタ拡張。ガードやメニュー、ウィザードなどを配置。
-- `Art/`・`Docs/`・`Samples~` — アセット、ドキュメント、サンプルを格納。
-- `Assets/FUnity/**` — プロジェクト同梱の検証用アセット。ランタイムコードは配置禁止で、混入すると Editor/CI ガードがエラーを報告します。
-
-## ⚙ Modes
-- `FUnityProjectData` アセットの Inspector で **ブロックモード (Block Mode)** と unityroom モードを切り替えられます。
-- 選択したモードに応じて `FUnityProjectData` 内の ModeConfig 参照がランタイム起動時に自動適用されます。
-- 各モードの仕様やブロック互換ポリシーは [`Assets/FUnity/Docs/Modes/README.md`](Assets/FUnity/Docs/Modes/README.md) を参照してください。
-
-## 現状機能サマリ
-- UPM の Git URL（`https://github.com/oco777/FUnity.git`）で導入可能。タグ指定（例：`#v0.5.0`）によるバージョン固定にも対応。
-- Samples~/BasicScene 内の **FUnitySample.unity** を開いて、ワンコマンド（**FUnity/Create/FUnityProjectData**）で初期データを生成。
-- `Runtime/Resources/Backgrounds/Background_01.png` と `FUnityActorData_Fooni` を自動設定し、背景とフーニーが 5 分で表示される。
-- `FUnityManager` がシーン起動時に “FUnity UI” GameObject と `UIDocument` を構築し、UI ブリッジや Runner 参照をセットアップ。
-- Unity Visual Scripting を **必須依存**とし、Macro が無い場合でも `Fooni_FloatSetup.asset` を自動生成して割り当てる。
-- ブロックモードの見た目操作として「大きさを ◯ % にする」「大きさを ◯ % ずつ変える」ユニットを提供し、Presenter 経由で UI Toolkit `style.scale` を中心ピボットで適用。
-
-## What's new in 0.5.0
-
-- Scratch「イベント/このスプライトが押されたとき」ユニットを追加し、イベント開始パターンを拡充しました。
-- Actor の向きと見た目の回転処理を整理し、初期状態で右方向へ移動する挙動に統一しました。
-- ブロックモードと unityroom モードの違いを整理したドキュメントを追加し、ブロックモードの角度仕様（0=上, 90=右, 180=下, 270=左）を明記しました。
-
-## 目次
-- [システム要件](#システム要件)
-- [インストール（UPM/Git）](#インストールupmgit)
-- [クイックスタート](#クイックスタート)
-- [FUnityProjectData が行うこと](#funityprojectdata-が行うこと)
-- [ランタイム構築フロー](#ランタイム構築フロー)
-- [⚙ Modes](#-modes)
-- [Visual Scripting での移動例](#visual-scripting-での移動例)
-- [トラブルシューティング早見表](#トラブルシューティング早見表)
-- [Roadmap / 今後追加したい機能（案）](#roadmap--今後追加したい機能案)
-- [ドキュメント](#ドキュメント)
-- [ライセンス](#ライセンス)
-- [貢献方法](#貢献方法)
-
-## システム要件
-- Unity 6 (6000.x) 以降。
-- .NET Standard 2.1 互換ランタイム。
-- UI Toolkit / UI Builder。
-- Unity Visual Scripting 1.9.7 以降（FUnity の依存として自動追加される）。
-
-## インストール（UPM/Git）
-### Git URL を直接指定する場合
-`Packages/manifest.json` の `dependencies` に次のエントリを追加します。
-
-```json
-"com.papacoder.funity": "https://github.com/oco777/FUnity.git"
-```
-
-### バージョンを固定したい場合
-特定のタグに固定したい場合は、`#タグ名` を付けます。
+## インストール
+`Packages/manifest.json` に Git URL を追加します。
 
 ```json
 "com.papacoder.funity": "https://github.com/oco777/FUnity.git#v0.5.0"
 ```
 
-> ℹ️ Visual Scripting は必須依存のため、`#if UNITY_VISUAL_SCRIPTING` などのガードは不要です。パッケージ導入時に `com.unity.visualscripting` が自動インストールされます。
+UPM の **Add package from git URL...** に貼り付けても導入できます。
 
-## クイックスタート
-1. Package Manager を開き、**Samples → BasicScene** の **Import** を押して `Samples~/BasicScene/FUnitySample.unity` を開きます。
-2. メニュー **FUnity/Create/FUnityProjectData** を実行し、プロジェクト既定データを生成します。
-3. シーンを再生すると背景画像（`Background_01.png`）とフーニーの俳優 UI が表示され、サンプル Macro による移動が動作します。
+## 使い方の流れ
+1. Unity を起動し、メニュー **FUnity/Create/FUnityProjectData** を実行してプロジェクト既定データを生成します。
+2. 必要に応じて **FUnity/Create/FUnityActorData** で俳優テンプレートを追加し、スプライトや吹き出しを設定します。
+3. シーンに `FUnityManager` を 1 体配置すると、起動時に Stage / Actor / UI Document が自動構築されます。
+4. Visual Scripting の Macro で Scratch 互換ブロックを配置し、`VSPresenterBridge` を経由して Actor を操作します。
 
-## Scratch本で最初に試すレシピ（5分）
-- **FUnity/Create/FUnityActorData** を実行すると、ActorData と関連テンプレートが規定のフォルダに生成され、Stage や Runner を既存プロジェクトへ手早く追加できます。
-  - 生成した `FUnityActorData` には `ActorElement.uxml/uss` と吹き出し用ラベルが割り当て済みで、`StageBackgroundService` と組み合わせて背景を適用できます。
-  - Runner は必要に応じて既存のテンプレートを複製し、`ScriptMachine` に Macro を割り当てて Visual Scripting グラフを編集してください。
-- Visual Scripting のグラフは Runner の `ScriptMachine` から新規 Macro を作成し、`VSPresenterBridge` の Custom Event を結線するとブロックモードのブロック相当の操作が行えます。
+## Samples~/ から始める
+- **BasicScene**：`Samples~/BasicScene/FUnitySample.unity` を開き、サンプル Macro で移動と吹き出しを体験できます。
+- **Maze**：`Samples~/Maze` の説明に従い、StopAll → GameClearUI → Finish の流れでゲームクリア演出を学べます。
 
-## FUnityProjectData が行うこと
-メニュー **FUnity/Create/FUnityProjectData**（`Assets/FUnity/Editor/CreateProjectData.cs` 内）を実行すると、既存リソースを尊重しつつ以下が保証されます。
-- `Resources/FUnityProjectData.asset` と `Resources/FUnityStageData.asset` を生成し、ステージ背景に `Runtime/Resources/Backgrounds/Background_01.png` を設定。
-- `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.uss` が存在する場合はそれを `FUnityPanelSettings.asset`（`Assets/FUnity/UI/`）の ThemeStyleSheet に割り当て。存在しなければ `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` を生成し、同アセットに設定。
-- `Assets/FUnity/Data/Actors/FUnityActorData_Fooni.asset` を作成し、既存の重複リソース（`Assets/Resources/FUnityActorData_Fooni.asset` など）を検出して削除。Portrait/UXML/USS を既定テンプレートに割り当てます。
-- `Assets/FUnity/VisualScripting/Macros/Fooni_FloatSetup.asset` を探索し、無ければ新規作成。生成した Macro を `FUnityActorData_Fooni` の ScriptGraph に登録します。
-
-## ランタイム構築フロー
-- シーンに `FUnityManager` を 1 体置くだけで、再生開始時に “FUnity UI” GameObject と `UIDocument` を生成。
-- `FUnityManager` は `FUnityProjectData` を参照して各 Actor Runner を生成し、Runner 側の `ScriptMachine` と `ActorPresenterAdapter` を構成しつつ、`FooniUIBridge` や `VSPresenterBridge` など必要なコンポーネントを結線します。
-- Actor ごとに `FUnityActorData` に設定された Macro が `ScriptMachine` に割り当てられ、`ActorPresenter` が `ActorState` と `ActorView` を橋渡しします。
-- Visual Scripting を用いず C# だけで動作させたい場合も、Presenter 層でロジックを完結させることで UI 更新と分離できます。
-
-## Visual Scripting での移動例
-- サンプル Macro（`Fooni_FloatSetup`）では、`On Update` → `Get Axis (Horizontal/Vertical)` → `Vector2`（Y を `*-1` で反転）→ `FooniUIBridge.NudgeByDefaultSpeed(dir, deltaTime)` の流れで移動量を計算します。
-- 入力 API は `FUnity.Runtime.Input` と `UnityEngine.Input` の名前空間が衝突しやすいため、`UnityEngine.Input.GetAxisRaw` のように完全修飾呼び出しを推奨します。
-
-## トラブルシューティング早見表
-- `CS0234`（`Input.GetAxisRaw` が見つからない）: `UnityEngine.Input.GetAxisRaw` と完全修飾するか、`using UInput = UnityEngine.Input;` を追加します。
-- テーマが null のまま: `Assets/UI Toolkit/UnityThemes/` を確認し、存在しない場合は **FUnity/Create/FUnityProjectData** を再実行して `Assets/FUnity/UI/USS/UnityDefaultRuntimeTheme.uss` が生成されることを確認します。
-- 俳優 UI が表示されない: `FooniElement.uxml` で `name="root"` と `name="actor-root"` が設定されているか確認し、`FooniUIBridge` が要素を取得できるようにします。
-
-## Roadmap / 今後追加したい機能（案）
-
-- YouTube モード（構想中）
-  - Visual Scripting で作成したアニメーションを
-    Unity Recorder から動画ファイルとして書き出し、
-    YouTube 向けに発表できる作品にするモード。
-  - タイトル → 本編 → エンディング の定型テンプレートを用意し、
-    キャラクター差し替えだけで作品が作れる構成を目指す。
+## ブロックモードの特徴
+- Scratch に近い見た目とカテゴリ構成（動き／見た目／音／調べる／制御／変数）。
+- ActorState の `CostumeIndex` を Presenter が受け取り、`ActorPresenter.ApplyCostumeFromState()` → `ActorView.SetSprite(Sprite)` の順に UI へ反映。
+- ScriptThreadManager がイベント開始時にスレッドを登録し、停止ブロックが正しく効きます。
 
 ## ドキュメント
-- [導入手順](Docs/setup.md)
-- [既定データの構成](Docs/data-defaults.md)
-- [UI テーマ適用戦略](Docs/ui-theme.md)
-- [トラブルシュート集](Docs/troubleshooting.md)
-- [MVP アーキテクチャ概要](Docs/mvp-overview.md)
+- [Docs/Overview.md](Docs/Overview.md)：FUnity のコンセプトとアーキテクチャ概要
+- [Docs/InstallGuide.md](Docs/InstallGuide.md)：セットアップとプロジェクト生成手順
+- [Docs/BlockList.md](Docs/BlockList.md)：ブロック一覧と備考
+- [Docs/VS_Scratch_Mapping.md](Docs/VS_Scratch_Mapping.md)：Visual Scripting と Scratch の対応表
 
-## ライセンス
-- 本プロジェクトは [MIT License](LICENSE.md) に従います。
-
-## 貢献方法
-- Issue と Pull Request を歓迎します。まずは課題を記載し、再現手順・スクリーンショットを添付してください。
-- コーディング規約とコメント方針は [Docs/conventions.md](Docs/conventions.md) を参照してください。
+## ライセンスと貢献
+- ライセンス: [MIT License](LICENSE.md)
+- Issue / Pull Request を歓迎します。貢献時は [Docs/conventions.md](Docs/conventions.md) を参照してください。
