@@ -1,4 +1,5 @@
 // Updated: 2025-02-14
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -133,6 +134,15 @@ namespace FUnity.Runtime.Core
 
         /// <summary>マウス座標を監視し、Scratch 座標系へ変換するサービス。</summary>
         private MousePositionService m_MousePositionService;
+
+        /// <summary>ステージに登録されている背景一覧。空コレクションは背景未登録を示す。</summary>
+        private IReadOnlyList<StageBackgroundInfo> m_StageBackgrounds = Array.Empty<StageBackgroundInfo>();
+
+        /// <summary>現在適用中の背景インデックス（0 始まり）。背景未設定時は -1。</summary>
+        private int m_CurrentBackgroundIndex = -1;
+
+        /// <summary>背景スケールのキーワード。StageData から取得し、背景差し替え時に再利用する。</summary>
+        private string m_CurrentBackgroundScale = FUnityStageData.BackgroundScaleContain;
 
         /// <summary>変数モニターの UI 表示を担当する Presenter。</summary>
         private VariableUiPresenter m_VariableUiPresenter;
@@ -1476,20 +1486,198 @@ namespace FUnity.Runtime.Core
             stageElement?.Configure(stage);
             ApplyScratchStageSizing(stageElement);
 
+            UpdateStageBackgroundState(stage);
+        }
+
+        /// <summary>
+        /// ステージ背景の状態を更新し、現在の背景色・画像を StageBackgroundService へ適用する。
+        /// </summary>
+        /// <param name="stage">適用対象のステージ設定。null の場合は背景一覧を初期化する。</param>
+        private void UpdateStageBackgroundState(FUnityStageData stage)
+        {
             if (stage == null)
             {
+                m_StageBackgrounds = Array.Empty<StageBackgroundInfo>();
+                m_CurrentBackgroundIndex = -1;
+                m_CurrentBackgroundScale = FUnityStageData.BackgroundScaleContain;
                 return;
             }
+
+            m_StageBackgrounds = stage.Backgrounds ?? Array.Empty<StageBackgroundInfo>();
+            m_CurrentBackgroundScale = stage.BackgroundScale;
 
             m_StageBackgroundService.SetBackgroundColor(stage.BackgroundColor);
 
-            if (stage.BackgroundImage != null)
+            if (m_StageBackgrounds.Count == 0)
             {
-                m_StageBackgroundService.SetBackground(stage.BackgroundImage, stage.BackgroundScale);
+                m_CurrentBackgroundIndex = -1;
+                m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, m_CurrentBackgroundScale);
                 return;
             }
 
-            m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, stage.BackgroundScale);
+            var defaultIndex = Mathf.Clamp(stage.DefaultBackgroundIndex, 0, m_StageBackgrounds.Count - 1);
+            ApplyBackgroundByIndexInternal(defaultIndex, false);
+        }
+
+        /// <summary>
+        /// 指定したインデックスの背景を適用し、現在の背景インデックスを更新する。
+        /// </summary>
+        /// <param name="zeroBasedIndex">0 始まりの背景インデックス。</param>
+        /// <param name="allowWrap">範囲外の値を循環させる場合は true。</param>
+        private void ApplyBackgroundByIndexInternal(int zeroBasedIndex, bool allowWrap)
+        {
+            if (m_StageBackgrounds == null || m_StageBackgrounds.Count == 0)
+            {
+                Debug.LogWarning("[FUnity] Stage 背景が未登録のため背景を切り替えられません。");
+                return;
+            }
+
+            var count = m_StageBackgrounds.Count;
+            var normalized = zeroBasedIndex;
+
+            if (allowWrap)
+            {
+                normalized = ((zeroBasedIndex % count) + count) % count;
+            }
+
+            normalized = Mathf.Clamp(normalized, 0, count - 1);
+
+            var info = m_StageBackgrounds[normalized];
+            if (info == null)
+            {
+                Debug.LogWarning($"[FUnity] インデックス {normalized} の StageBackgroundInfo が null です。");
+                return;
+            }
+
+            m_CurrentBackgroundIndex = normalized;
+            ApplyBackgroundFromInfo(info);
+        }
+
+        /// <summary>
+        /// 背景情報から StageBackgroundService へテクスチャを適用する。
+        /// </summary>
+        /// <param name="info">適用対象の背景情報。</param>
+        private void ApplyBackgroundFromInfo(StageBackgroundInfo info)
+        {
+            if (info == null)
+            {
+                return;
+            }
+
+            if (info.Sprite != null && info.Sprite.texture != null)
+            {
+                m_StageBackgroundService.SetBackground(info.Sprite.texture, m_CurrentBackgroundScale);
+                return;
+            }
+
+            Debug.LogWarning($"[FUnity] 背景 '{info.DisplayName}' に Sprite が割り当てられていないため既定背景へフォールバックします。");
+            m_StageBackgroundService.SetBackgroundFromResources(DefaultStageBackgroundName, m_CurrentBackgroundScale);
+        }
+
+        /// <summary>
+        /// 背景数を返します。未設定時は 0 を返します。
+        /// </summary>
+        /// <returns>登録されている背景の数。</returns>
+        private int GetBackgroundCountInternal()
+        {
+            return m_StageBackgrounds?.Count ?? 0;
+        }
+
+        /// <summary>
+        /// 現在の背景番号（1 始まり）を返します。未設定時は 0。
+        /// </summary>
+        /// <returns>現在の背景番号。範囲外の場合は 0。</returns>
+        private int GetCurrentBackgroundNumberInternal()
+        {
+            if (m_CurrentBackgroundIndex < 0)
+            {
+                return 0;
+            }
+
+            return m_CurrentBackgroundIndex + 1;
+        }
+
+        /// <summary>
+        /// 現在の背景名を返します。未設定時は空文字列。
+        /// </summary>
+        /// <returns>背景表示名。</returns>
+        private string GetCurrentBackgroundNameInternal()
+        {
+            if (m_CurrentBackgroundIndex < 0 || m_StageBackgrounds == null || m_CurrentBackgroundIndex >= m_StageBackgrounds.Count)
+            {
+                return string.Empty;
+            }
+
+            var info = m_StageBackgrounds[m_CurrentBackgroundIndex];
+            return info != null ? info.DisplayName : string.Empty;
+        }
+
+        /// <summary>
+        /// 1 始まりの番号指定で背景を切り替える。
+        /// </summary>
+        /// <param name="backgroundNumber">ユーザー向けの背景番号。</param>
+        private void SetBackgroundByNumberInternal(int backgroundNumber)
+        {
+            if (m_StageBackgrounds == null || m_StageBackgrounds.Count == 0)
+            {
+                Debug.LogWarning("[FUnity] 背景が 1 件も登録されていないため切り替えできません。");
+                return;
+            }
+
+            var zeroBased = Mathf.Clamp(backgroundNumber - 1, 0, m_StageBackgrounds.Count - 1);
+            ApplyBackgroundByIndexInternal(zeroBased, false);
+        }
+
+        /// <summary>
+        /// 背景名で一致するエントリを探し、見つかれば適用する。
+        /// </summary>
+        /// <param name="backgroundName">検索する背景名。</param>
+        private void SetBackgroundByNameInternal(string backgroundName)
+        {
+            if (string.IsNullOrWhiteSpace(backgroundName))
+            {
+                Debug.LogWarning("[FUnity] 空の背景名が指定されたため切り替えをスキップします。");
+                return;
+            }
+
+            if (m_StageBackgrounds == null || m_StageBackgrounds.Count == 0)
+            {
+                Debug.LogWarning("[FUnity] 背景が 1 件も登録されていないため名前で切り替えできません。");
+                return;
+            }
+
+            for (var i = 0; i < m_StageBackgrounds.Count; i++)
+            {
+                var info = m_StageBackgrounds[i];
+                if (info == null)
+                {
+                    continue;
+                }
+
+                if (string.Equals(info.DisplayName, backgroundName, StringComparison.Ordinal) ||
+                    string.Equals(info.DisplayName, backgroundName, StringComparison.OrdinalIgnoreCase))
+                {
+                    ApplyBackgroundByIndexInternal(i, false);
+                    return;
+                }
+            }
+
+            Debug.LogWarning($"[FUnity] 背景名 '{backgroundName}' に一致するエントリが見つかりません。");
+        }
+
+        /// <summary>
+        /// 現在の背景を 1 つ進め、末尾に達したら先頭へ戻す。
+        /// </summary>
+        private void NextBackgroundInternal()
+        {
+            if (m_StageBackgrounds == null || m_StageBackgrounds.Count == 0)
+            {
+                Debug.LogWarning("[FUnity] 背景が 1 件も登録されていないため次の背景へ進めません。");
+                return;
+            }
+
+            var nextIndex = m_CurrentBackgroundIndex + 1;
+            ApplyBackgroundByIndexInternal(nextIndex, true);
         }
 
         /// <summary>
@@ -2157,6 +2345,101 @@ namespace FUnity.Runtime.Core
             }
 
             return manager.CloneActorInternal(original);
+        }
+
+        /// <summary>
+        /// 登録済みの背景数を返します。マネージャー未初期化時は 0。
+        /// </summary>
+        /// <returns>背景の総数。</returns>
+        public static int GetBackgroundCount()
+        {
+            var manager = Instance != null ? Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager.GetBackgroundCount: FUnityManager が見つからないため背景数を取得できません。");
+                return 0;
+            }
+
+            return manager.GetBackgroundCountInternal();
+        }
+
+        /// <summary>
+        /// 現在表示している背景番号（1 始まり）を返します。
+        /// </summary>
+        /// <returns>現在の背景番号。背景が無い場合は 0。</returns>
+        public static int GetCurrentBackgroundNumber()
+        {
+            var manager = Instance != null ? Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager.GetCurrentBackgroundNumber: FUnityManager が見つからないため背景番号を取得できません。");
+                return 0;
+            }
+
+            return manager.GetCurrentBackgroundNumberInternal();
+        }
+
+        /// <summary>
+        /// 現在表示している背景名を返します。
+        /// </summary>
+        /// <returns>背景名。未設定時は空文字列。</returns>
+        public static string GetCurrentBackgroundName()
+        {
+            var manager = Instance != null ? Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager.GetCurrentBackgroundName: FUnityManager が見つからないため背景名を取得できません。");
+                return string.Empty;
+            }
+
+            return manager.GetCurrentBackgroundNameInternal();
+        }
+
+        /// <summary>
+        /// 1 始まりの番号で背景を切り替えます。範囲外の値はクランプします。
+        /// </summary>
+        /// <param name="backgroundNumber">ユーザー向けの背景番号。</param>
+        public static void SetBackgroundByNumber(int backgroundNumber)
+        {
+            var manager = Instance != null ? Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager.SetBackgroundByNumber: FUnityManager が見つからないため背景を切り替えできません。");
+                return;
+            }
+
+            manager.SetBackgroundByNumberInternal(backgroundNumber);
+        }
+
+        /// <summary>
+        /// 背景名で一致するエントリへ切り替えます。一致しない場合は変更しません。
+        /// </summary>
+        /// <param name="backgroundName">検索する背景名。</param>
+        public static void SetBackgroundByName(string backgroundName)
+        {
+            var manager = Instance != null ? Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager.SetBackgroundByName: FUnityManager が見つからないため背景を切り替えできません。");
+                return;
+            }
+
+            manager.SetBackgroundByNameInternal(backgroundName);
+        }
+
+        /// <summary>
+        /// 次の背景へ進め、末尾では先頭へ戻します。
+        /// </summary>
+        public static void NextBackground()
+        {
+            var manager = Instance != null ? Instance : FindObjectOfType<FUnityManager>();
+            if (manager == null)
+            {
+                Debug.LogWarning("[FUnity] FUnityManager.NextBackground: FUnityManager が見つからないため背景を進められません。");
+                return;
+            }
+
+            manager.NextBackgroundInternal();
         }
 
         /// <summary>
