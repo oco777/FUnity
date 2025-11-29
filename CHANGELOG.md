@@ -4,6 +4,18 @@
 
 _No unreleased changes yet._
 
+## [0.6.0] - 2025-11-29
+### Added
+- 背景ブロック追加 (背景を番号にする / 名前にする / 次の背景 / 背景の番号 / 背景の名前)
+- StopAll 改善: flow.StopCoroutine(false) に変更して安全に終了できるようにした
+- 迷路サンプルのゲームクリア演出
+- 背景カラー取得座標精度改善
+- GameClear UI 表示例の追加
+
+### Fixed
+- Speech balloon の回転問題修正
+- Actor reset effects の安定化
+
 ## [v0.5.0] - 2025-11-25
 
 ### Added

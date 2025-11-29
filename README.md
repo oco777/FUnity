@@ -5,7 +5,7 @@
 ## 概要
 FUnity は、Scratch 風のブロックでゲームづくりを学べる Unity 用パッケージです。Actor（スプライト）、背景、サウンドを視覚的に組み合わせ、子どもや初心者でも Unity 6 環境で直感的に作品を作成できます。
 
-- 最新バージョン: **v0.5.0**
+- 最新バージョン: **v0.6.0**
 - Visual Scripting 互換の **ブロックモード (Block Mode)** を同梱
 - Actor / Costume / Speech Balloon / Background を Scratch ライクに操作
 - UPM Git URL からそのまま導入可能
@@ -13,10 +13,10 @@ FUnity は、Scratch 風のブロックでゲームづくりを学べる Unity �
 ## 主な機能
 - **Visual Scripting 互換 Scratch ブロック**：ブロックモードのカテゴリと文言を揃え、学習用のサンプル Macro 付き。
 - **Actor / Costume / Speech Balloon**：Actor のスプライト切り替え、吹き出し表示、コスチュームの状態遷移を Presenter 経由で適用。
-- **Background 制御**：背景リストからの切り替えやインデックス指定をブロックで実行可能。
+- **Background 制御**：背景番号／背景名による切り替え、次の背景への移動、現在の番号・名前の取得といったブロックを追加し、背景カラー取得の精度も強化。
 - **Sound / Effects**：サウンド再生や効果切り替えを Scratch 互換のブロックで管理。
 - **Clone System**：クローン生成・停止を ScriptThreadManager が管理し、Scratch の停止ブロックとも連携。
-- **Script Thread Manager**：`FUnityScriptThreadManager` が Scratch スレッドを一元管理し、「すべてを止める」「スプライトの他のスクリプトを止める」を再現。
+- **Script Thread Manager**：`FUnityScriptThreadManager` が Scratch スレッドを一元管理し、StopAll のコルーチン停止を安全な `flow.StopCoroutine(false)` へ統一して「すべてを止める」「スプライトの他のスクリプトを止める」を再現。
 
 ## 動作環境
 - Unity 6 (6000.x) 以降
@@ -28,7 +28,7 @@ FUnity は、Scratch 風のブロックでゲームづくりを学べる Unity �
 `Packages/manifest.json` に Git URL を追加します。
 
 ```json
-"com.papacoder.funity": "https://github.com/oco777/FUnity.git#v0.5.0"
+"com.papacoder.funity": "https://github.com/oco777/FUnity.git#v0.6.0"
 ```
 
 UPM の **Add package from git URL...** に貼り付けても導入できます。
@@ -41,7 +41,7 @@ UPM の **Add package from git URL...** に貼り付けても導入できます�
 
 ## Samples~/ から始める
 - **BasicScene**：`Samples~/BasicScene/FUnitySample.unity` を開き、サンプル Macro で移動と吹き出しを体験できます。
-- **Maze**：`Samples~/Maze` の説明に従い、StopAll → GameClearUI → Finish の流れでゲームクリア演出を学べます。
+- **Maze**：`Samples~/Maze` の説明に従い、StopAll → GameClearUI → Finish の流れを強化したゲームクリア演出を体験できます（演出例 UI を同梱）。
 
 ## ブロックモードの特徴
 - Scratch に近い見た目とカテゴリ構成（動き／見た目／音／調べる／制御／変数）。
