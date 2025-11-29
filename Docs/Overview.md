@@ -38,3 +38,4 @@ FUnity は「Scratch の楽しさを Unity の表現力で広げる」ことを�
 - Visual Scripting の Unit を Scratch 表記で提供し、`FUnity/Scratch/<カテゴリ>` に分類しています。
 - 角度はブロックモードに合わせて「上=0° / 右=90° / 下=180° / 左=270°」を維持します。
 - ScriptMachine に Macro を割り当てるだけでブロックモードを利用でき、C# とのハイブリッドも可能です。
+- Maze サンプルには StopAll から GameClear UI 表示までの演出例を含め、学習フローを追体験できます。

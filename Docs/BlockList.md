@@ -9,7 +9,11 @@
 | 動き | GoTo | 位置を指定して移動 | マウス座標や他 Actor へのジャンプに対応。 |
 | 見た目 | Say / SayTimed | 吹き出しを表示 | ActorPresenter 経由で吹き出し UI を更新。 |
 | 見た目 | SwitchCostume | コスチュームを切り替える | `CostumeIndex` を ActorState に設定し Presenter が反映。 |
-| 見た目 | SetBackgroundByIndex | 背景をインデックスで変更 | **New**。StageData の背景リストから切り替え。 |
+| 見た目 | SetBackgroundByIndex | 背景を番号で変更 | StageData の背景リストから切り替え。 |
+| 見た目 | SetBackgroundByName | 背景を名前で変更 | 背景名に一致する項目へ切り替え。 |
+| 見た目 | NextBackground | 次の背景にする | 背景リストを巡回しながら進める。 |
+| 見た目 | GetBackgroundIndex | 背景の番号 | 現在の背景番号を取得。 |
+| 見た目 | GetBackgroundName | 背景の名前 | 現在の背景名を取得。 |
 | 音 | PlaySound | サウンドを再生 | 音量や再生位置はサービスを介して管理。 |
 | 調べる | TouchingColor | 指定色に触れたか判定 | 色判定精度を改善。境界の色も検出。 |
 | 制御 | StopAll | 全スクリプトを停止 | `flow.StopCoroutine(false)` を利用し ScriptThreadManager と連動。 |
