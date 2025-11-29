@@ -400,7 +400,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting
 
             try
             {
-                flow.StopCoroutine(true);
+                flow.StopCoroutine(false);
             }
             catch (Exception ex)
             {

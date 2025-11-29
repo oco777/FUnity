@@ -18,6 +18,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 #endif
 using FUnity.Runtime.Authoring;
+using Object = UnityEngine.Object;
 
 namespace FUnity.Runtime.Core
 {
