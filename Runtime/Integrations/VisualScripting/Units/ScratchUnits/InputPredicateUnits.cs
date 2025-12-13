@@ -4,6 +4,7 @@ using FUnity.Runtime.Integrations.VisualScripting;
 using UInput = UnityEngine.Input;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using InputSystemKey = UnityEngine.InputSystem.Key;
 #endif
 
 namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
@@ -94,51 +95,51 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
         /// <param name="keyCode">変換元の KeyCode。</param>
         /// <param name="inputSystemKey">変換に成功した場合の出力先。</param>
         /// <returns>変換できた場合は true。それ以外は false。</returns>
-        private static bool TryMapKeyCodeToInputSystemKey(KeyCode keyCode, out Key inputSystemKey)
+        private static bool TryMapKeyCodeToInputSystemKey(KeyCode keyCode, out InputSystemKey inputSystemKey)
         {
             if (keyCode >= KeyCode.A && keyCode <= KeyCode.Z)
             {
-                inputSystemKey = (Key)((int)Key.A + ((int)keyCode - (int)KeyCode.A));
+                inputSystemKey = (InputSystemKey)((int)InputSystemKey.A + ((int)keyCode - (int)KeyCode.A));
                 return true;
             }
 
             if (keyCode >= KeyCode.Alpha0 && keyCode <= KeyCode.Alpha9)
             {
-                inputSystemKey = (Key)((int)Key.Digit0 + ((int)keyCode - (int)KeyCode.Alpha0));
+                inputSystemKey = (InputSystemKey)((int)InputSystemKey.Digit0 + ((int)keyCode - (int)KeyCode.Alpha0));
                 return true;
             }
 
             if (keyCode >= KeyCode.Keypad0 && keyCode <= KeyCode.Keypad9)
             {
-                inputSystemKey = (Key)((int)Key.Numpad0 + ((int)keyCode - (int)KeyCode.Keypad0));
+                inputSystemKey = (InputSystemKey)((int)InputSystemKey.Numpad0 + ((int)keyCode - (int)KeyCode.Keypad0));
                 return true;
             }
 
             switch (keyCode)
             {
                 case KeyCode.Space:
-                    inputSystemKey = Key.Space;
+                    inputSystemKey = InputSystemKey.Space;
                     return true;
                 case KeyCode.LeftArrow:
-                    inputSystemKey = Key.LeftArrow;
+                    inputSystemKey = InputSystemKey.LeftArrow;
                     return true;
                 case KeyCode.RightArrow:
-                    inputSystemKey = Key.RightArrow;
+                    inputSystemKey = InputSystemKey.RightArrow;
                     return true;
                 case KeyCode.UpArrow:
-                    inputSystemKey = Key.UpArrow;
+                    inputSystemKey = InputSystemKey.UpArrow;
                     return true;
                 case KeyCode.DownArrow:
-                    inputSystemKey = Key.DownArrow;
+                    inputSystemKey = InputSystemKey.DownArrow;
                     return true;
                 case KeyCode.Return:
-                    inputSystemKey = Key.Enter;
+                    inputSystemKey = InputSystemKey.Enter;
                     return true;
                 case KeyCode.KeypadEnter:
-                    inputSystemKey = Key.NumpadEnter;
+                    inputSystemKey = InputSystemKey.NumpadEnter;
                     return true;
                 case KeyCode.Escape:
-                    inputSystemKey = Key.Escape;
+                    inputSystemKey = InputSystemKey.Escape;
                     return true;
                 default:
                     inputSystemKey = default;
