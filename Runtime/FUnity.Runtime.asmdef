@@ -3,12 +3,13 @@
     "rootNamespace": "FUnity.Runtime",
     "references": [
         "UnityEngine.UIElementsModule",
-        "Unity.VisualScripting",
-        "Unity.VisualScripting.Core",
-        "Unity.VisualScripting.Flow",
-        "Unity.VisualScripting.State",
-        "Unity.VisualScripting.Antlr3.Runtime"
-    ],
+        "Unity.VisualScripting", 
+        "Unity.VisualScripting.Core", 
+        "Unity.VisualScripting.Flow", 
+        "Unity.VisualScripting.State", 
+        "Unity.VisualScripting.Antlr3.Runtime", 
+        "Unity.InputSystem"
+    ], 
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -16,6 +17,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.0.0",
+            "define": "ENABLE_INPUT_SYSTEM"
+        }
+    ],
     "noEngineReferences": false
 }
