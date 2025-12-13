@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
 using UnityEngine;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -18,9 +19,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class OnKeyPressedUnit : EventUnit<EmptyEventArgs>
     {
-        /// <summary>GraphReference 単位のキー入力リスナーを保持します。</summary>
-        private static readonly Dictionary<GraphReference, Action<EmptyEventArgs>> s_Handlers
-            = new Dictionary<GraphReference, Action<EmptyEventArgs>>();
+        /// <summary>
+        /// GraphReference と Unit ごとにキー入力リスナーを保持します。
+        /// 同一グラフ内で複数のキーイベントがあっても並列に処理できるよう unitId を含めて管理します。
+        /// </summary>
+        private static readonly Dictionary<(GraphReference reference, int unitId), Action<EmptyEventArgs>> s_Handlers
+            = new Dictionary<(GraphReference reference, int unitId), Action<EmptyEventArgs>>();
 
         /// <summary>現在ひとつでもキー入力リスナーが登録されているかを返します。</summary>
         internal static bool HasAnyListeners => s_Handlers.Count > 0;
@@ -121,15 +125,17 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             var reference = stack.ToReference();
+            var unitId = RuntimeHelpers.GetHashCode(this);
+            var key = (reference, unitId);
 
-            if (s_Handlers.ContainsKey(reference))
+            if (s_Handlers.ContainsKey(key))
             {
                 return;
             }
 
             Action<EmptyEventArgs> handler = args => TriggerWithThreadRegistration(reference, args);
 
-            s_Handlers.Add(reference, handler);
+            s_Handlers.Add(key, handler);
         }
 
         /// <summary>
@@ -145,7 +151,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
 
             var reference = stack.ToReference();
 
-            s_Handlers.Remove(reference);
+            var unitId = RuntimeHelpers.GetHashCode(this);
+            var key = (reference, unitId);
+
+            s_Handlers.Remove(key);
         }
 
         /// <summary>

@@ -2,6 +2,7 @@
 using System.Collections;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using Unity.VisualScripting;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -128,9 +129,12 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     [TypeIcon(typeof(FUnityScratchUnitIcon))]
     public sealed class WhenIStartAsCloneUnit : EventUnit<CloneEventArgs>
     {
-        /// <summary>GraphReference ごとに登録したクローン開始イベントのハンドラ管理。</summary>
-        private static readonly Dictionary<GraphReference, Action<CloneEventArgs>> s_Handlers
-            = new Dictionary<GraphReference, Action<CloneEventArgs>>();
+        /// <summary>
+        /// GraphReference と Unit ごとに登録したクローン開始イベントのハンドラ管理。
+        /// Unit 単位で登録することで、同一グラフ内に複数存在しても全て並行発火させます。
+        /// </summary>
+        private static readonly Dictionary<(GraphReference reference, int unitId), Action<CloneEventArgs>> s_Handlers
+            = new Dictionary<(GraphReference reference, int unitId), Action<CloneEventArgs>>();
 
         /// <summary>EventBus に登録するかどうか。</summary>
         protected override bool register => true;
@@ -179,8 +183,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             var reference = stack.ToReference();
+            var unitId = RuntimeHelpers.GetHashCode(this);
+            var key = (reference, unitId);
 
-            if (s_Handlers.ContainsKey(reference))
+            if (s_Handlers.ContainsKey(key))
             {
                 return;
             }
@@ -191,7 +197,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (hook.name != null && handler != null)
             {
                 EventBus.Register<CloneEventArgs>(hook, handler);
-                s_Handlers[reference] = handler;
+                s_Handlers[key] = handler;
             }
         }
 
@@ -207,8 +213,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             var reference = stack.ToReference();
+            var unitId = RuntimeHelpers.GetHashCode(this);
+            var key = (reference, unitId);
 
-            if (!s_Handlers.TryGetValue(reference, out var handler) || handler == null)
+            if (!s_Handlers.TryGetValue(key, out var handler) || handler == null)
             {
                 return;
             }
@@ -219,7 +227,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 EventBus.Unregister(hook, handler);
             }
 
-            s_Handlers.Remove(reference);
+            s_Handlers.Remove(key);
         }
 
         /// <summary>

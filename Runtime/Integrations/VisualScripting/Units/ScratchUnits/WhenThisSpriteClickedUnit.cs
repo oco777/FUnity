@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
 using FUnity.Runtime.Core;
 using FUnity.Runtime.Integrations.VisualScripting;
@@ -22,13 +23,13 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
     public sealed class WhenThisSpriteClickedUnit : EventUnit<EmptyEventArgs>
     {
         /// <summary>
-        /// GraphReference ごとに EventBus へ登録したハンドラを保持します。
+        /// GraphReference と Unit ごとに EventBus へ登録したハンドラを保持します。
         ///
-        /// ・キー: GraphReference
+        /// ・キー: (GraphReference, unitId)
         /// ・値: EventBus から呼び出されるコールバック
         /// </summary>
-        private static readonly Dictionary<GraphReference, Action<EmptyEventArgs>> s_Handlers
-            = new Dictionary<GraphReference, Action<EmptyEventArgs>>();
+        private static readonly Dictionary<(GraphReference reference, int unitId), Action<EmptyEventArgs>> s_Handlers
+            = new Dictionary<(GraphReference reference, int unitId), Action<EmptyEventArgs>>();
 
         /// <summary>
         /// EventUnit による EventBus への自動登録を有効にします。
@@ -104,8 +105,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             var reference = stack.ToReference();
+            var unitId = RuntimeHelpers.GetHashCode(this);
+            var key = (reference, unitId);
 
-            if (s_Handlers.ContainsKey(reference))
+            if (s_Handlers.ContainsKey(key))
             {
                 return;
             }
@@ -116,7 +119,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             if (hook.name != null && handler != null)
             {
                 EventBus.Register<EmptyEventArgs>(hook, handler);
-                s_Handlers[reference] = handler;
+                s_Handlers[key] = handler;
             }
         }
 
@@ -132,8 +135,10 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
             }
 
             var reference = stack.ToReference();
+            var unitId = RuntimeHelpers.GetHashCode(this);
+            var key = (reference, unitId);
 
-            if (!s_Handlers.TryGetValue(reference, out var handler) || handler == null)
+            if (!s_Handlers.TryGetValue(key, out var handler) || handler == null)
             {
                 return;
             }
@@ -144,7 +149,7 @@ namespace FUnity.Runtime.Integrations.VisualScripting.Units.ScratchUnits
                 EventBus.Unregister(hook, handler);
             }
 
-            s_Handlers.Remove(reference);
+            s_Handlers.Remove(key);
         }
 
         /// <summary>
