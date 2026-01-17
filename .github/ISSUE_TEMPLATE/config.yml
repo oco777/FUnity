@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 質問・相談（Discussions 推奨）
+    url: https://github.com/oco777/FUnity/discussions
+    about: 仕様相談・使い方の質問・アイデア雑談はこちら（Issueはタスク管理用）
+  - name: セキュリティ報告
+    url: https://github.com/oco777/FUnity/security/policy
+    about: 脆弱性の報告は公開Issueではなくこちらへ

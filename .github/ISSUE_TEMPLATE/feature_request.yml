@@ -1,0 +1,50 @@
+name: "✨ 機能要望"
+description: "FUnity に追加したい機能・改善案"
+title: "[Feat] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したい課題
+      description: なぜ必要か（教材として／ユーザー体験として）
+      placeholder: "例: 子どもがイベントの並行処理を理解できるようにしたい"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案（こうしたい）
+      placeholder: "例: 同種イベントが複数あっても全て並行実行される"
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 対象範囲
+      description: 影響しそうな箇所
+      placeholder: "例: Visual Scripting Units / Runtime Event Bus / サンプルプロジェクト"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度（希望）
+      options:
+        - P0: なるべく早く（教材が詰まる）
+        - P1: 近いうちに
+        - P2: 余裕があるとき
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: 受け入れ条件（例）
+      options:
+        - label: "仕様（docs/spec など）に追記される"
+        - label: "サンプル or チュートリアル記事に反映される"
+        - label: "テスト（可能なら）または検証手順が追加される"

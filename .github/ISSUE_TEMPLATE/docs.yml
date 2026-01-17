@@ -1,0 +1,28 @@
+name: "📚 ドキュメント改善"
+description: "README / docs / チュートリアルの修正・追加"
+title: "[Docs] "
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: target
+    attributes:
+      label: 対象ページ / ファイル
+      placeholder: "例: README.md / docs/spec.md / ブログ第10回"
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: 問題点
+      placeholder: "例: 手順がScratchとズレていて混乱する"
+    validations:
+      required: true
+
+  - type: textarea
+    id: fix
+    attributes:
+      label: 修正案
+      placeholder: "例: Scratchのブロック画像に合わせて文章を調整する"
+    validations:
+      required: false
